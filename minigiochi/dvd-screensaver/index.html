@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🕹️ DVD SCREENSAVER GAME 🕹️</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="main-container">
+        <header id="game-title">
+            <h1>🕹️ DVD SCREENSAVER GAME 🕹️</h1>
+            <p>Nostalgic Fun from the 90s!</p>
+        </header>
+
+        <div id="controls">
+            <div id="setup-section">
+                <div class="control-group">
+                    <label for="imageUpload" class="retro-label">📸 Choose Your Image</label>
+                    <input type="file" id="imageUpload" accept="image/*" class="retro-input">
+                </div>
+
+                <div id="players-setup" class="control-group">
+                    <label class="retro-label">👥 Add Players (Max 6)</label>
+                    <div class="input-row">
+                        <input type="text" id="playerNameInput" placeholder="Enter player name..." class="retro-input">
+                        <button id="addPlayerBtn" class="retro-btn add-btn">ADD PLAYER</button>
+                    </div>
+                    <div id="playersList"></div>
+                </div>
+
+                <div class="button-row">
+                    <button id="startBtn" class="retro-btn main-btn" disabled>🚀 START GAME</button>
+                    <button id="screensaverBtn" class="retro-btn screensaver-btn">📺 SOLO SCREENSAVER</button>
+                    <button id="stopBtn" class="retro-btn stop-btn">⏹️ STOP</button>
+                </div>
+            </div>
+
+            <div id="game-section" class="hidden">
+                <div id="currentPlayer" class="current-player-display"></div>
+                <div id="scoreboard-container">
+                    <h3 class="retro-label">🏆 SCOREBOARD</h3>
+                    <div id="scoreboard"></div>
+                </div>
+                <button id="resetGameBtn" class="retro-btn reset-btn">🔄 RESET GAME</button>
+            </div>
+        </div>
+
+        <div id="preview-container">
+            <div id="image-preview">
+                <img id="preview-image" src="" alt="Preview">
+                <div class="preview-label">Preview</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="screensaver" class="hidden">
+        <img id="bouncing-image" src="" alt="Immagine rimbalzante">
+        <div id="bet-points"></div>
+        <div id="game-overlay">
+            <div id="winner-notification" class="hidden"></div>
+            <div id="turn-indicator"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
