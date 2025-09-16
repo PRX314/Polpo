@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRIX - Bolt Edition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* RESET E BASE */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        :root {
+            /* Light theme */
+            --bg-primary: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #555;
+            --text-muted: #666;
+            --border-color: #ddd;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.1);
+            --gradient-accent: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
+            --gradient-border: linear-gradient(90deg, #48dbfb, #54a0ff);
+
+            /* Retrogaming colors */
+            --retro-green: #00ff41;
+            --retro-cyan: #00ffff;
+            --retro-purple: #ff00ff;
+            --retro-yellow: #ffff00;
+            --retro-orange: #ff8000;
+            --game-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme */
+            --bg-primary: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            --bg-secondary: #34495e;
+            --bg-card: #34495e;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --text-muted: #95a5a6;
+            --border-color: #4a5568;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+            --gradient-accent: linear-gradient(90deg, #e74c3c, #f39c12, #3498db, #9b59b6, #2980b9);
+            --gradient-border: linear-gradient(90deg, #3498db, #2980b9);
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--game-bg);
+            color: var(--retro-green);
+            line-height: 1.7;
+            font-size: 14px;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Retrogaming effects */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                linear-gradient(90deg, transparent 98%, rgba(0, 255, 65, 0.03) 100%),
+                linear-gradient(0deg, transparent 98%, rgba(0, 255, 65, 0.03) 100%);
+            background-size: 3px 3px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: 4px;
+            color: var(--retro-cyan);
+            text-shadow: 0 0 20px var(--retro-cyan);
+            text-transform: uppercase;
+        }
+
+        h2 {
+            font-size: 1.5em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--retro-green);
+            margin: 25px 0 15px 0;
+            text-shadow: 0 0 10px var(--retro-green);
+        }
+
+        h3 {
+            font-size: 1em;
+            font-weight: 500;
+            color: var(--retro-yellow);
+            margin: 20px 0 10px 0;
+            text-shadow: 0 0 5px var(--retro-yellow);
+        }
+
+        /* Game animations */
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes neon-pulse {
+            0%, 100% {
+                box-shadow: 0 0 5px currentColor,
+                           0 0 10px currentColor,
+                           0 0 15px currentColor;
+            }
+            50% {
+                box-shadow: 0 0 10px currentColor,
+                           0 0 20px currentColor,
+                           0 0 30px currentColor;
+            }
+        }
+
+        .fade-out {
+            animation: fadeOut 1s forwards;
+        }
+
+        .cell-highlight {
+            animation: neon-pulse 0.5s ease;
+            transform: scale(1.05);
+            transition: all 0.3s ease;
+        }
+
+        .mini-board {
+            transition: all 0.3s ease;
+        }
+
+        .mini-board.won {
+            filter: brightness(0.6);
+            pointer-events: none;
+        }
+
+        .active-board {
+            border: 2px solid var(--retro-cyan);
+            box-shadow: 0 0 15px var(--retro-cyan);
+        }
+
+        .pulse {
+            animation: neon-pulse 2s infinite;
+        }
+
+        .timer-critical {
+            color: var(--retro-purple);
+            animation: neon-pulse 0.5s infinite;
+        }
+
+        .timer-warning {
+            color: var(--retro-orange);
+        }
+
+        .timer-normal {
+            color: var(--retro-green);
+        }
+
+        .timer-disabled {
+            color: var(--text-muted);
+        }
+
+        /* Ultimate Bolt mini-boards */
+        .mini-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 4px;
+            border-radius: 6px;
+            border: 1px solid var(--retro-green);
+            transition: all 0.3s ease;
+        }
+
+        .mini-board-cell {
+            aspect-ratio: 1;
+            background: rgba(16, 21, 62, 0.8);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--retro-yellow);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px currentColor;
+        }
+
+        .mini-board-cell:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: var(--retro-cyan);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .mini-board.won {
+            filter: brightness(0.6);
+            pointer-events: none;
+            border-color: var(--retro-purple);
+        }
+
+        .mini-board.won .mini-board-cell {
+            background: rgba(255, 0, 255, 0.1);
+            opacity: 0.5;
+        }
+
+        .bg-opacity-50 {
+            opacity: 0.5;
+        }
+        /* UI Components */
+        .game-card {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--retro-green);
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow:
+                0 0 20px rgba(0, 255, 65, 0.3),
+                inset 0 0 20px rgba(0, 255, 65, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: var(--gradient-border);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: 2px solid;
+            border-radius: 6px;
+            background: transparent;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            color: var(--retro-cyan);
+            border-color: var(--retro-cyan);
+        }
+
+        .btn-primary:hover {
+            background: var(--retro-cyan);
+            color: #000;
+            box-shadow: 0 0 20px var(--retro-cyan);
+            animation: glitch 0.3s ease;
+        }
+
+        .btn-secondary {
+            color: var(--retro-green);
+            border-color: var(--retro-green);
+        }
+
+        .btn-secondary:hover {
+            background: var(--retro-green);
+            color: #000;
+            box-shadow: 0 0 20px var(--retro-green);
+        }
+
+        .btn-danger {
+            color: var(--retro-purple);
+            border-color: var(--retro-purple);
+        }
+
+        .btn-danger:hover {
+            background: var(--retro-purple);
+            color: #000;
+            box-shadow: 0 0 20px var(--retro-purple);
+        }
+
+        /* Game boards */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--retro-cyan);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .game-cell {
+            aspect-ratio: 1;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--retro-green);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--retro-yellow);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        .game-cell:hover {
+            background: rgba(0, 255, 65, 0.1);
+            border-color: var(--retro-yellow);
+            box-shadow: 0 0 15px var(--retro-yellow);
+        }
+
+        /* Settings panel */
+        .settings-panel.open {
+            max-height: 400px !important;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 2em;
+                letter-spacing: 2px;
+            }
+
+            .game-card {
+                padding: 1.5rem;
+            }
+
+            .btn {
+                padding: 10px 16px;
+                font-size: 0.8em;
+            }
+
+            .game-board {
+                max-width: 280px !important;
+            }
+
+            .game-cell {
+                font-size: 1.5rem;
+            }
+
+            /* Ultimate board mobile adjustments */
+            #ultimate-board {
+                max-width: 350px !important;
+                gap: 4px !important;
+                padding: 0.8rem !important;
+            }
+
+            .mini-board {
+                gap: 1px;
+                padding: 2px;
+            }
+
+            .mini-board-cell {
+                font-size: 0.7rem;
+                min-height: 25px;
+            }
+
+            /* Settings panel mobile */
+            #timer-settings input {
+                width: 50px !important;
+            }
+
+            /* Header buttons mobile */
+            .game-card > div:first-child {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 1rem !important;
+            }
+
+            .game-card > div:first-child > div:last-child {
+                justify-content: center !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 12px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+                letter-spacing: 1px;
+            }
+
+            h2 {
+                font-size: 1.2em;
+            }
+
+            .game-card {
+                padding: 1rem;
+            }
+
+            .game-board {
+                max-width: 240px !important;
+            }
+
+            .game-cell {
+                font-size: 1.2rem;
+            }
+
+            /* Ultimate board small mobile */
+            #ultimate-board {
+                max-width: 280px !important;
+                gap: 3px !important;
+                padding: 0.5rem !important;
+            }
+
+            .mini-board {
+                padding: 1px;
+            }
+
+            .mini-board-cell {
+                font-size: 0.6rem;
+                min-height: 20px;
+            }
+
+            /* Buttons */
+            .btn {
+                padding: 8px 12px;
+                font-size: 0.7em;
+            }
+
+            /* Rules modal mobile */
+            #rules-modal > div {
+                max-width: 95vw !important;
+                max-height: 90vh !important;
+                padding: 1.5rem !important;
+                margin: 1rem !important;
+            }
+
+            #rules-modal h4 {
+                font-size: 1em !important;
+            }
+
+            #rules-modal ul {
+                padding-left: 0.5rem !important;
+            }
+
+            #rules-modal li {
+                font-size: 0.9em !important;
+                margin-bottom: 0.2rem !important;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .game-card {
+                padding: 0.8rem;
+            }
+
+            .game-board {
+                max-width: 200px !important;
+            }
+
+            .game-cell {
+                font-size: 1rem;
+            }
+
+            #ultimate-board {
+                max-width: 220px !important;
+            }
+
+            .mini-board-cell {
+                font-size: 0.5rem;
+                min-height: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header style="text-align: center; margin-bottom: 3rem;">
+            <h1 class="pulse">TRIX <span style="color: var(--retro-purple);">Bolt Edition</span></h1>
+            <p style="color: var(--text-secondary); font-size: 1.1em; margin-top: 1rem;">Three electrifying ways to play Tic Tac Toe!</p>
+        </header>
+
+        <!-- Main Menu -->
+        <div id="main-menu" class="game-card" style="text-align: center; max-width: 600px; margin: 0 auto;">
+            <h2>Select Game Mode</h2>
+
+            <div class="game-card" style="margin: 2rem 0; padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleSettingsPanel()">
+                    <h3 style="color: var(--retro-cyan);">⚙ Game Settings</h3>
+                    <span id="settings-chevron" style="color: var(--retro-cyan); transition: transform 0.3s;">▼</span>
+                </div>
+
+                <div id="settings-panel" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;">
+                    <div style="padding-top: 1rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                            <label style="display: flex; align-items: center; color: var(--retro-green);">
+                                <input type="checkbox" id="timer-toggle" style="margin-right: 0.5rem; accent-color: var(--retro-green);">
+                                <span>Enable Timer</span>
+                            </label>
+                        </div>
+
+                        <div id="timer-settings" style="display: none;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
+                                <label style="color: var(--retro-yellow);">Classic Mode Timer (sec):</label>
+                                <input type="number" id="classic-timer" min="5" max="120" value="30" style="width: 60px; background: rgba(0,0,0,0.8); border: 1px solid var(--retro-green); border-radius: 4px; padding: 0.2rem; text-align: center; color: var(--retro-green); font-family: 'JetBrains Mono', monospace;">
+                            </div>
+
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
+                                <label style="color: var(--retro-yellow);">Memory Mobile Timer (sec):</label>
+                                <input type="number" id="memory-timer" min="5" max="120" value="20" style="width: 60px; background: rgba(0,0,0,0.8); border: 1px solid var(--retro-green); border-radius: 4px; padding: 0.2rem; text-align: center; color: var(--retro-green); font-family: 'JetBrains Mono', monospace;">
+                            </div>
+
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
+                                <label style="color: var(--retro-yellow);">Ultimate Bolt Timer (sec):</label>
+                                <input type="number" id="ultimate-timer" min="5" max="120" value="45" style="width: 60px; background: rgba(0,0,0,0.8); border: 1px solid var(--retro-green); border-radius: 4px; padding: 0.2rem; text-align: center; color: var(--retro-green); font-family: 'JetBrains Mono', monospace;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1.5rem; margin: 2rem 0;">
+                <button onclick="startGame('classic')" class="btn btn-primary" style="width: 100%; padding: 1rem;">
+                    🎲 Classic Mode
+                </button>
+
+                <button onclick="startGame('memory')" class="btn btn-secondary" style="width: 100%; padding: 1rem;">
+                    🧠 Memory Mobile
+                </button>
+
+                <button onclick="startGame('ultimate')" class="btn btn-danger" style="width: 100%; padding: 1rem;">
+                    ⚡ Ultimate Bolt
+                </button>
+            </div>
+
+            <div style="margin-top: 2rem; color: var(--text-secondary);">
+                <p style="margin-bottom: 0.5rem;">ℹ Each mode has unique rules!</p>
+                <button onclick="showRules()" style="background: none; border: none; color: var(--retro-yellow); text-decoration: underline; cursor: pointer; font-family: inherit;">View Game Rules</button>
+            </div>
+        </div>
+
+        <!-- Game Boards -->
+        <div id="game-container" style="display: none;">
+            <!-- Classic and Memory Mobile Board -->
+            <div id="standard-board-container" style="display: none;">
+                <div class="game-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 id="game-mode-title" style="color: var(--retro-cyan); margin: 0;"></h2>
+                        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            <div id="timer-display" style="display: none; align-items: center;">
+                                <svg id="timer-ring" width="40" height="40" style="margin-right: 0.5rem;">
+                                    <circle cx="20" cy="20" r="18" fill="transparent" stroke="rgba(255,255,255,0.2)" stroke-width="4"></circle>
+                                    <circle id="timer-progress" cx="20" cy="20" r="18" fill="transparent" stroke="var(--retro-green)" stroke-width="4" stroke-dasharray="113" stroke-dashoffset="0" style="transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%;"></circle>
+                                </svg>
+                                <span id="timer-text" class="timer-normal" style="font-family: 'JetBrains Mono', monospace; font-size: 1.1em; font-weight: 500;">00:00</span>
+                            </div>
+                            <button onclick="restartGame()" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+                                🔄 Restart
+                            </button>
+                            <button onclick="backToMenu()" class="btn btn-primary" style="padding: 0.5rem 1rem;">
+                                🏠 Menu
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center;">
+                        <div id="status-message" style="font-size: 1.2em; font-weight: 500; margin-bottom: 2rem; color: var(--retro-yellow); text-shadow: 0 0 10px var(--retro-yellow);"></div>
+
+                        <div id="game-board" class="game-board" style="max-width: 300px; margin: 0 auto;">
+                            <!-- Cells will be generated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ultimate Bolt Board -->
+            <div id="ultimate-board-container" style="display: none;">
+                <div class="game-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 style="color: var(--retro-cyan); margin: 0;">Ultimate Bolt Mode</h2>
+                        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            <div id="ultimate-timer-display" style="display: none; align-items: center;">
+                                <svg id="ultimate-timer-ring" width="40" height="40" style="margin-right: 0.5rem;">
+                                    <circle cx="20" cy="20" r="18" fill="transparent" stroke="rgba(255,255,255,0.2)" stroke-width="4"></circle>
+                                    <circle id="ultimate-timer-progress" cx="20" cy="20" r="18" fill="transparent" stroke="var(--retro-green)" stroke-width="4" stroke-dasharray="113" stroke-dashoffset="0" style="transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%;"></circle>
+                                </svg>
+                                <span id="ultimate-timer-text" class="timer-normal" style="font-family: 'JetBrains Mono', monospace; font-size: 1.1em; font-weight: 500;">00:00</span>
+                            </div>
+                            <button onclick="restartGame()" class="btn btn-secondary" style="padding: 0.5rem 1rem;">
+                                🔄 Restart
+                            </button>
+                            <button onclick="backToMenu()" class="btn btn-primary" style="padding: 0.5rem 1rem;">
+                                🏠 Menu
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center;">
+                        <div id="ultimate-status" style="font-size: 1.2em; font-weight: 500; margin-bottom: 2rem; color: var(--retro-yellow); text-shadow: 0 0 10px var(--retro-yellow);"></div>
+
+                        <div id="ultimate-board" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: rgba(0, 0, 0, 0.8); padding: 1rem; border-radius: 12px; border: 2px solid var(--retro-purple); box-shadow: 0 0 30px rgba(255, 0, 255, 0.3); max-width: 600px; margin: 0 auto;">
+                            <!-- Mini boards will be generated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rules Modal -->
+        <div id="rules-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.9); display: none; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(5px);">
+            <div style="background: rgba(0, 0, 0, 0.95); border: 2px solid var(--retro-cyan); border-radius: 12px; padding: 2rem; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 0 40px var(--retro-cyan); position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1.5em; font-weight: 700; color: var(--retro-cyan); text-shadow: 0 0 15px var(--retro-cyan); margin: 0;">Game Rules</h3>
+                    <button onclick="hideRules()" style="background: none; border: none; color: var(--retro-purple); font-size: 1.5em; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.color='var(--retro-yellow)'; this.style.textShadow='0 0 10px var(--retro-yellow)'" onmouseout="this.style.color='var(--retro-purple)'; this.style.textShadow='none'">
+                        ✕
+                    </button>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div>
+                        <h4 style="font-size: 1.1em; font-weight: 600; color: var(--retro-cyan); margin-bottom: 0.5rem; text-shadow: 0 0 5px var(--retro-cyan);">1️⃣ Classic Mode</h4>
+                        <ul style="list-style: none; padding-left: 1rem; color: var(--retro-green); line-height: 1.6;">
+                            <li style="margin-bottom: 0.3rem;">▸ Standard 3x3 Tic Tac Toe rules</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Two players (X and O) take turns</li>
+                            <li style="margin-bottom: 0.3rem;">▸ First to align three symbols wins (row, column, or diagonal)</li>
+                            <li style="margin-bottom: 0.3rem;">▸ No moves disappear - static grid like traditional game</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Optional timer puts pressure on players to think fast</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 style="font-size: 1.1em; font-weight: 600; color: var(--retro-purple); margin-bottom: 0.5rem; text-shadow: 0 0 5px var(--retro-purple);">2️⃣ Memory Mobile</h4>
+                        <ul style="list-style: none; padding-left: 1rem; color: var(--retro-green); line-height: 1.6;">
+                            <li style="margin-bottom: 0.3rem;">▸ Starts as normal 3x3 game</li>
+                            <li style="margin-bottom: 0.3rem;">▸ After the 4th move, the oldest move is marked and removed</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Only the last 3 moves remain active for each player</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Fade-out animation shows removal of oldest move</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Dynamic, fast-paced gameplay that's never static</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Timer adds extra challenge to this already intense mode</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 style="font-size: 1.1em; font-weight: 600; color: var(--retro-orange); margin-bottom: 0.5rem; text-shadow: 0 0 5px var(--retro-orange);">3️⃣ Ultimate Bolt</h4>
+                        <ul style="list-style: none; padding-left: 1rem; color: var(--retro-green); line-height: 1.6;">
+                            <li style="margin-bottom: 0.3rem;">▸ 9x9 grid composed of 9 mini 3x3 grids</li>
+                            <li style="margin-bottom: 0.3rem;">▸ When you make a move in a mini-grid, opponent must play in corresponding mini-grid</li>
+                            <li style="margin-bottom: 0.3rem;">▸ When a mini-grid is won, it's locked and can't be played in</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Win by getting three mini-grids in a row (like classic Tic Tac Toe)</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Multi-level strategy with mini and macro gameplay</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Timer makes this complex mode even more challenging</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 style="font-size: 1.1em; font-weight: 600; color: var(--retro-yellow); margin-bottom: 0.5rem; text-shadow: 0 0 5px var(--retro-yellow);">⏱️ Timer System</h4>
+                        <ul style="list-style: none; padding-left: 1rem; color: var(--retro-green); line-height: 1.6;">
+                            <li style="margin-bottom: 0.3rem;">▸ Configurable timer for each game mode</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Visual countdown with progress ring</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Color changes as time runs low</li>
+                            <li style="margin-bottom: 0.3rem;">▸ When time runs out, the current player loses their turn</li>
+                            <li style="margin-bottom: 0.3rem;">▸ Can be disabled in settings if preferred</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; text-align: center;">
+                    <button onclick="hideRules()" class="btn btn-primary" style="padding: 0.8rem 2rem;">
+                        Got It!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state variables
+        let currentGameMode = '';
+        let board = Array(9).fill(null);
+        let currentPlayer = 'X';
+        let gameActive = true;
+        let moveHistory = { X: [], O: [] };
+        let ultimateBoards = Array(9).fill(null).map(() => Array(9).fill(null));
+        let ultimateActiveBoard = null;
+        let ultimateWinners = Array(9).fill(null);
+        let ultimateCurrentPlayer = 'X';
+        let ultimateGameActive = true;
+
+        // Timer variables
+        let timerEnabled = false;
+        let timerInterval;
+        let timeLeft = 0;
+        let maxTime = 30;
+        let ultimateTimerInterval;
+        let ultimateTimeLeft = 0;
+        let ultimateMaxTime = 45;
+
+        // DOM elements
+        const mainMenu = document.getElementById('main-menu');
+        const gameContainer = document.getElementById('game-container');
+        const standardBoardContainer = document.getElementById('standard-board-container');
+        const ultimateBoardContainer = document.getElementById('ultimate-board-container');
+        const gameBoard = document.getElementById('game-board');
+        const statusMessage = document.getElementById('status-message');
+        const gameModeTitle = document.getElementById('game-mode-title');
+        const ultimateBoard = document.getElementById('ultimate-board');
+        const ultimateStatus = document.getElementById('ultimate-status');
+        const rulesModal = document.getElementById('rules-modal');
+        const timerDisplay = document.getElementById('timer-display');
+        const timerText = document.getElementById('timer-text');
+        const timerProgress = document.getElementById('timer-progress');
+        const ultimateTimerDisplay = document.getElementById('ultimate-timer-display');
+        const ultimateTimerText = document.getElementById('ultimate-timer-text');
+        const ultimateTimerProgress = document.getElementById('ultimate-timer-progress');
+        const timerToggle = document.getElementById('timer-toggle');
+        const classicTimerInput = document.getElementById('classic-timer');
+        const memoryTimerInput = document.getElementById('memory-timer');
+        const ultimateTimerInput = document.getElementById('ultimate-timer');
+        const timerSettings = document.getElementById('timer-settings');
+        const settingsPanel = document.getElementById('settings-panel');
+        const settingsChevron = document.getElementById('settings-chevron');
+
+        // Initialize settings
+        timerToggle.addEventListener('change', function() {
+            timerEnabled = this.checked;
+            timerSettings.style.display = timerEnabled ? 'block' : 'none';
+        });
+
+        function toggleSettingsPanel() {
+            const panel = document.getElementById('settings-panel');
+            const chevron = document.getElementById('settings-chevron');
+
+            if (panel.style.maxHeight && panel.style.maxHeight !== '0px') {
+                panel.style.maxHeight = '0px';
+                chevron.style.transform = 'rotate(0deg)';
+            } else {
+                panel.style.maxHeight = '400px';
+                chevron.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // Start a new game
+        function startGame(mode) {
+            currentGameMode = mode;
+            mainMenu.style.display = 'none';
+            gameContainer.style.display = 'block';
+
+            // Set timer values based on settings
+            if (timerToggle.checked) {
+                timerEnabled = true;
+
+                switch(mode) {
+                    case 'classic':
+                        maxTime = parseInt(classicTimerInput.value);
+                        break;
+                    case 'memory':
+                        maxTime = parseInt(memoryTimerInput.value);
+                        break;
+                    case 'ultimate':
+                        ultimateMaxTime = parseInt(ultimateTimerInput.value);
+                        break;
+                }
+            } else {
+                timerEnabled = false;
+            }
+
+            if (mode === 'ultimate') {
+                standardBoardContainer.style.display = 'none';
+                ultimateBoardContainer.style.display = 'block';
+                initializeUltimateBoard();
+
+                if (timerEnabled) {
+                    ultimateTimerDisplay.style.display = 'flex';
+                    startUltimateTimer();
+                } else {
+                    ultimateTimerDisplay.style.display = 'none';
+                }
+            } else {
+                standardBoardContainer.style.display = 'block';
+                ultimateBoardContainer.style.display = 'none';
+                initializeStandardBoard();
+
+                if (timerEnabled) {
+                    timerDisplay.style.display = 'flex';
+                    startTimer();
+                } else {
+                    timerDisplay.style.display = 'none';
+                }
+
+                if (mode === 'classic') {
+                    gameModeTitle.textContent = 'Classic Mode';
+                } else {
+                    gameModeTitle.textContent = 'Memory Mobile';
+                }
+            }
+        }
+
+        // Timer functions
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = maxTime;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerText.classList.remove('timer-warning');
+                    timerText.classList.add('timer-critical');
+
+                    // Time's up! Switch player
+                    if (gameActive) {
+                        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                        updateStatus(`${currentPlayer}'s turn (timeout!)`);
+                        startTimer(); // Restart timer for next player
+                    }
+                }
+            }, 1000);
+        }
+
+        function startUltimateTimer() {
+            clearInterval(ultimateTimerInterval);
+            ultimateTimeLeft = ultimateMaxTime;
+            updateUltimateTimerDisplay();
+
+            ultimateTimerInterval = setInterval(() => {
+                ultimateTimeLeft--;
+                updateUltimateTimerDisplay();
+
+                if (ultimateTimeLeft <= 0) {
+                    clearInterval(ultimateTimerInterval);
+                    ultimateTimerText.classList.remove('timer-warning');
+                    ultimateTimerText.classList.add('timer-critical');
+
+                    // Time's up! Switch player
+                    if (ultimateGameActive) {
+                        ultimateCurrentPlayer = ultimateCurrentPlayer === 'X' ? 'O' : 'X';
+                        updateUltimateStatus(`${ultimateCurrentPlayer}'s turn (timeout!)`);
+                        startUltimateTimer(); // Restart timer for next player
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerText.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            // Update progress ring
+            const circumference = 2 * Math.PI * 18;
+            const offset = circumference - (timeLeft / maxTime) * circumference;
+            timerProgress.style.strokeDashoffset = offset;
+
+            // Update color based on time left
+            if (timeLeft <= maxTime * 0.2) {
+                timerText.classList.remove('timer-normal', 'timer-warning');
+                timerText.classList.add('timer-critical');
+                timerProgress.style.stroke = '#ef4444';
+            } else if (timeLeft <= maxTime * 0.5) {
+                timerText.classList.remove('timer-normal', 'timer-critical');
+                timerText.classList.add('timer-warning');
+                timerProgress.style.stroke = '#f59e0b';
+            } else {
+                timerText.classList.remove('timer-warning', 'timer-critical');
+                timerText.classList.add('timer-normal');
+                timerProgress.style.stroke = '#10b981';
+            }
+        }
+
+        function updateUltimateTimerDisplay() {
+            const minutes = Math.floor(ultimateTimeLeft / 60);
+            const seconds = ultimateTimeLeft % 60;
+            ultimateTimerText.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            // Update progress ring
+            const circumference = 2 * Math.PI * 18;
+            const offset = circumference - (ultimateTimeLeft / ultimateMaxTime) * circumference;
+            ultimateTimerProgress.style.strokeDashoffset = offset;
+
+            // Update color based on time left
+            if (ultimateTimeLeft <= ultimateMaxTime * 0.2) {
+                ultimateTimerText.classList.remove('timer-normal', 'timer-warning');
+                ultimateTimerText.classList.add('timer-critical');
+                ultimateTimerProgress.style.stroke = '#ef4444';
+            } else if (ultimateTimeLeft <= ultimateMaxTime * 0.5) {
+                ultimateTimerText.classList.remove('timer-normal', 'timer-critical');
+                ultimateTimerText.classList.add('timer-warning');
+                ultimateTimerProgress.style.stroke = '#f59e0b';
+            } else {
+                ultimateTimerText.classList.remove('timer-warning', 'timer-critical');
+                ultimateTimerText.classList.add('timer-normal');
+                ultimateTimerProgress.style.stroke = '#10b981';
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerText.classList.remove('timer-critical', 'timer-warning');
+            timerText.classList.add('timer-normal');
+        }
+
+        function resetUltimateTimer() {
+            clearInterval(ultimateTimerInterval);
+            ultimateTimerText.classList.remove('timer-critical', 'timer-warning');
+            ultimateTimerText.classList.add('timer-normal');
+        }
+
+        // Initialize standard 3x3 board
+        function initializeStandardBoard() {
+            board = Array(9).fill(null);
+            currentPlayer = 'X';
+            gameActive = true;
+            moveHistory = { X: [], O: [] };
+
+            gameBoard.innerHTML = '';
+
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'game-cell';
+                cell.dataset.index = i;
+                cell.addEventListener('click', () => handleCellClick(i));
+                gameBoard.appendChild(cell);
+            }
+
+            updateStatus(`${currentPlayer}'s turn`);
+
+            if (timerEnabled) {
+                startTimer();
+            }
+        }
+
+        // Initialize ultimate 9x9 board
+        function initializeUltimateBoard() {
+            ultimateBoards = Array(9).fill(null).map(() => Array(9).fill(null));
+            ultimateActiveBoard = null;
+            ultimateWinners = Array(9).fill(null);
+            ultimateCurrentPlayer = 'X';
+            ultimateGameActive = true;
+
+            ultimateBoard.innerHTML = '';
+
+            for (let i = 0; i < 9; i++) {
+                const miniBoard = document.createElement('div');
+                miniBoard.className = 'mini-board';
+                if (ultimateWinners[i]) {
+                    miniBoard.classList.add('won');
+                }
+                miniBoard.dataset.boardIndex = i;
+
+                for (let j = 0; j < 9; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'mini-board-cell';
+                    cell.dataset.cellIndex = j;
+                    cell.dataset.boardIndex = i;
+                    cell.addEventListener('click', () => handleUltimateCellClick(i, j));
+
+                    if (ultimateBoards[i][j]) {
+                        cell.textContent = ultimateBoards[i][j];
+                    }
+
+                    miniBoard.appendChild(cell);
+                }
+
+                ultimateBoard.appendChild(miniBoard);
+            }
+
+            updateUltimateStatus(`${ultimateCurrentPlayer}'s turn - Select any board to start`);
+
+            if (timerEnabled) {
+                startUltimateTimer();
+            }
+        }
+
+        // Handle standard cell click
+        function handleCellClick(index) {
+            if (!gameActive || board[index]) return;
+
+            board[index] = currentPlayer;
+            moveHistory[currentPlayer].push(index);
+
+            const cell = gameBoard.children[index];
+            cell.textContent = currentPlayer;
+            cell.classList.add('cell-highlight');
+
+            setTimeout(() => {
+                cell.classList.remove('cell-highlight');
+            }, 300);
+
+            // For Memory Mobile mode, handle move removal
+            if (currentGameMode === 'memory' && moveHistory[currentPlayer].length > 3) {
+                const oldestMove = moveHistory[currentPlayer].shift();
+                board[oldestMove] = null;
+
+                const oldCell = gameBoard.children[oldestMove];
+                oldCell.classList.add('fade-out');
+
+                setTimeout(() => {
+                    oldCell.textContent = '';
+                    oldCell.classList.remove('fade-out');
+                }, 1000);
+            }
+
+            checkStandardGameResult();
+
+            if (gameActive) {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                updateStatus(`${currentPlayer}'s turn`);
+
+                if (timerEnabled) {
+                    startTimer(); // Reset timer for next player
+                }
+            }
+        }
+
+        // Handle ultimate cell click
+        function handleUltimateCellClick(boardIndex, cellIndex) {
+            if (!ultimateGameActive || ultimateWinners[boardIndex]) return;
+
+            // If this is the first move or the active board is set
+            if (ultimateActiveBoard === null || ultimateActiveBoard === boardIndex) {
+                if (ultimateBoards[boardIndex][cellIndex]) return;
+
+                // Make the move
+                ultimateBoards[boardIndex][cellIndex] = ultimateCurrentPlayer;
+
+                // Update the UI
+                const miniBoard = ultimateBoard.children[boardIndex];
+                const cell = miniBoard.children[cellIndex];
+                cell.textContent = ultimateCurrentPlayer;
+                cell.classList.add('cell-highlight');
+
+                setTimeout(() => {
+                    cell.classList.remove('cell-highlight');
+                }, 300);
+
+                // Check if this move won the mini-board
+                checkMiniBoardWinner(boardIndex);
+
+                // Check if the ultimate game is won
+                checkUltimateGameResult();
+
+                if (ultimateGameActive) {
+                    // Set next active board based on the cell index
+                    ultimateActiveBoard = ultimateWinners[cellIndex] ? null : cellIndex;
+
+                    // Switch player
+                    ultimateCurrentPlayer = ultimateCurrentPlayer === 'X' ? 'O' : 'X';
+
+                    // Update status
+                    if (ultimateActiveBoard === null) {
+                        updateUltimateStatus(`${ultimateCurrentPlayer}'s turn - Select any available board`);
+                    } else {
+                        updateUltimateStatus(`${ultimateCurrentPlayer}'s turn - Play in board ${ultimateActiveBoard + 1}`);
+
+                        // Highlight the active board
+                        Array.from(ultimateBoard.children).forEach((board, idx) => {
+                            if (idx === ultimateActiveBoard && !ultimateWinners[idx]) {
+                                board.classList.add('active-board');
+                            } else {
+                                board.classList.remove('active-board');
+                            }
+                        });
+                    }
+
+                    if (timerEnabled) {
+                        startUltimateTimer(); // Reset timer for next player
+                    }
+                }
+            }
+        }
+
+        // Check standard game result
+        function checkStandardGameResult() {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6]             // diagonals
+            ];
+
+            for (const pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    gameActive = false;
+                    highlightWinningCells(pattern);
+                    updateStatus(`${board[a]} wins!`);
+                    resetTimer();
+                    return;
+                }
+            }
+
+            if (!board.includes(null)) {
+                gameActive = false;
+                updateStatus("Game ended in a draw!");
+                resetTimer();
+            }
+        }
+
+        // Check mini-board winner
+        function checkMiniBoardWinner(boardIndex) {
+            const miniBoard = ultimateBoards[boardIndex];
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6]             // diagonals
+            ];
+
+            for (const pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (miniBoard[a] && miniBoard[a] === miniBoard[b] && miniBoard[a] === miniBoard[c]) {
+                    ultimateWinners[boardIndex] = miniBoard[a];
+
+                    // Update UI
+                    const boardElement = ultimateBoard.children[boardIndex];
+                    boardElement.classList.add('won');
+
+                    // Mark all cells with the winner's symbol
+                    Array.from(boardElement.children).forEach(cell => {
+                        cell.textContent = miniBoard[a];
+                        cell.classList.add('bg-opacity-50');
+                    });
+
+                    return;
+                }
+            }
+
+            // Check for draw in mini-board
+            if (!miniBoard.includes(null) && !ultimateWinners[boardIndex]) {
+                ultimateWinners[boardIndex] = 'D'; // D for draw
+                const boardElement = ultimateBoard.children[boardIndex];
+                boardElement.classList.add('won');
+            }
+        }
+
+        // Check ultimate game result
+        function checkUltimateGameResult() {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6]             // diagonals
+            ];
+
+            for (const pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (ultimateWinners[a] && ultimateWinners[a] !== 'D' &&
+                    ultimateWinners[a] === ultimateWinners[b] &&
+                    ultimateWinners[a] === ultimateWinners[c]) {
+
+                    ultimateGameActive = false;
+                    highlightWinningUltimateBoards(pattern);
+                    updateUltimateStatus(`${ultimateWinners[a]} wins the ultimate game!`);
+                    resetUltimateTimer();
+                    return;
+                }
+            }
+
+            // Check for ultimate draw
+            if (!ultimateWinners.includes(null) && ultimateGameActive) {
+                ultimateGameActive = false;
+                updateUltimateStatus("Ultimate game ended in a draw!");
+                resetUltimateTimer();
+            }
+        }
+
+        // Highlight winning cells in standard game
+        function highlightWinningCells(cells) {
+            cells.forEach(index => {
+                const cell = gameBoard.children[index];
+                cell.style.background = 'var(--retro-green)';
+                cell.style.color = '#000';
+                cell.style.boxShadow = '0 0 20px var(--retro-green)';
+            });
+        }
+
+        // Highlight winning boards in ultimate game
+        function highlightWinningUltimateBoards(boards) {
+            boards.forEach(index => {
+                const board = ultimateBoard.children[index];
+                board.style.background = 'var(--retro-green)';
+                board.style.boxShadow = '0 0 30px var(--retro-green)';
+            });
+        }
+
+        // Update standard game status
+        function updateStatus(message) {
+            statusMessage.textContent = message;
+        }
+
+        // Update ultimate game status
+        function updateUltimateStatus(message) {
+            ultimateStatus.textContent = message;
+        }
+
+        // Restart current game
+        function restartGame() {
+            if (currentGameMode === 'ultimate') {
+                initializeUltimateBoard();
+            } else {
+                initializeStandardBoard();
+            }
+        }
+
+        // Return to main menu
+        function backToMenu() {
+            resetTimer();
+            resetUltimateTimer();
+            gameContainer.style.display = 'none';
+            mainMenu.style.display = 'block';
+        }
+
+        // Show rules modal
+        function showRules() {
+            rulesModal.style.display = 'flex';
+        }
+
+        // Hide rules modal
+        function hideRules() {
+            rulesModal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

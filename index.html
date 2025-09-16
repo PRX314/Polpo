@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#48dbfb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Paolo Repetto - Portfolio Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        :root {
+            /* Light theme */
+            --bg-primary: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #555;
+            --text-muted: #666;
+            --border-color: #ddd;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.1);
+            --gradient-accent: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
+            --gradient-border: linear-gradient(90deg, #48dbfb, #54a0ff);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme */
+            --bg-primary: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            --bg-secondary: #34495e;
+            --bg-card: #34495e;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --text-muted: #95a5a6;
+            --border-color: #4a5568;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+            --gradient-accent: linear-gradient(90deg, #e74c3c, #f39c12, #3498db, #9b59b6, #2980b9);
+            --gradient-border: linear-gradient(90deg, #3498db, #2980b9);
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            font-size: 14px;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Touch optimization */
+        a, button, .project-btn {
+            cursor: pointer !important;
+            touch-action: manipulation;
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-light);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .theme-toggle:hover {
+            background: var(--text-primary);
+            color: var(--bg-secondary);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.5em;
+            font-weight: 300;
+            letter-spacing: 4px;
+            color: var(--text-primary);
+        }
+
+        h2 {
+            font-size: 1.1em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-primary);
+            margin: 25px 0 15px 0;
+        }
+
+        h3 {
+            font-size: 1em;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin: 20px 0 10px 0;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-secondary);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-light);
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: var(--text-primary);
+            letter-spacing: 2px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 50%;
+            background: var(--gradient-border);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        nav a:hover {
+            color: var(--text-primary);
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 3rem 0 2rem 0;
+            color: var(--text-primary);
+        }
+
+        .hero h1 {
+            margin-bottom: 1rem;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 0.9em;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero p:last-child {
+            margin-bottom: 0;
+        }
+
+        .social-links {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 1000;
+        }
+
+        .social-links a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-light);
+            font-size: 1rem;
+        }
+
+        .social-links a:hover {
+            background: var(--text-primary);
+            color: var(--bg-secondary);
+            border-color: var(--text-primary);
+            transform: translateX(-2px);
+        }
+
+        /* Projects Section */
+        .projects {
+            background: var(--bg-secondary);
+            padding: 2rem 0;
+            margin: 2rem 0;
+            border-radius: 8px;
+            box-shadow: var(--shadow-light);
+            border-top: 4px solid;
+            border-image: var(--gradient-accent) 1;
+            position: relative;
+        }
+
+        .projects h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding: 0 1rem;
+        }
+
+        .project-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 140px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-light);
+        }
+
+        .project-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid;
+            border-image: var(--gradient-border) 1;
+            height: auto;
+            min-height: 200px;
+        }
+
+        .project-image {
+            width: 100%;
+            height: 50px;
+            background: var(--gradient-border);
+            border-radius: 6px;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .project-card h3 {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .project-card p {
+            color: var(--text-secondary);
+            font-size: 0.75em;
+            line-height: 1.5;
+            margin-bottom: 0.8rem;
+            flex-grow: 1;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .project-status {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.6em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .project-btn {
+            display: inline-block;
+            background: var(--text-primary);
+            color: var(--bg-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-top: auto;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .project-btn:hover {
+            background: var(--gradient-border);
+            transform: translateY(8px);
+        }
+
+        /* Hover effects */
+        .project-card:hover p {
+            opacity: 1;
+            max-height: 100px;
+        }
+
+        .project-card:hover .project-status {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .project-card:hover .project-btn {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .status-ready {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .status-dev {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: white;
+        }
+
+        .status-draft {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.8em;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-content h4 {
+            color: var(--text-primary);
+            font-size: 0.8em;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Large desktop - 6 columns for bigger screens */
+        @media (min-width: 1400px) {
+            .projects-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        /* Medium desktop - keep 3 columns */
+        @media (max-width: 1200px) and (min-width: 900px) {
+            .projects-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.8rem;
+            }
+        }
+
+        /* Tablet - 3 columns compatte */
+        @media (max-width: 900px) and (min-width: 600px) {
+            .hero {
+                padding: 1rem 0 0.3rem 0;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .hero p {
+                font-size: 0.85rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .projects {
+                padding: 1rem 0 0.3rem 0;
+                margin: 0.2rem 0;
+            }
+
+            .projects h2 {
+                font-size: 1.5rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .projects-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.6rem;
+            }
+
+            .project-card {
+                padding: 0.5rem;
+                height: 100px;
+            }
+
+            .project-image {
+                height: 35px;
+                font-size: 1rem;
+                margin-bottom: 0.3rem;
+            }
+
+            .project-card h3 {
+                font-size: 0.8rem;
+                margin-bottom: 0.2rem;
+            }
+        }
+
+        /* Touch devices behavior */
+        @media (hover: none) and (pointer: coarse) {
+            .project-card p,
+            .project-card .project-status,
+            .project-card .project-btn {
+                opacity: 1;
+                max-height: none;
+                transform: translateY(0);
+            }
+
+            .project-card {
+                height: auto;
+                min-height: 200px;
+            }
+
+            .project-card.touch-active {
+                transform: scale(0.98);
+                transition: transform 0.1s ease;
+            }
+
+            .project-card.mobile-expanded {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+                border-left: 4px solid;
+                border-image: var(--gradient-border) 1;
+            }
+        }
+
+        /* Mobile - 2 columns per far stare tutto */
+        @media (max-width: 600px) {
+            .container {
+                padding: 0 8px;
+            }
+
+            header {
+                padding: 0.4rem 0;
+            }
+
+            .logo {
+                font-size: 1.1rem;
+            }
+
+            nav ul {
+                gap: 0.5rem;
+                font-size: 0.75rem;
+            }
+
+            .hero {
+                padding: 0.8rem 0 0.3rem 0;
+            }
+
+            .hero h1 {
+                font-size: 1.4rem;
+                margin-bottom: 0.2rem;
+            }
+
+            .hero p {
+                font-size: 0.75rem;
+                margin-bottom: 0.3rem;
+                padding: 0 3px;
+            }
+
+            .projects {
+                margin: 0.1rem 0;
+                padding: 0.8rem 0 0.3rem 0;
+                border-radius: 10px;
+            }
+
+            .projects h2 {
+                font-size: 1.2rem;
+                margin-bottom: 0.6rem;
+            }
+
+            .projects-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.4rem;
+            }
+
+            .project-card {
+                padding: 0.4rem;
+                margin: 0 2px;
+                height: 85px;
+            }
+
+            .project-image {
+                height: 30px;
+                font-size: 0.9rem;
+                margin-bottom: 0.3rem;
+            }
+
+            .project-card h3 {
+                font-size: 0.75rem;
+                margin-bottom: 0.2rem;
+                line-height: 1;
+            }
+
+            .project-card p {
+                font-size: 0.6rem;
+                margin-bottom: 0.3rem;
+                line-height: 1.2;
+            }
+
+            .project-status {
+                font-size: 0.5rem;
+                padding: 0.05rem 0.3rem;
+                margin-bottom: 0.2rem;
+            }
+
+            .project-btn {
+                padding: 0.2rem 0.5rem;
+                font-size: 0.6rem;
+            }
+
+            footer {
+                padding: 0.8rem 0;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+                text-align: center;
+            }
+
+            .social-links {
+                right: 6px;
+                gap: 0.4rem;
+            }
+
+            .social-links a {
+                width: 28px;
+                height: 28px;
+            }
+
+            .social-links svg {
+                width: 12px;
+                height: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <div class="theme-toggle" onclick="toggleTheme()">
+        <span id="theme-text">Dark Mode</span>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">Paolo Repetto</div>
+                <nav>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#progetti">Progetti</a></li>
+                        <li><a href="#contatti">Contatti</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Social Links Fixed -->
+    <div class="social-links">
+        <a href="#" title="Instagram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+        </a>
+        <a href="#" title="YouTube">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+        </a>
+        <a href="#" title="TikTok">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
+            </svg>
+        </a>
+    </div>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <h1>Paolo Repetto</h1>
+            <p>Sviluppatore Full-Stack • Creator • Innovatore Digitale</p>
+            <p>Benvenuto nel mio hub creativo dove sviluppo progetti web, mini-giochi, e-commerce e mondi virtuali</p>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="progetti" class="projects">
+        <div class="container">
+            <h2>I Miei Progetti</h2>
+            <div class="projects-grid">
+
+                <!-- Mini Giochi -->
+                <div class="project-card">
+                    <div class="project-image">🎮</div>
+                    <h3>Mini Giochi</h3>
+                    <span class="project-status status-ready">Pronto</span>
+                    <p>TRIX Bolt Edition: Tre modi elettrizzanti di giocare a Tris! Classic, Memory Mobile e Ultimate Bolt con timer configurabile.</p>
+                    <a href="minigiochi/trix.html" class="project-btn">Gioca Ora</a>
+                </div>
+
+                <!-- Negozio Magliette -->
+                <div class="project-card">
+                    <div class="project-image">👕</div>
+                    <h3>Magliette Personalizzate</h3>
+                    <span class="project-status status-ready">Pronto</span>
+                    <p>Shop online con design unici e personalizzazione avanzata. Crea la tua maglietta perfetta con i nostri strumenti creativi.</p>
+                    <a href="#" class="project-btn">Vai al Shop</a>
+                </div>
+
+                <!-- X World Project -->
+                <div class="project-card">
+                    <div class="project-image">🌍</div>
+                    <h3>X World Project</h3>
+                    <span class="project-status status-dev">In Sviluppo</span>
+                    <p>Mondo virtuale interattivo con esplorazione 3D, missioni e costruzione. Un'esperienza immersiva nel metaverso.</p>
+                    <a href="#" class="project-btn">Esplora</a>
+                </div>
+
+                <!-- Creazione Manga -->
+                <div class="project-card">
+                    <div class="project-image">📚</div>
+                    <h3>Editor Manga</h3>
+                    <span class="project-status status-draft">Bozza</span>
+                    <p>Strumento per creare manga digitali e visual novel. Editor drag-and-drop con personaggi, sfondi e effetti professionali.</p>
+                    <a href="#" class="project-btn">Crea Storia</a>
+                </div>
+
+                <!-- Learn4Real -->
+                <div class="project-card">
+                    <div class="project-image">🎓</div>
+                    <h3>Learn4Real</h3>
+                    <span class="project-status status-ready">Pronto</span>
+                    <p>Piattaforma e-learning avanzata con AI integration, simulatore di codice e contenuti interattivi per l'apprendimento.</p>
+                    <a href="#" class="project-btn">Inizia a Imparare</a>
+                </div>
+
+                <!-- Hunter Gaming -->
+                <div class="project-card">
+                    <div class="project-image">⚔️</div>
+                    <h3>Hunter Gaming</h3>
+                    <span class="project-status status-ready">Pronto</span>
+                    <p>Sistema di gamificazione con progressione character-based, missioni giornaliere e collezione di carte.</p>
+                    <a href="#" class="project-btn">Entra nel Gioco</a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contatti">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <h4>Paolo Repetto</h4>
+                    <p>Portfolio Hub</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Menu</h4>
+                    <p><a href="#home">Home</a></p>
+                    <p><a href="#progetti">Progetti</a></p>
+                    <p><a href="#contatti">Contatti</a></p>
+                </div>
+                <div class="footer-links">
+                    <h4>Social</h4>
+                    <p><a href="#" target="_blank">Instagram</a></p>
+                    <p><a href="#" target="_blank">YouTube</a></p>
+                    <p><a href="#" target="_blank">TikTok</a></p>
+                </div>
+            </div>
+            <p>&copy; 2025 Paolo Repetto. Tutti i diritti riservati.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const body = document.body;
+            const themeText = document.getElementById('theme-text');
+
+            if (body.dataset.theme === 'dark') {
+                body.dataset.theme = 'light';
+                themeText.textContent = 'Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.dataset.theme = 'dark';
+                themeText.textContent = 'Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Load saved theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const body = document.body;
+            const themeText = document.getElementById('theme-text');
+
+            if (savedTheme === 'dark') {
+                body.dataset.theme = 'dark';
+                themeText.textContent = 'Light Mode';
+            } else {
+                body.dataset.theme = 'light';
+                themeText.textContent = 'Dark Mode';
+            }
+        });
+
+        // Smooth animations for cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.project-card');
+
+            cards.forEach((card, index) => {
+                // Stagger animation on load
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>
