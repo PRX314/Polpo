@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Test ISTINTO - Personalità Pura</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #000000;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Back Button */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            color: white;
+            text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: white;
+            color: black;
+        }
+
+        /* Container principale */
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Start Screen */
+        .start-screen .header h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 30px;
+            color: white;
+            letter-spacing: 3px;
+            text-align: center;
+        }
+
+        .start-screen .header p {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 50px;
+            text-align: center;
+        }
+
+        .start-btn {
+            background: transparent;
+            border: 1px solid white;
+            padding: 15px 30px;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .start-btn:hover {
+            background: white;
+            color: black;
+        }
+
+        /* Test Screen - Split Design */
+        .test-screen {
+            background: linear-gradient(90deg, #000000 50%, #ffffff 50%);
+            position: relative;
+        }
+
+        .question-number {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            color: rgba(128, 128, 128, 0.8);
+            z-index: 10;
+        }
+
+        .timer-container {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        .timer {
+            font-size: 2rem;
+            font-weight: 300;
+            color: rgba(128, 128, 128, 0.8);
+        }
+
+        .timer.critical {
+            color: #ff0000;
+            animation: pulse 0.5s infinite;
+        }
+
+        .choices-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .choice-btn {
+            background: transparent;
+            border: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 300;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .choice-btn:first-child {
+            background: #000000;
+            color: white;
+        }
+
+        .choice-btn:last-child {
+            background: #ffffff;
+            color: black;
+        }
+
+        .choice-btn:hover {
+            font-size: 2.2rem;
+        }
+
+        .vs-separator {
+            display: none;
+        }
+
+        .progress-container {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            z-index: 10;
+        }
+
+        .progress-bar {
+            background: rgba(128, 128, 128, 0.3);
+            height: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: gray;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            color: rgba(128, 128, 128, 0.7);
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        /* Results Screen */
+        .results-screen {
+            background: #000000;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .results-screen h1 {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .dominant-trait {
+            margin-bottom: 30px;
+        }
+
+        .dominant-trait h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .dominant-trait p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+        }
+
+        .traits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .trait-bar {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .trait-name {
+            color: white;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .bar-container {
+            background: rgba(255, 255, 255, 0.2);
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 0.8s ease;
+            border-radius: 10px;
+        }
+
+        .percentage {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        .stats {
+            margin: 30px 0;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .restart-btn {
+            background: transparent;
+            border: 1px solid white;
+            padding: 12px 24px;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .restart-btn:hover {
+            background: white;
+            color: black;
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .choice-btn {
+                font-size: 1.5rem;
+            }
+
+            .choice-btn:hover {
+                font-size: 1.7rem;
+            }
+
+            .start-screen .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-btn">← Test</a>
+
+    <div class="container">
+        <!-- Start Screen -->
+        <div id="startScreen" class="test-area start-screen">
+            <div class="header">
+                <h1>ISTINTO</h1>
+                <p>Test di personalità istintiva - 12 domande, 3 secondi ciascuna</p>
+            </div>
+            <button class="start-btn" onclick="startTest()">INIZIA</button>
+        </div>
+
+        <!-- Test Screen -->
+        <div id="testScreen" class="test-area test-screen hidden">
+            <div class="question-number" id="questionNumber">Domanda 1</div>
+
+            <div class="timer-container">
+                <div class="timer" id="timer">3</div>
+            </div>
+
+            <div class="choices-container">
+                <button class="choice-btn" id="choiceA" onclick="makeChoice('A')">SCELTA A</button>
+                <button class="choice-btn" id="choiceB" onclick="makeChoice('B')">SCELTA B</button>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Domanda 1 di 12</div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="test-area results-screen hidden">
+            <h1>🎯 I Tuoi Risultati</h1>
+
+            <div class="dominant-trait">
+                <h2 id="dominantTrait">Il Tuo Tratto Dominante</h2>
+                <p id="traitDescription">Descrizione del tratto dominante</p>
+            </div>
+
+            <div class="traits-grid" id="traitsGrid">
+                <!-- Le barre dei tratti verranno generate dinamicamente -->
+            </div>
+
+            <div class="stats">
+                <h3>📊 Statistiche</h3>
+                <p id="reactionStats">Reattività: 10/12 risposte date</p>
+                <p>Tempo totale: <span id="totalTime">36</span> secondi</p>
+            </div>
+
+            <button class="restart-btn" onclick="restartTest()">🔄 RIPETI TEST</button>
+            <button class="restart-btn" onclick="window.location.href='../index.html'">🏠 TORNA AI GIOCHI</button>
+        </div>
+    </div>
+
+    <script>
+        // Configurazione del test (mescolate per evitare bias)
+        const questions = [
+            { id: 1, wordA: "CAOS", wordB: "ORDINE", area: "struttura", scoreA: "B", scoreB: "A" },
+            { id: 2, wordA: "CONTROLLO", wordB: "LIBERTÀ", area: "struttura", scoreA: "A", scoreB: "B" },
+            { id: 3, wordA: "EMOZIONE", wordB: "RAZIONALITÀ", area: "logica", scoreA: "B", scoreB: "A" },
+            { id: 4, wordA: "ANALISI", wordB: "INTUITO", area: "logica", scoreA: "A", scoreB: "B" },
+            { id: 5, wordA: "INNOVAZIONE", wordB: "TRADIZIONE", area: "tradizione", scoreA: "B", scoreB: "A" },
+            { id: 6, wordA: "STABILITÀ", wordB: "CAMBIAMENTO", area: "tradizione", scoreA: "A", scoreB: "B" },
+            { id: 7, wordA: "RISCHIO", wordB: "SICUREZZA", area: "rischio", scoreA: "A", scoreB: "B" },
+            { id: 8, wordA: "PRUDENZA", wordB: "AUDACIA", area: "rischio", scoreA: "B", scoreB: "A" },
+            { id: 9, wordA: "COOPERAZIONE", wordB: "AUTONOMIA", area: "individualita", scoreA: "B", scoreB: "A" },
+            { id: 10, wordA: "AFFERMATIVO", wordB: "SOLIDALE", area: "individualita", scoreA: "A", scoreB: "B" },
+            { id: 11, wordA: "SPIRITUALITÀ", wordB: "MATERIALITÀ", area: "spiritualita", scoreA: "A", scoreB: "B" },
+            { id: 12, wordA: "CONCRETIZZAZIONE", wordB: "INTERIORITÀ", area: "spiritualita", scoreA: "B", scoreB: "A" }
+        ];
+
+        const areas = {
+            struttura: { name: "Struttura vs Imprevedibilità", color: "#ff6b6b", scoreA: 0, scoreB: 0 },
+            logica: { name: "Logica vs Emozione", color: "#4ecdc4", scoreA: 0, scoreB: 0 },
+            tradizione: { name: "Tradizione vs Innovazione", color: "#45b7d1", scoreA: 0, scoreB: 0 },
+            rischio: { name: "Rischio vs Sicurezza", color: "#f9ca24", scoreA: 0, scoreB: 0 },
+            individualita: { name: "Individualità vs Collaborazione", color: "#8854d0", scoreA: 0, scoreB: 0 },
+            spiritualita: { name: "Spiritualità vs Materialità", color: "#26de81", scoreA: 0, scoreB: 0 }
+        };
+
+        // Variabili di stato
+        let currentQuestion = 0;
+        let timer = null;
+        let timeLeft = 3;
+        let startTime = null;
+        let noResponseCount = 0;
+
+        // Elementi DOM
+        const startScreen = document.getElementById('startScreen');
+        const testScreen = document.getElementById('testScreen');
+        const resultsScreen = document.getElementById('resultsScreen');
+        const questionNumber = document.getElementById('questionNumber');
+        const timerDisplay = document.getElementById('timer');
+        const choiceA = document.getElementById('choiceA');
+        const choiceB = document.getElementById('choiceB');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+
+        function startTest() {
+            startScreen.classList.add('hidden');
+            testScreen.classList.remove('hidden');
+            startTime = new Date();
+
+            // Reset scores
+            Object.keys(areas).forEach(area => {
+                areas[area].scoreA = 0;
+                areas[area].scoreB = 0;
+            });
+
+            currentQuestion = 0;
+            noResponseCount = 0;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= questions.length) {
+                showResults();
+                return;
+            }
+
+            const question = questions[currentQuestion];
+
+            // Update UI
+            questionNumber.textContent = `Domanda ${currentQuestion + 1}`;
+            choiceA.textContent = question.wordA;
+            choiceB.textContent = question.wordB;
+
+            // Update progress
+            const progress = ((currentQuestion) / questions.length) * 100;
+            progressFill.style.width = progress + '%';
+            progressText.textContent = `Domanda ${currentQuestion + 1} di ${questions.length}`;
+
+            // Start timer
+            timeLeft = 3;
+            startTimer();
+        }
+
+        function startTimer() {
+            timerDisplay.textContent = timeLeft;
+
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    // No response - count it and move to next
+                    noResponseCount++;
+                    nextQuestion();
+                }
+            }, 1000);
+        }
+
+        function makeChoice(choice) {
+            if (timer) {
+                clearInterval(timer);
+            }
+
+            const question = questions[currentQuestion];
+            const area = question.area;
+
+            // Increment score based on choice and question mapping
+            if (choice === 'A') {
+                if (question.scoreA === 'A') {
+                    areas[area].scoreA++;
+                } else {
+                    areas[area].scoreB++;
+                }
+            } else {
+                if (question.scoreB === 'A') {
+                    areas[area].scoreA++;
+                } else {
+                    areas[area].scoreB++;
+                }
+            }
+
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+
+            if (currentQuestion < questions.length) {
+                // Small delay before next question
+                setTimeout(() => {
+                    showQuestion();
+                }, 500);
+            } else {
+                setTimeout(() => {
+                    showResults();
+                }, 500);
+            }
+        }
+
+        function showResults() {
+            // STOP ALL TIMERS immediately
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+
+            testScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+
+            // Calculate total time
+            const endTime = new Date();
+            const totalSeconds = Math.round((endTime - startTime) / 1000);
+            document.getElementById('totalTime').textContent = totalSeconds;
+
+            // Calculate dominant trait
+            let maxScore = 0;
+            let dominantArea = '';
+            let dominantSide = '';
+
+            Object.keys(areas).forEach(areaKey => {
+                const area = areas[areaKey];
+                const totalA = area.scoreA;
+                const totalB = area.scoreB;
+
+                if (totalA > maxScore) {
+                    maxScore = totalA;
+                    dominantArea = areaKey;
+                    dominantSide = 'A';
+                }
+                if (totalB > maxScore) {
+                    maxScore = totalB;
+                    dominantArea = areaKey;
+                    dominantSide = 'B';
+                }
+            });
+
+            // Display dominant trait
+            const dominantTraitEl = document.getElementById('dominantTrait');
+            const traitDescriptionEl = document.getElementById('traitDescription');
+
+            const traitDescriptions = {
+                struttura: {
+                    A: "🏗️ STRUTTURATO - Ami l'ordine, la pianificazione e il controllo. Preferisci ambienti organizzati e processi chiari.",
+                    B: "🌪️ SPONTANEO - Prosperi nel caos e nell'imprevedibilità. Ti piace la libertà e l'adattabilità."
+                },
+                logica: {
+                    A: "🧠 RAZIONALE - Prendi decisioni basate su logica e analisi. Il ragionamento guida le tue scelte.",
+                    B: "❤️ EMOTIVO - Segui le tue emozioni e l'intuito. I sentimenti guidano le tue decisioni."
+                },
+                tradizione: {
+                    A: "⚖️ TRADIZIONALISTA - Valorizzi la stabilità e le tradizioni consolidate. Preferisci ciò che è testato nel tempo.",
+                    B: "🚀 INNOVATORE - Sei sempre alla ricerca del nuovo e del cambiamento. L'innovazione ti ispira."
+                },
+                rischio: {
+                    A: "🎯 AUDACE - Non hai paura di rischiare. L'audacia e il coraggio caratterizzano le tue scelte.",
+                    B: "🛡️ PRUDENTE - Preferisci la sicurezza e valuti attentamente ogni rischio prima di agire."
+                },
+                individualita: {
+                    A: "👤 INDIVIDUALISTA - Valorizzi l'autonomia e l'indipendenza. Preferisci fare affidamento su te stesso.",
+                    B: "🤝 COLLABORATIVO - Credi nel potere della cooperazione. Lavori meglio in gruppo."
+                },
+                spiritualita: {
+                    A: "🔮 SPIRITUALE - Sei attratto dalla dimensione interiore e spirituale della vita.",
+                    B: "⚡ MATERIALISTICO - Preferisci la concretezza e il mondo tangibile. I risultati pratici contano."
+                }
+            };
+
+            dominantTraitEl.textContent = `${dominantArea.toUpperCase()}: ${dominantSide === 'A' ? traitDescriptions[dominantArea].A.split(' - ')[0] : traitDescriptions[dominantArea].B.split(' - ')[0]}`;
+            traitDescriptionEl.textContent = dominantSide === 'A' ? traitDescriptions[dominantArea].A.split(' - ')[1] : traitDescriptions[dominantArea].B.split(' - ')[1];
+
+            // Create trait bars
+            const traitsGrid = document.getElementById('traitsGrid');
+            traitsGrid.innerHTML = '';
+
+            Object.keys(areas).forEach(areaKey => {
+                const area = areas[areaKey];
+                const totalResponses = area.scoreA + area.scoreB;
+                const percentageA = totalResponses > 0 ? Math.round((area.scoreA / totalResponses) * 100) : 0;
+                const percentageB = totalResponses > 0 ? Math.round((area.scoreB / totalResponses) * 100) : 0;
+
+                const traitBar = document.createElement('div');
+                traitBar.className = 'trait-bar';
+                traitBar.innerHTML = `
+                    <div class="trait-name">${area.name}</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: ${percentageA}%; background: ${area.color};"></div>
+                    </div>
+                    <div class="percentage">A: ${percentageA}% | B: ${percentageB}%</div>
+                `;
+                traitsGrid.appendChild(traitBar);
+            });
+
+            // Update reaction stats
+            const responsesGiven = questions.length - noResponseCount;
+            document.getElementById('reactionStats').textContent = `Reattività: ${responsesGiven}/${questions.length} risposte date`;
+        }
+
+        function restartTest() {
+            // Reset everything
+            currentQuestion = 0;
+            noResponseCount = 0;
+            startTime = null;
+            timeLeft = 3;
+
+            Object.keys(areas).forEach(area => {
+                areas[area].scoreA = 0;
+                areas[area].scoreB = 0;
+            });
+
+            // Show start screen
+            resultsScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

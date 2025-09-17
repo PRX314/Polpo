@@ -21,6 +21,8 @@ class DVDScreensaver {
         this.turnIndicator = document.getElementById('turn-indicator');
         this.winnerNotification = document.getElementById('winner-notification');
         this.previewImage = document.getElementById('preview-image');
+        this.bettingAreas = document.getElementById('betting-areas');
+        this.tripleClickExit = document.getElementById('triple-click-exit');
 
         this.isRunning = false;
         this.animationId = null;
@@ -43,6 +45,10 @@ class DVDScreensaver {
         this.betPoints = [];
         this.gameActive = false;
         this.playerColors = ['#ff006e', '#06ffa5', '#3a86ff', '#8338ec', '#ffbe0b', '#dc2626'];
+
+        // Triple-click counter
+        this.clickCount = 0;
+        this.clickTimer = null;
 
         this.init();
     }
@@ -70,6 +76,9 @@ class DVDScreensaver {
         // Click e touch per piazzare scommesse o uscire
         this.screensaver.addEventListener('click', this.handleScreensaverClick.bind(this));
         this.screensaver.addEventListener('touchstart', this.handleScreensaverTouch.bind(this), { passive: false });
+
+        // Triple-click exit handler
+        this.tripleClickExit.addEventListener('click', this.exitToHome.bind(this));
 
         // Imposta un'immagine di default
         this.setDefaultImage();
@@ -290,11 +299,8 @@ class DVDScreensaver {
             return;
         }
 
-        // Se l'animazione è già in corso, qualsiasi touch/click esce
-        if (this.animating) {
-            this.stop();
-            return;
-        }
+        // Durante l'animazione, permetti solo di piazzare scommesse ai bordi
+        // Non uscire dal gioco automaticamente
 
         // Se non ci sono giocatori, esci
         if (this.players.length === 0) {
@@ -315,10 +321,8 @@ class DVDScreensaver {
 
         if (isNearBorder) {
             this.placeBet(x, y);
-        } else {
-            // Touch/click al centro esce dal gioco
-            this.stop();
         }
+        // Non fare nulla se clicca al centro - il gioco continua
     }
 
     placeBet(x, y) {
@@ -365,6 +369,9 @@ class DVDScreensaver {
             betPoint.textContent = bet.playerName.charAt(0).toUpperCase();
             this.betPointsContainer.appendChild(betPoint);
         });
+
+        // Mostra sempre il container quando ci sono bet points
+        this.betPointsContainer.classList.remove('hidden');
     }
 
     clearBetPoints() {
@@ -470,6 +477,9 @@ class DVDScreensaver {
         // Nascondi tutti gli elementi UI durante lo screensaver
         this.hideUIElements();
 
+        // Mostra evidenziazione dei bordi per le scommesse
+        this.showBettingAreas();
+
         // Mostra brevemente messaggio per iniziare a scommettere, poi nascondilo
         this.turnIndicator.textContent = `🎯 ${this.players[0].name} - Clicca sui bordi per scommettere!`;
         this.turnIndicator.style.background = this.players[0].color;
@@ -487,6 +497,9 @@ class DVDScreensaver {
         // Nascondi tutti gli elementi UI durante l'animazione
         this.hideUIElements();
 
+        // Nascondi evidenziazione dei bordi
+        this.hideBettingAreas();
+
         // Mostra brevemente messaggio di inizio, poi nascondilo
         this.turnIndicator.textContent = '🚀 Tutti hanno scommesso! Il gioco inizia!';
         this.turnIndicator.style.background = '#06ffa5';
@@ -494,6 +507,8 @@ class DVDScreensaver {
 
         setTimeout(() => {
             this.turnIndicator.classList.add('hidden');
+            // Nascondi tutti gli elementi UI durante l'animazione
+            this.hideUIElementsForAnimation();
             this.animate();
         }, 2000); // Aspetta 2 secondi prima di iniziare
     }
@@ -535,6 +550,14 @@ class DVDScreensaver {
         // Nascondi tutti gli elementi UI durante lo screensaver
         this.turnIndicator.classList.add('hidden');
         this.winnerNotification.classList.add('hidden');
+        this.hideBettingAreas();
+        this.tripleClickExit.classList.remove('show');
+    }
+
+    hideUIElementsForAnimation() {
+        // Nascondi tutti gli elementi UI durante l'animazione, inclusi i bet points
+        this.hideUIElements();
+        this.betPointsContainer.classList.add('hidden');
     }
 
     showUIElements() {
@@ -557,11 +580,20 @@ class DVDScreensaver {
         // Nascondi tutti gli elementi UI
         this.hideUIElements();
 
+        // Nascondi evidenziazione e exit button
+        this.hideBettingAreas();
+        this.tripleClickExit.classList.remove('show');
+
         this.updateUI();
     }
 
     animate() {
         if (!this.isRunning || !this.animating) return;
+
+        // Debug: Assicurati che l'immagine sia visibile
+        if (this.bouncingImage.style.display === 'none' || this.bouncingImage.style.display === 'hidden') {
+            this.bouncingImage.style.display = 'block';
+        }
 
         // Aggiorna posizione
         this.x += this.speedX;
@@ -610,6 +642,60 @@ class DVDScreensaver {
         this.bouncingImage.style.top = this.y + 'px';
 
         this.animationId = requestAnimationFrame(this.animate.bind(this));
+    }
+
+    // Gestione evidenziazione bordi
+    showBettingAreas() {
+        this.bettingAreas.classList.remove('hidden');
+    }
+
+    hideBettingAreas() {
+        this.bettingAreas.classList.add('hidden');
+    }
+
+    // Gestione click e touch
+    handleScreensaverClick(event) {
+        // Gestione triple-click per mostrare exit button
+        this.handleTripleClick();
+        this.handleScreensaverInteraction(event.clientX, event.clientY);
+    }
+
+    handleScreensaverTouch(event) {
+        event.preventDefault();
+        const touch = event.touches[0];
+        this.handleTripleClick();
+        this.handleScreensaverInteraction(touch.clientX, touch.clientY);
+    }
+
+    // Gestione triple-click
+    handleTripleClick() {
+        this.clickCount++;
+
+        if (this.clickTimer) {
+            clearTimeout(this.clickTimer);
+        }
+
+        if (this.clickCount >= 3) {
+            // Mostra pulsante di uscita
+            this.tripleClickExit.classList.add('show');
+            this.clickCount = 0;
+
+            // Nascondi automaticamente dopo 5 secondi
+            setTimeout(() => {
+                this.tripleClickExit.classList.remove('show');
+            }, 5000);
+        } else {
+            // Reset counter dopo 1 secondo se non raggiunge 3 click
+            this.clickTimer = setTimeout(() => {
+                this.clickCount = 0;
+            }, 1000);
+        }
+    }
+
+    // Uscita verso home del DVD game
+    exitToHome() {
+        this.stop(); // Ferma il gioco
+        // Non cambia pagina, torna solo al setup del DVD game
     }
 }
 

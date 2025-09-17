@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🕹️ DVD SCREENSAVER GAME 🕹️</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+
     <div id="main-container">
         <header id="game-title">
             <h1>🕹️ DVD SCREENSAVER GAME 🕹️</h1>
@@ -19,6 +20,13 @@
                 <div class="control-group">
                     <label for="imageUpload" class="retro-label">📸 Choose Your Image</label>
                     <input type="file" id="imageUpload" accept="image/*" class="retro-input">
+                </div>
+
+                <div id="game-explanation" class="control-group">
+                    <div class="explanation-box">
+                        <h3>📋 Come si gioca</h3>
+                        <p>Scommetti su quale bordo dello schermo l'immagine colpirà per prima! Ogni giocatore sceglie un lato (alto, basso, sinistra, destra) e vince chi indovina correttamente dove l'immagine rimbalzerà.</p>
+                    </div>
                 </div>
 
                 <div id="players-setup" class="control-group">
@@ -58,9 +66,18 @@
     <div id="screensaver" class="hidden">
         <img id="bouncing-image" src="" alt="Immagine rimbalzante">
         <div id="bet-points"></div>
+        <div id="betting-areas" class="hidden">
+            <div class="betting-border border-top"></div>
+            <div class="betting-border border-bottom"></div>
+            <div class="betting-border border-left"></div>
+            <div class="betting-border border-right"></div>
+        </div>
         <div id="game-overlay">
             <div id="winner-notification" class="hidden"></div>
             <div id="turn-indicator"></div>
+            <div id="triple-click-exit" class="hidden">
+                <span class="exit-icon">✕</span>
+            </div>
         </div>
     </div>
 
