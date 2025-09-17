@@ -37,3 +37,59 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Polpo Long Press Handler
+let polpoLongPressTimer;
+let polpoPressed = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const polpoLogo = document.getElementById('polpoLogo');
+    const polpoModal = document.getElementById('polpoModal');
+
+    if (!polpoLogo || !polpoModal) return;
+
+    // Mouse events
+    polpoLogo.addEventListener('mousedown', startPolpoPress);
+    polpoLogo.addEventListener('mouseup', endPolpoPress);
+    polpoLogo.addEventListener('mouseleave', endPolpoPress);
+
+    // Touch events
+    polpoLogo.addEventListener('touchstart', startPolpoPress);
+    polpoLogo.addEventListener('touchend', endPolpoPress);
+    polpoLogo.addEventListener('touchcancel', endPolpoPress);
+
+    // Close modal when clicking outside
+    polpoModal.addEventListener('click', function(e) {
+        if (e.target === polpoModal) {
+            closePolpoModal();
+        }
+    });
+
+    function startPolpoPress(e) {
+        e.preventDefault();
+        polpoPressed = true;
+
+        polpoLongPressTimer = setTimeout(() => {
+            if (polpoPressed) {
+                openPolpoModal();
+            }
+        }, 3000);
+    }
+
+    function endPolpoPress() {
+        polpoPressed = false;
+        if (polpoLongPressTimer) {
+            clearTimeout(polpoLongPressTimer);
+        }
+    }
+});
+
+function openPolpoModal() {
+    document.getElementById('polpoModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePolpoModal() {
+    document.getElementById('polpoModal').classList.remove('show');
+    document.body.style.overflow = 'auto';
+}

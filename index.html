@@ -65,12 +65,8 @@
             touch-action: manipulation;
         }
 
-        /* Theme toggle */
+        /* Theme toggle nel header */
         .theme-toggle {
-            position: fixed;
-            top: 80px;
-            left: 20px;
-            z-index: 1001;
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -92,6 +88,81 @@
         .theme-toggle:hover {
             background: var(--text-primary);
             color: var(--bg-secondary);
+        }
+
+        /* Logo Polpo nel header */
+        .polpo-logo {
+            font-size: 1.8rem;
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        /* Modal per polpo */
+        .polpo-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .polpo-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .polpo-modal-content {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .polpo-modal.show .polpo-modal-content {
+            transform: scale(1);
+        }
+
+        .polpo-modal h2 {
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        .polpo-modal p {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .close-modal {
+            background: var(--gradient-border);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .close-modal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
         }
 
         .container {
@@ -140,6 +211,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
         .logo {
@@ -553,12 +636,22 @@
                 font-size: 0.75rem;
             }
 
-            /* Ottimizzazione posizioni per mobile */
+            /* Ottimizzazione per mobile */
+            .header-left {
+                gap: 0.5rem;
+            }
+
+            .header-right {
+                gap: 0.5rem;
+            }
+
             .theme-toggle {
-                top: 60px;
-                left: 15px;
                 padding: 6px 10px;
                 font-size: 0.7em;
+            }
+
+            .polpo-logo {
+                font-size: 1.5rem;
             }
 
             .social-links {
@@ -659,23 +752,144 @@
     </style>
 </head>
 <body>
-    <!-- Theme Toggle -->
-    <div class="theme-toggle" onclick="toggleTheme()">
-        <span id="theme-text">Dark Mode</span>
+
+    <!-- Modal Polpo -->
+    <div class="polpo-modal" id="polpoModal">
+        <div class="polpo-modal-content">
+            <h2>🐙 Polpo Hub</h2>
+            <p>Ciao! Sono il guardiano di questo portfolio digitale. Qui troverai progetti innovativi, mini-giochi divertenti e tante altre creazioni.</p>
+            <p>Esplora liberamente e lasciati ispirare! 🚀</p>
+            <button class="close-modal" onclick="closePolpoModal()">Chiudi</button>
+        </div>
     </div>
 
     <!-- Header -->
     <header>
         <div class="container">
             <div class="header-content">
-                <div class="logo">Paolo Repetto</div>
-                <nav>
-                    <ul>
-                        <li><a href="#home">Home</a></li>
-                        <li><a href="#progetti">Progetti</a></li>
-                        <li><a href="#contatti">Contatti</a></li>
-                    </ul>
-                </nav>
+                <div class="header-left">
+                    <div class="polpo-logo" id="polpoLogo">
+                        <svg width="32" height="32" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <!-- Gradients avanzati per il corpo -->
+                                <radialGradient id="bodyGradient" cx="50%" cy="40%" r="70%">
+                                    <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:1" />
+                                    <stop offset="30%" style="stop-color:#4ECDC4;stop-opacity:1" />
+                                    <stop offset="60%" style="stop-color:#45B7D1;stop-opacity:1" />
+                                    <stop offset="80%" style="stop-color:#96CEB4;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#FFEAA7;stop-opacity:1" />
+                                </radialGradient>
+
+                                <!-- Gradients per tentacoli -->
+                                <linearGradient id="tentacle1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:1" />
+                                    <stop offset="33%" style="stop-color:#4ECDC4;stop-opacity:1" />
+                                    <stop offset="66%" style="stop-color:#45B7D1;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#96CEB4;stop-opacity:1" />
+                                </linearGradient>
+                                <linearGradient id="tentacle2" x1="100%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#96CEB4;stop-opacity:1" />
+                                    <stop offset="33%" style="stop-color:#FFEAA7;stop-opacity:1" />
+                                    <stop offset="66%" style="stop-color:#FF6B6B;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#4ECDC4;stop-opacity:1" />
+                                </linearGradient>
+                                <linearGradient id="tentacle3" x1="0%" y1="100%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#45B7D1;stop-opacity:1" />
+                                    <stop offset="33%" style="stop-color:#96CEB4;stop-opacity:1" />
+                                    <stop offset="66%" style="stop-color:#4ECDC4;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#FFEAA7;stop-opacity:1" />
+                                </linearGradient>
+                                <linearGradient id="tentacle4" x1="100%" y1="100%" x2="0%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#FFEAA7;stop-opacity:1" />
+                                    <stop offset="33%" style="stop-color:#FF6B6B;stop-opacity:1" />
+                                    <stop offset="66%" style="stop-color:#45B7D1;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#96CEB4;stop-opacity:1" />
+                                </linearGradient>
+
+                                <!-- Ombre e effetti -->
+                                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.3)"/>
+                                </filter>
+                                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                                    <feMerge>
+                                        <feMergeNode in="coloredBlur"/>
+                                        <feMergeNode in="SourceGraphic"/>
+                                    </feMerge>
+                                </filter>
+                            </defs>
+
+                            <!-- Corpo principale del polpo -->
+                            <ellipse cx="60" cy="40" rx="28" ry="22" fill="url(#bodyGradient)" filter="url(#shadow)"/>
+
+                            <!-- Tentacoli migliorati con curve più naturali -->
+                            <path d="M 30 52 Q 18 62 25 75 Q 32 88 20 95 Q 15 100 22 105"
+                                  stroke="url(#tentacle1)" stroke-width="7" fill="none"
+                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+
+                            <path d="M 40 58 Q 25 70 30 85 Q 35 100 25 108 Q 20 115 28 118"
+                                  stroke="url(#tentacle2)" stroke-width="6" fill="none"
+                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+
+                            <path d="M 52 60 Q 42 75 48 90 Q 54 105 44 112 Q 40 118 48 120"
+                                  stroke="url(#tentacle3)" stroke-width="6" fill="none"
+                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+
+                            <path d="M 68 60 Q 78 75 72 90 Q 66 105 76 112 Q 80 118 72 120"
+                                  stroke="url(#tentacle4)" stroke-width="6" fill="none"
+                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+
+                            <path d="M 80 58 Q 95 70 90 85 Q 85 100 95 108 Q 100 115 92 118"
+                                  stroke="url(#tentacle1)" stroke-width="6" fill="none"
+                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+
+                            <path d="M 90 52 Q 102 62 95 75 Q 88 88 100 95 Q 105 100 98 105"
+                                  stroke="url(#tentacle2)" stroke-width="7" fill="none"
+                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+
+                            <!-- Ventose sui tentacoli -->
+                            <circle cx="25" cy="78" r="2" fill="#FF6B6B" opacity="0.8"/>
+                            <circle cx="32" cy="88" r="1.5" fill="#4ECDC4" opacity="0.8"/>
+                            <circle cx="30" cy="95" r="2" fill="#45B7D1" opacity="0.8"/>
+                            <circle cx="90" cy="85" r="2" fill="#96CEB4" opacity="0.8"/>
+                            <circle cx="95" cy="75" r="1.5" fill="#FFEAA7" opacity="0.8"/>
+
+                            <!-- Strisce zebrate più dettagliate -->
+                            <ellipse cx="60" cy="32" rx="22" ry="3" fill="#FF6B6B" opacity="0.7"/>
+                            <ellipse cx="60" cy="37" rx="20" ry="2.5" fill="#4ECDC4" opacity="0.7"/>
+                            <ellipse cx="60" cy="42" rx="18" ry="3" fill="#45B7D1" opacity="0.7"/>
+                            <ellipse cx="60" cy="47" rx="16" ry="2.5" fill="#96CEB4" opacity="0.7"/>
+                            <ellipse cx="60" cy="52" rx="14" ry="3" fill="#FFEAA7" opacity="0.7"/>
+
+                            <!-- Occhi migliorati -->
+                            <ellipse cx="48" cy="35" rx="7" ry="8" fill="white" filter="url(#shadow)"/>
+                            <ellipse cx="72" cy="35" rx="7" ry="8" fill="white" filter="url(#shadow)"/>
+
+                            <!-- Pupille -->
+                            <circle cx="48" cy="35" r="4" fill="black"/>
+                            <circle cx="72" cy="35" r="4" fill="black"/>
+
+                            <!-- Riflessi negli occhi -->
+                            <circle cx="50" cy="33" r="1.5" fill="white" opacity="0.9"/>
+                            <circle cx="74" cy="33" r="1.5" fill="white" opacity="0.9"/>
+
+                            <!-- Dettagli extra: bocca -->
+                            <ellipse cx="60" cy="45" rx="3" ry="2" fill="#333" opacity="0.6"/>
+                        </svg>
+                    </div>
+                    <nav>
+                        <ul>
+                            <li><a href="#home">Home</a></li>
+                            <li><a href="#progetti">Progetti</a></li>
+                            <li><a href="#contatti">Contatti</a></li>
+                        </ul>
+                    </nav>
+                </div>
+                <div class="header-right">
+                    <div class="theme-toggle" onclick="toggleTheme()">
+                        <span id="theme-icon">☀️</span>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -702,7 +916,6 @@
     <!-- Hero Section -->
     <section id="home" class="hero">
         <div class="container">
-            <h1>Paolo Repetto</h1>
             <p>Sviluppatore Full-Stack • Creator • Innovatore Digitale</p>
             <p>Benvenuto nel mio hub creativo dove sviluppo progetti web, mini-giochi, e-commerce e mondi virtuali</p>
         </div>
@@ -777,15 +990,15 @@
         // Theme toggle functionality
         function toggleTheme() {
             const body = document.body;
-            const themeText = document.getElementById('theme-text');
+            const themeIcon = document.getElementById('theme-icon');
 
             if (body.dataset.theme === 'dark') {
                 body.dataset.theme = 'light';
-                themeText.textContent = 'Dark Mode';
+                themeIcon.textContent = '☀️';
                 localStorage.setItem('theme', 'light');
             } else {
                 body.dataset.theme = 'dark';
-                themeText.textContent = 'Light Mode';
+                themeIcon.textContent = '🌙';
                 localStorage.setItem('theme', 'dark');
             }
         }
@@ -794,14 +1007,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             const body = document.body;
-            const themeText = document.getElementById('theme-text');
+            const themeIcon = document.getElementById('theme-icon');
 
             if (savedTheme === 'dark') {
                 body.dataset.theme = 'dark';
-                themeText.textContent = 'Light Mode';
+                themeIcon.textContent = '🌙';
             } else {
                 body.dataset.theme = 'light';
-                themeText.textContent = 'Dark Mode';
+                themeIcon.textContent = '☀️';
             }
         });
 

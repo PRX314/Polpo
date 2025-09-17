@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>🍕 Pixxa - Generatore Italiano di Pizze</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Italiana&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Kalam', cursive;
+      background:
+        /* Texture marmo */
+        radial-gradient(circle at 25% 25%, rgba(255,255,255,0.3) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(255,255,255,0.2) 0%, transparent 50%),
+        linear-gradient(135deg, #f4f1eb 0%, #e8e2d4 50%, #ddd4c0 100%);
+      color: #2c1810;
+      text-align: center;
+      padding: 20px;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Effetti particelle di farina */
+    .flour-particle {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: floatFlour 4s infinite ease-in-out;
+    }
+
+    @keyframes floatFlour {
+      0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+        opacity: 0.3;
+      }
+      50% {
+        transform: translateY(-20px) rotate(180deg);
+        opacity: 0.8;
+      }
+    }
+
+    /* Schizzi di pomodoro */
+    .tomato-splash {
+      position: absolute;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .splash {
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle, #ff4757 20%, #ff3838 40%, #c23616 70%);
+      border-radius: 50% 30% 60% 40%;
+      opacity: 0;
+      animation: splashEffect 1.5s ease-out forwards;
+      position: relative;
+    }
+
+    .splash::before,
+    .splash::after {
+      content: '';
+      position: absolute;
+      background: #ff4757;
+      border-radius: 50%;
+    }
+
+    .splash::before {
+      width: 20px;
+      height: 20px;
+      top: -10px;
+      right: -8px;
+      animation: drip1 1.5s ease-out forwards;
+    }
+
+    .splash::after {
+      width: 15px;
+      height: 15px;
+      bottom: -8px;
+      left: -5px;
+      animation: drip2 1.5s ease-out forwards;
+    }
+
+    @keyframes splashEffect {
+      0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 0;
+      }
+      20% {
+        transform: scale(1.2) rotate(10deg);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1) rotate(5deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes drip1 {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(15px); }
+    }
+
+    @keyframes drip2 {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(20px); }
+    }
+
+    /* Header italiano */
+    .header {
+      background:
+        linear-gradient(45deg, #27ae60 0%, #27ae60 33%, #ffffff 33%, #ffffff 66%, #e74c3c 66%, #e74c3c 100%);
+      background-size: 60px 20px;
+      padding: 30px 20px;
+      margin: -20px -20px 40px -20px;
+      position: relative;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 0;
+      right: 0;
+      height: 10px;
+      background: linear-gradient(90deg,
+        #27ae60 0%, #27ae60 33%,
+        #ffffff 33%, #ffffff 66%,
+        #e74c3c 66%, #e74c3c 100%);
+      clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);
+    }
+
+    h1 {
+      font-family: 'Dancing Script', cursive;
+      font-size: 4rem;
+      font-weight: 700;
+      color: #2c1810;
+      text-shadow:
+        3px 3px 0px #fff,
+        6px 6px 10px rgba(0,0,0,0.3);
+      margin-bottom: 10px;
+      transform: rotate(-2deg);
+      animation: titleWobble 3s ease-in-out infinite;
+    }
+
+    @keyframes titleWobble {
+      0%, 100% { transform: rotate(-2deg) scale(1); }
+      50% { transform: rotate(2deg) scale(1.02); }
+    }
+
+    .subtitle {
+      font-family: 'Italiana', serif;
+      font-size: 1.2rem;
+      color: #8b0000;
+      font-style: italic;
+      text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+    }
+
+    /* Controlli stile pizzeria */
+    .controls {
+      background:
+        radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%),
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 10px,
+          rgba(0,0,0,0.02) 10px,
+          rgba(0,0,0,0.02) 20px
+        );
+      padding: 30px;
+      border-radius: 20px;
+      margin: 30px auto;
+      max-width: 500px;
+      box-shadow:
+        0 0 0 3px #8b4513,
+        0 0 0 6px #d2691e,
+        0 15px 35px rgba(0,0,0,0.2);
+      position: relative;
+    }
+
+    .controls::before {
+      content: '🍕';
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 2rem;
+      background: white;
+      padding: 0 10px;
+      border-radius: 50%;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+
+    label {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #8b0000;
+      display: block;
+      margin-bottom: 15px;
+    }
+
+    select {
+      font-family: 'Kalam', cursive;
+      padding: 15px 20px;
+      font-size: 1.1rem;
+      margin: 10px;
+      border-radius: 15px;
+      border: 3px solid #d2691e;
+      background:
+        linear-gradient(145deg, #ffffff 0%, #f8f8f8 100%);
+      color: #2c1810;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow:
+        inset 0 2px 5px rgba(0,0,0,0.1),
+        0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    select:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        inset 0 2px 5px rgba(0,0,0,0.1),
+        0 8px 25px rgba(0,0,0,0.2);
+      border-color: #ff6347;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #ff4757;
+      box-shadow:
+        inset 0 2px 5px rgba(0,0,0,0.1),
+        0 0 0 3px rgba(255, 71, 87, 0.3);
+    }
+
+    .generate-btn {
+      font-family: 'Dancing Script', cursive;
+      background:
+        linear-gradient(145deg, #ff6347 0%, #ff4757 50%, #c23616 100%);
+      color: white;
+      padding: 18px 40px;
+      font-size: 1.8rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      margin: 20px;
+      position: relative;
+      transition: all 0.3s ease;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      box-shadow:
+        0 0 0 3px #fff,
+        0 0 0 6px #ff6347,
+        0 10px 30px rgba(255, 99, 71, 0.4);
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% {
+        box-shadow:
+          0 0 0 3px #fff,
+          0 0 0 6px #ff6347,
+          0 10px 30px rgba(255, 99, 71, 0.4);
+      }
+      50% {
+        box-shadow:
+          0 0 0 3px #fff,
+          0 0 0 6px #ff6347,
+          0 10px 30px rgba(255, 99, 71, 0.6),
+          0 0 40px rgba(255, 99, 71, 0.3);
+      }
+    }
+
+    .generate-btn:hover {
+      transform: translateY(-3px) scale(1.05);
+      animation: none;
+      box-shadow:
+        0 0 0 3px #fff,
+        0 0 0 6px #ff4757,
+        0 15px 40px rgba(255, 71, 87, 0.5),
+        0 0 60px rgba(255, 71, 87, 0.3);
+    }
+
+    .generate-btn:active {
+      transform: translateY(-1px) scale(1.02);
+    }
+
+    .generate-btn::before {
+      content: '🍅';
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      font-size: 1.2rem;
+      animation: bounce 1s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    /* Risultato pizza - stile menù italiano */
+    #pizzaResult {
+      margin: 40px auto;
+      background:
+        radial-gradient(ellipse at top, rgba(255,255,255,0.95) 0%, rgba(248,248,248,0.9) 100%),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 30px,
+          rgba(139, 69, 19, 0.1) 30px,
+          rgba(139, 69, 19, 0.1) 32px
+        );
+      padding: 30px;
+      border-radius: 20px;
+      max-width: 650px;
+      box-shadow:
+        0 0 0 5px #8b4513,
+        0 0 0 10px #d2691e,
+        0 20px 50px rgba(0,0,0,0.3);
+      text-align: left;
+      position: relative;
+      transform: perspective(1000px) rotateX(2deg);
+      opacity: 0;
+      animation: menuAppear 0.8s ease-out forwards;
+    }
+
+    @keyframes menuAppear {
+      from {
+        opacity: 0;
+        transform: perspective(1000px) rotateX(10deg) translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: perspective(1000px) rotateX(2deg) translateY(0);
+      }
+    }
+
+    #pizzaResult::before {
+      content: '📜';
+      position: absolute;
+      top: -20px;
+      left: 30px;
+      font-size: 2.5rem;
+      filter: sepia(0.8) hue-rotate(30deg);
+    }
+
+    #pizzaResult h2 {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2.8rem;
+      color: #8b0000;
+      margin-bottom: 20px;
+      text-align: center;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      border-bottom: 3px dotted #d2691e;
+      padding-bottom: 15px;
+    }
+
+    #pizzaResult h3 {
+      font-family: 'Italiana', serif;
+      font-size: 1.4rem;
+      color: #2c1810;
+      margin: 20px 0 10px 0;
+      border-left: 4px solid #ff6347;
+      padding-left: 15px;
+    }
+
+    #pizzaResult p, #pizzaResult ul {
+      font-family: 'Kalam', cursive;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: #2c1810;
+      margin-bottom: 15px;
+    }
+
+    #pizzaResult ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    #pizzaResult li {
+      padding: 8px 0;
+      border-bottom: 1px dotted rgba(139, 69, 19, 0.3);
+      position: relative;
+      padding-left: 30px;
+    }
+
+    #pizzaResult li::before {
+      content: '🌿';
+      position: absolute;
+      left: 0;
+      top: 8px;
+    }
+
+    .note {
+      font-style: italic;
+      color: #8b4513;
+      background: rgba(255, 235, 205, 0.6);
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid #ff6347;
+      margin-top: 20px;
+    }
+
+    /* Decorazioni aggiuntive */
+    .ingredient-emoji {
+      font-size: 1.2rem;
+      margin-right: 8px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2.5rem;
+      }
+
+      .controls {
+        margin: 20px 10px;
+        padding: 20px;
+      }
+
+      .generate-btn {
+        font-size: 1.4rem;
+        padding: 15px 30px;
+      }
+
+      #pizzaResult {
+        margin: 20px 10px;
+        padding: 20px;
+      }
+    }
+
+    /* Effetto loading */
+    .loading {
+      display: none;
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.5rem;
+      color: #ff6347;
+      margin: 20px 0;
+      animation: loadingPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes loadingPulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Bottone ritorno al hub -->
+  <a href="../index.html" style="
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    background: linear-gradient(145deg, #fff 0%, #f8f8f8 100%);
+    color: #2c1810;
+    padding: 12px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-family: 'Kalam', cursive;
+    font-weight: 600;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    border: 2px solid #d2691e;
+    transition: all 0.3s ease;
+  " onmouseover="this.style.transform='translateY(-2px) scale(1.05)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.2)'">
+    ← Torna ai Giochi
+  </a>
+
+  <!-- Header con bandiera italiana -->
+  <div class="header">
+    <h1>🍕 Pixxa Italiana</h1>
+    <p class="subtitle">Autentico Generatore di Pizze Tradizionali</p>
+  </div>
+
+  <!-- Controlli principali -->
+  <div class="controls">
+    <label for="livelloSelect">Scegli la tua avventura culinaria:</label>
+    <select id="livelloSelect">
+      <option value="classica">🇮🇹 Italiana Classica - Le ricette della nonna</option>
+      <option value="leggenda">🏛️ Leggenda Italiana - Storie dal Bel Paese</option>
+      <option value="pazza">🤪 Pazza Creazione - Esperimenti da chef</option>
+    </select>
+
+    <button class="generate-btn" onclick="generaPizza()">
+      Crea la Mia Pizza!
+    </button>
+
+    <div class="loading" id="loadingText">
+      🍅 Preparando ingredienti freschi... 🌿
+    </div>
+  </div>
+
+  <!-- Risultato pizza -->
+  <div id="pizzaResult"></div>
+
+  <!-- Particelle di farina animate -->
+  <div id="flourParticles"></div>
+
+  <script src="pizzeClassiche.js"></script>
+  <script src="pizzeLeggendarie.js"></script>
+  <script src="ingredienti.js"></script>
+  <script src="main.js"></script>
+
+  <script>
+    // Effetti speciali per l'estetica italiana
+
+    // Crea particelle di farina fluttuanti
+    function createFlourParticles() {
+      const container = document.getElementById('flourParticles');
+
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'flour-particle';
+        particle.style.width = Math.random() * 8 + 4 + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 4 + 's';
+        particle.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        container.appendChild(particle);
+      }
+    }
+
+    // Crea schizzo di pomodoro al click del bottone
+    function createTomatoSplash(x, y) {
+      const splash = document.createElement('div');
+      splash.className = 'tomato-splash';
+      splash.style.left = (x - 30) + 'px';
+      splash.style.top = (y - 30) + 'px';
+
+      const splashInner = document.createElement('div');
+      splashInner.className = 'splash';
+      splash.appendChild(splashInner);
+
+      document.body.appendChild(splash);
+
+      // Rimuovi lo splash dopo l'animazione
+      setTimeout(() => {
+        document.body.removeChild(splash);
+      }, 1500);
+    }
+
+    // Migliora la funzione generaPizza originale
+    window.originalGeneraPizza = window.generaPizza;
+    window.generaPizza = function() {
+      const button = document.querySelector('.generate-btn');
+      const loading = document.getElementById('loadingText');
+      const result = document.getElementById('pizzaResult');
+
+      // Crea splash di pomodoro al click
+      const rect = button.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      createTomatoSplash(x, y);
+
+      // Mostra loading
+      loading.style.display = 'block';
+      button.style.transform = 'scale(0.95)';
+
+      // Nascondi il risultato precedente
+      result.style.opacity = '0';
+      result.style.animation = 'none';
+
+      setTimeout(() => {
+        // Esegui la funzione originale
+        if (window.originalGeneraPizza) {
+          window.originalGeneraPizza();
+        }
+
+        // Nascondi loading e mostra risultato
+        loading.style.display = 'none';
+        button.style.transform = 'scale(1)';
+
+        // Aggiungi emoji agli ingredienti
+        enhancePizzaResult();
+
+        // Anima l'apparizione del risultato
+        setTimeout(() => {
+          result.style.animation = 'menuAppear 0.8s ease-out forwards';
+        }, 100);
+
+      }, 1500);
+    };
+
+    // Migliora il risultato con emoji e stile italiano
+    function enhancePizzaResult() {
+      const result = document.getElementById('pizzaResult');
+      if (result.innerHTML) {
+        // Aggiungi emoji agli ingredienti
+        let content = result.innerHTML;
+
+        // Mappatura ingredienti -> emoji
+        const ingredientEmojis = {
+          'pomodoro': '🍅',
+          'mozzarella': '🧀',
+          'basilico': '🌿',
+          'origano': '🌿',
+          'olio': '🫒',
+          'prosciutto': '🥓',
+          'funghi': '🍄',
+          'salame': '🥩',
+          'peperoni': '🌶️',
+          'olive': '🫒',
+          'parmigiano': '🧀',
+          'gorgonzola': '🧀',
+          'ricotta': '🥛',
+          'rucola': '🥬',
+          'pomodorini': '🍅',
+          'bufala': '🧀',
+          'bresaola': '🥩',
+          'mascarpone': '🥛',
+          'noci': '🥜',
+          'fichi': '🍇',
+          'salmone': '🐟',
+          'gamberi': '🦐',
+          'tonno': '🐟',
+          'capperi': '🌿',
+          'acciughe': '🐟'
+        };
+
+        // Sostituisci gli ingredienti con emoji
+        Object.keys(ingredientEmojis).forEach(ingrediente => {
+          const regex = new RegExp(`\\b${ingrediente}\\b`, 'gi');
+          content = content.replace(regex, `${ingredientEmojis[ingrediente]} ${ingrediente}`);
+        });
+
+        result.innerHTML = content;
+      }
+    }
+
+    // Eventi al caricamento
+    document.addEventListener('DOMContentLoaded', function() {
+      createFlourParticles();
+
+      // Aggiungi effetti hover casuali
+      setInterval(() => {
+        if (Math.random() > 0.7) {
+          const x = Math.random() * window.innerWidth;
+          const y = Math.random() * window.innerHeight;
+          if (Math.random() > 0.5) {
+            createTomatoSplash(x, y);
+          }
+        }
+      }, 8000);
+    });
+
+    // Effetto click sui controlli
+    document.querySelector('select').addEventListener('change', function() {
+      const rect = this.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+
+      // Piccolo splash per feedback
+      setTimeout(() => {
+        createTomatoSplash(x, y);
+      }, 200);
+    });
+  </script>
+
+</body>
+</html>
