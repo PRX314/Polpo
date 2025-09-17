@@ -19,6 +19,33 @@ function generaNomeDaIngredienti(ingredienti) {
 }
 
 function generaPizza() {
+  const loading = document.getElementById('loadingText');
+  const result = document.getElementById('pizzaResult');
+  const button = document.querySelector('.generate-btn');
+
+  // Mostra loading se gli elementi esistono
+  if (loading) loading.classList.add('show');
+  if (result) result.classList.remove('show');
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Preparando...';
+  }
+
+  // Simula il caricamento
+  setTimeout(() => {
+    generaPizzaInternal();
+
+    // Nascondi loading
+    if (loading) loading.classList.remove('show');
+    if (result) result.classList.add('show');
+    if (button) {
+      button.disabled = false;
+      button.textContent = 'Crea la Mia Pizza! 🍕';
+    }
+  }, 1200);
+}
+
+function generaPizzaInternal() {
   const livello = document.getElementById("livelloSelect").value;
   let nome = "", ingredienti = [], provenienza = "", note = "";
 
@@ -33,6 +60,17 @@ function generaPizza() {
     ingredienti = p.ingredienti;
     provenienza = p.storia;
     note = p.descrizione;
+  } else if (livello === "regionale") {
+    // Scegli una regione casuale
+    const regioni = Object.keys(pizzeRegionali);
+    const regioneScelta = scegliRandom(regioni, 1)[0];
+    const pizzeRegione = pizzeRegionali[regioneScelta];
+    const p = scegliRandom(pizzeRegione, 1)[0];
+
+    nome = p.nome;
+    ingredienti = p.ingredienti;
+    provenienza = p.storia;
+    note = `${p.descrizione} - Specialità ${regioneScelta}`;
   } else if (livello === "pazza") {
     // Prendi tutti gli ingredienti da classiche + leggendarie
     const tuttiIngredienti = [
