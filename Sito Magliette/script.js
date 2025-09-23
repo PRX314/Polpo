@@ -20,41 +20,100 @@ let paypalButtonRendered = false;
 emailjs.init("JyVULYbhjRGgAq9cb");
 
 // ============================================================================
-// POLPO THEME SYSTEM
+// DUAL THEME SYSTEM - Header Themes + Global Dark/Light Mode
 // ============================================================================
 
-// Initialize theme from localStorage
-const savedTheme = localStorage.getItem('polpo-magliette-theme') || 'light';
-document.body.dataset.theme = savedTheme;
-updateThemeButton();
+const headerThemes = [
+  { name: 'light', icon: '🌙', label: 'Dark' },
+  { name: 'dark', icon: '🌈', label: 'Neon' },
+  { name: 'neon', icon: '🌅', label: 'Sunset' },
+  { name: 'sunset', icon: '🌊', label: 'Ocean' },
+  { name: 'ocean', icon: '☀️', label: 'Light' }
+];
 
-// Theme toggle functionality
+let currentHeaderThemeIndex = 0;
+let globalDarkMode = false;
+
+// Initialize themes from localStorage
+const savedHeaderTheme = localStorage.getItem('header-theme') || 'light';
+const savedGlobalTheme = localStorage.getItem('global-theme') || 'light';
+const savedIndex = headerThemes.findIndex(theme => theme.name === savedHeaderTheme);
+
+currentHeaderThemeIndex = savedIndex >= 0 ? savedIndex : 0;
+globalDarkMode = savedGlobalTheme === 'dark';
+
+// Apply themes
+document.body.dataset.headerTheme = headerThemes[currentHeaderThemeIndex].name;
+document.body.dataset.globalTheme = savedGlobalTheme;
+updateThemeButton();
+updateMetaThemeColor(headerThemes[currentHeaderThemeIndex].name, globalDarkMode);
+
+// Dual theme toggle functionality
 document.addEventListener('DOMContentLoaded', function() {
   const themeToggle = document.getElementById('theme-toggle');
   if (themeToggle) {
-    themeToggle.addEventListener('click', toggleTheme);
+    // Click cycles header themes, Shift+Click toggles global dark mode
+    themeToggle.addEventListener('click', function(e) {
+      if (e.shiftKey) {
+        toggleGlobalDarkMode();
+      } else {
+        cycleHeaderTheme();
+      }
+    });
+
+    // Show tooltip hint
+    themeToggle.title = 'Click: Cycle header theme | Shift+Click: Toggle dark mode';
   }
 });
 
-function toggleTheme() {
-  const body = document.body;
-  const newTheme = body.dataset.theme === 'dark' ? 'light' : 'dark';
-  body.dataset.theme = newTheme;
-  localStorage.setItem('polpo-magliette-theme', newTheme);
+function cycleHeaderTheme() {
+  // Cycle through all header themes
+  currentHeaderThemeIndex = (currentHeaderThemeIndex + 1) % headerThemes.length;
+  const newTheme = headerThemes[currentHeaderThemeIndex];
+
+  document.body.dataset.headerTheme = newTheme.name;
+  localStorage.setItem('header-theme', newTheme.name);
   updateThemeButton();
+
+  // Update meta theme color
+  updateMetaThemeColor(newTheme.name, globalDarkMode);
+}
+
+function toggleGlobalDarkMode() {
+  globalDarkMode = !globalDarkMode;
+  const newGlobalTheme = globalDarkMode ? 'dark' : 'light';
+
+  document.body.dataset.globalTheme = newGlobalTheme;
+  localStorage.setItem('global-theme', newGlobalTheme);
+  updateThemeButton();
+
+  // Update meta theme color
+  updateMetaThemeColor(headerThemes[currentHeaderThemeIndex].name, globalDarkMode);
+
+  // Show feedback
+  showToast(`${globalDarkMode ? 'Dark' : 'Light'} mode enabled`, 'success');
 }
 
 function updateThemeButton() {
-  const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.querySelector('.theme-icon');
   const themeText = document.querySelector('.theme-text');
 
-  if (themeToggle && themeIcon && themeText) {
-    const isDark = document.body.dataset.theme === 'dark';
-    themeIcon.textContent = isDark ? '☀️' : '🌙';
-    themeText.textContent = isDark ? 'Light' : 'Dark';
+  if (globalDarkMode) {
+    // Show global dark mode status
+    if (themeIcon && themeText) {
+      themeIcon.textContent = '☀️';
+      themeText.textContent = 'Light';
+    }
+  } else {
+    // Show next header theme
+    const nextTheme = headerThemes[(currentHeaderThemeIndex + 1) % headerThemes.length];
+    if (themeIcon && themeText) {
+      themeIcon.textContent = nextTheme.icon;
+      themeText.textContent = nextTheme.label;
+    }
   }
 }
+
 
 // ✅ Toast notification system
 function showToast(message, type = 'success') {
@@ -305,35 +364,82 @@ function applyCollectionTheme(themeClass) {
   if (themeMap[themeClass]) {
     body.classList.add(themeMap[themeClass]);
 
-    // Update meta theme color based on collection
-    updateMetaThemeColor(themeMap[themeClass]);
-
-    // Show collection change notification
-    showCollectionChangeToast(themeMap[themeClass]);
+    // Show collection wave banner
+    showCollectionWaveBanner(themeMap[themeClass]);
   }
 }
 
-function updateMetaThemeColor(collectionClass) {
+function updateMetaThemeColor(themeName, isDarkMode = false) {
   const metaThemeColor = document.querySelector('meta[name="theme-color"]');
   const colors = {
-    'collection-fijo': '#E4002B',
-    'collection-gpower': '#FF2AA5'
+    'light': isDarkMode ? '#1a1a1a' : '#48dbfb',
+    'dark': isDarkMode ? '#0f0f0f' : '#2c3e50',
+    'neon': isDarkMode ? '#001a0f' : '#00ff88',
+    'sunset': isDarkMode ? '#2a0f00' : '#ff6b35',
+    'ocean': isDarkMode ? '#001122' : '#0077be'
   };
 
-  if (metaThemeColor && colors[collectionClass]) {
-    metaThemeColor.setAttribute('content', colors[collectionClass]);
+  if (metaThemeColor && colors[themeName]) {
+    metaThemeColor.setAttribute('content', colors[themeName]);
   }
 }
 
-function showCollectionChangeToast(collectionClass) {
-  const messages = {
-    'collection-fijo': 'Modalità Fijo dell\'Amore 💕 - Ironia, amore e minimalismo',
-    'collection-gpower': 'Modalità G Power ⚡ - Forza, femminilità e pop-art'
+// ============================================================================
+// COLLECTION WAVE BANNER SYSTEM
+// ============================================================================
+
+function showCollectionWaveBanner(collectionClass) {
+  // Remove existing banner if present
+  const existingBanner = document.getElementById('collection-wave-banner');
+  if (existingBanner) {
+    existingBanner.remove();
+  }
+
+  const bannerData = {
+    'collection-fijo': {
+      title: 'Fijo dell\'Amore',
+      subtitle: 'Ironia • Amore • Fertilità • Minimalismo Provocatorio',
+      icon: '♥',
+      theme: 'fijo'
+    },
+    'collection-gpower': {
+      title: 'G Power',
+      subtitle: 'Forza • Femminilità • Potere • Pop-Art • Energia',
+      icon: '⚡',
+      theme: 'gpower'
+    }
   };
 
-  if (messages[collectionClass]) {
-    showToast(messages[collectionClass], 'success');
-  }
+  const data = bannerData[collectionClass];
+  if (!data) return;
+
+  // Create banner element
+  const banner = document.createElement('div');
+  banner.id = 'collection-wave-banner';
+  banner.className = `wave-banner wave-banner-${data.theme}`;
+
+  banner.innerHTML = `
+    <div class="wave-banner-content">
+      <div class="wave-banner-icon">${data.icon}</div>
+      <div class="wave-banner-text">
+        <h3 class="wave-banner-title">${data.title}</h3>
+        <p class="wave-banner-subtitle">${data.subtitle}</p>
+      </div>
+    </div>
+    <div class="wave-banner-wave"></div>
+  `;
+
+  // Add to page
+  document.body.appendChild(banner);
+
+  // Animate in
+  setTimeout(() => banner.classList.add('wave-banner-show'), 100);
+
+  // Auto remove after 4 seconds
+  setTimeout(() => {
+    banner.classList.remove('wave-banner-show');
+    setTimeout(() => banner.remove(), 500);
+  }, 4000);
 }
 
 function updateTypeSelect() {
