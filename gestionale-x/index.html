@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#48dbfb">
+    <title>Gestionale X - Paolo Repetto</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        :root {
+            /* Light theme */
+            --bg-primary: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #555;
+            --text-muted: #666;
+            --border-color: #ddd;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.1);
+            --gradient-accent: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
+            --gradient-border: linear-gradient(90deg, #48dbfb, #54a0ff);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme */
+            --bg-primary: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            --bg-secondary: #34495e;
+            --bg-card: #34495e;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --text-muted: #95a5a6;
+            --border-color: #4a5568;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+            --gradient-accent: linear-gradient(90deg, #e74c3c, #f39c12, #3498db, #9b59b6, #2980b9);
+            --gradient-border: linear-gradient(90deg, #3498db, #2980b9);
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            box-shadow: var(--shadow-light);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Main Dashboard */
+        .dashboard {
+            padding: 1.5rem 0;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .dashboard-title {
+            font-size: 1.8rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .dashboard-card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 1.2rem;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-icon {
+            font-size: 1.3rem;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--gradient-border);
+            color: white;
+            margin-bottom: 0.8rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .card-description {
+            display: none;
+        }
+
+        .card-stats {
+            display: none;
+        }
+
+        .stat-item {
+            display: none;
+        }
+
+        .stat-number {
+            display: none;
+        }
+
+        .stat-label {
+            display: none;
+        }
+
+        /* Music Icon */
+        .music-icon {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+
+        .music-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .music-icon span {
+            font-size: 1.5rem;
+        }
+
+        /* Calendar Section */
+        .calendar-section {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--border-color);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .calendar-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .calendar-placeholder {
+            height: 200px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Back Button */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            transition: color 0.3s ease;
+        }
+
+        .back-btn:hover {
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+
+            .dashboard {
+                padding: 1rem 0;
+            }
+
+            .dashboard-header {
+                margin-bottom: 1rem;
+            }
+
+            .dashboard-title {
+                font-size: 1.5rem;
+                letter-spacing: 1px;
+            }
+
+            .dashboard-subtitle {
+                font-size: 0.8rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .dashboard-card {
+                padding: 1rem;
+                height: 100px;
+            }
+
+            .card-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
+                margin-bottom: 0.6rem;
+            }
+
+            .card-title {
+                font-size: 0.9rem;
+            }
+
+            .card-description {
+                font-size: 0.75rem;
+                margin-bottom: 0.8rem;
+            }
+
+            .stat-number {
+                font-size: 1rem;
+            }
+
+            .stat-label {
+                font-size: 0.65rem;
+            }
+
+            .calendar-section {
+                padding: 1rem;
+            }
+
+            .music-icon {
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="../index.html" class="back-btn">
+                    ← Torna al Portfolio
+                </a>
+                <a href="#" class="logo">
+                    <span>💡</span>
+                    Gestionale X
+                </a>
+                <div class="theme-toggle" onclick="toggleTheme()">
+                    <span id="theme-icon">☀️</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="dashboard">
+        <div class="container">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Il Tuo Hub Creativo</h1>
+                <p class="dashboard-subtitle">Organizza idee, progetti e ispirazioni in un unico posto</p>
+            </div>
+
+            <!-- Dashboard Grid -->
+            <div class="dashboard-grid">
+                <!-- Progetti Card -->
+                <div class="dashboard-card" onclick="openSection('progetti')">
+                    <div class="card-header">
+                        <div class="card-icon">🚀</div>
+                        <h3 class="card-title">Progetti</h3>
+                    </div>
+                </div>
+
+                <!-- Note e Idee Card -->
+                <div class="dashboard-card" onclick="openSection('note')">
+                    <div class="card-header">
+                        <div class="card-icon">💭</div>
+                        <h3 class="card-title">Note & Idee</h3>
+                    </div>
+                </div>
+
+                <!-- Monologhi Card -->
+                <div class="dashboard-card" onclick="openSection('monologhi')">
+                    <div class="card-header">
+                        <div class="card-icon">🎭</div>
+                        <h3 class="card-title">Monologhi</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar Section -->
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <h3 class="calendar-title">📅 Calendario & Promemoria</h3>
+                </div>
+                <div class="calendar-placeholder">
+                    Calendario eventi e scadenze - Coming Soon
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Music Icon -->
+    <div class="music-icon" onclick="openMusic()">
+        <span>🎵</span>
+    </div>
+
+    <script>
+        // Theme Management
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            const newTheme = body.dataset.theme === 'dark' ? 'light' : 'dark';
+
+            body.dataset.theme = newTheme;
+            themeIcon.textContent = newTheme === 'dark' ? '🌙' : '☀️';
+            localStorage.setItem('gestionale-theme', newTheme);
+        }
+
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('gestionale-theme') || 'light';
+            const themeIcon = document.getElementById('theme-icon');
+
+            document.body.dataset.theme = savedTheme;
+            themeIcon.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+        }
+
+        // Section Navigation
+        function openSection(section) {
+            if (section === 'progetti') {
+                window.location.href = 'progetti.html';
+            } else if (section === 'note') {
+                window.location.href = 'note.html';
+            } else if (section === 'monologhi') {
+                window.location.href = 'monologhi.html';
+            } else {
+                console.log(`Aprendo sezione: ${section}`);
+                alert(`Sezione ${section} - Coming Soon!`);
+            }
+        }
+
+        function openMusic() {
+            console.log('Aprendo sezione musica');
+            alert('Sezione Spunti Musicali - Coming Soon!');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+        });
+    </script>
+</body>
+</html>

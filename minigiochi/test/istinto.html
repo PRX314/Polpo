@@ -18,6 +18,12 @@
             font-family: 'JetBrains Mono', monospace;
             background: #000000;
             color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Blocca lo scroll solo durante il test */
+        body.test-active {
             height: 100vh;
             overflow: hidden;
         }
@@ -213,6 +219,8 @@
             background: #000000;
             padding: 40px;
             text-align: center;
+            min-height: 100vh;
+            overflow-y: auto;
         }
 
         .results-screen h1 {
@@ -432,6 +440,9 @@
             testScreen.classList.remove('hidden');
             startTime = new Date();
 
+            // Blocca lo scroll durante il test
+            document.body.classList.add('test-active');
+
             // Reset scores
             Object.keys(areas).forEach(area => {
                 areas[area].scoreA = 0;
@@ -530,6 +541,9 @@
                 timer = null;
             }
 
+            // Riabilita lo scroll per i risultati
+            document.body.classList.remove('test-active');
+
             testScreen.classList.add('hidden');
             resultsScreen.classList.remove('hidden');
 
@@ -627,6 +641,9 @@
             noResponseCount = 0;
             startTime = null;
             timeLeft = 3;
+
+            // Riabilita lo scroll
+            document.body.classList.remove('test-active');
 
             Object.keys(areas).forEach(area => {
                 areas[area].scoreA = 0;

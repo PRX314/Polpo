@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#48dbfb">
+  <title>Magliette Store - E-commerce</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700;800&family=Montserrat+Alternates:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- ✅ PayPal SDK con client ID tuo -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AWyU4uCd7hp1-v_-vJXPkAszGNO9FgjnYrO68K-nfv25QxApHQqK0RfgwwATqT14l_yG139_k5jwHpC6&currency=EUR"></script>
+</head>
+<body data-theme="light">
+  <header>
+    <div class="header-content">
+      <div class="logo-section">
+        <h1 id="main-title" class="main-title">Magliette Store</h1>
+      </div>
+      <button class="theme-toggle" id="theme-toggle">
+        <span class="theme-icon">🌙</span>
+        <span class="theme-text">Dark</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="product-box">
+      <label for="collection-select">Scegli la collezione:</label>
+      <select id="collection-select"></select>
+
+      <div class="image-container">
+        <img id="product-image" class="product-image" src="" alt="Seleziona una variante">
+        <div id="image-spinner" class="loading-spinner" style="display: none;"></div>
+      </div>
+      <h2 id="product-name"></h2>
+      <p id="product-description"></p>
+
+      <label for="type-select">Tipo:</label>
+      <select id="type-select"></select>
+
+      <label for="color-select">Colore:</label>
+      <select id="color-select"></select>
+
+      <label for="size-select">Taglia:</label>
+      <select id="size-select"></select>
+
+      <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button id="add-to-wishlist">♡ Wishlist</button>
+        <button id="add-to-cart">Aggiungi al carrello</button>
+      </div>
+    </div>
+
+    <div id="wishlist" style="display: none;">
+      <h2>❤️ Wishlist</h2>
+      <ul id="wishlist-items"></ul>
+      <button id="clear-wishlist">Svuota wishlist</button>
+    </div>
+
+    <div id="cart">
+      <h2>Carrello</h2>
+      <ul id="cart-items"></ul>
+      <div id="cart-total"></div>
+      <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button id="toggle-wishlist">👀 Mostra Wishlist</button>
+        <button id="clear-cart">Svuota carrello</button>
+      </div>
+    </div>
+
+    <div id="user-form" class="form-section">
+      <h2>Dati per la spedizione</h2>
+      <input type="text" id="name" placeholder="Nome e Cognome" required><br>
+      <input type="email" id="email" placeholder="Email" required><br>
+      <textarea id="address" placeholder="Indirizzo di spedizione" required></textarea><br>
+      <button id="send-order">Invia ordine e Paga</button>
+    </div>
+
+    <div id="confirmation-message" class="form-section" style="display:none;">
+      <h2>✅ Ordine confermato!</h2>
+      <p>Ti abbiamo inviato una conferma via email. Grazie per il tuo supporto!</p>
+      <!-- ✅ Bottone PayPal verrà generato qui -->
+      <div id="paypal-button-container" style="margin-top: 30px;"></div>
+    </div>
+  </main>
+
+  <!-- ❌ RIMOSSO form PayPal obsoleto -->
+
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script src="productData.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

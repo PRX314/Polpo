@@ -1,0 +1,932 @@
+/* ============================================================================
+   🐙 POLPO MAGLIETTE - CSS SYSTEM
+   Adapted from polpo portfolio design system
+   ============================================================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+:root {
+  /* Light theme - Polpo Style */
+  --bg-primary: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --text-primary: #333;
+  --text-secondary: #555;
+  --text-muted: #666;
+  --border-color: #ddd;
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --gradient-accent: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff);
+  --gradient-border: linear-gradient(90deg, #48dbfb, #54a0ff);
+  --gradient-button: linear-gradient(135deg, #48dbfb, #54a0ff);
+  --gradient-success: linear-gradient(135deg, #27ae60, #2ecc71);
+  --gradient-warning: linear-gradient(135deg, #f39c12, #e67e22);
+  --gradient-error: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+[data-theme="dark"] {
+  /* Dark theme - Polpo Style */
+  --bg-primary: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  --bg-secondary: #34495e;
+  --bg-card: #34495e;
+  --text-primary: #ecf0f1;
+  --text-secondary: #bdc3c7;
+  --text-muted: #95a5a6;
+  --border-color: #4a5568;
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.4);
+  --gradient-accent: linear-gradient(90deg, #e74c3c, #f39c12, #3498db, #9b59b6, #2980b9);
+  --gradient-border: linear-gradient(90deg, #3498db, #2980b9);
+  --gradient-button: linear-gradient(135deg, #3498db, #2980b9);
+  --gradient-success: linear-gradient(135deg, #27ae60, #2ecc71);
+  --gradient-warning: linear-gradient(135deg, #f39c12, #e67e22);
+  --gradient-error: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.7;
+  font-size: 14px;
+  min-height: 100vh;
+  transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================================
+   HEADER & NAVIGATION
+   ============================================================================ */
+
+header {
+  background: var(--bg-card);
+  box-shadow: var(--shadow-light);
+  padding: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 2px solid transparent;
+  background-image: var(--gradient-border);
+  background-clip: padding-box;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+
+.main-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: var(--gradient-accent);
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 4s ease infinite;
+  text-shadow: none;
+  margin: 0;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.theme-toggle {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  min-height: 44px;
+}
+
+.theme-toggle:hover {
+  background: var(--gradient-button);
+  color: white;
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+/* ============================================================================
+   LAYOUT & CONTAINERS
+   ============================================================================ */
+
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.product-box,
+#user-form,
+#cart,
+#wishlist {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: var(--shadow-light);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.product-box:hover,
+#cart:hover,
+#wishlist:hover {
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-2px);
+}
+
+/* ============================================================================
+   FORMS & INPUTS
+   ============================================================================ */
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+select,
+input,
+textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+}
+
+select:focus,
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #48dbfb;
+  box-shadow: 0 0 0 3px rgba(72, 219, 251, 0.1);
+  background: var(--bg-card);
+}
+
+/* ============================================================================
+   BUTTONS
+   ============================================================================ */
+
+button {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+button:not(.theme-toggle) {
+  background: var(--gradient-button);
+  color: white;
+  box-shadow: var(--shadow-light);
+}
+
+button:not(.theme-toggle):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+button:not(.theme-toggle):active {
+  transform: translateY(0);
+}
+
+.btn-success {
+  background: var(--gradient-success) !important;
+  animation: success-pulse 0.6s ease-out;
+}
+
+@keyframes success-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* ============================================================================
+   IMAGE CONTAINER & LOADING
+   ============================================================================ */
+
+.image-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.product-image {
+  max-width: 100%;
+  height: auto;
+  max-height: 400px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-light);
+  transition: all 0.3s ease;
+}
+
+.product-image:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-medium);
+}
+
+.loading-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(72, 219, 251, 0.3);
+  border-top: 3px solid #48dbfb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  z-index: 10;
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.product-image.loading {
+  opacity: 0.5;
+}
+
+/* ============================================================================
+   CART & WISHLIST
+   ============================================================================ */
+
+#cart h2,
+#wishlist h2 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#cart-items,
+#wishlist-items {
+  list-style: none;
+  margin-bottom: 20px;
+}
+
+#cart-items li,
+#wishlist-items li {
+  padding: 12px;
+  margin: 8px 0;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border-left: 4px solid #48dbfb;
+  font-size: 13px;
+}
+
+.cart-item-new {
+  animation: slideInCart 0.5s ease-out;
+  background: linear-gradient(90deg, rgba(72, 219, 251, 0.1), var(--bg-secondary)) !important;
+}
+
+@keyframes slideInCart {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+#cart-total {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 16px;
+  background: var(--gradient-accent);
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 3s ease infinite;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  margin: 16px 0;
+}
+
+/* ============================================================================
+   TOAST NOTIFICATIONS
+   ============================================================================ */
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 13px;
+  z-index: 1000;
+  animation: toastSlideIn 0.3s ease-out;
+  box-shadow: var(--shadow-medium);
+  min-width: 250px;
+  text-align: center;
+}
+
+.toast {
+  background: var(--gradient-success);
+}
+
+.toast.error {
+  background: var(--gradient-error);
+}
+
+.toast.warning {
+  background: var(--gradient-warning);
+}
+
+@keyframes toastSlideIn {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   LOADING OVERLAY
+   ============================================================================ */
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(8px);
+}
+
+.overlay-content {
+  background: var(--bg-card);
+  padding: 40px;
+  border-radius: 16px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-medium);
+  border: 1px solid var(--border-color);
+}
+
+.overlay-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid #48dbfb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+/* ============================================================================
+   WISHLIST ITEMS STYLING
+   ============================================================================ */
+
+#wishlist-items li > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border-left: 4px solid #ff9ff3;
+}
+
+#wishlist-items button {
+  min-width: 40px;
+  padding: 8px 12px;
+  margin: 0 2px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .header-content {
+    text-align: center;
+    gap: 10px;
+  }
+
+  .logo-section {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .main-title {
+    font-size: 1.4rem;
+  }
+
+  .content {
+    padding: 20px 15px;
+  }
+
+  .product-box,
+  #user-form,
+  #cart,
+  #wishlist {
+    padding: 20px;
+    margin: 15px 0;
+  }
+
+  .product-image {
+    max-height: 300px;
+  }
+
+  select,
+  input,
+  textarea,
+  button {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .toast {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+  }
+
+  .overlay-content {
+    margin: 20px;
+    padding: 30px 20px;
+  }
+
+  /* Button layouts */
+  div[style*="display: flex"] {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  div[style*="display: flex"] button {
+    width: 100% !important;
+  }
+
+  /* Wishlist mobile */
+  #wishlist-items li > div {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  #wishlist-items li > div > div {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-title {
+    font-size: 1.2rem;
+  }
+
+  .content {
+    padding: 15px 10px;
+  }
+
+  .product-box,
+  #user-form,
+  #cart,
+  #wishlist {
+    padding: 16px;
+  }
+}
+
+/* ============================================================================
+   COLLECTION-SPECIFIC THEMES
+   ============================================================================ */
+
+/* 💕 FIJO DELL'AMORE THEME - Ironia, amore, fertilità, minimalismo provocatorio */
+body.collection-fijo {
+  --bg-primary: #ffffff;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: #333333;
+  --text-muted: #666666;
+  --border-color: #f0f0f0;
+  --accent-color: #E4002B;
+  --shadow-light: 0 2px 10px rgba(228, 0, 43, 0.1);
+  --shadow-medium: 0 8px 25px rgba(228, 0, 43, 0.15);
+  --gradient-button: linear-gradient(135deg, #E4002B, #FF1744);
+  --gradient-accent: linear-gradient(90deg, #E4002B, #FF1744, #E91E63);
+  font-family: 'Poppins', sans-serif;
+}
+
+body.collection-fijo .main-title {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+  color: #E4002B;
+  text-shadow: none;
+  background: none;
+  -webkit-text-fill-color: #E4002B;
+  position: relative;
+}
+
+body.collection-fijo .main-title::after {
+  content: '♥';
+  color: #E4002B;
+  font-size: 0.8em;
+  margin-left: 8px;
+  animation: heartbeat 2s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+body.collection-fijo h1,
+body.collection-fijo h2,
+body.collection-fijo h3 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  color: #000000;
+}
+
+body.collection-fijo button:not(.theme-toggle) {
+  background: var(--gradient-button);
+  border-radius: 25px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+body.collection-fijo .product-box,
+body.collection-fijo #cart,
+body.collection-fijo #wishlist,
+body.collection-fijo #user-form {
+  border: 2px solid #f8f8f8;
+  box-shadow: 0 4px 20px rgba(228, 0, 43, 0.08);
+}
+
+/* Micro-elementi grafici spermatozoi */
+body.collection-fijo .product-box::before {
+  content: '⌐ ⌐ ⌐';
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 12px;
+  color: #E4002B;
+  opacity: 0.3;
+  letter-spacing: 8px;
+}
+
+body.collection-fijo #cart-items li,
+body.collection-fijo #wishlist-items li {
+  border-left: 4px solid #E4002B;
+  background: #fefefe;
+  position: relative;
+}
+
+body.collection-fijo #cart-items li::before,
+body.collection-fijo #wishlist-items li::before {
+  content: '⌐';
+  color: #E4002B;
+  opacity: 0.5;
+  margin-right: 8px;
+  font-size: 10px;
+}
+
+/* ⚡ G POWER THEME - Forza, femminilità, potere, pop-art, energia */
+body.collection-gpower {
+  --bg-primary: #F7F7F7;
+  --bg-secondary: #F7F7F7;
+  --bg-card: #ffffff;
+  --text-primary: #3C3C3C;
+  --text-secondary: #3C3C3C;
+  --text-muted: #666666;
+  --border-color: #e0e0e0;
+  --accent-color: #FF2AA5;
+  --secondary-color: #FFD600;
+  --energy-color: #FF3B30;
+  --shadow-light: 0 4px 15px rgba(255, 42, 165, 0.1);
+  --shadow-medium: 0 8px 30px rgba(255, 42, 165, 0.2);
+  --gradient-button: linear-gradient(45deg, #FF2AA5, #FFD600);
+  --gradient-accent: linear-gradient(90deg, #FF2AA5, #FFD600, #FF3B30);
+  font-family: 'Montserrat Alternates', sans-serif;
+  background: linear-gradient(135deg, #F7F7F7 0%, #ffffff 100%);
+}
+
+body.collection-gpower .main-title {
+  font-family: 'Montserrat Alternates', sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  background: var(--gradient-accent);
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 3s ease infinite;
+  position: relative;
+}
+
+body.collection-gpower .main-title::after {
+  content: '⚡';
+  color: #FF3B30;
+  font-size: 0.8em;
+  margin-left: 8px;
+  animation: powerPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes powerPulse {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.3) rotate(15deg); }
+}
+
+body.collection-gpower h1,
+body.collection-gpower h2,
+body.collection-gpower h3 {
+  font-family: 'Montserrat Alternates', sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #3C3C3C;
+}
+
+body.collection-gpower button:not(.theme-toggle) {
+  background: var(--gradient-button);
+  border-radius: 0;
+  font-family: 'Montserrat Alternates', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+body.collection-gpower button:not(.theme-toggle)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.5s;
+}
+
+body.collection-gpower button:not(.theme-toggle):hover::before {
+  left: 100%;
+}
+
+body.collection-gpower .product-box,
+body.collection-gpower #cart,
+body.collection-gpower #wishlist,
+body.collection-gpower #user-form {
+  border: 3px solid #FFD600;
+  box-shadow: 8px 8px 0px #FF2AA5;
+  transform: none;
+  border-radius: 0;
+}
+
+body.collection-gpower .product-box:hover,
+body.collection-gpower #cart:hover,
+body.collection-gpower #wishlist:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 10px 10px 0px #FF2AA5;
+}
+
+/* Elementi grafici pop-art */
+body.collection-gpower .content::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-bottom: 30px solid #FFD600;
+  z-index: 1;
+  opacity: 0.7;
+}
+
+body.collection-gpower #cart-items li,
+body.collection-gpower #wishlist-items li {
+  border-left: 6px solid #FF2AA5;
+  background: linear-gradient(90deg, #ffffff, #FFD600);
+  position: relative;
+  transform: skew(-2deg);
+  margin: 8px 4px;
+}
+
+body.collection-gpower #cart-items li::before,
+body.collection-gpower #wishlist-items li::before {
+  content: '▶';
+  color: #FF2AA5;
+  margin-right: 8px;
+  font-weight: 900;
+}
+
+/* ============================================================================
+   MICRO-ANIMATIONS E EFFETTI SPECIALI
+   ============================================================================ */
+
+/* Fijo Theme - Hover effects romantici */
+body.collection-fijo .product-image:hover {
+  filter: sepia(10%) hue-rotate(320deg) brightness(1.1);
+  transition: filter 0.3s ease;
+}
+
+body.collection-fijo button:not(.theme-toggle):hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(228, 0, 43, 0.3);
+}
+
+body.collection-fijo #add-to-cart:hover::after {
+  content: '♥';
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  animation: heartbeat 0.8s ease-in-out infinite;
+}
+
+body.collection-fijo .loading-spinner {
+  border-top-color: #E4002B;
+  border-right-color: #E4002B;
+}
+
+/* G Power Theme - Effetti pop-art energici */
+body.collection-gpower .product-image:hover {
+  filter: contrast(1.2) saturate(1.3);
+  transform: scale(1.02) rotate(1deg);
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+body.collection-gpower button:not(.theme-toggle):hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 4px 8px 0px #FF2AA5, 8px 12px 20px rgba(255, 42, 165, 0.3);
+}
+
+body.collection-gpower #add-to-cart:hover::after {
+  content: '⚡';
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  animation: powerPulse 0.6s ease-in-out infinite;
+}
+
+body.collection-gpower .loading-spinner {
+  border-top-color: #FF2AA5;
+  border-right-color: #FFD600;
+  animation: spin 0.8s linear infinite, colorShift 2s ease-in-out infinite;
+}
+
+@keyframes colorShift {
+  0%, 100% { border-top-color: #FF2AA5; }
+  50% { border-top-color: #FFD600; }
+}
+
+/* Toast personalizzati per ogni tema */
+body.collection-fijo .toast {
+  background: linear-gradient(135deg, #E4002B, #FF1744);
+  border-radius: 25px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+}
+
+body.collection-gpower .toast {
+  background: linear-gradient(45deg, #FF2AA5, #FFD600);
+  border-radius: 0;
+  font-family: 'Montserrat Alternates', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 4px 4px 0px #FF3B30;
+}
+
+/* Transizioni fluide tra temi */
+body {
+  transition: background 0.5s ease, font-family 0.3s ease;
+}
+
+.main-title,
+button,
+.product-box,
+#cart,
+#wishlist,
+#user-form {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Effetti di ingresso per elementi dinamici */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cart-item-new {
+  animation: fadeInUp 0.5s ease-out, slideInCart 0.5s ease-out;
+}
+
+/* Responsive per i temi specifici */
+@media (max-width: 768px) {
+  body.collection-fijo .main-title::after,
+  body.collection-gpower .main-title::after {
+    font-size: 0.6em;
+    margin-left: 4px;
+  }
+
+  body.collection-gpower .product-box,
+  body.collection-gpower #cart,
+  body.collection-gpower #wishlist,
+  body.collection-gpower #user-form {
+    box-shadow: 4px 4px 0px #FF2AA5;
+  }
+
+  body.collection-gpower .product-box:hover,
+  body.collection-gpower #cart:hover,
+  body.collection-gpower #wishlist:hover {
+    box-shadow: 6px 6px 0px #FF2AA5;
+  }
+}

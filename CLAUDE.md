@@ -18,7 +18,7 @@ This is Paolo Repetto's portfolio hub repository - a collection of web-based min
 - Touch-optimized mobile interactions
 - Custom SVG polpo (octopus) logo with interactive modal
 
-### Mini-Games Collection
+### Mini App Collection
 **Location**: `/minigiochi/`
 **Entry Point**: `/minigiochi/index.html`
 
@@ -52,11 +52,13 @@ This is Paolo Repetto's portfolio hub repository - a collection of web-based min
 - `ingredienti.js` - Ingredient database
 - `pizzeClassiche.js` - Classic pizza recipes
 - `pizzeLeggendarie.js` - Legendary pizza variants
+- `pizzeRegionali.js` - Regional pizza variants
 **Features**:
 - Three generation modes: Classica, Leggendaria, Pazza
 - Smart pizza naming based on ingredient combinations
 - Random pricing and calorie calculation
 - Italian restaurant aesthetic with custom fonts
+- Loading animations and Italian flag design elements
 
 #### Istinto Personality Test
 **File**: `/minigiochi/test/istinto.html`
@@ -68,10 +70,39 @@ This is Paolo Repetto's portfolio hub repository - a collection of web-based min
 **Purpose**: Portfolio page for larger development projects
 **Features**: Same design system as main hub with theme support
 
+### Sito Magliette - E-commerce T-shirt Store
+**Location**: `/Sito Magliette/`
+**Type**: E-commerce web application with PayPal integration
+**Tech Stack**: Vanilla HTML5, CSS3, JavaScript ES6+
+**Key Files**:
+- `index.html` - Main e-commerce interface with Italian localization
+- `style.css` - Responsive styling with theme system
+- `script.js` - Shopping cart logic and PayPal integration
+- `productData.js` - Product catalog with collections and variants
+- `images/` - Product image assets
+**Key Features**:
+- Multi-collection product catalog system
+- Dynamic variant selection (type, color, size)
+- Shopping cart with local storage persistence
+- PayPal SDK integration for payments
+- Responsive design with mobile optimization
+- Italian language interface ("Fijo de'n amore" collection)
+
+### Gestionale-X React Application
+**Location**: `/gestionale-x/`
+**Type**: React + Vite modern web application
+**Tech Stack**: React 19, Vite 7, ESLint 9
+**Key Features**:
+- Modern React application with Vite for fast development
+- ESLint configuration with React hooks and refresh plugins
+- Hot Module Replacement (HMR) for development
+- Production build optimization
+
 ## Architecture Patterns
 
 ### Frontend Architecture
-- **Pure Vanilla JavaScript** - No frameworks or build tools
+- **Pure Vanilla JavaScript** - No frameworks or build tools (main portfolio and games)
+- **React + Vite** - Modern React application for gestionale-x project
 - **ES6+ Features** - Modern JavaScript with classes, arrow functions, modules
 - **CSS Custom Properties** - Theme system using CSS variables
 - **Mobile-First Design** - Progressive enhancement for larger screens
@@ -161,17 +192,17 @@ card.addEventListener('touchend', function() {
 
 ## Key Interactive Features
 
-### Portfolio Hub Features
-- **Polpo Logo Interaction** - 3-second long press (mouse/touch) to open modal (`script.js:polpoLongPressTimer`)
-- **Project Card Expansion** - Hover on desktop, tap to expand on mobile with collision detection
-- **Theme Persistence** - Dark/light mode with localStorage (`index.html:toggleTheme()`)
+### Portfolio Hub Features (`index.html` + `script.js`)
+- **Polpo Logo Interaction** - 3-second long press (mouse/touch) to open modal (`script.js:42-77`)
+- **Project Card Expansion** - Hover on desktop, tap to expand on mobile (`script.js:1-39`)
+- **Theme Persistence** - Dark/light mode with localStorage (embedded in `index.html`)
 - **Responsive Design** - CSS Grid with breakpoints: 6 columns (1400px+), 3 columns (900px+), 2 columns (mobile)
 - **SVG Logo** - Complex gradient polpo/octopus logo with custom animations
 
-### Games Architecture
+### Mini Apps Architecture
 - **State Management** - Local storage for scores and preferences
 - **Responsive Layouts** - Adaptive UI for different screen sizes
-- **Touch Optimizations** - Gesture handling for mobile gameplay
+- **Touch Optimizations** - Gesture handling for mobile interactions
 
 ### Visual Design System
 - **Gradient Themes** - Consistent color schemes across projects
@@ -180,14 +211,31 @@ card.addEventListener('touchend', function() {
 
 ## Common Development Tasks
 
-### Adding New Games
+### Adding New Mini Apps
 1. Create new HTML file in `/minigiochi/` directory following self-contained pattern
 2. Include embedded CSS and JavaScript (avoid external dependencies)
 3. Implement responsive design with mobile-first approach
 4. Add back navigation link to `/minigiochi/index.html`
-5. Update `/minigiochi/index.html` with new game card in the games grid
+5. Update `/minigiochi/index.html` with new app card in the games grid
 6. Follow touch optimization patterns for mobile devices
 7. Consider adding to main portfolio hub (`/index.html`) if significant
+
+### Working with Sito Magliette E-commerce
+1. Navigate to `/Sito Magliette/` directory
+2. Modify product data in `productData.js` to add new collections or variants
+3. Update styling in `style.css` for theme customizations
+4. Test shopping cart functionality and PayPal integration
+5. Ensure all product images are optimized and placed in `images/` directory
+6. Verify responsive design across different screen sizes
+
+### Working with React Application (Gestionale-X)
+1. Navigate to `/gestionale-x/` directory
+2. Install dependencies with `npm install` if first time
+3. Start development server with `npm run dev`
+4. React components are in `/src/` directory
+5. Follow React 19 patterns and modern hooks
+6. Run `npm run lint` before committing changes
+7. Use `npm run build` to test production builds
 
 ### Updating Portfolio Hub
 1. Modify `/index.html` for main hub changes
@@ -197,40 +245,71 @@ card.addEventListener('touchend', function() {
 5. Ensure SVG logo and polpo modal functionality works
 6. Verify responsive grid behavior: 6/3/2 column layout
 
-### Modifying Games
-1. **Pixxa Generator**: Edit data files (`ingredienti.js`, `pizzeClassiche.js`, `pizzeLeggendarie.js`) or logic (`main.js`)
-2. **DVD Screensaver**: Modify `DVDScreensaver` class in `/minigiochi/dvd-screensaver/script.js`
+### Modifying Mini Apps
+1. **Pixxa Generator**:
+   - Data files: `ingredienti.js`, `pizzeClassiche.js`, `pizzeLeggendarie.js`, `pizzeRegionali.js`
+   - Core logic: `main.js` (includes smart naming algorithm in `generaNomeDaIngredienti()`)
+   - UI: `index.html` (self-contained with embedded CSS)
+2. **DVD Screensaver**:
+   - Main class: `DVDScreensaver` in `/minigiochi/dvd-screensaver/script.js`
+   - Supports image upload, betting system, collision detection
+   - Separate HTML/CSS/JS architecture
 3. **TRIX**: Edit `/minigiochi/trix.html` (self-contained)
 4. **Istinto Test**: Edit `/minigiochi/test/istinto.html` (self-contained)
 
-### Testing Approach
-- **Manual testing** on multiple device sizes
-- **Cross-browser testing** for modern browser features
-- **Touch device testing** for mobile interactions
-- **Theme switching verification** across all pages
-
 ## Development Commands
 
-### Local Development Server
+### Portfolio and Mini Apps (Static Files)
 ```bash
 # Python 3 (recommended for development)
 python -m http.server 8000
 
-# Python 2 (fallback)
-python -m SimpleHTTPServer 8000
-
 # Node.js alternative (if available)
 npx serve .
 
-# PHP alternative (if available)
-php -S localhost:8000
+# Live Server (VS Code extension) - recommended for development
+# Install Live Server extension and right-click any HTML file → "Open with Live Server"
 ```
 
-### File Serving
-This repository serves static files and doesn't require a build process. Files can be:
-- Opened directly in browser (`file://` protocol) - may have CORS limitations
-- Served with any static file server for full functionality
+### Gestionale-X React Application
+```bash
+# Navigate to the React project
+cd gestionale-x
+
+# Install dependencies
+npm install
+
+# Start development server (port 5173)
+npm run dev
+
+# Build for production
+npm run build
+
+# Run ESLint
+npm run lint
+
+# Preview production build
+npm run preview
+```
+
+### File Serving and Testing
+
+**Static Files (Portfolio & Mini Apps)**:
+- Opened directly in browser (`file://` protocol) - limited functionality due to CORS
+- Served with any static file server for full functionality (recommended)
 - Deployed to static hosting (GitHub Pages, Netlify, Vercel)
+
+**React Application (Gestionale-X)**:
+- Requires Node.js development server (`npm run dev`)
+- Uses Vite for fast builds and HMR
+- Production builds can be served statically
+
+**Testing Approach**:
+- **Static sites**: Manual testing by navigating to HTML files
+- **React app**: Use Vite dev server with hot reload
+- Verify mobile responsiveness using browser dev tools
+- Test theme switching functionality across all pages
+- Validate touch interactions on actual mobile devices when possible
 
 ### Git Workflow
 ```bash
