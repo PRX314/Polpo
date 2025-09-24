@@ -1,10 +1,10 @@
 [build]
   base = "gestionale-x"
   command = "npm run build"
-  publish = "gestionale-x/dist"
+  publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
 
 # Redirect rules for SPA
 [[redirects]]
