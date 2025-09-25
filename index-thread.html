@@ -352,16 +352,61 @@
             background-clip: text;
         }
 
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
+        /* Projects Container */
+        .projects-container {
             padding: 0 1rem;
+        }
+
+        .project-group {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 3rem;
+            padding-left: 30px;
+        }
+
+        /* Thread Connector System */
+        .thread-connector {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            left: -20px;
+            border-radius: 2px;
+            opacity: 0.7;
+            z-index: 1;
+        }
+
+        .gaming-thread {
+            background: linear-gradient(to bottom, #ff6b6b, #feca57, #48dbfb);
+        }
+
+        .business-thread {
+            background: linear-gradient(to bottom, #48dbfb, #54a0ff);
+        }
+
+        .dev-thread {
+            background: linear-gradient(to bottom, #5f27cd, #00d2d3, #10ac84);
+        }
+
+        .thread-connector::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 30px;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border: 3px solid currentColor;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
 
         .project-card {
             background: var(--bg-card);
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 1rem;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
@@ -373,7 +418,42 @@
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow-light);
             will-change: transform, box-shadow, min-height;
-            z-index: 1;
+            z-index: 2;
+        }
+
+        /* Card Size Variants */
+        .project-card.size-large {
+            min-height: 200px;
+            grid-column: span 2;
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(255,255,255,0.02) 100%);
+        }
+
+        .project-card.size-medium {
+            min-height: 160px;
+        }
+
+        .project-card.size-small {
+            min-height: 120px;
+        }
+
+        /* Tech Tags */
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: auto;
+            padding-top: 0.5rem;
+        }
+
+        .tech {
+            background: linear-gradient(45deg, var(--gradient-accent));
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
         .project-card:hover {
@@ -462,6 +542,11 @@
 
         .status-dev {
             background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: white;
+        }
+
+        .status-concept {
+            background: linear-gradient(135deg, #a55eea, #26de81);
             color: white;
         }
 
@@ -1004,30 +1089,96 @@
     <section id="progetti" class="projects">
         <div class="container">
             <h2>I Miei Progetti</h2>
-            <div class="projects-grid">
+            <div class="projects-container">
 
-                <!-- Mini Giochi -->
-                <div class="project-card" onclick="window.location.href='minigiochi/index.html'">
-                    <div class="project-image">🎮</div>
-                    <h3>Mini Giochi</h3>
-                    <span class="project-status status-ready">Pronto</span>
-                    <p>Giochi retrò e moderni innovativi</p>
+                <!-- Gaming Section -->
+                <div class="project-group" data-group="gaming">
+                    <div class="thread-connector gaming-thread"></div>
+
+                    <div class="project-card size-large" onclick="window.location.href='minigiochi/trix.html'">
+                        <div class="project-image">🎯</div>
+                        <h3>TRIX Bolt Edition</h3>
+                        <span class="project-status status-ready">Pronto</span>
+                        <p>Gioco strategico di carte con stile notebook</p>
+                        <div class="tech-tags">
+                            <span class="tech">Strategy</span>
+                            <span class="tech">Cards</span>
+                        </div>
+                    </div>
+
+                    <div class="project-card size-large" onclick="window.location.href='minigiochi/dvd-screensaver/index.html'">
+                        <div class="project-image">📺</div>
+                        <h3>DVD Screensaver</h3>
+                        <span class="project-status status-ready">Pronto</span>
+                        <p>Nostalgia interactive con betting system</p>
+                        <div class="tech-tags">
+                            <span class="tech">Canvas</span>
+                            <span class="tech">Animation</span>
+                        </div>
+                    </div>
+
+                    <div class="project-card size-medium" onclick="window.location.href='minigiochi/pixxa/index.html'">
+                        <div class="project-image">🍕</div>
+                        <h3>Pixxa Generator</h3>
+                        <span class="project-status status-ready">Pronto</span>
+                        <p>Generatore ricette pizza con AI naming</p>
+                        <div class="tech-tags">
+                            <span class="tech">Generator</span>
+                        </div>
+                    </div>
+
+                    <div class="project-card size-small" onclick="window.location.href='minigiochi/test/istinto.html'">
+                        <div class="project-image">🧠</div>
+                        <h3>Test Istinto</h3>
+                        <span class="project-status status-ready">Pronto</span>
+                        <p>Personality assessment</p>
+                    </div>
                 </div>
 
-                <!-- Shop -->
-                <div class="project-card" onclick="window.location.href='Sito Magliette/index.html'">
-                    <div class="project-image">🛒</div>
-                    <h3>Shop</h3>
-                    <span class="project-status status-ready">Pronto</span>
-                    <p>Magliette con design unici e personalizzabili</p>
+                <!-- Business Section -->
+                <div class="project-group" data-group="business">
+                    <div class="thread-connector business-thread"></div>
+
+                    <div class="project-card size-large" onclick="window.location.href='Sito Magliette/index.html'">
+                        <div class="project-image">🛒</div>
+                        <h3>Shop Magliette</h3>
+                        <span class="project-status status-ready">Pronto</span>
+                        <p>E-commerce completo con PayPal integration e sistema varianti</p>
+                        <div class="tech-tags">
+                            <span class="tech">PayPal</span>
+                            <span class="tech">E-commerce</span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- I Miei Progetti -->
-                <div class="project-card" onclick="window.location.href='progetti/index.html'">
-                    <div class="project-image">🚀</div>
-                    <h3>I Miei Progetti</h3>
-                    <span class="project-status status-dev">In Sviluppo</span>
-                    <p>Learn4Real, Editor Storie e X World metaverso</p>
+                <!-- Development Section -->
+                <div class="project-group" data-group="development">
+                    <div class="thread-connector dev-thread"></div>
+
+                    <div class="project-card size-medium" onclick="window.location.href='progetti/index.html'">
+                        <div class="project-image">📚</div>
+                        <h3>Learn4Real</h3>
+                        <span class="project-status status-dev">In Sviluppo</span>
+                        <p>Piattaforma e-learning con AI integration</p>
+                        <div class="tech-tags">
+                            <span class="tech">MERN</span>
+                            <span class="tech">AI</span>
+                        </div>
+                    </div>
+
+                    <div class="project-card size-small" onclick="window.location.href='progetti/index.html'">
+                        <div class="project-image">✍️</div>
+                        <h3>Editor Storie</h3>
+                        <span class="project-status status-dev">In Sviluppo</span>
+                        <p>Story creation tool</p>
+                    </div>
+
+                    <div class="project-card size-small" onclick="window.location.href='progetti/index.html'">
+                        <div class="project-image">🌐</div>
+                        <h3>X World</h3>
+                        <span class="project-status status-concept">Concept</span>
+                        <p>Metaverso platform</p>
+                    </div>
                 </div>
 
             </div>

@@ -71,9 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         polpoLongPressTimer = setTimeout(() => {
             if (polpoPressed) {
-                openPolpoModal();
+                window.location.href = 'https://gestionalepolpo.netlify.app/';
             }
-        }, 3000);
+        }, 1500);
     }
 
     function endPolpoPress() {

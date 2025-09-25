@@ -1,18 +1,14 @@
 // Authentication component for Gestionale Polpo
 import { useState } from 'react';
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile
+  signInWithEmailAndPassword
 } from 'firebase/auth';
 import { auth } from '../firebase';
 
 const Auth = ({ onAuthSuccess }) => {
-  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    displayName: ''
+    password: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,30 +27,12 @@ const Auth = ({ onAuthSuccess }) => {
     setError('');
 
     try {
-      let userCredential;
-
-      if (isLogin) {
-        // Login
-        userCredential = await signInWithEmailAndPassword(
-          auth,
-          formData.email,
-          formData.password
-        );
-      } else {
-        // Register
-        userCredential = await createUserWithEmailAndPassword(
-          auth,
-          formData.email,
-          formData.password
-        );
-
-        // Update display name
-        if (formData.displayName) {
-          await updateProfile(userCredential.user, {
-            displayName: formData.displayName
-          });
-        }
-      }
+      // Solo login
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
 
       onAuthSuccess(userCredential.user);
     } catch (error) {
@@ -71,14 +49,10 @@ const Auth = ({ onAuthSuccess }) => {
         return 'Utente non trovato';
       case 'auth/wrong-password':
         return 'Password errata';
-      case 'auth/email-already-in-use':
-        return 'Email già in uso';
-      case 'auth/weak-password':
-        return 'Password troppo debole (minimo 6 caratteri)';
       case 'auth/invalid-email':
         return 'Email non valida';
       default:
-        return 'Errore durante l\'autenticazione';
+        return 'Errore durante l\'accesso';
     }
   };
 
@@ -88,25 +62,11 @@ const Auth = ({ onAuthSuccess }) => {
         <div className="auth-header">
           <h1 className="title-main">🐙 Gestionale Polpo</h1>
           <p className="auth-subtitle">
-            {isLogin ? 'Accedi al tuo account' : 'Crea un nuovo account'}
+            Accedi al tuo account
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
-          {!isLogin && (
-            <div className="form-group">
-              <label htmlFor="displayName">Nome</label>
-              <input
-                type="text"
-                id="displayName"
-                name="displayName"
-                value={formData.displayName}
-                onChange={handleInputChange}
-                placeholder="Il tuo nome"
-                required={!isLogin}
-              />
-            </div>
-          )}
 
           <div className="form-group">
             <label htmlFor="email">Email</label>
@@ -145,26 +105,9 @@ const Auth = ({ onAuthSuccess }) => {
             className="auth-button"
             disabled={loading}
           >
-            {loading ? 'Caricamento...' : (isLogin ? 'Accedi' : 'Registrati')}
+            {loading ? 'Caricamento...' : 'Accedi'}
           </button>
         </form>
-
-        <div className="auth-switch">
-          <p>
-            {isLogin ? 'Non hai un account?' : 'Hai già un account?'}
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-                setFormData({ email: '', password: '', displayName: '' });
-              }}
-              className="switch-button"
-            >
-              {isLogin ? 'Registrati' : 'Accedi'}
-            </button>
-          </p>
-        </div>
       </div>
     </div>
   );
