@@ -1046,3 +1046,184 @@ body::after {
         font-size: 16px;
     }
 }
+
+/* ===== TV & BIG SCREEN OPTIMIZATION ===== */
+
+/* Large screens (1080p TVs, monitors) */
+@media screen and (min-width: 1200px) {
+    body {
+        font-size: 20px;
+    }
+
+    #game-title h1 {
+        font-size: 3.5rem;
+        letter-spacing: 4px;
+    }
+
+    #game-title p {
+        font-size: 1.4rem;
+    }
+
+    .retro-btn {
+        padding: 16px 32px;
+        font-size: 1.2rem;
+        min-height: 60px;
+    }
+
+    .retro-input {
+        padding: 16px;
+        font-size: 1.1rem;
+    }
+
+    #controls {
+        max-width: 800px;
+    }
+
+    /* Bigger betting buttons for TV remote navigation */
+    .bet-buttons button {
+        padding: 20px 30px;
+        font-size: 1.3rem;
+        min-width: 200px;
+        margin: 10px;
+    }
+
+    /* Larger scoreboard for TV viewing */
+    .score-item {
+        padding: 20px;
+        font-size: 1.2rem;
+    }
+
+    .score-item h3 {
+        font-size: 1.4rem;
+    }
+
+    .score-value {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+}
+
+/* Extra large screens (4K TVs, projectors) */
+@media screen and (min-width: 1920px) {
+    body {
+        font-size: 24px;
+    }
+
+    #main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px;
+    }
+
+    #game-title h1 {
+        font-size: 4.5rem;
+        letter-spacing: 6px;
+    }
+
+    #game-title p {
+        font-size: 1.8rem;
+    }
+
+    #game-title {
+        padding: 50px;
+        margin-bottom: 60px;
+    }
+
+    #controls {
+        max-width: 1000px;
+        padding: 40px;
+    }
+
+    .retro-btn {
+        padding: 20px 40px;
+        font-size: 1.4rem;
+        min-height: 70px;
+    }
+
+    /* Extra large betting buttons for TV remote */
+    .bet-buttons button {
+        padding: 25px 40px;
+        font-size: 1.6rem;
+        min-width: 250px;
+        margin: 15px;
+    }
+
+    /* Canvas scales automatically but ensure it's visible */
+    canvas {
+        max-width: 100%;
+        max-height: 80vh;
+        margin: 20px auto;
+        display: block;
+    }
+
+    /* Huge scoreboard for TV */
+    .score-item {
+        padding: 25px;
+        font-size: 1.4rem;
+    }
+
+    .score-item h3 {
+        font-size: 1.8rem;
+    }
+
+    .score-value {
+        font-size: 2.5rem;
+    }
+}
+
+/* TV-specific optimizations */
+@media screen and (min-width: 1200px) {
+    /* Remove hover effects for TV (no mouse) */
+    @media (hover: none) {
+        .retro-btn:hover {
+            transform: none;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+        }
+
+        .bet-buttons button:hover {
+            transform: none;
+        }
+    }
+
+    /* Focus styles for TV remote navigation */
+    .retro-btn:focus {
+        outline: 3px solid #00ff41;
+        outline-offset: 3px;
+        transform: scale(1.05);
+    }
+
+    .bet-buttons button:focus {
+        outline: 3px solid #fff;
+        outline-offset: 3px;
+        transform: scale(1.1);
+    }
+
+    /* Better contrast for TV viewing distance */
+    body {
+        text-shadow: 0 0 8px currentColor;
+    }
+
+    /* Ensure important elements are visible from couch distance */
+    .current-player-display {
+        font-size: 2rem;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+}
+
+/* Ultra-wide screens (cinema displays) */
+@media screen and (min-width: 2560px) {
+    #main-container {
+        max-width: 1800px;
+    }
+
+    #game-title h1 {
+        font-size: 6rem;
+    }
+
+    .retro-btn {
+        font-size: 1.6rem;
+        padding: 25px 50px;
+    }
+}

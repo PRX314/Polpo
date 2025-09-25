@@ -86,6 +86,107 @@ class DVDScreensaver {
 
         // Imposta l'immagine di preview iniziale
         this.previewImage.src = this.bouncingImage.src;
+
+        // Initialize TV optimizations
+        this.initTVOptimizations();
+    }
+
+    // TV and large screen optimizations
+    initTVOptimizations() {
+        // Auto-resize canvas for different screen sizes
+        this.handleResize = () => {
+            if (this.canvas && this.isRunning) {
+                const maxWidth = Math.min(window.innerWidth * 0.9, 1400);
+                const maxHeight = Math.min(window.innerHeight * 0.8, 900);
+
+                // Maintain 16:10 aspect ratio for TV compatibility
+                if (maxWidth / maxHeight > 1.6) {
+                    this.canvas.style.width = (maxHeight * 1.6) + 'px';
+                    this.canvas.style.height = maxHeight + 'px';
+                } else {
+                    this.canvas.style.width = maxWidth + 'px';
+                    this.canvas.style.height = (maxWidth / 1.6) + 'px';
+                }
+            }
+        };
+
+        // Add resize listener
+        window.addEventListener('resize', this.handleResize);
+
+        // Enhanced keyboard navigation for TV remotes
+        document.addEventListener('keydown', (e) => {
+            if (!this.isRunning && !this.gameActive) {
+                // Setup phase - navigate buttons with arrow keys
+                const buttons = Array.from(document.querySelectorAll('button:not([disabled]), input[type="file"]'));
+                const currentIndex = buttons.findIndex(el => el === document.activeElement);
+
+                switch(e.key) {
+                    case 'ArrowDown':
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        const nextIndex = (currentIndex + 1) % buttons.length;
+                        buttons[nextIndex]?.focus();
+                        break;
+                    case 'ArrowUp':
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        const prevIndex = currentIndex <= 0 ? buttons.length - 1 : currentIndex - 1;
+                        buttons[prevIndex]?.focus();
+                        break;
+                    case 'Enter':
+                    case ' ':
+                        e.preventDefault();
+                        if (document.activeElement.tagName === 'INPUT') {
+                            document.activeElement.click(); // For file input
+                        } else {
+                            document.activeElement?.click();
+                        }
+                        break;
+                }
+            } else if (this.gameActive && !this.isRunning) {
+                // Game phase - navigate bet buttons
+                const betButtons = Array.from(document.querySelectorAll('.bet-buttons button'));
+                const currentIndex = betButtons.findIndex(el => el === document.activeElement);
+
+                switch(e.key) {
+                    case 'ArrowRight':
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        const nextIndex = (currentIndex + 1) % betButtons.length;
+                        betButtons[nextIndex]?.focus();
+                        break;
+                    case 'ArrowLeft':
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        const prevIndex = currentIndex <= 0 ? betButtons.length - 1 : currentIndex - 1;
+                        betButtons[prevIndex]?.focus();
+                        break;
+                    case 'Enter':
+                    case ' ':
+                        e.preventDefault();
+                        document.activeElement?.click();
+                        break;
+                }
+            }
+
+            // Global escape key
+            if (e.key === 'Escape' && this.isRunning) {
+                this.stop();
+            }
+        });
+
+        // Auto-focus for TV navigation
+        this.autoFocusForTV();
+    }
+
+    autoFocusForTV() {
+        // Auto-focus first interactable element for TV remote
+        setTimeout(() => {
+            const firstButton = document.querySelector('button:not([disabled])');
+            if (firstButton && window.innerWidth >= 1200) {
+                firstButton.focus();
+            }
+        }, 100);
     }
 
     addPlayer() {
