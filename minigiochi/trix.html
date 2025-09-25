@@ -549,6 +549,10 @@
             display: none;
         }
 
+        .hidden {
+            display: none !important;
+        }
+
         .modal-overlay {
             position: absolute;
             top: 0;
@@ -630,6 +634,51 @@
             flex-wrap: wrap;
         }
 
+        /* Turn Selection Panel */
+        .turn-selection {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px solid #007bff;
+        }
+
+        .turn-selection h3 {
+            color: #007bff;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .turn-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .turn-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            padding: 15px 10px;
+            background: white;
+            border: 2px solid #007bff;
+            transition: all 0.3s ease;
+        }
+
+        .turn-btn:hover {
+            background: #007bff;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .turn-symbol {
+            font-size: 1.5rem;
+        }
+
         /* Mobile modal adjustments */
         @media (max-width: 768px) {
             .modal-content {
@@ -656,6 +705,21 @@
 
             .game-controls .btn {
                 width: 100%;
+            }
+
+            .turn-selection {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .turn-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .turn-btn {
+                min-width: 100%;
+                padding: 12px;
             }
         }
     </style>
@@ -774,9 +838,24 @@
                     </div>
                 </div>
 
+                <!-- Turn Selection Panel -->
+                <div class="turn-selection hidden" id="turnSelection">
+                    <h3>Chi inizia questa partita?</h3>
+                    <div class="turn-buttons">
+                        <button class="btn turn-btn" onclick="startGameWithPlayer('X')">
+                            <span class="turn-symbol">❌</span>
+                            <span>Giocatore X</span>
+                        </button>
+                        <button class="btn turn-btn" onclick="startGameWithPlayer('O')">
+                            <span class="turn-symbol">⭕</span>
+                            <span>Giocatore O</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Controlli -->
                 <div class="game-controls">
-                    <button class="btn" onclick="resetGame()">Nuova Partita</button>
+                    <button class="btn" onclick="showTurnSelection()">Nuova Partita</button>
                     <button class="btn" onclick="resetScore()">Reset Punteggio</button>
                     <button class="btn" onclick="showSettings()">Impostazioni</button>
                 </div>
@@ -835,26 +914,18 @@
             // Mostra la modal
             document.getElementById('gameModal').classList.remove('hidden');
 
+            // Hide game areas initially and show turn selection
+            document.getElementById('gameGrid').classList.add('hidden');
+            document.getElementById('ultimateBoard').classList.add('hidden');
+
             if (mode === 'bolt') {
-                // Ultimate Bolt mode
-                document.getElementById('gameGrid').classList.add('hidden');
-                document.getElementById('ultimateBoard').classList.remove('hidden');
                 document.getElementById('timer').classList.remove('hidden');
-                initializeUltimateBoard();
-                startTimer();
             } else {
-                // Classic and Memory modes
-                document.getElementById('gameGrid').classList.remove('hidden');
-                document.getElementById('ultimateBoard').classList.add('hidden');
-                if (mode === 'memory') {
-                    document.getElementById('timer').classList.add('hidden');
-                } else {
-                    document.getElementById('timer').classList.add('hidden');
-                }
-                resetGame();
+                document.getElementById('timer').classList.add('hidden');
             }
 
-            updateStatus();
+            // Show turn selection panel
+            showTurnSelection();
         }
 
         // Chiudi modal
@@ -884,8 +955,17 @@
                 if (moveCounter[currentPlayer] >= 4) {
                     const oldestMove = playerMoves[currentPlayer].shift();
                     const oldestCell = document.querySelectorAll('.game-cell')[oldestMove];
+
+                    // Complete cleanup for mobile rendering
                     oldestCell.textContent = '';
-                    oldestCell.classList.remove('x', 'o');
+                    oldestCell.className = 'game-cell'; // Reset all classes
+                    oldestCell.style.color = '';        // Clear inline styles
+
+                    // Force repaint on mobile devices
+                    oldestCell.style.display = 'none';
+                    oldestCell.offsetHeight; // Trigger reflow
+                    oldestCell.style.display = '';
+
                     gameBoard[oldestMove] = '';
                     moveCounter[currentPlayer]--;
                 }
@@ -1171,15 +1251,49 @@
             document.getElementById('scoreTie').textContent = scores.tie;
         }
 
-        // Reset gioco
-        function resetGame() {
+        // Show turn selection panel
+        function showTurnSelection() {
+            document.getElementById('turnSelection').classList.remove('hidden');
+            hideGameArea();
+        }
+
+        // Start game with selected player
+        function startGameWithPlayer(player) {
+            currentPlayer = player;
+            document.getElementById('turnSelection').classList.add('hidden');
+            showGameArea();
+            resetGameBoard();
+            updateStatus();
+        }
+
+        // Hide game area
+        function hideGameArea() {
+            if (currentMode === 'bolt') {
+                document.getElementById('ultimateBoard').classList.add('hidden');
+            } else {
+                document.getElementById('gameGrid').classList.add('hidden');
+            }
+        }
+
+        // Show game area
+        function showGameArea() {
+            if (currentMode === 'bolt') {
+                document.getElementById('ultimateBoard').classList.remove('hidden');
+            } else {
+                document.getElementById('gameGrid').classList.remove('hidden');
+            }
+        }
+
+        // Reset game board only
+        function resetGameBoard() {
             if (currentMode === 'bolt') {
                 // Reset Ultimate Bolt mode
                 initializeUltimateBoard();
+                if (timer) clearInterval(timer);
+                startTimer();
             } else {
                 // Reset standard modes (Classic e Memory)
                 gameBoard = Array(9).fill('');
-                currentPlayer = 'X';
                 gameActive = true;
                 // Reset memory mode tracking
                 playerMoves = { X: [], O: [] };
@@ -1191,15 +1305,12 @@
                     cell.className = 'game-cell';
                     cell.style.opacity = '1';
                 });
-
-                updateStatus();
             }
+        }
 
-            if (timer) clearInterval(timer);
-
-            if (currentMode === 'bolt') {
-                startTimer();
-            }
+        // Reset gioco (legacy function - now shows turn selection)
+        function resetGame() {
+            showTurnSelection();
         }
 
         // Reset punteggio
