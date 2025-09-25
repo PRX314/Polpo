@@ -90,23 +90,29 @@ This is Paolo Repetto's portfolio hub repository - a collection of web-based min
 
 ### Gestionale-X React Application
 **Location**: `/gestionale-x/`
-**Type**: React + Vite modern web application
-**Tech Stack**: React 19, Vite 7, ESLint 9
+**Type**: React + Vite web application with Firebase backend
+**Tech Stack**: React 19.1.1, Vite 7, ESLint 9, Firebase 12.3.0
+**Deployment**: Configured for Netlify deployment (see `netlify.toml`)
 **Key Features**:
-- Modern React application with Vite for fast development
-- ESLint configuration with React hooks and refresh plugins
+- Project and note management system with CRUD operations
+- Firebase Authentication with email/password and Google OAuth
+- Firestore database with real-time subscriptions
+- Component-based architecture with form handling
 - Hot Module Replacement (HMR) for development
-- Production build optimization
+- Firebase security rules for user data isolation
+**Security**: Requires proper Firestore security rules (see `SECURITY_SETUP.md`)
+**Components**: Auth, AddProjectForm, AddNoteForm, ProjectCard, NoteCard, StatusBadge
 
 ## Architecture Patterns
 
 ### Frontend Architecture
 - **Pure Vanilla JavaScript** - No frameworks or build tools (main portfolio and games)
-- **React + Vite** - Modern React application for gestionale-x project
+- **React + Vite + Firebase** - Modern React application with real-time backend (gestionale-x)
 - **ES6+ Features** - Modern JavaScript with classes, arrow functions, modules
 - **CSS Custom Properties** - Theme system using CSS variables
 - **Mobile-First Design** - Progressive enhancement for larger screens
 - **Component-Based CSS** - Modular styling with BEM-like naming
+- **Real-time Data** - Firebase Firestore subscriptions for live updates
 
 ### JavaScript Patterns
 - **Class-based Organization** - Games use ES6 classes (e.g., `DVDScreensaver` class in dvd-screensaver)
@@ -231,11 +237,14 @@ card.addEventListener('touchend', function() {
 ### Working with React Application (Gestionale-X)
 1. Navigate to `/gestionale-x/` directory
 2. Install dependencies with `npm install` if first time
-3. Start development server with `npm run dev`
-4. React components are in `/src/` directory
-5. Follow React 19 patterns and modern hooks
-6. Run `npm run lint` before committing changes
-7. Use `npm run build` to test production builds
+3. **IMPORTANT**: Configure Firebase before running (see `firebase.js`)
+4. **SECURITY**: Review and implement `SECURITY_SETUP.md` for Firestore rules
+5. Start development server with `npm run dev`
+6. React components are in `/src/components/` directory
+7. Firebase services are in `/src/firebaseService.js`
+8. Authentication handled in `/src/components/Auth.jsx`
+9. Run `npm run lint` before committing changes
+10. Use `npm run build` to test production builds
 
 ### Updating Portfolio Hub
 1. Modify `/index.html` for main hub changes
@@ -292,6 +301,13 @@ npm run lint
 npm run preview
 ```
 
+### Deployment
+```bash
+# For Netlify deployment (configured in netlify.toml)
+# Builds from gestionale-x directory, deploys to dist/
+# Includes SPA redirects for React Router
+```
+
 ### File Serving and Testing
 
 **Static Files (Portfolio & Mini Apps)**:
@@ -327,9 +343,18 @@ git push origin main
 
 ## Security Considerations
 
+### Static Projects (Portfolio, Mini Games, E-commerce)
 - **No server-side code** - Pure client-side implementation
-- **Local storage only** - No external data transmission
+- **Local storage only** - No external data transmission (except PayPal in Sito Magliette)
 - **XSS prevention** - Avoid `innerHTML` with user data
 - **File upload validation** - Image type checking in games
+
+### Gestionale-X Firebase Project
+- **CRITICAL**: Implement Firestore security rules immediately (see `SECURITY_SETUP.md`)
+- **Default state is VULNERABLE** - Anyone can read/write all data without rules
+- **User authentication required** - Firebase Auth with email/password and Google OAuth
+- **Data isolation** - Users can only access their own projects/notes
+- **Input validation** - Both client-side and server-side through Firestore rules
+- **Real-time security** - Firebase rules apply to all real-time subscriptions
 
 This repository represents a creative showcase of modern web development techniques using vanilla technologies, emphasizing performance, accessibility, and mobile-first design principles.

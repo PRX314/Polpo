@@ -1068,9 +1068,9 @@ body.collection-gpower button:not(.theme-toggle)::before {
 }
 
 body.collection-gpower button:not(.theme-toggle):hover {
-  transform: translate3d(0, -3px, 0) scale3d(1.02, 1.02, 1);
-  box-shadow: 4px 6px 0px #FF2AA5, 0 0 15px rgba(255, 42, 165, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 6px 6px 0px #FF2AA5, 0 0 10px rgba(255, 42, 165, 0.2);
+  transition: box-shadow 0.3s ease;
+  transform: none;
 }
 
 body.collection-gpower button:not(.theme-toggle):hover::before {
@@ -1113,12 +1113,11 @@ body.collection-gpower #cart,
 body.collection-gpower #wishlist,
 body.collection-gpower #user-form {
   border: 3px solid #FFD600;
-  box-shadow: 8px 8px 0px #FF2AA5;
-  transform: skew(-1deg, 1deg);
+  box-shadow: 6px 6px 0px #FF2AA5;
   border-radius: 0;
-  will-change: transform;
   position: relative;
   overflow: hidden;
+  transform: none;
 }
 
 body.collection-gpower .product-box::before,
@@ -1126,12 +1125,11 @@ body.collection-gpower #cart::before,
 body.collection-gpower #wishlist::before {
   content: '';
   position: absolute;
-  top: -20%;
-  left: -20%;
-  width: 140%;
-  height: 140%;
-  background: linear-gradient(45deg, transparent, rgba(255, 42, 165, 0.05), transparent, rgba(255, 212, 0, 0.05), transparent);
-  animation: gpowerSpin 8s linear infinite;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(255, 42, 165, 0.02), rgba(255, 212, 0, 0.02));
   z-index: -1;
 }
 
@@ -1143,9 +1141,9 @@ body.collection-gpower #wishlist::before {
 body.collection-gpower .product-box:hover,
 body.collection-gpower #cart:hover,
 body.collection-gpower #wishlist:hover {
-  transform: translate(-2px, -2px) skew(-1deg, 1deg) scale(1.01);
-  box-shadow: 10px 10px 0px #FF2AA5, 0 0 20px rgba(255, 42, 165, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 8px 8px 0px #FF2AA5, 0 0 15px rgba(255, 42, 165, 0.2);
+  transition: box-shadow 0.3s ease;
+  transform: none;
 }
 
 @keyframes gpowerCardShake {
@@ -1174,8 +1172,8 @@ body.collection-gpower #wishlist-items li {
   border-left: 6px solid #FF2AA5;
   background: linear-gradient(90deg, #ffffff, #FFD600);
   position: relative;
-  transform: skew(-2deg);
-  margin: 8px 4px;
+  margin: 8px 0;
+  transform: none;
 }
 
 body.collection-gpower #cart-items li::before,

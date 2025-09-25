@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow users to read and write only their own projects
+    match /projects/{projectId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Allow users to read and write only their own notes
+    match /notes/{noteId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Validation rules for projects
+    match /projects/{projectId} {
+      allow write: if request.auth != null
+        && request.resource.data.keys().hasAll(['name', 'description', 'status', 'tags', 'userId', 'createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 500
+        && request.resource.data.status in ['pending', 'in_progress', 'completed', 'paused']
+        && request.resource.data.tags is list
+        && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Validation rules for notes
+    match /notes/{noteId} {
+      allow write: if request.auth != null
+        && request.resource.data.keys().hasAll(['title', 'content', 'type', 'priority', 'projectTags', 'userId', 'createdAt'])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 200
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 2000
+        && request.resource.data.type in ['note', 'idea']
+        && request.resource.data.priority in ['low', 'medium', 'high']
+        && request.resource.data.projectTags is list
+        && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
