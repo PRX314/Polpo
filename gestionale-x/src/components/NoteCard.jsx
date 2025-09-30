@@ -29,6 +29,48 @@ const NoteCard = ({ note, projects, onEdit, onDelete }) => {
         </div>
       )}
 
+      {note.links && note.links.length > 0 && (
+        <div className="mb-3" style={{ borderTop: '1px solid #e9ecef', paddingTop: '0.5rem' }}>
+          <div style={{ fontSize: '0.7em', color: '#999', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            🔗 Links
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {note.links.map((link, index) => (
+              <a
+                key={index}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: '0.7em',
+                  padding: '0.3rem 0.5rem',
+                  background: 'linear-gradient(135deg, #feca57, #fd7e14)',
+                  color: 'white',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 4px 8px rgba(254, 202, 87, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = 'none';
+                }}
+              >
+                {link.title}
+                <span style={{ fontSize: '1.1em' }}>↗</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="text-meta">
         <div>Creato: {new Date(note.createdAt).toLocaleDateString('it-IT')}</div>
         {matchingProjects.length > 0 && (

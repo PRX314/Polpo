@@ -8,10 +8,12 @@ const AddNoteForm = ({ onClose, onSuccess, onError, note }) => {
     content: note?.content || '',
     type: note?.type || 'note',
     priority: note?.priority || 'medium',
-    projectTags: note?.projectTags?.join(', ') || ''
+    projectTags: note?.projectTags?.join(', ') || '',
+    links: note?.links || []
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [newLink, setNewLink] = useState({ title: '', url: '' });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +31,8 @@ const AddNoteForm = ({ onClose, onSuccess, onError, note }) => {
         content: formData.content,
         type: formData.type,
         priority: formData.priority,
-        projectTags: tagsArray
+        projectTags: tagsArray,
+        links: formData.links
       };
 
       if (isEdit) {
@@ -52,6 +55,30 @@ const AddNoteForm = ({ onClose, onSuccess, onError, note }) => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleAddLink = () => {
+    if (newLink.title.trim() && newLink.url.trim()) {
+      setFormData({
+        ...formData,
+        links: [...formData.links, { ...newLink }]
+      });
+      setNewLink({ title: '', url: '' });
+    }
+  };
+
+  const handleRemoveLink = (index) => {
+    setFormData({
+      ...formData,
+      links: formData.links.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleLinkChange = (e) => {
+    setNewLink({
+      ...newLink,
       [e.target.name]: e.target.value
     });
   };
@@ -132,6 +159,73 @@ const AddNoteForm = ({ onClose, onSuccess, onError, note }) => {
             />
             <small className="form-help">
               I tag determinano a quali progetti questa nota sarà associata
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label>🔗 Links</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {formData.links.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  {formData.links.map((link, index) => (
+                    <div key={index} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem',
+                      background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                      borderRadius: '6px',
+                      border: '1px solid #ddd'
+                    }}>
+                      <div style={{ flex: 1, fontSize: '0.85em' }}>
+                        <strong>{link.title}</strong>
+                        <div style={{ fontSize: '0.9em', color: '#666', wordBreak: 'break-all' }}>
+                          {link.url}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLink(index)}
+                        className="btn-icon btn-delete"
+                        title="Rimuovi link"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+                <input
+                  type="text"
+                  name="title"
+                  value={newLink.title}
+                  onChange={handleLinkChange}
+                  placeholder="Titolo link (es: Riferimento, Docs, Tutorial)"
+                  style={{ flex: 1 }}
+                />
+                <input
+                  type="url"
+                  name="url"
+                  value={newLink.url}
+                  onChange={handleLinkChange}
+                  placeholder="URL (es: https://...)"
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddLink}
+                  className="btn-secondary"
+                  disabled={!newLink.title.trim() || !newLink.url.trim()}
+                  style={{ alignSelf: 'flex-start' }}
+                >
+                  + Aggiungi Link
+                </button>
+              </div>
+            </div>
+            <small className="form-help">
+              Link utili relativi a questa nota/idea
             </small>
           </div>
 
