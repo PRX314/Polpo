@@ -11,6 +11,7 @@ import {
   deleteNote
 } from './firebaseService'
 import Auth from './components/Auth'
+import Home from './components/Home'
 import AddProjectForm from './components/AddProjectForm'
 import AddNoteForm from './components/AddNoteForm'
 import ProjectCard from './components/ProjectCard'
@@ -24,7 +25,7 @@ function App() {
   const [projects, setProjects] = useState([])
   const [notes, setNotes] = useState([])
   const [selectedProject, setSelectedProject] = useState(null)
-  const [view, setView] = useState('projects') // 'projects', 'notes', 'project-detail'
+  const [view, setView] = useState('home') // 'home', 'projects', 'notes', 'project-detail'
   const [showAddProjectForm, setShowAddProjectForm] = useState(false)
   const [showAddNoteForm, setShowAddNoteForm] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
@@ -410,6 +411,15 @@ function App() {
             <nav className="flex gap-4">
               <button
                 onClick={() => {
+                  setView('home')
+                  setSelectedProject(null)
+                }}
+                className={`nav-button ${view === 'home' ? 'active' : ''}`}
+              >
+                🏠 Home
+              </button>
+              <button
+                onClick={() => {
                   setView('projects')
                   setSelectedProject(null)
                 }}
@@ -442,6 +452,19 @@ function App() {
 
       {/* Content */}
       <main className="main-content">
+        {view === 'home' && (
+          <Home
+            projects={projects}
+            notes={notes}
+            onNavigate={setView}
+            onAddProject={() => setShowAddProjectForm(true)}
+            onAddNote={(type) => {
+              setEditingNote({ type });
+              setShowAddNoteForm(true);
+            }}
+          />
+        )}
+
         {view === 'project-detail' && (
           <div className="mb-6">
             <button

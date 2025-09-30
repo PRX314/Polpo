@@ -10,7 +10,10 @@ const NoteCard = ({ note, projects, onEdit, onDelete }) => {
       <div className="flex-start mb-3">
         <div className="flex gap-2">
           <span className={`badge badge-type-${note.type}`}>
-            {note.type === 'idea' ? '💡 Idea' : '📝 Nota'}
+            {note.type === 'idea' ? '💡 Idea' :
+             note.type === 'monologo' ? '🎭 Monologo' :
+             note.type === 'musica' ? '🎵 Musica' :
+             '📝 Nota'}
           </span>
           <PriorityBadge priority={note.priority} />
         </div>

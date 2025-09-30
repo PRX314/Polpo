@@ -88,7 +88,17 @@ const AddNoteForm = ({ onClose, onSuccess, onError, note }) => {
       <div className="form-modal-content">
         <div className="form-header">
           <h3 className="title-section">
-            {isEdit ? (formData.type === 'idea' ? '💡 Modifica Idea' : '📝 Modifica Nota') : (formData.type === 'idea' ? '💡 Nuova Idea' : '📝 Nuova Nota')}
+            {isEdit ? (
+              formData.type === 'idea' ? '💡 Modifica Idea' :
+              formData.type === 'monologo' ? '🎭 Modifica Monologo' :
+              formData.type === 'musica' ? '🎵 Modifica Musica' :
+              '📝 Modifica Nota'
+            ) : (
+              formData.type === 'idea' ? '💡 Nuova Idea' :
+              formData.type === 'monologo' ? '🎭 Nuovo Monologo' :
+              formData.type === 'musica' ? '🎵 Nuova Musica' :
+              '📝 Nuova Nota'
+            )}
           </h3>
           <button onClick={onClose} className="close-button">×</button>
         </div>
@@ -104,6 +114,8 @@ const AddNoteForm = ({ onClose, onSuccess, onError, note }) => {
             >
               <option value="note">📝 Nota</option>
               <option value="idea">💡 Idea</option>
+              <option value="monologo">🎭 Monologo</option>
+              <option value="musica">🎵 Musica</option>
             </select>
           </div>
 
@@ -249,7 +261,15 @@ const AddNoteForm = ({ onClose, onSuccess, onError, note }) => {
               className="btn-primary"
               disabled={loading}
             >
-              {loading ? 'Salvando...' : (isEdit ? `Aggiorna ${formData.type === 'idea' ? 'Idea' : 'Nota'}` : `Salva ${formData.type === 'idea' ? 'Idea' : 'Nota'}`)}
+              {loading ? 'Salvando...' : (isEdit ? `Aggiorna ${
+                formData.type === 'idea' ? 'Idea' :
+                formData.type === 'monologo' ? 'Monologo' :
+                formData.type === 'musica' ? 'Musica' : 'Nota'
+              }` : `Salva ${
+                formData.type === 'idea' ? 'Idea' :
+                formData.type === 'monologo' ? 'Monologo' :
+                formData.type === 'musica' ? 'Musica' : 'Nota'
+              }`)}
             </button>
           </div>
         </form>
