@@ -1,0 +1,199 @@
+1. DTF (Direct To Film)
+👉 Stampa su un film trasparente che viene poi trasferito sul tessuto con una pressa a caldo.
+
+✅ Pro:
+
+Ottima resa su cotone, poliestere, misti
+
+Perfetta per piccoli lotti e stampa a colori
+
+Resistente ai lavaggi
+
+❌ Contro:
+
+Richiede pellicola e adesivo (servizio esterno o macchina DTF)
+
+2. DTG (Direct To Garment)
+👉 Stampa direttamente sulla maglietta con inchiostro tessile (come una stampante inkjet).
+
+✅ Pro:
+
+Alta qualità, perfetto per grafiche complesse e sfumature
+
+Buono per capi chiari (con primer anche per capi scuri)
+
+❌ Contro:
+
+Costosa per avviarsi (stampante DTG = 2000€+)
+
+Non ideale per produzione in serie
+
+3. Serigrafia (Screen Printing)
+👉 Si usa un telaio con una rete e un disegno inciso, attraverso cui si fa passare l’inchiostro.
+
+✅ Pro:
+
+Ottima per grandi quantità
+
+Colori brillanti e molto resistenti
+
+Economica dopo l'avvio
+
+❌ Contro:
+
+Ogni colore richiede un telaio
+
+Non adatta a grafiche molto dettagliate o con sfumature
+
+4. Stampa a caldo (vinile termo-adesivo)
+👉 Si intaglia il disegno su un vinile adesivo, poi si applica con la pressa.
+
+✅ Pro:
+
+Ottimo per scritte, loghi semplici, numeri
+
+Economico per piccole personalizzazioni
+
+❌ Contro:
+
+Non adatto a grafiche complesse o dettagliate
+
+Il vinile è percepibile al tatto
+
+5. Sublimazione
+👉 Si stampa su carta speciale e si trasferisce con il calore, solo su tessuti sintetici bianchi.
+
+✅ Pro:
+
+Nessun rilievo sul tessuto, stampa invisibile al tatto
+
+Resistente e durevole
+
+❌ Contro:
+
+Funziona solo su tessuti 100% poliestere chiari
+
+6. Xilografia o timbri manuali
+👉 Tecnica antica: si incide un timbro in rilievo (su legno, gomma, linoleum) e lo si inchiostra.
+
+✅ Pro:
+
+Estetica artigianale unica
+
+Perfetto per piccoli dettagli o effetti “fatti a mano”
+
+❌ Contro:
+
+Poco preciso per grafiche complesse
+
+Non adatto a tessuti scuri o resistenti
+
+7. Transfer a inchiostro (Inkjet Transfer)
+👉 Si stampa un disegno su carta transfer con una comune stampante inkjet, poi si applica con la pressa o ferro da stiro.
+
+✅ Economica, ideale per uso domestico
+
+❌ Bassa qualità, tende a screpolare col tempo
+
+8. Laser Transfer (No-Cut / Forever Paper)
+👉 Si usa una stampante laser a colori + carta speciale (tipo Forever), poi si fissa con la pressa.
+
+✅ Più resistente dell’inkjet, adatto anche a grafiche complesse
+
+❌ Richiede stampante laser di qualità + carta costosa
+
+9. Stampa con pigmenti reattivi o acidi (per tessuti naturali o seta)
+👉 Usata in ambito industriale e tessile artistico.
+
+✅ Ottima penetrazione nel tessuto, colori vivaci e resistenti
+
+❌ Richiede conoscenze chimiche, fissaggi specifici
+
+10. Batik
+👉 Tecnica artigianale dove si disegna con cera calda sul tessuto e si tinge a immersione.
+
+✅ Unica, tradizionale, decorativa
+
+❌ Molto laboriosa, non ripetibile in serie
+
+11. Block printing
+👉 Simile alla xilografia, ma spesso su blocchi di legno incisi a mano (stile indiano o africano).
+
+✅ Ideale per motivi ripetitivi su tessuti naturali
+
+❌ Richiede molta manualità
+
+12. Airbrush / Aerografo
+👉 Tecnica artistica a spruzzo con mascherine o a mano libera.
+
+✅ Effetto pittorico, sfumato, molto creativo
+
+❌ Poco uniforme, richiede esperienza e mascheratura
+
+13. Stampaggio a caldo con foil metallizzati (Hot Foil Transfer)
+👉 Si usa una pellicola metallica + colla attivata dal calore per decorazioni lucide o metalliche.
+
+✅ Effetto wow (oro, argento, olografico)
+
+❌ Serve precisione, più decorativa che pratica
+
+14. Ricamo (non stampa, ma alternativa)
+👉 Non è una stampa vera, ma spesso usata in alternativa per logo, scritte o patch.
+
+✅ Super resistente e professionale
+
+❌ Serve macchina da ricamo, più lento da produrre
+
+indice: 🔬 1. Stampa Diretta
+Dove l’inchiostro penetra nel tessuto:
+
+DTG (Direct to Garment)
+
+Stampa reattiva / acida / pigmenti
+
+Sublimazione (su sintetico)
+
+Inkjet + trattamenti
+
+🧴 2. Stampa Indiretta / Trasferimento
+Dove un supporto intermedio (film, carta, vinile) viene trasferito al tessuto:
+
+DTF
+
+Transfer inkjet/laser
+
+Hot foil
+
+Vinile termoadesivo
+
+Serigrafia transfer
+
+Sublimazione (tecnicamente è un transfer termico)
+
+🎨 3. Stampa Manuale / Artigianale
+Dove il disegno viene impresso manualmente o meccanicamente:
+
+Serigrafia diretta
+
+Block printing
+
+Xilografia / timbri
+
+Batik
+
+Aerografo
+
+Pittura a mano (acrilici per tessuto, stencil, ecc.)
+
+🧵 4. Decorazione Alternativa (non stampa pura)
+Tecniche che non sono stampa vera, ma vengono usate come alternative:
+
+Ricamo
+
+Patch cucite
+
+Applicazioni in tessuto
+
+Incisione laser (su tessuti tecnici o pelle)
+
+Termosaldature 3D

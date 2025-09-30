@@ -7,10 +7,16 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project }) => {
     name: project?.name || '',
     description: project?.description || '',
     status: project?.status || 'pending',
-    tags: project?.tags?.join(', ') || ''
+    tags: project?.tags?.join(', ') || '',
+    links: project?.links || [],
+    roadmap: project?.roadmap || '',
+    obiettivi: project?.obiettivi || '',
+    todos: project?.todos || []
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [newLink, setNewLink] = useState({ title: '', url: '' });
+  const [newTodo, setNewTodo] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,7 +33,11 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project }) => {
         name: formData.name,
         description: formData.description,
         status: formData.status,
-        tags: tagsArray
+        tags: tagsArray,
+        links: formData.links,
+        roadmap: formData.roadmap,
+        obiettivi: formData.obiettivi,
+        todos: formData.todos
       };
 
       if (isEdit) {
@@ -51,6 +61,56 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project }) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
+    });
+  };
+
+  const handleAddLink = () => {
+    if (newLink.title.trim() && newLink.url.trim()) {
+      setFormData({
+        ...formData,
+        links: [...formData.links, { ...newLink }]
+      });
+      setNewLink({ title: '', url: '' });
+    }
+  };
+
+  const handleRemoveLink = (index) => {
+    setFormData({
+      ...formData,
+      links: formData.links.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleLinkChange = (e) => {
+    setNewLink({
+      ...newLink,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleAddTodo = () => {
+    if (newTodo.trim()) {
+      setFormData({
+        ...formData,
+        todos: [...formData.todos, { text: newTodo.trim(), completed: false }]
+      });
+      setNewTodo('');
+    }
+  };
+
+  const handleRemoveTodo = (index) => {
+    setFormData({
+      ...formData,
+      todos: formData.todos.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleToggleTodo = (index) => {
+    const updatedTodos = [...formData.todos];
+    updatedTodos[index].completed = !updatedTodos[index].completed;
+    setFormData({
+      ...formData,
+      todos: updatedTodos
     });
   };
 
@@ -113,6 +173,176 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project }) => {
               onChange={handleChange}
               placeholder="es: react, design, e-commerce"
             />
+          </div>
+
+          <div className="form-group">
+            <label>🔗 Links</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {formData.links.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  {formData.links.map((link, index) => (
+                    <div key={index} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem',
+                      background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                      borderRadius: '6px',
+                      border: '1px solid #ddd'
+                    }}>
+                      <div style={{ flex: 1, fontSize: '0.85em' }}>
+                        <strong>{link.title}</strong>
+                        <div style={{ fontSize: '0.9em', color: '#666', wordBreak: 'break-all' }}>
+                          {link.url}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLink(index)}
+                        className="btn-icon btn-delete"
+                        title="Rimuovi link"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+                <input
+                  type="text"
+                  name="title"
+                  value={newLink.title}
+                  onChange={handleLinkChange}
+                  placeholder="Titolo link (es: GitHub, Demo, Docs)"
+                  style={{ flex: 1 }}
+                />
+                <input
+                  type="url"
+                  name="url"
+                  value={newLink.url}
+                  onChange={handleLinkChange}
+                  placeholder="URL (es: https://github.com/...)"
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddLink}
+                  className="btn-secondary"
+                  disabled={!newLink.title.trim() || !newLink.url.trim()}
+                  style={{ alignSelf: 'flex-start' }}
+                >
+                  + Aggiungi Link
+                </button>
+              </div>
+            </div>
+            <small className="form-help">
+              Aggiungi link utili al progetto (repository, demo, documentazione, ecc.)
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="roadmap">📍 Roadmap</label>
+            <textarea
+              id="roadmap"
+              name="roadmap"
+              value={formData.roadmap}
+              onChange={handleChange}
+              placeholder="Descrivi le fasi principali del progetto (milestone, feature da implementare, ecc.)"
+              rows={4}
+            />
+            <small className="form-help">
+              Piano di sviluppo e milestone del progetto
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="obiettivi">🎯 Obiettivi</label>
+            <textarea
+              id="obiettivi"
+              name="obiettivi"
+              value={formData.obiettivi}
+              onChange={handleChange}
+              placeholder="Elenca gli obiettivi principali del progetto"
+              rows={3}
+            />
+            <small className="form-help">
+              Obiettivi e risultati attesi del progetto
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label>✅ Lista Cose da Fare</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {formData.todos.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  {formData.todos.map((todo, index) => (
+                    <div key={index} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem',
+                      background: todo.completed ? 'linear-gradient(135deg, #d1fae5, #d1fae5)' : 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+                      borderRadius: '6px',
+                      border: '1px solid #ddd',
+                      transition: 'all 0.2s ease'
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={todo.completed}
+                        onChange={() => handleToggleTodo(index)}
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          cursor: 'pointer',
+                          accentColor: '#20c997'
+                        }}
+                      />
+                      <div style={{
+                        flex: 1,
+                        fontSize: '0.85em',
+                        textDecoration: todo.completed ? 'line-through' : 'none',
+                        color: todo.completed ? '#999' : '#333'
+                      }}>
+                        {todo.text}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTodo(index)}
+                        className="btn-icon btn-delete"
+                        title="Rimuovi task"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  type="text"
+                  value={newTodo}
+                  onChange={(e) => setNewTodo(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTodo())}
+                  placeholder="Aggiungi una cosa da fare..."
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTodo}
+                  className="btn-secondary"
+                  disabled={!newTodo.trim()}
+                  style={{ whiteSpace: 'nowrap' }}
+                >
+                  + Aggiungi
+                </button>
+              </div>
+            </div>
+            <small className="form-help">
+              Lista di task da completare per il progetto
+            </small>
           </div>
 
           {error && (

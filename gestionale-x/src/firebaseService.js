@@ -25,14 +25,14 @@ export const getProjects = async () => {
   if (!auth.currentUser) return [];
   const q = query(
     projectsCollection,
-    where("userId", "==", auth.currentUser.uid),
+    where("userId", "==", auth.currentUser.uid)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
     createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-  }));
+  })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 };
 
 // Listen to projects changes (realtime)
@@ -44,7 +44,7 @@ export const subscribeToProjects = (callback, onError) => {
 
   const q = query(
     projectsCollection,
-    where("userId", "==", auth.currentUser.uid),
+    where("userId", "==", auth.currentUser.uid)
   );
   return onSnapshot(q,
     (snapshot) => {
@@ -52,7 +52,7 @@ export const subscribeToProjects = (callback, onError) => {
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-      }));
+      })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       callback(projects);
     },
     (error) => {
@@ -105,14 +105,14 @@ export const getNotes = async () => {
   if (!auth.currentUser) return [];
   const q = query(
     notesCollection,
-    where("userId", "==", auth.currentUser.uid),
+    where("userId", "==", auth.currentUser.uid)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
     createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-  }));
+  })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 };
 
 // Listen to notes changes (realtime)
@@ -124,7 +124,7 @@ export const subscribeToNotes = (callback, onError) => {
 
   const q = query(
     notesCollection,
-    where("userId", "==", auth.currentUser.uid),
+    where("userId", "==", auth.currentUser.uid)
   );
   return onSnapshot(q,
     (snapshot) => {
@@ -132,7 +132,7 @@ export const subscribeToNotes = (callback, onError) => {
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-      }));
+      })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       callback(notes);
     },
     (error) => {
@@ -194,65 +194,7 @@ export const getNotesByProjectTags = async (tags) => {
 
 // Initialize sample data if collections are empty
 export const initializeSampleData = async () => {
-  const [projects, notes] = await Promise.all([getProjects(), getNotes()]);
-
-  if (projects.length === 0) {
-    const sampleProjects = [
-      {
-        name: "Sito Magliette",
-        description: "E-commerce per vendita magliette con temi dinamici",
-        status: "in_progress",
-        tags: ["e-commerce", "react", "design"]
-      },
-      {
-        name: "Portfolio Polpo",
-        description: "Portfolio personale con minigiochi e progetti",
-        status: "completed",
-        tags: ["portfolio", "games", "vanilla-js"]
-      },
-      {
-        name: "Hunter Gaming",
-        description: "Piattaforma di gamificazione con sistema di missioni",
-        status: "in_progress",
-        tags: ["gaming", "mongodb", "react"]
-      }
-    ];
-
-    await Promise.all(sampleProjects.map(project => addProject(project)));
-  }
-
-  if (notes.length === 0) {
-    const sampleNotes = [
-      {
-        title: "Idea: Animazioni tema G Power",
-        content: "Creare animazioni più dinamiche per il tema G Power ma senza far ballare troppo la finestra",
-        type: "idea",
-        projectTags: ["e-commerce", "design"],
-        priority: "high"
-      },
-      {
-        title: "Nota: Ottimizzazione mobile",
-        content: "Verificare responsive design su dispositivi touch per tutti i progetti",
-        type: "note",
-        projectTags: ["portfolio", "e-commerce"],
-        priority: "medium"
-      },
-      {
-        title: "Idea: Sistema di achievements",
-        content: "Implementare badge e achievement unlockabili per aumentare engagement",
-        type: "idea",
-        projectTags: ["gaming"],
-        priority: "high"
-      },
-      {
-        title: "Nota: Performance CSS",
-        content: "Utilizzare transform3d invece di transform per hardware acceleration",
-        type: "note",
-        projectTags: ["design", "portfolio"],
-        priority: "low"
-      }
-    ];
-
-    await Promise.all(sampleNotes.map(note => addNote(note)));
-  }
+  // Function kept for compatibility but does nothing
+  // Users will start with empty projects and notes
+  return Promise.resolve();
 };

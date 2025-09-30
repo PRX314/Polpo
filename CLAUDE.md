@@ -4,133 +4,104 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is Paolo Repetto's portfolio hub repository - a collection of web-based mini-games and interactive projects built with vanilla HTML, CSS, and JavaScript. The repository serves as a showcase for creative web development projects focused on gaming and interactive experiences.
+This is Paolo Repetto's portfolio hub repository - a collection of web-based mini-games, interactive projects, and React applications. The repository features vanilla HTML/CSS/JS games alongside a modern React + Firebase application.
+
+**Primary Entry Point**: `/index.html` (main portfolio hub)
+**Language**: Italian (all user-facing content)
 
 ## Repository Structure
 
-### Main Portfolio Hub
-**Entry Point**: `/index.html`
-**Tech Stack**: Vanilla HTML5, CSS3, JavaScript ES6+
-**Key Features**:
-- Responsive design with mobile optimization
-- Dark/light theme toggle with localStorage persistence
-- CSS Grid-based project showcase
-- Touch-optimized mobile interactions
-- Custom SVG polpo (octopus) logo with interactive modal
+### 1. Main Portfolio Hub (`/`)
+- **Entry Point**: `index.html`
+- **Tech Stack**: Vanilla HTML5, CSS3, JavaScript ES6+
+- **Key Features**:
+  - Dark/light theme toggle with localStorage persistence
+  - CSS Grid-based responsive layout (6/3/2 columns)
+  - Mobile-first touch optimization
+  - SVG polpo (octopus) logo with 1.5s long-press redirect to gestionale
+  - Project card expansion on hover (desktop) or tap (mobile)
 
-### Mini App Collection
-**Location**: `/minigiochi/`
-**Entry Point**: `/minigiochi/index.html`
+### 2. Mini Games Collection (`/minigiochi/`)
+- **Entry Point**: `minigiochi/index.html`
+- **Architecture**: Self-contained HTML files with embedded CSS/JS
+- **Games**:
+  - **TRIX Bolt Edition** (`trix.html`): Three game modes (Classic, Memory Mobile, Ultimate Bolt Timer)
+  - **DVD Screensaver** (`dvd-screensaver/`): Class-based game with betting system and image upload
+  - **Pixxa Generator** (`pixxa/`): Pizza recipe generator with modular data files
+  - **Test ISTINTO** (`test/istinto.html`): Personality assessment game
+  - **Style Generator** (`style-generator.html`): T-shirt style combination generator
 
-#### TRIX Bolt Edition Game
-**File**: `/minigiochi/trix.html`
-**Type**: Strategic card-based puzzle game
-**Features**:
-- Notebook-style paper UI design
-- Multiple game modes
-- Local score tracking
-- Responsive mobile gameplay
+### 3. Gestionale-X React Application (`/gestionale-x/`)
+- **Type**: React 19 + Vite 7 + Firebase 12
+- **Purpose**: Project and note management with Firebase backend
+- **Key Features**:
+  - Firebase Authentication (email/password + Google OAuth)
+  - Firestore database with real-time subscriptions
+  - User data isolation via security rules
+  - Component-based architecture with CRUD operations
 
-#### DVD Screensaver Game
-**Location**: `/minigiochi/dvd-screensaver/`
-**Type**: Interactive nostalgic screensaver with betting game
-**Architecture**: Class-based JavaScript (`DVDScreensaver` class)
-**Features**:
-- Image upload functionality
-- Multi-player betting system
-- Corner collision detection
-- Real-time score tracking
-- Fullscreen screensaver mode
+### 4. E-commerce Store (`/Sito Magliette/`)
+- **Entry Point**: `Sito Magliette/index.html`
+- **Type**: Static e-commerce with PayPal integration
+- **Key Features**:
+  - Multi-collection product catalog
+  - Shopping cart with localStorage persistence
+  - PayPal SDK integration
+  - Italian language interface
+- **Laboratorio Subfolder** (`/Sito Magliette/laboratorio/`):
+  - Business admin panel with KPI tracking
+  - Style generator with 2000+ T-shirt combinations
+  - Creative and technical specification tabs
 
-#### Pixxa Generator
-**Location**: `/minigiochi/pixxa/`
-**Type**: Random pizza recipe generator with Italian restaurant styling
-**Architecture**: Modular JavaScript with data separation
-**Key Files**:
-- `index.html` - Main interface with Italian restaurant theme
-- `main.js` - Core generation logic with smart naming algorithm
-- `ingredienti.js` - Ingredient database
-- `pizzeClassiche.js` - Classic pizza recipes
-- `pizzeLeggendarie.js` - Legendary pizza variants
-- `pizzeRegionali.js` - Regional pizza variants
-**Features**:
-- Three generation modes: Classica, Leggendaria, Pazza
-- Smart pizza naming based on ingredient combinations
-- Random pricing and calorie calculation
-- Italian restaurant aesthetic with custom fonts
-- Loading animations and Italian flag design elements
+### 5. Projects Showcase (`/progetti/`)
+- Portfolio page for larger development projects
+- Consistent design system with main hub
 
-#### Istinto Personality Test
-**File**: `/minigiochi/test/istinto.html`
-**Type**: Interactive personality assessment game
-**Features**: Dark theme, fullscreen experience
+## Development Commands
 
-### Projects Showcase
-**File**: `/progetti/index.html`
-**Purpose**: Portfolio page for larger development projects
-**Features**: Same design system as main hub with theme support
+### Static Sites (Portfolio, Mini Games, E-commerce)
+```bash
+# Serve with Python 3 (recommended)
+python -m http.server 8000
 
-### Sito Magliette - E-commerce T-shirt Store
-**Location**: `/Sito Magliette/`
-**Type**: E-commerce web application with PayPal integration
-**Tech Stack**: Vanilla HTML5, CSS3, JavaScript ES6+
-**Key Files**:
-- `index.html` - Main e-commerce interface with Italian localization
-- `style.css` - Responsive styling with theme system
-- `script.js` - Shopping cart logic and PayPal integration
-- `productData.js` - Product catalog with collections and variants
-- `images/` - Product image assets
-**Key Features**:
-- Multi-collection product catalog system
-- Dynamic variant selection (type, color, size)
-- Shopping cart with local storage persistence
-- PayPal SDK integration for payments
-- Responsive design with mobile optimization
-- Italian language interface ("Fijo de'n amore" collection)
+# Or with Node.js
+npx serve .
+
+# Or use VS Code Live Server extension (recommended for development)
+# Right-click any HTML file → "Open with Live Server"
+```
 
 ### Gestionale-X React Application
-**Location**: `/gestionale-x/`
-**Type**: React + Vite web application with Firebase backend
-**Tech Stack**: React 19.1.1, Vite 7, ESLint 9, Firebase 12.3.0
-**Deployment**: Configured for Netlify deployment (see `netlify.toml`)
-**Key Features**:
-- Project and note management system with CRUD operations
-- Firebase Authentication with email/password and Google OAuth
-- Firestore database with real-time subscriptions
-- Component-based architecture with form handling
-- Hot Module Replacement (HMR) for development
-- Firebase security rules for user data isolation
-**Security**: Requires proper Firestore security rules (see `SECURITY_SETUP.md`)
-**Components**: Auth, AddProjectForm, AddNoteForm, ProjectCard, NoteCard, StatusBadge
+```bash
+cd gestionale-x
+
+# Install dependencies (first time only)
+npm install
+
+# Start development server (port 5173)
+npm run dev
+
+# Build for production
+npm run build
+
+# Run linting
+npm run lint
+
+# Preview production build
+npm run preview
+```
 
 ## Architecture Patterns
 
-### Frontend Architecture
-- **Pure Vanilla JavaScript** - No frameworks or build tools (main portfolio and games)
-- **React + Vite + Firebase** - Modern React application with real-time backend (gestionale-x)
-- **ES6+ Features** - Modern JavaScript with classes, arrow functions, modules
-- **CSS Custom Properties** - Theme system using CSS variables
+### Frontend Architecture (Static Sites)
+- **Pure Vanilla JavaScript** - No frameworks or build tools
+- **ES6+ Features** - Classes, arrow functions, modules
+- **CSS Custom Properties** - Theme system with CSS variables
 - **Mobile-First Design** - Progressive enhancement for larger screens
-- **Component-Based CSS** - Modular styling with BEM-like naming
-- **Real-time Data** - Firebase Firestore subscriptions for live updates
+- **Self-contained Files** - Each game is a complete HTML document with inline CSS/JS
 
-### JavaScript Patterns
-- **Class-based Organization** - Games use ES6 classes (e.g., `DVDScreensaver` class in dvd-screensaver)
-- **Event-Driven Programming** - DOM event listeners for interactions and mobile touch support
-- **Local Storage Integration** - Theme persistence and game state management
-- **Modular Data Management** - Separate JS files for game data (e.g., `ingredienti.js`, `pizzeClassiche.js` in Pixxa)
-- **Self-contained Architecture** - Each game is a complete HTML file with embedded CSS/JS
-- **Mobile-First Touch Handling** - Specific touch event patterns for mobile devices
-
-### CSS Architecture
-- **CSS Grid & Flexbox** - Modern layout techniques
-- **CSS Custom Properties** - Dynamic theming system
-- **Mobile Touch Optimization** - Touch-specific hover states and interactions
-- **Animation-First Design** - CSS animations for smooth UX
-
-### Theme System Implementation
+### Theme System Pattern
 ```javascript
-// Theme persistence pattern used across projects
 function toggleTheme() {
     const body = document.body;
     const newTheme = body.dataset.theme === 'dark' ? 'light' : 'dark';
@@ -138,19 +109,19 @@ function toggleTheme() {
     localStorage.setItem('theme', newTheme);
 }
 
-// Load theme on page initialization
+// Load saved theme on initialization
 const savedTheme = localStorage.getItem('theme') || 'light';
 document.body.dataset.theme = savedTheme;
 ```
 
 ### Mobile Touch Handling Pattern
 ```javascript
-// Touch optimization pattern for mobile cards
+// Touch optimization for mobile card expansion
 card.addEventListener('click', function(e) {
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
         if (!this.classList.contains('mobile-expanded')) {
             e.preventDefault();
-            // Close other expanded cards first
+            // Close other expanded cards
             cards.forEach(otherCard => {
                 if (otherCard !== this) {
                     otherCard.classList.remove('mobile-expanded');
@@ -160,201 +131,186 @@ card.addEventListener('click', function(e) {
         }
     }
 });
-
-// Touch start/end for visual feedback
-card.addEventListener('touchstart', function() {
-    this.classList.add('touch-active');
-});
-
-card.addEventListener('touchend', function() {
-    this.classList.remove('touch-active');
-});
 ```
 
-## Development Guidelines
+### Class-Based Game Architecture
+```javascript
+// Example: DVDScreensaver class pattern
+class DVDScreensaver {
+    constructor() {
+        this.x = 100;
+        this.y = 100;
+        this.speedX = 3;
+        this.speedY = 2;
+        this.players = [];
+        this.init();
+    }
 
-### File Organization
-- **Self-contained HTML files** - Each game/project is a complete HTML document
-- **Inline CSS and JavaScript** - Styles and scripts embedded for portability
-- **Modular game data** - Separate JS files for game content and logic
-- **Asset-light approach** - Minimal external dependencies
+    init() {
+        // Event listeners
+        // Initialize game state
+    }
 
-### Naming Conventions
-- **Files**: kebab-case (e.g., `dvd-screensaver`, `istinto.html`)
-- **CSS Classes**: kebab-case with descriptive names
-- **JavaScript**: camelCase for variables/functions, PascalCase for classes
-- **IDs**: camelCase for DOM element references
+    start() { /* animation loop */ }
+    stop() { /* cleanup */ }
+}
+```
 
-### Performance Considerations
-- **No build process** - Direct file serving for fast development
-- **Optimized animations** - CSS transitions over JavaScript animations
-- **Lazy loading** - Games load content on demand
-- **Mobile optimization** - Touch-first interaction design
-
-### Browser Compatibility
-- **Modern browser features** - ES6+ syntax, CSS Grid, Custom Properties
-- **Mobile-first responsive design** - Works across device sizes
-- **Touch device optimization** - Separate hover states for touch vs. mouse
+### Modular Data Management (Pixxa Generator)
+- **Separate data files**: `ingredienti.js`, `pizzeClassiche.js`, `pizzeLeggendarie.js`, `pizzeRegionali.js`
+- **Core logic**: `main.js` with `generaNomeDaIngredienti()` smart naming algorithm
+- **Random selection utility**: `scegliRandom(lista, quanti)` for ingredient combinations
 
 ## Key Interactive Features
 
-### Portfolio Hub Features (`index.html` + `script.js`)
-- **Polpo Logo Interaction** - 3-second long press (mouse/touch) to open modal (`script.js:42-77`)
-- **Project Card Expansion** - Hover on desktop, tap to expand on mobile (`script.js:1-39`)
-- **Theme Persistence** - Dark/light mode with localStorage (embedded in `index.html`)
-- **Responsive Design** - CSS Grid with breakpoints: 6 columns (1400px+), 3 columns (900px+), 2 columns (mobile)
-- **SVG Logo** - Complex gradient polpo/octopus logo with custom animations
+### Portfolio Hub (`index.html` + `script.js`)
+- **Polpo Logo Long Press** (script.js:42-85): 1.5s hold redirects to `gestionalepolpo.netlify.app`
+- **Project Card Mobile Expansion** (script.js:1-39): Touch-based card reveal system
+- **Theme Toggle**: Dark/light mode with localStorage persistence
+- **Responsive Grid**: 6 columns (1400px+), 3 columns (900px+), 2 columns (mobile)
+- **Touch Optimization**: Separate hover states for touch vs. mouse devices
 
-### Mini Apps Architecture
-- **State Management** - Local storage for scores and preferences
-- **Responsive Layouts** - Adaptive UI for different screen sizes
-- **Touch Optimizations** - Gesture handling for mobile interactions
+### Gestionale-X React Application
+- **Real-time Data**: Firestore subscriptions for live updates
+- **Authentication Flow**: Email/password and Google OAuth
+- **Security**: User data isolation via Firestore rules
+- **Component Structure**: Auth, AddProjectForm, AddNoteForm, ProjectCard, NoteCard, StatusBadge
 
-### Visual Design System
-- **Gradient Themes** - Consistent color schemes across projects
-- **Typography** - JetBrains Mono for technical aesthetic
-- **Micro-animations** - Smooth transitions and hover effects
+## File Organization
 
-## Common Development Tasks
+### Naming Conventions
+- **Files**: kebab-case (e.g., `dvd-screensaver`, `style-generator.html`)
+- **CSS Classes**: kebab-case with descriptive names
+- **JavaScript Variables/Functions**: camelCase
+- **JavaScript Classes**: PascalCase (e.g., `DVDScreensaver`)
+- **IDs**: camelCase for DOM element references
 
-### Adding New Mini Apps
-1. Create new HTML file in `/minigiochi/` directory following self-contained pattern
+### Project Structure Best Practices
+- **Self-contained HTML files** for games (inline CSS/JS for portability)
+- **Modular data files** for game content (separate logic from data)
+- **Consistent theme system** across all static pages
+- **Mobile-first responsive design** with 768px breakpoint
+
+## Development Workflow
+
+### Working with Static Sites
+1. Open files directly in browser or use local server
+2. Modify HTML/CSS/JS in place (no build step required)
+3. Test responsive behavior using browser dev tools
+4. Verify theme switching across pages
+5. Test touch interactions on actual mobile devices when possible
+
+### Working with Gestionale-X
+1. Navigate to `/gestionale-x/` directory
+2. Configure Firebase settings in `src/firebase.js` (IMPORTANT: Do this before running)
+3. Review `SECURITY_SETUP.md` for Firestore security rules (CRITICAL for production)
+4. Run `npm install` first time
+5. Use `npm run dev` for development with hot reload
+6. Run `npm run lint` before committing
+7. Test production builds with `npm run build`
+
+### Adding New Mini Games
+1. Create self-contained HTML file in `/minigiochi/` directory
 2. Include embedded CSS and JavaScript (avoid external dependencies)
 3. Implement responsive design with mobile-first approach
 4. Add back navigation link to `/minigiochi/index.html`
-5. Update `/minigiochi/index.html` with new app card in the games grid
+5. Update `/minigiochi/index.html` games grid with new card
 6. Follow touch optimization patterns for mobile devices
 7. Consider adding to main portfolio hub (`/index.html`) if significant
 
-### Working with Sito Magliette E-commerce
-1. Navigate to `/Sito Magliette/` directory
-2. Modify product data in `productData.js` to add new collections or variants
-3. Update styling in `style.css` for theme customizations
-4. Test shopping cart functionality and PayPal integration
-5. Ensure all product images are optimized and placed in `images/` directory
-6. Verify responsive design across different screen sizes
+### Modifying Existing Games
+- **Pixxa Generator**: Edit data files (`ingredienti.js`, `pizzeClassiche.js`, etc.) or logic in `main.js`
+- **DVD Screensaver**: Modify `DVDScreensaver` class in `script.js`
+- **TRIX**: Edit self-contained `trix.html` file
+- **Style Generator**: Edit self-contained `style-generator.html` file
 
-### Working with React Application (Gestionale-X)
-1. Navigate to `/gestionale-x/` directory
-2. Install dependencies with `npm install` if first time
-3. **IMPORTANT**: Configure Firebase before running (see `firebase.js`)
-4. **SECURITY**: Review and implement `SECURITY_SETUP.md` for Firestore rules
-5. Start development server with `npm run dev`
-6. React components are in `/src/components/` directory
-7. Firebase services are in `/src/firebaseService.js`
-8. Authentication handled in `/src/components/Auth.jsx`
-9. Run `npm run lint` before committing changes
-10. Use `npm run build` to test production builds
+## Important Technical Details
 
-### Updating Portfolio Hub
-1. Modify `/index.html` for main hub changes
-2. Update project cards in `.projects-grid` section (lines ~928-958)
-3. Maintain consistent theme system implementation (`data-theme` attribute)
-4. Test mobile touch interactions across breakpoints
-5. Ensure SVG logo and polpo modal functionality works
-6. Verify responsive grid behavior: 6/3/2 column layout
-
-### Modifying Mini Apps
-1. **Pixxa Generator**:
-   - Data files: `ingredienti.js`, `pizzeClassiche.js`, `pizzeLeggendarie.js`, `pizzeRegionali.js`
-   - Core logic: `main.js` (includes smart naming algorithm in `generaNomeDaIngredienti()`)
-   - UI: `index.html` (self-contained with embedded CSS)
-2. **DVD Screensaver**:
-   - Main class: `DVDScreensaver` in `/minigiochi/dvd-screensaver/script.js`
-   - Supports image upload, betting system, collision detection
-   - Separate HTML/CSS/JS architecture
-3. **TRIX**: Edit `/minigiochi/trix.html` (self-contained)
-4. **Istinto Test**: Edit `/minigiochi/test/istinto.html` (self-contained)
-
-## Development Commands
-
-### Portfolio and Mini Apps (Static Files)
-```bash
-# Python 3 (recommended for development)
-python -m http.server 8000
-
-# Node.js alternative (if available)
-npx serve .
-
-# Live Server (VS Code extension) - recommended for development
-# Install Live Server extension and right-click any HTML file → "Open with Live Server"
+### Portfolio Hub Long-Press Feature
+The polpo logo uses a 1.5-second long press (mouse or touch) to redirect:
+```javascript
+// Location: script.js:68-76
+polpoLongPressTimer = setTimeout(() => {
+    if (polpoPressed) {
+        window.location.href = 'https://gestionalepolpo.netlify.app/';
+    }
+}, 1500);
 ```
 
-### Gestionale-X React Application
-```bash
-# Navigate to the React project
-cd gestionale-x
+### CSS Grid Responsive Breakpoints
+```css
+/* 6 columns for large desktop (1400px+) */
+@media (min-width: 1400px) {
+    .projects-grid { grid-template-columns: repeat(6, 1fr); }
+}
 
-# Install dependencies
-npm install
+/* 3 columns for medium desktop/tablet (900px - 1200px) */
+@media (max-width: 1200px) and (min-width: 900px) {
+    .projects-grid { grid-template-columns: repeat(3, 1fr); }
+}
 
-# Start development server (port 5173)
-npm run dev
-
-# Build for production
-npm run build
-
-# Run ESLint
-npm run lint
-
-# Preview production build
-npm run preview
+/* 2 columns for mobile (<600px) */
+@media (max-width: 600px) {
+    .projects-grid { grid-template-columns: repeat(2, 1fr); }
+}
 ```
 
-### Deployment
-```bash
-# For Netlify deployment (configured in netlify.toml)
-# Builds from gestionale-x directory, deploys to dist/
-# Includes SPA redirects for React Router
-```
-
-### File Serving and Testing
-
-**Static Files (Portfolio & Mini Apps)**:
-- Opened directly in browser (`file://` protocol) - limited functionality due to CORS
-- Served with any static file server for full functionality (recommended)
-- Deployed to static hosting (GitHub Pages, Netlify, Vercel)
-
-**React Application (Gestionale-X)**:
-- Requires Node.js development server (`npm run dev`)
-- Uses Vite for fast builds and HMR
-- Production builds can be served statically
-
-**Testing Approach**:
-- **Static sites**: Manual testing by navigating to HTML files
-- **React app**: Use Vite dev server with hot reload
-- Verify mobile responsiveness using browser dev tools
-- Test theme switching functionality across all pages
-- Validate touch interactions on actual mobile devices when possible
-
-### Git Workflow
-```bash
-# View current changes
-git status
-git diff
-
-# Stage and commit changes
-git add .
-git commit -m "Update: description of changes"
-
-# Push to remote
-git push origin main
+### Touch Device Detection
+```javascript
+// Check for touch capability
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    // Touch-specific behavior
+}
 ```
 
 ## Security Considerations
 
-### Static Projects (Portfolio, Mini Games, E-commerce)
+### Static Projects
 - **No server-side code** - Pure client-side implementation
-- **Local storage only** - No external data transmission (except PayPal in Sito Magliette)
+- **Local storage only** - No external data transmission (except PayPal in e-commerce)
 - **XSS prevention** - Avoid `innerHTML` with user data
 - **File upload validation** - Image type checking in games
 
-### Gestionale-X Firebase Project
+### Gestionale-X Firebase
 - **CRITICAL**: Implement Firestore security rules immediately (see `SECURITY_SETUP.md`)
-- **Default state is VULNERABLE** - Anyone can read/write all data without rules
-- **User authentication required** - Firebase Auth with email/password and Google OAuth
-- **Data isolation** - Users can only access their own projects/notes
-- **Input validation** - Both client-side and server-side through Firestore rules
-- **Real-time security** - Firebase rules apply to all real-time subscriptions
+- **Default state is VULNERABLE** - Anyone can read/write without rules
+- **Authentication required** - Firebase Auth enforces user identity
+- **Data isolation** - Firestore rules restrict users to their own data
+- **Real-time security** - Rules apply to all queries and subscriptions
 
-This repository represents a creative showcase of modern web development techniques using vanilla technologies, emphasizing performance, accessibility, and mobile-first design principles.
+## Performance Considerations
+
+### Static Sites
+- **No build process** - Direct file serving for fast development
+- **Optimized animations** - CSS transitions over JavaScript
+- **Lazy loading** - Games load content on demand
+- **Mobile optimization** - Touch-first interaction design
+- **Asset-light** - Minimal external dependencies
+
+### React Application (Gestionale-X)
+- **Vite HMR** - Fast hot module replacement during development
+- **Code splitting** - React.lazy() for component lazy loading
+- **Firebase optimization** - Real-time subscriptions with efficient queries
+- **Production builds** - Minification and tree-shaking via Vite
+
+## Browser Compatibility
+
+- **Modern browser features**: ES6+ syntax, CSS Grid, Custom Properties
+- **Mobile-first responsive design**: Works across device sizes
+- **Touch device optimization**: Separate hover states for touch vs. mouse
+- **Audio API**: Required for radio player in laboratorio interfaces
+- **WebGL support**: Required for advanced visualizations (if any)
+
+## External Resources
+
+### Portfolio Hub
+- **Fonts**: Google Fonts (JetBrains Mono)
+- **Icons**: Inline SVG (polpo logo, social icons)
+- **No external JS libraries**: Pure vanilla JavaScript
+
+### Gestionale-X
+- **Firebase**: Authentication, Firestore database, hosting ready
+- **React**: Version 19.1.1
+- **Vite**: Version 7.1.6 for build tooling
+
+This repository represents a creative showcase of modern web development techniques using both vanilla technologies and modern frameworks, emphasizing performance, accessibility, and mobile-first design principles.

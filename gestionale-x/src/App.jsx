@@ -218,10 +218,143 @@ function App() {
             </div>
           )}
 
+          {selectedProject.links && selectedProject.links.length > 0 && (
+            <div className="mb-4" style={{ borderTop: '2px solid #f8f9fa', paddingTop: '1rem' }}>
+              <div style={{ fontSize: '0.85em', color: '#999', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '500' }}>
+                🔗 Links del Progetto
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                {selectedProject.links.map((link, index) => (
+                  <a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: '0.85em',
+                      padding: '0.5rem 1rem',
+                      background: 'linear-gradient(135deg, #48dbfb, #54a0ff)',
+                      color: 'white',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontWeight: '500',
+                      transition: 'all 0.3s ease',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      boxShadow: '0 2px 4px rgba(72, 219, 251, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'translateY(-2px)';
+                      e.target.style.boxShadow = '0 6px 12px rgba(72, 219, 251, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'translateY(0)';
+                      e.target.style.boxShadow = '0 2px 4px rgba(72, 219, 251, 0.3)';
+                    }}
+                  >
+                    {link.title}
+                    <span style={{ fontSize: '1.2em' }}>↗</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="text-meta">
             Creato: {new Date(selectedProject.createdAt).toLocaleDateString('it-IT')}
           </div>
         </div>
+
+        {/* Roadmap Section */}
+        {selectedProject.roadmap && (
+          <div className="project-card mb-6">
+            <h3 className="title-section mb-4">📍 Roadmap</h3>
+            <div style={{
+              whiteSpace: 'pre-wrap',
+              lineHeight: '1.8',
+              color: '#555',
+              fontSize: '0.9em',
+              background: 'linear-gradient(135deg, #f8f9fa, #ffffff)',
+              padding: '1rem',
+              borderRadius: '6px',
+              border: '1px solid #e9ecef'
+            }}>
+              {selectedProject.roadmap}
+            </div>
+          </div>
+        )}
+
+        {/* Obiettivi Section */}
+        {selectedProject.obiettivi && (
+          <div className="project-card mb-6">
+            <h3 className="title-section mb-4">🎯 Obiettivi</h3>
+            <div style={{
+              whiteSpace: 'pre-wrap',
+              lineHeight: '1.8',
+              color: '#555',
+              fontSize: '0.9em',
+              background: 'linear-gradient(135deg, #fff5f0, #ffffff)',
+              padding: '1rem',
+              borderRadius: '6px',
+              border: '1px solid #ffe5d9'
+            }}>
+              {selectedProject.obiettivi}
+            </div>
+          </div>
+        )}
+
+        {/* Todo List Section */}
+        {selectedProject.todos && selectedProject.todos.length > 0 && (
+          <div className="project-card mb-6">
+            <h3 className="title-section mb-4">
+              ✅ Cose da Fare ({selectedProject.todos.filter(t => !t.completed).length}/{selectedProject.todos.length})
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {selectedProject.todos.map((todo, index) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.75rem',
+                  background: todo.completed
+                    ? 'linear-gradient(135deg, #d1fae5, #ecfdf5)'
+                    : 'linear-gradient(135deg, #f8f9fa, #ffffff)',
+                  borderRadius: '8px',
+                  border: todo.completed ? '2px solid #20c997' : '1px solid #e9ecef',
+                  transition: 'all 0.3s ease'
+                }}>
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: todo.completed
+                      ? 'linear-gradient(135deg, #20c997, #28a745)'
+                      : '#fff',
+                    border: todo.completed ? 'none' : '2px solid #ddd',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.9em',
+                    color: 'white',
+                    flexShrink: 0
+                  }}>
+                    {todo.completed && '✓'}
+                  </div>
+                  <div style={{
+                    flex: 1,
+                    fontSize: '0.9em',
+                    textDecoration: todo.completed ? 'line-through' : 'none',
+                    color: todo.completed ? '#999' : '#333',
+                    fontWeight: todo.completed ? '400' : '500'
+                  }}>
+                    {todo.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="project-card">
           <h3 className="title-section mb-4">

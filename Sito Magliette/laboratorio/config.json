@@ -1,0 +1,196 @@
+{
+  "progetto": {
+    "titolo": "LABORATORIO X",
+    "sottotitolo": "Micro-Lab Creativo - Versione 2",
+    "tagline": "Micro-laboratorio per creare stile",
+    "investimento": "600-900€",
+    "target": "Online, mercatini, concept store",
+    "quote": "Hai lo spazio, io ho le idee e la produzione. Uniamo le forze per testare il potenziale del laboratorio con una prima linea di magliette."
+  },
+  
+  "timeline": [
+    {
+      "fase": "1. Setup Immediato",
+      "descrizione": "Attrezzature, spazio, test serigrafia • 10 design magliette • Test borse tela"
+    },
+    {
+      "fase": "2. Prima Produzione", 
+      "descrizione": "Primi prodotti, qualità, branding • Prime 50 vendite"
+    },
+    {
+      "fase": "3. Sviluppo Canali",
+      "descrizione": "Vendite online, mercatini, marketing • Ottimizzazione processi"
+    },
+    {
+      "fase": "4. Espansione Tecnica",
+      "descrizione": "Serigrafia homemade • Stampante DTF propria • Cappellini • Collaborazioni artistiche"
+    },
+    {
+      "fase": "5. Crescita e Sviluppo",
+      "descrizione": "Nuovi prodotti • Team expansion • Mercati regionali • E-commerce avanzato"
+    }
+  ],
+  
+  "tecniche": [
+    {
+      "nome": "DTF (Direct To Film)",
+      "status": "ATTUALE",
+      "emoji": "🔥",
+      "descrizione": "Film trasparente trasferito con pressa a caldo.",
+      "uso": "Tecnica principale per magliette e borse."
+    },
+    {
+      "nome": "Timbri Manuali",
+      "status": "ATTUALE", 
+      "emoji": "🎨",
+      "descrizione": "Timbri incisi inchiostrati a mano.",
+      "uso": "Dettagli decorativi, loghi semplici, effetti artigianali."
+    },
+    {
+      "nome": "DTG (Direct To Garment)",
+      "status": "OBIETTIVO",
+      "emoji": "🖨️", 
+      "descrizione": "Stampa diretta su tessuto con inchiostro tessile.",
+      "uso": "Grafiche complesse e sfumature."
+    },
+    {
+      "nome": "Serigrafia Homemade",
+      "status": "OBIETTIVO",
+      "emoji": "🖼️",
+      "descrizione": "Telaio fatto in casa per piccole serie.",
+      "uso": "Serie 10-50 pezzi, autonomia produttiva."
+    }
+  ],
+  
+  "budget": {
+    "primeSpese": {
+      "descrizione": "PRIME SPESE (Essenziali)",
+      "voci": [
+        {
+          "item": "Pressa grande",
+          "costo": "200-300€"
+        },
+        {
+          "item": "Pressa mini", 
+          "costo": "50€"
+        },
+        {
+          "item": "Stampante TATTMUSE etichette",
+          "costo": "79€"
+        },
+        {
+          "item": "Magliette stock",
+          "costo": "100-150€"
+        },
+        {
+          "item": "Kit spedizione/scatole",
+          "costo": "30-50€"
+        }
+      ],
+      "subtotale": "470-640€"
+    },
+    "secondeSpese": {
+      "descrizione": "SECONDE SPESE (Sviluppo)",
+      "voci": [
+        {
+          "item": "Kit serigrafia",
+          "costo": "50-80€"
+        },
+        {
+          "item": "Macchina cucire",
+          "costo": "80-120€" 
+        },
+        {
+          "item": "Materiali vari",
+          "costo": "50-100€"
+        }
+      ],
+      "subtotale": "180-300€"
+    },
+    "totaleCompleto": "750-1040€"
+  },
+  
+  "target": {
+    "descrizione": "Giovani creativi, artisti locali, piccoli brand, eventi culturali, concept store."
+  },
+  
+  "links": {
+    "priorita": [
+      {
+        "nome": "🔥 Pressa Termica",
+        "url": "https://www.amazon.it/s?k=pressa+a+caldo"
+      },
+      {
+        "nome": "🖨️ TATTMUSE Stampante Etichette", 
+        "url": "https://www.amazon.it/TATTMUSE-Stampante-Etichette-Spedizione-Compatibile/dp/B0DRHP31RG/ref=sr_1_26?sr=8-26"
+      }
+    ],
+    "attrezzature": [
+      {
+        "nome": "Pressa Mini",
+        "url": "https://www.amazon.it/s?k=pressa+caldo+mini&__mk_it_IT=%C3%85M%C3%85%C5%BD%C3%95%C3%91"
+      },
+      {
+        "nome": "Cucitrice",
+        "url": "https://www.amazon.it/dp/B0CPHP3Q3K/ref=sspa_dk_detail_6?sp_csd=d2lkZ2V0TmFtZT1zcF9kZXRhaWw"
+      },
+      {
+        "nome": "Kit Serigrafia",
+        "url": "https://www.amazon.it/s?k=emulsione+fotosensibile+serigrafia"
+      }
+    ]
+  },
+  
+  "tshirtTipi": {
+    "lunghezza": [
+      "Micro crop (-10÷12cm)",
+      "Baby tee (-5÷7cm)", 
+      "Crop tee (-6÷9cm)",
+      "Regular/Classic (0cm)",
+      "Extended hip (+2÷3cm)",
+      "Curved-hem (+1÷5cm)",
+      "Hi-low (asimmetrico)",
+      "Longline (+10÷15cm)"
+    ],
+    "vestibilita": [
+      "Slim-fit/Muscle-fit",
+      "Regular/Standard",
+      "Relaxed fit (+3÷5cm)",
+      "Loose fit (+5÷8cm)",
+      "Boxy fit (+6÷10cm)", 
+      "Oversized (+8÷12cm)",
+      "Drop-shoulder"
+    ],
+    "combinazioni": [
+      "Longline boxy",
+      "Relaxed curved-hem",
+      "Micro crop slim-fit",
+      "Oversized drop-shoulder"
+    ],
+    "applicazioni": [
+      "Streetwear branding",
+      "Moda consapevole",
+      "Layering styling",
+      "Personalizzazioni tech"
+    ]
+  },
+  
+  "radioStazioni": [
+    {
+      "nome": "🎵 Lofi Hip Hop",
+      "url": "https://stream.zeno.fm/fyn8eh3h5f9uv"
+    },
+    {
+      "nome": "🎷 Smooth Jazz", 
+      "url": "https://stream.zeno.fm/0r0xa792kwzuv"
+    },
+    {
+      "nome": "🎹 Piano Chill",
+      "url": "https://stream.zeno.fm/f3nkfqx8k98uv"
+    },
+    {
+      "nome": "🌊 Ambient Sounds",
+      "url": "https://stream.zeno.fm/8wv4d8g7k98uv"
+    }
+  ]
+}
