@@ -538,6 +538,7 @@ header {
   font-family: 'JetBrains Mono', monospace;
   transition: all 0.3s ease;
   background: #fff;
+  color: #333;
 }
 
 .form-group input:focus,

@@ -95,10 +95,22 @@ npm run preview
 
 ### Frontend Architecture (Static Sites)
 - **Pure Vanilla JavaScript** - No frameworks or build tools
-- **ES6+ Features** - Classes, arrow functions, modules
-- **CSS Custom Properties** - Theme system with CSS variables
+- **ES6+ Features** - Classes, arrow functions, modules, template literals
+- **CSS Custom Properties** - Theme system with CSS variables (--bg-primary, --text-primary, etc.)
 - **Mobile-First Design** - Progressive enhancement for larger screens
 - **Self-contained Files** - Each game is a complete HTML document with inline CSS/JS
+- **Event-driven** - DOMContentLoaded events, touch/mouse event listeners
+- **LocalStorage** - Theme persistence and user preferences
+
+### Gestionale-X React Architecture
+- **Component-based** - Modular React components with single responsibility
+- **Hooks-based state** - useState, useEffect for local and side-effect state
+- **Firebase integration** - Real-time subscriptions via `subscribeToProjects()` and `subscribeToNotes()`
+- **Service layer** - `firebaseService.js` abstracts Firestore operations (CRUD + subscriptions)
+- **Authentication flow** - `onAuthStateChanged` listener in App.jsx
+- **Form modals** - Reusable AddProjectForm/AddNoteForm with edit capabilities
+- **Inline styles** - Strategic use alongside CSS classes for dynamic styling
+- **Italian language** - All UI text in Italian for target audience
 
 ### Theme System Pattern
 ```javascript
@@ -174,9 +186,45 @@ class DVDScreensaver {
 - **Real-time Data**: Firestore subscriptions for live updates
 - **Authentication Flow**: Email/password and Google OAuth
 - **Security**: User data isolation via Firestore rules
-- **Component Structure**: Auth, AddProjectForm, AddNoteForm, ProjectCard, NoteCard, StatusBadge
+- **Component Structure**: Auth, Home, AddProjectForm, AddNoteForm, ProjectCard, NoteCard, StatusBadge, PriorityBadge
+- **App State Management**: React hooks with useState/useEffect for UI, Firebase subscriptions for data
+- **Views**: Home dashboard, Projects list, Notes list, Project detail with associated notes
+- **Sample Data Initialization**: Automatic on first user login via `initializeSampleData()`
 
 ## File Organization
+
+### Key File Locations
+
+**Root Level**
+- `index.html` - Main portfolio hub entry point
+- `script.js` - Touch handlers, polpo long-press, mobile card expansion
+- `CLAUDE.md` - This file (project documentation for Claude Code)
+
+**Mini Games** (`/minigiochi/`)
+- `index.html` - Games collection landing page
+- `trix.html` - TRIX Bolt Edition game
+- `dvd-screensaver/` - DVD screensaver with betting system
+- `pixxa/` - Pizza generator with modular data files
+- `test/istinto.html` - Personality assessment game
+- `style-generator.html` - T-shirt style combination generator
+
+**E-commerce** (`/Sito Magliette/`)
+- `index.html` - Store front with PayPal integration
+- `productData.js` - Product catalog data
+- `laboratorio/` - Business admin panel and configuration tools
+
+**Gestionale-X** (`/gestionale-x/`)
+- `src/App.jsx` - Main application component with routing and state
+- `src/firebase.js` - Firebase configuration and initialization
+- `src/firebaseService.js` - Firestore CRUD operations and subscriptions
+- `src/components/Auth.jsx` - Authentication component
+- `src/components/Home.jsx` - Dashboard home view
+- `src/components/AddProjectForm.jsx` - Project creation/editing form
+- `src/components/AddNoteForm.jsx` - Note/idea creation/editing form
+- `src/components/ProjectCard.jsx` - Project display card
+- `src/components/NoteCard.jsx` - Note/idea display card
+- `src/components/ui/StatusBadge.jsx` - Status indicator component
+- `src/components/ui/PriorityBadge.jsx` - Priority indicator component
 
 ### Naming Conventions
 - **Files**: kebab-case (e.g., `dvd-screensaver`, `style-generator.html`)
@@ -202,12 +250,14 @@ class DVDScreensaver {
 
 ### Working with Gestionale-X
 1. Navigate to `/gestionale-x/` directory
-2. Configure Firebase settings in `src/firebase.js` (IMPORTANT: Do this before running)
-3. Review `SECURITY_SETUP.md` for Firestore security rules (CRITICAL for production)
-4. Run `npm install` first time
-5. Use `npm run dev` for development with hot reload
-6. Run `npm run lint` before committing
-7. Test production builds with `npm run build`
+2. Firebase settings in `src/firebase.js` are already configured for production deployment
+3. Run `npm install` first time
+4. Use `npm run dev` for development with hot reload (port 5173)
+5. Run `npm run lint` before committing changes
+6. Test production builds with `npm run build`
+7. Preview production build with `npm run preview`
+
+**IMPORTANT**: The Firebase configuration includes public API keys which is normal for Firebase web apps. Security is enforced through Firestore security rules on the backend, not through hiding the config.
 
 ### Adding New Mini Games
 1. Create self-contained HTML file in `/minigiochi/` directory
@@ -223,6 +273,38 @@ class DVDScreensaver {
 - **DVD Screensaver**: Modify `DVDScreensaver` class in `script.js`
 - **TRIX**: Edit self-contained `trix.html` file
 - **Style Generator**: Edit self-contained `style-generator.html` file
+
+## Data Models
+
+### Gestionale-X Firebase Collections
+
+**Projects Collection** (`projects`)
+- `id` (auto-generated)
+- `name` - Project name
+- `description` - Project description
+- `status` - One of: `pending`, `in_progress`, `completed`, `paused`
+- `tags` - Array of tag strings for categorization
+- `links` - Array of objects with `{title, url}` for project links
+- `roadmap` - Text field for project roadmap/timeline
+- `obiettivi` - Text field for project objectives
+- `todos` - Array of objects with `{text, completed}` for task tracking
+- `createdAt` - ISO timestamp
+- `userId` - Owner's Firebase Auth UID (for data isolation)
+
+**Notes Collection** (`notes`)
+- `id` (auto-generated)
+- `title` - Note/idea title
+- `content` - Note/idea content
+- `type` - One of: `note`, `idea`
+- `priority` - One of: `high`, `medium`, `low`
+- `projectTags` - Array of tag strings linking to projects
+- `createdAt` - ISO timestamp
+- `userId` - Owner's Firebase Auth UID (for data isolation)
+
+**Data Relationships**
+- Notes are associated with projects via shared tags in `projectTags` and `project.tags`
+- Each user's data is isolated by `userId` field (enforced by Firestore security rules)
+- Real-time subscriptions keep UI synchronized with database changes
 
 ## Important Technical Details
 
@@ -272,11 +354,11 @@ if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
 - **File upload validation** - Image type checking in games
 
 ### Gestionale-X Firebase
-- **CRITICAL**: Implement Firestore security rules immediately (see `SECURITY_SETUP.md`)
-- **Default state is VULNERABLE** - Anyone can read/write without rules
-- **Authentication required** - Firebase Auth enforces user identity
-- **Data isolation** - Firestore rules restrict users to their own data
+- **Authentication required** - Firebase Auth enforces user identity via email/password or Google OAuth
+- **Data isolation** - Each user can only access their own projects and notes (enforced via Firestore rules)
 - **Real-time security** - Rules apply to all queries and subscriptions
+- **Public API keys** - Firebase config in `src/firebase.js` contains public keys, which is normal and expected
+- **Backend security** - Security is enforced through Firestore security rules on the Firebase backend, not client-side code hiding
 
 ## Performance Considerations
 
@@ -289,9 +371,10 @@ if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
 
 ### React Application (Gestionale-X)
 - **Vite HMR** - Fast hot module replacement during development
-- **Code splitting** - React.lazy() for component lazy loading
 - **Firebase optimization** - Real-time subscriptions with efficient queries
 - **Production builds** - Minification and tree-shaking via Vite
+- **State management** - React hooks-based architecture without external state libraries
+- **Toast notifications** - Auto-dismiss after 3-5 seconds for user feedback
 
 ## Browser Compatibility
 
@@ -309,8 +392,10 @@ if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
 - **No external JS libraries**: Pure vanilla JavaScript
 
 ### Gestionale-X
-- **Firebase**: Authentication, Firestore database, hosting ready
+- **Firebase**: Version 12.3.0 - Authentication, Firestore database, deployed at gestionalepolpo.netlify.app
 - **React**: Version 19.1.1
+- **React DOM**: Version 19.1.1
 - **Vite**: Version 7.1.6 for build tooling
+- **ESLint**: Version 9.35.0 for code quality
 
 This repository represents a creative showcase of modern web development techniques using both vanilla technologies and modern frameworks, emphasizing performance, accessibility, and mobile-first design principles.
