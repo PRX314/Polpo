@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#48dbfb">
+    <title>Rhythm Click - 5 Visual Modes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            --bg-secondary: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #555;
+            --accent-color: #48dbfb;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            --bg-secondary: #34495e;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #c0392b;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .back-btn, .theme-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--text-secondary);
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+        }
+
+        .back-btn:hover, .theme-toggle:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle {
+            font-size: 1.2rem;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .game-container {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .score-display {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .visual-selector {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(128, 128, 128, 0.1);
+            border-radius: 12px;
+        }
+
+        .visual-selector-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            display: block;
+            text-align: center;
+        }
+
+        .visual-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .visual-option {
+            background: var(--bg-secondary);
+            border: 2px solid var(--text-secondary);
+            border-radius: 10px;
+            padding: 12px 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.75rem;
+        }
+
+        .visual-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .visual-option.active {
+            border-color: var(--accent-color);
+            background: var(--accent-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        .visual-option-icon {
+            font-size: 1.8rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .game-canvas {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 1;
+            margin: 0 auto 20px;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .game-canvas {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Mode 1: Pulse Wave - Multiple expanding waves */
+        .pulse-wave {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid var(--accent-color);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--accent-color);
+            pointer-events: none;
+        }
+
+        /* Mode 2: Scanner Laser */
+        .scanner-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 50%;
+            background: linear-gradient(to top, transparent, var(--accent-color));
+            transform-origin: center bottom;
+            transform: translate(-50%, -100%) rotate(0deg);
+            box-shadow: 0 0 15px var(--accent-color);
+            filter: blur(1px);
+        }
+
+        .scanner-trail {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* Mode 3: Beat Visualizer */
+        .beat-bars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .beat-bar {
+            width: 15px;
+            background: var(--accent-color);
+            border-radius: 8px;
+            transition: height 0.05s ease;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        /* Mode 4: Orbital Particles */
+        .particle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--accent-color);
+            transition: opacity 0.1s ease;
+        }
+
+        /* Mode 5: Pulse Ring - Concentric rings */
+        .pulse-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 4px solid var(--accent-color);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--accent-color);
+            pointer-events: none;
+        }
+
+        .target-point {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: var(--success-color);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+            border: 3px solid var(--bg-secondary);
+            z-index: 10;
+            box-shadow: 0 0 15px var(--success-color);
+        }
+
+        .target-point.hit {
+            animation: hitAnimation 0.5s ease;
+        }
+
+        .target-point.removed {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(2);
+        }
+
+        @keyframes hitAnimation {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% {
+                transform: translate(-50%, -50%) scale(1.5);
+                box-shadow: 0 0 30px var(--success-color);
+            }
+        }
+
+        .center-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            z-index: 15;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .control-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        .bpm-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .bpm-input {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            background: var(--text-secondary);
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .bpm-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .bpm-input::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        .bpm-value {
+            font-weight: bold;
+            min-width: 80px;
+            text-align: right;
+            color: var(--accent-color);
+        }
+
+        .game-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .game-button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            box-shadow: var(--shadow);
+        }
+
+        .game-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .game-button:active {
+            transform: translateY(0);
+        }
+
+        .game-button.reset {
+            background: var(--error-color);
+        }
+
+        .feedback {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-height: 30px;
+            margin-top: 15px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feedback.show {
+            opacity: 1;
+        }
+
+        .feedback.success {
+            color: var(--success-color);
+        }
+
+        .feedback.error {
+            color: var(--error-color);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid var(--text-secondary);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+            }
+
+            .title {
+                font-size: 1.5rem;
+            }
+
+            .score-display {
+                font-size: 1.8rem;
+            }
+
+            .visual-options {
+                grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            }
+
+            .visual-option {
+                padding: 10px 5px;
+                font-size: 0.7rem;
+            }
+
+            .visual-option-icon {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="back-btn">← Indietro</a>
+        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    </div>
+
+    <h1 class="title">🎵 Rhythm Click</h1>
+    <p class="subtitle">5 Stili Visivi Sincronizzati!</p>
+
+    <div class="game-container">
+        <div class="visual-selector">
+            <label class="visual-selector-label">Scegli lo Stile Visivo</label>
+            <div class="visual-options">
+                <div class="visual-option active" data-mode="pulse-wave" onclick="changeVisualMode('pulse-wave')">
+                    <span class="visual-option-icon">🌀</span>
+                    <span>Pulse Wave</span>
+                </div>
+                <div class="visual-option" data-mode="scanner" onclick="changeVisualMode('scanner')">
+                    <span class="visual-option-icon">⚡</span>
+                    <span>Scanner</span>
+                </div>
+                <div class="visual-option" data-mode="beat-bars" onclick="changeVisualMode('beat-bars')">
+                    <span class="visual-option-icon">🎵</span>
+                    <span>Beat Bars</span>
+                </div>
+                <div class="visual-option" data-mode="orbital" onclick="changeVisualMode('orbital')">
+                    <span class="visual-option-icon">🔮</span>
+                    <span>Orbital</span>
+                </div>
+                <div class="visual-option" data-mode="pulse-ring" onclick="changeVisualMode('pulse-ring')">
+                    <span class="visual-option-icon">🎯</span>
+                    <span>Pulse Ring</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="score-label">Punteggio</div>
+        <div class="score-display" id="score">0</div>
+
+        <div class="game-canvas" id="gameCanvas" onclick="handleClick()">
+            <div class="center-dot"></div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <span class="control-label">Velocità</span>
+                <div class="bpm-selector">
+                    <input type="range" class="bpm-input" id="bpmSlider" min="30" max="200" value="60" onchange="updateBPM()">
+                    <span class="bpm-value"><span id="bpmValue">60</span> BPM</span>
+                </div>
+            </div>
+
+            <div class="game-buttons">
+                <button class="game-button" id="startBtn" onclick="toggleGame()">Inizia</button>
+                <button class="game-button reset" onclick="resetGame()">Reset</button>
+            </div>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="hits">0</div>
+                <div class="stat-label">Colpiti</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="misses">0</div>
+                <div class="stat-label">Mancati</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="accuracy">0%</div>
+                <div class="stat-label">Precisione</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.dataset.theme || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.dataset.theme = newTheme;
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const themeBtn = document.querySelector('.theme-toggle');
+            const currentTheme = document.body.dataset.theme || 'light';
+            themeBtn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.dataset.theme = savedTheme;
+        updateThemeIcon();
+
+        let gameState = {
+            score: 0,
+            hits: 0,
+            misses: 0,
+            isPlaying: false,
+            rotation: 0,
+            bpm: 60,
+            rotationSpeed: 180,
+            lastTime: 0,
+            animationId: null,
+            targetPoints: [0, 90, 180, 270],
+            activeTargets: [true, true, true, true],
+            hitTolerance: 15,
+            visualMode: 'pulse-wave'
+        };
+
+        class VisualMode {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.elements = [];
+            }
+
+            init() {
+                this.cleanup();
+                this.createElement();
+            }
+
+            cleanup() {
+                this.elements.forEach(el => {
+                    if (el && el.parentNode) {
+                        el.parentNode.removeChild(el);
+                    }
+                });
+                this.elements = [];
+            }
+
+            createElement() {}
+            update(rotation, deltaTime) {}
+        }
+
+        // Mode 1: Pulse Wave - 3 onde che si espandono dal centro
+        class PulseWaveMode extends VisualMode {
+            createElement() {
+                this.waves = [];
+                for (let i = 0; i < 3; i++) {
+                    const wave = document.createElement('div');
+                    wave.className = 'pulse-wave';
+                    this.canvas.insertBefore(wave, this.canvas.firstChild);
+                    this.elements.push(wave);
+                    this.waves.push({
+                        element: wave,
+                        progress: i / 3 // Stagger di partenza
+                    });
+                }
+            }
+
+            update(rotation, deltaTime) {
+                const cycleDuration = 60 / gameState.bpm; // secondi per ciclo completo
+
+                this.waves.forEach(wave => {
+                    wave.progress += deltaTime / cycleDuration;
+                    if (wave.progress >= 1) {
+                        wave.progress = 0;
+                    }
+
+                    const size = 20 + (wave.progress * 100);
+                    const opacity = 1 - wave.progress;
+
+                    wave.element.style.width = `${size}%`;
+                    wave.element.style.height = `${size}%`;
+                    wave.element.style.opacity = opacity;
+                });
+            }
+        }
+
+        // Mode 2: Scanner Laser - Linea che ruota
+        class ScannerMode extends VisualMode {
+            createElement() {
+                const trail = document.createElement('div');
+                trail.className = 'scanner-trail';
+                trail.id = 'scannerTrail';
+                this.canvas.insertBefore(trail, this.canvas.firstChild);
+                this.elements.push(trail);
+
+                const line = document.createElement('div');
+                line.className = 'scanner-line';
+                line.id = 'scannerLine';
+                this.canvas.insertBefore(line, this.canvas.firstChild);
+                this.elements.push(line);
+            }
+
+            update(rotation, deltaTime) {
+                const line = document.getElementById('scannerLine');
+                const trail = document.getElementById('scannerTrail');
+
+                if (line) {
+                    line.style.transform = `translate(-50%, -100%) rotate(${rotation}deg)`;
+                }
+
+                if (trail) {
+                    trail.style.background = `conic-gradient(from ${rotation}deg, transparent 340deg, rgba(72, 219, 251, 0.2) 360deg)`;
+                }
+            }
+        }
+
+        // Mode 3: Beat Visualizer - Barre che reagiscono alla posizione
+        class BeatBarsMode extends VisualMode {
+            createElement() {
+                const container = document.createElement('div');
+                container.className = 'beat-bars';
+                container.id = 'beatBars';
+
+                this.barCount = 8;
+                this.bars = [];
+
+                for (let i = 0; i < this.barCount; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'beat-bar';
+                    bar.style.height = '20px';
+                    container.appendChild(bar);
+                    this.bars.push(bar);
+                }
+
+                this.canvas.insertBefore(container, this.canvas.firstChild);
+                this.elements.push(container);
+            }
+
+            update(rotation, deltaTime) {
+                this.bars.forEach((bar, index) => {
+                    const targetAngle = (index * (360 / this.barCount)) % 360;
+                    const diff = Math.abs((rotation - targetAngle + 360) % 360);
+                    const adjustedDiff = Math.min(diff, 360 - diff);
+
+                    // Altezza inversamente proporzionale alla distanza
+                    const height = 20 + Math.max(0, (90 - adjustedDiff) * 1.5);
+                    bar.style.height = `${height}px`;
+                });
+            }
+        }
+
+        // Mode 4: Orbital - Particelle che orbitano e si illuminano
+        class OrbitalMode extends VisualMode {
+            createElement() {
+                this.particleCount = 12;
+                this.particles = [];
+
+                for (let i = 0; i < this.particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    this.canvas.insertBefore(particle, this.canvas.firstChild);
+                    this.elements.push(particle);
+                    this.particles.push(particle);
+                }
+            }
+
+            update(rotation, deltaTime) {
+                const radius = 42;
+
+                this.particles.forEach((particle, index) => {
+                    const angle = (rotation + (index * (360 / this.particleCount))) % 360;
+                    const angleRad = (angle - 90) * Math.PI / 180;
+                    const x = 50 + radius * Math.cos(angleRad);
+                    const y = 50 + radius * Math.sin(angleRad);
+
+                    particle.style.left = `${x}%`;
+                    particle.style.top = `${y}%`;
+                    particle.style.transform = 'translate(-50%, -50%)';
+
+                    // Illumina le particelle vicine ai target
+                    let nearTarget = false;
+                    gameState.targetPoints.forEach(targetAngle => {
+                        const diff = Math.abs((angle - targetAngle + 360) % 360);
+                        const adjustedDiff = Math.min(diff, 360 - diff);
+                        if (adjustedDiff < 20) {
+                            nearTarget = true;
+                        }
+                    });
+
+                    particle.style.opacity = nearTarget ? '1' : '0.4';
+                });
+            }
+        }
+
+        // Mode 5: Pulse Ring - Anelli concentrici multipli
+        class PulseRingMode extends VisualMode {
+            createElement() {
+                this.ringCount = 4;
+                this.rings = [];
+
+                for (let i = 0; i < this.ringCount; i++) {
+                    const ring = document.createElement('div');
+                    ring.className = 'pulse-ring';
+                    this.canvas.insertBefore(ring, this.canvas.firstChild);
+                    this.elements.push(ring);
+                    this.rings.push({
+                        element: ring,
+                        progress: (i / this.ringCount) + (rotation / 360) // Diverso da pulse wave
+                    });
+                }
+            }
+
+            update(rotation, deltaTime) {
+                const cycleDuration = 60 / gameState.bpm;
+
+                this.rings.forEach((ring, index) => {
+                    // Usa sia il tempo CHE la rotazione per differenziare da pulse wave
+                    ring.progress += deltaTime / cycleDuration;
+                    if (ring.progress >= 1) {
+                        ring.progress = 0;
+                    }
+
+                    // Combina progress con rotazione per effetto diverso
+                    const rotationFactor = (rotation / 360) * 0.3;
+                    const combinedProgress = (ring.progress + rotationFactor) % 1;
+
+                    const minSize = 30 + (index * 15);
+                    const maxSize = 90;
+                    const size = minSize + (combinedProgress * (maxSize - minSize));
+                    const opacity = 0.8 - (combinedProgress * 0.6);
+
+                    ring.element.style.width = `${size}%`;
+                    ring.element.style.height = `${size}%`;
+                    ring.element.style.opacity = opacity;
+                });
+            }
+        }
+
+        class VisualModeManager {
+            constructor() {
+                this.modes = {
+                    'pulse-wave': new PulseWaveMode(),
+                    'scanner': new ScannerMode(),
+                    'beat-bars': new BeatBarsMode(),
+                    'orbital': new OrbitalMode(),
+                    'pulse-ring': new PulseRingMode()
+                };
+                this.currentMode = null;
+            }
+
+            setMode(modeName) {
+                if (this.currentMode) {
+                    this.currentMode.cleanup();
+                }
+                this.currentMode = this.modes[modeName];
+                this.currentMode.init();
+            }
+
+            update(rotation, deltaTime) {
+                if (this.currentMode) {
+                    this.currentMode.update(rotation, deltaTime);
+                }
+            }
+        }
+
+        const visualManager = new VisualModeManager();
+
+        function changeVisualMode(mode) {
+            gameState.visualMode = mode;
+            visualManager.setMode(mode);
+
+            document.querySelectorAll('.visual-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+
+            initTargetPoints();
+        }
+
+        function initTargetPoints() {
+            const canvas = document.getElementById('gameCanvas');
+            const existingTargets = canvas.querySelectorAll('.target-point');
+            existingTargets.forEach(t => t.remove());
+
+            gameState.targetPoints.forEach((angle, index) => {
+                const target = document.createElement('div');
+                target.className = 'target-point';
+                target.id = `target-${index}`;
+
+                const radius = 42;
+                const angleRad = (angle - 90) * Math.PI / 180;
+                const x = 50 + radius * Math.cos(angleRad);
+                const y = 50 + radius * Math.sin(angleRad);
+
+                target.style.left = `${x}%`;
+                target.style.top = `${y}%`;
+
+                canvas.appendChild(target);
+            });
+        }
+
+        function updateBPM() {
+            const bpm = parseInt(document.getElementById('bpmSlider').value);
+            gameState.bpm = bpm;
+            gameState.rotationSpeed = (bpm / 60) * 180;
+            document.getElementById('bpmValue').textContent = bpm;
+        }
+
+        function animate(currentTime) {
+            if (!gameState.isPlaying) return;
+
+            const deltaTime = (currentTime - gameState.lastTime) / 1000;
+            gameState.lastTime = currentTime;
+
+            gameState.rotation += gameState.rotationSpeed * deltaTime;
+            gameState.rotation = gameState.rotation % 360;
+
+            visualManager.update(gameState.rotation, deltaTime);
+
+            gameState.animationId = requestAnimationFrame(animate);
+        }
+
+        function handleClick() {
+            if (!gameState.isPlaying) return;
+
+            const currentRotation = gameState.rotation % 360;
+            let hitDetected = false;
+
+            gameState.targetPoints.forEach((targetAngle, index) => {
+                if (!gameState.activeTargets[index]) return;
+
+                const angleDiff = Math.abs(currentRotation - targetAngle);
+                const adjustedDiff = Math.min(angleDiff, 360 - angleDiff);
+
+                if (adjustedDiff <= gameState.hitTolerance) {
+                    hitDetected = true;
+                    gameState.score++;
+                    gameState.hits++;
+
+                    const target = document.getElementById(`target-${index}`);
+                    target.classList.add('hit');
+                    setTimeout(() => {
+                        target.classList.remove('hit');
+                        target.classList.add('removed');
+                        gameState.activeTargets[index] = false;
+
+                        setTimeout(() => {
+                            target.classList.remove('removed');
+                            gameState.activeTargets[index] = true;
+                        }, 2000);
+                    }, 500);
+
+                    showFeedback('Perfetto! 🎯', 'success');
+                }
+            });
+
+            if (!hitDetected) {
+                gameState.misses++;
+                showFeedback('Mancato! ❌', 'error');
+            }
+
+            updateUI();
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `feedback show ${type}`;
+
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 1000);
+        }
+
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('hits').textContent = gameState.hits;
+            document.getElementById('misses').textContent = gameState.misses;
+
+            const total = gameState.hits + gameState.misses;
+            const accuracy = total > 0 ? Math.round((gameState.hits / total) * 100) : 0;
+            document.getElementById('accuracy').textContent = `${accuracy}%`;
+        }
+
+        function toggleGame() {
+            const btn = document.getElementById('startBtn');
+
+            if (gameState.isPlaying) {
+                gameState.isPlaying = false;
+                cancelAnimationFrame(gameState.animationId);
+                btn.textContent = 'Riprendi';
+            } else {
+                gameState.isPlaying = true;
+                gameState.lastTime = performance.now();
+                btn.textContent = 'Pausa';
+                animate(gameState.lastTime);
+            }
+        }
+
+        function resetGame() {
+            gameState.score = 0;
+            gameState.hits = 0;
+            gameState.misses = 0;
+            gameState.rotation = 0;
+            gameState.activeTargets = [true, true, true, true];
+            gameState.isPlaying = false;
+
+            cancelAnimationFrame(gameState.animationId);
+
+            document.getElementById('startBtn').textContent = 'Inizia';
+            document.getElementById('feedback').classList.remove('show');
+
+            changeVisualMode(gameState.visualMode);
+            updateUI();
+        }
+
+        changeVisualMode('pulse-wave');
+        updateUI();
+    </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Paolino Commerce</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Eruda Mobile Debugger - ATTIVO SEMPRE (temporaneo per debug) -->
+    <script>
+      // NOTA: Eruda attualmente attivo SEMPRE per debug
+      // TODO: Rimuovere o limitare prima del rilascio in produzione
+      
+      // Carica Eruda dinamicamente dal CDN
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/eruda@3/eruda.min.js';
+      document.body.appendChild(script);
+      script.onload = function() {
+        // Inizializza Eruda
+        eruda.init();
+        // Posiziona il bottone in basso a destra
+        eruda.position({x: window.innerWidth - 50, y: window.innerHeight - 50});
+      }
+    </script>
+  </body>
+</html>

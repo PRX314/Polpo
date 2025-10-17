@@ -1,0 +1,256 @@
+/* Wave Banner Base Styles */
+.wave-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 120px;
+  overflow: hidden;
+  transform: translateY(-100%);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.wave-banner-show {
+  transform: translateY(0);
+}
+
+/* Banner Content */
+.wave-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  height: 100%;
+  padding: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.wave-banner-icon {
+  font-size: 48px;
+  animation: iconBounce 0.6s ease-out;
+}
+
+@keyframes iconBounce {
+  0% { transform: scale(0) rotate(-180deg); }
+  50% { transform: scale(1.2) rotate(10deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.wave-banner-text {
+  text-align: center;
+}
+
+.wave-banner-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 5px 0;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.wave-banner-subtitle {
+  font-size: 16px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Wave Animation Base */
+.wave-banner-wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 30px;
+  z-index: 1;
+}
+
+/* Theme: Romantic (Fijo) */
+.wave-banner.theme-romantic {
+  background: linear-gradient(135deg, #E4002B 0%, #FF6B9D 100%);
+  font-family: 'Poppins', sans-serif;
+}
+
+.wave-banner.theme-romantic .wave-banner-wave {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0px,
+    rgba(255, 255, 255, 0.2) 10px,
+    rgba(255, 255, 255, 0.1) 20px,
+    transparent 30px,
+    transparent 50px
+  );
+  animation: waveMove 3s ease-in-out infinite;
+}
+
+/* Theme: Energy (G Power) */
+.wave-banner.theme-energy {
+  background: linear-gradient(45deg, #FF2AA5 0%, #FFD600 50%, #FF3B30 100%);
+  background-size: 300% 300%;
+  animation: gpowerShift 4s ease infinite;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.wave-banner.theme-energy .wave-banner-wave {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.2) 0px,
+    transparent 10px,
+    rgba(255, 255, 255, 0.3) 20px,
+    transparent 30px
+  );
+  animation: waveMoveDiagonal 2s linear infinite;
+}
+
+/* Theme: Ocean */
+.wave-banner.theme-ocean {
+  background: linear-gradient(135deg, #0066CC 0%, #00C9FF 100%);
+}
+
+.wave-banner.theme-ocean .wave-banner-wave {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.15) 0px,
+    rgba(255, 255, 255, 0.25) 15px,
+    rgba(255, 255, 255, 0.15) 30px,
+    transparent 40px,
+    transparent 60px
+  );
+  animation: waveMove 4s ease-in-out infinite;
+}
+
+/* Theme: Sunset */
+.wave-banner.theme-sunset {
+  background: linear-gradient(135deg, #FF6B35 0%, #F7931E 50%, #FEC84D 100%);
+  background-size: 200% 200%;
+  animation: sunsetShift 6s ease infinite;
+}
+
+.wave-banner.theme-sunset .wave-banner-wave {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.2) 0px,
+    transparent 12px,
+    rgba(255, 255, 255, 0.3) 24px,
+    transparent 36px
+  );
+  animation: waveMove 3.5s ease-in-out infinite;
+}
+
+/* Theme: Neon */
+.wave-banner.theme-neon {
+  background: linear-gradient(135deg, #00F5FF 0%, #FF00FF 50%, #FFFF00 100%);
+  background-size: 300% 300%;
+  animation: neonShift 3s ease infinite;
+}
+
+.wave-banner.theme-neon .wave-banner-wave {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.3) 0px,
+    transparent 8px,
+    rgba(255, 255, 255, 0.4) 16px,
+    transparent 24px
+  );
+  animation: waveMoveDiagonal 1.5s linear infinite;
+}
+
+/* Wave Animations */
+@keyframes waveMove {
+  0% {
+    background-position-x: 0;
+  }
+  100% {
+    background-position-x: 200px;
+  }
+}
+
+@keyframes waveMoveDiagonal {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100px 100px;
+  }
+}
+
+@keyframes gpowerShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes sunsetShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes neonShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  33% {
+    background-position: 50% 50%;
+  }
+  66% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wave-banner {
+    height: 100px;
+  }
+
+  .wave-banner-icon {
+    font-size: 36px;
+  }
+
+  .wave-banner-title {
+    font-size: 22px;
+  }
+
+  .wave-banner-subtitle {
+    font-size: 14px;
+  }
+
+  .wave-banner-content {
+    gap: 15px;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wave-banner {
+    height: 80px;
+  }
+
+  .wave-banner-icon {
+    font-size: 28px;
+  }
+
+  .wave-banner-title {
+    font-size: 18px;
+  }
+
+  .wave-banner-subtitle {
+    font-size: 12px;
+  }
+
+  .wave-banner-content {
+    gap: 10px;
+    padding: 10px;
+  }
+}

@@ -1,0 +1,202 @@
+/* Rainbow Stripes Base */
+.rainbow-stripes {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.rainbow-stripes-top {
+  top: 0;
+}
+
+.rainbow-stripes-bottom {
+  bottom: 0;
+}
+
+.rainbow-stripe {
+  width: 100%;
+  height: 100%;
+  background-size: 200px 100%;
+  animation: rainbowMove 3s linear infinite;
+}
+
+/* Variant: Default (Classic Rainbow) */
+.rainbow-stripes-default .rainbow-stripe {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #FF0000 0%,
+    #FF7F00 14.28%,
+    #FFFF00 28.56%,
+    #00FF00 42.84%,
+    #0000FF 57.12%,
+    #4B0082 71.4%,
+    #9400D3 85.68%,
+    #FF0000 100%
+  );
+}
+
+/* Variant: Romantic (Fijo Style) */
+.rainbow-stripes-romantic .rainbow-stripe {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0px,
+    rgba(255, 255, 255, 0.2) 10px,
+    rgba(255, 255, 255, 0.1) 20px,
+    transparent 30px,
+    transparent 50px
+  );
+  background-color: rgba(228, 0, 43, 0.3);
+}
+
+/* Variant: Energy (G Power Style) */
+.rainbow-stripes-energy .rainbow-stripe {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.2) 0px,
+    transparent 10px,
+    rgba(255, 255, 255, 0.3) 20px,
+    transparent 30px
+  );
+  background: linear-gradient(45deg, #FF2AA5 0%, #FFD600 50%, #FF3B30 100%);
+  background-size: 300% 100%;
+  animation: energyShift 4s ease infinite;
+}
+
+/* Variant: Neon */
+.rainbow-stripes-neon .rainbow-stripe {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #00F5FF 0%,
+    #FF00FF 25%,
+    #FFFF00 50%,
+    #00FF00 75%,
+    #00F5FF 100%
+  );
+  background-size: 400px 100%;
+  animation: rainbowMove 2s linear infinite;
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+/* Variant: Ocean */
+.rainbow-stripes-ocean .rainbow-stripe {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.15) 0px,
+    rgba(255, 255, 255, 0.25) 15px,
+    rgba(255, 255, 255, 0.15) 30px,
+    transparent 40px,
+    transparent 60px
+  );
+  background-color: rgba(0, 102, 204, 0.3);
+  animation: waveOcean 4s ease-in-out infinite;
+}
+
+/* Variant: Sunset */
+.rainbow-stripes-sunset .rainbow-stripe {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.2) 0px,
+    transparent 12px,
+    rgba(255, 255, 255, 0.3) 24px,
+    transparent 36px
+  );
+  background: linear-gradient(90deg, #FF6B35 0%, #F7931E 50%, #FEC84D 100%);
+  background-size: 200% 100%;
+  animation: sunsetShift 6s ease infinite;
+}
+
+/* Variant: Gradient Wave */
+.rainbow-stripes-gradient .rainbow-stripe {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 0, 128, 0.8) 0%,
+    rgba(255, 128, 0, 0.8) 25%,
+    rgba(128, 255, 0, 0.8) 50%,
+    rgba(0, 255, 128, 0.8) 75%,
+    rgba(255, 0, 128, 0.8) 100%
+  );
+  background-size: 300px 100%;
+  animation: rainbowMove 4s ease infinite;
+}
+
+/* Animations */
+@keyframes rainbowMove {
+  0% {
+    background-position-x: 0;
+  }
+  100% {
+    background-position-x: 200px;
+  }
+}
+
+@keyframes energyShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes waveOcean {
+  0%, 100% {
+    background-position-x: 0;
+  }
+  50% {
+    background-position-x: 60px;
+  }
+}
+
+@keyframes sunsetShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Sizes */
+.rainbow-stripes-thin {
+  height: 3px;
+}
+
+.rainbow-stripes-thick {
+  height: 8px;
+}
+
+.rainbow-stripes-extra-thick {
+  height: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rainbow-stripes {
+    height: 4px;
+  }
+
+  .rainbow-stripes-thick {
+    height: 6px;
+  }
+
+  .rainbow-stripes-extra-thick {
+    height: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rainbow-stripes {
+    height: 3px;
+  }
+
+  .rainbow-stripes-thick {
+    height: 5px;
+  }
+
+  .rainbow-stripes-extra-thick {
+    height: 8px;
+  }
+}
