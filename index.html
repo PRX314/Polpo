@@ -95,6 +95,19 @@
             font-size: 1.8rem;
             opacity: 1;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .polpo-logo img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .polpo-logo img:hover {
+            transform: scale(1.05);
         }
 
         /* Modal per polpo */
@@ -724,8 +737,9 @@
                 font-size: 0.7em;
             }
 
-            .polpo-logo {
-                font-size: 1.5rem;
+            .polpo-logo img {
+                width: 40px;
+                height: 40px;
             }
 
             .social-links {
@@ -848,113 +862,7 @@
             <div class="header-content">
                 <div class="header-left">
                     <div class="polpo-logo" id="polpoLogo">
-                        <svg width="32" height="32" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <!-- Gradients avanzati per il corpo -->
-                                <radialGradient id="bodyGradient" cx="50%" cy="40%" r="70%">
-                                    <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:1" />
-                                    <stop offset="30%" style="stop-color:#4ECDC4;stop-opacity:1" />
-                                    <stop offset="60%" style="stop-color:#45B7D1;stop-opacity:1" />
-                                    <stop offset="80%" style="stop-color:#96CEB4;stop-opacity:1" />
-                                    <stop offset="100%" style="stop-color:#FFEAA7;stop-opacity:1" />
-                                </radialGradient>
-
-                                <!-- Gradients per tentacoli -->
-                                <linearGradient id="tentacle1" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:1" />
-                                    <stop offset="33%" style="stop-color:#4ECDC4;stop-opacity:1" />
-                                    <stop offset="66%" style="stop-color:#45B7D1;stop-opacity:1" />
-                                    <stop offset="100%" style="stop-color:#96CEB4;stop-opacity:1" />
-                                </linearGradient>
-                                <linearGradient id="tentacle2" x1="100%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#96CEB4;stop-opacity:1" />
-                                    <stop offset="33%" style="stop-color:#FFEAA7;stop-opacity:1" />
-                                    <stop offset="66%" style="stop-color:#FF6B6B;stop-opacity:1" />
-                                    <stop offset="100%" style="stop-color:#4ECDC4;stop-opacity:1" />
-                                </linearGradient>
-                                <linearGradient id="tentacle3" x1="0%" y1="100%" x2="100%" y2="0%">
-                                    <stop offset="0%" style="stop-color:#45B7D1;stop-opacity:1" />
-                                    <stop offset="33%" style="stop-color:#96CEB4;stop-opacity:1" />
-                                    <stop offset="66%" style="stop-color:#4ECDC4;stop-opacity:1" />
-                                    <stop offset="100%" style="stop-color:#FFEAA7;stop-opacity:1" />
-                                </linearGradient>
-                                <linearGradient id="tentacle4" x1="100%" y1="100%" x2="0%" y2="0%">
-                                    <stop offset="0%" style="stop-color:#FFEAA7;stop-opacity:1" />
-                                    <stop offset="33%" style="stop-color:#FF6B6B;stop-opacity:1" />
-                                    <stop offset="66%" style="stop-color:#45B7D1;stop-opacity:1" />
-                                    <stop offset="100%" style="stop-color:#96CEB4;stop-opacity:1" />
-                                </linearGradient>
-
-                                <!-- Ombre e effetti -->
-                                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                                    <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,0.3)"/>
-                                </filter>
-                                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                                    <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                                    <feMerge>
-                                        <feMergeNode in="coloredBlur"/>
-                                        <feMergeNode in="SourceGraphic"/>
-                                    </feMerge>
-                                </filter>
-                            </defs>
-
-                            <!-- Corpo principale del polpo -->
-                            <ellipse cx="60" cy="40" rx="28" ry="22" fill="url(#bodyGradient)" filter="url(#shadow)"/>
-
-                            <!-- Tentacoli migliorati con curve più naturali -->
-                            <path d="M 30 52 Q 18 62 25 75 Q 32 88 20 95 Q 15 100 22 105"
-                                  stroke="url(#tentacle1)" stroke-width="7" fill="none"
-                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
-
-                            <path d="M 40 58 Q 25 70 30 85 Q 35 100 25 108 Q 20 115 28 118"
-                                  stroke="url(#tentacle2)" stroke-width="6" fill="none"
-                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
-
-                            <path d="M 52 60 Q 42 75 48 90 Q 54 105 44 112 Q 40 118 48 120"
-                                  stroke="url(#tentacle3)" stroke-width="6" fill="none"
-                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
-
-                            <path d="M 68 60 Q 78 75 72 90 Q 66 105 76 112 Q 80 118 72 120"
-                                  stroke="url(#tentacle4)" stroke-width="6" fill="none"
-                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
-
-                            <path d="M 80 58 Q 95 70 90 85 Q 85 100 95 108 Q 100 115 92 118"
-                                  stroke="url(#tentacle1)" stroke-width="6" fill="none"
-                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
-
-                            <path d="M 90 52 Q 102 62 95 75 Q 88 88 100 95 Q 105 100 98 105"
-                                  stroke="url(#tentacle2)" stroke-width="7" fill="none"
-                                  stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
-
-                            <!-- Ventose sui tentacoli -->
-                            <circle cx="25" cy="78" r="2" fill="#FF6B6B" opacity="0.8"/>
-                            <circle cx="32" cy="88" r="1.5" fill="#4ECDC4" opacity="0.8"/>
-                            <circle cx="30" cy="95" r="2" fill="#45B7D1" opacity="0.8"/>
-                            <circle cx="90" cy="85" r="2" fill="#96CEB4" opacity="0.8"/>
-                            <circle cx="95" cy="75" r="1.5" fill="#FFEAA7" opacity="0.8"/>
-
-                            <!-- Strisce zebrate più dettagliate -->
-                            <ellipse cx="60" cy="32" rx="22" ry="3" fill="#FF6B6B" opacity="0.7"/>
-                            <ellipse cx="60" cy="37" rx="20" ry="2.5" fill="#4ECDC4" opacity="0.7"/>
-                            <ellipse cx="60" cy="42" rx="18" ry="3" fill="#45B7D1" opacity="0.7"/>
-                            <ellipse cx="60" cy="47" rx="16" ry="2.5" fill="#96CEB4" opacity="0.7"/>
-                            <ellipse cx="60" cy="52" rx="14" ry="3" fill="#FFEAA7" opacity="0.7"/>
-
-                            <!-- Occhi migliorati -->
-                            <ellipse cx="48" cy="35" rx="7" ry="8" fill="white" filter="url(#shadow)"/>
-                            <ellipse cx="72" cy="35" rx="7" ry="8" fill="white" filter="url(#shadow)"/>
-
-                            <!-- Pupille -->
-                            <circle cx="48" cy="35" r="4" fill="black"/>
-                            <circle cx="72" cy="35" r="4" fill="black"/>
-
-                            <!-- Riflessi negli occhi -->
-                            <circle cx="50" cy="33" r="1.5" fill="white" opacity="0.9"/>
-                            <circle cx="74" cy="33" r="1.5" fill="white" opacity="0.9"/>
-
-                            <!-- Dettagli extra: bocca -->
-                            <ellipse cx="60" cy="45" rx="3" ry="2" fill="#333" opacity="0.6"/>
-                        </svg>
+                        <img src="Immagini Generali/Logo Polpo.webp" alt="Logo Polpo">
                     </div>
                     <nav>
                         <ul>
@@ -1027,7 +935,7 @@
                     <div class="project-image">🚀</div>
                     <h3>I Miei Progetti</h3>
                     <span class="project-status status-dev">In Sviluppo</span>
-                    <p>Learn4Real, Editor Storie e X World metaverso</p>
+                    <p>Learn4Real e X World Project</p>
                 </div>
 
                 <!-- X World Project -->
