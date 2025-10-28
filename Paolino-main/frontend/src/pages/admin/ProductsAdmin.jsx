@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
   Eye,
   Upload,
   X
 } from 'lucide-react';
-import { adminAPI, productsAPI, API_SERVER_URL } from '../../services/api';
+import { adminAPI, productsAPI } from '../../services/api';
+import { getProductImageUrl } from '../../utils/imageHelper';
 import toast from 'react-hot-toast';
 
 const ProductsAdmin = () => {
@@ -217,9 +218,9 @@ const ProductsAdmin = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <div className="w-12 h-12 bg-primary-100 rounded-lg overflow-hidden flex-shrink-0">
-                        {product.images && product.images[0] ? (
+                        {getProductImageUrl(product, 0) ? (
                           <img
-                            src={`${API_SERVER_URL}${product.images[0].url}`}
+                            src={getProductImageUrl(product, 0)}
                             alt={product.name}
                             className="w-full h-full object-cover"
                           />

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Eye } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
+import { getProductImageUrl } from '../../utils/imageHelper';
 import { useState } from 'react';
 
 const ProductCard = ({ product, viewMode = 'grid' }) => {
@@ -32,7 +33,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
         <div className="flex flex-col md:flex-row">
           <div className="w-full md:w-48 h-48 bg-[#f8f9fa] overflow-hidden rounded-t-[16px] md:rounded-l-[16px] md:rounded-tr-none">
             <img
-              src={product.images?.[0]?.url || '/api/placeholder/300/300'}
+              src={getProductImageUrl(product, 0) || '/api/placeholder/300/300'}
               alt={product.name}
               className="w-full h-full object-cover hover:scale-[1.02] transition-all duration-300"
             />
@@ -118,7 +119,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
       <Link to={`/products/${product._id}`} className="block">
         <div className="aspect-square bg-[#f8f9fa] overflow-hidden relative">
           <img
-            src={product.images?.[0]?.url || '/api/placeholder/300/300'}
+            src={getProductImageUrl(product, 0) || '/api/placeholder/300/300'}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-all duration-300"
           />

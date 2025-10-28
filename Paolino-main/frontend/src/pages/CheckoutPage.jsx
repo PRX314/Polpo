@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { ordersAPI, API_SERVER_URL } from '../services/api';
+import { ordersAPI } from '../services/api';
+import { getProductImageUrl } from '../utils/imageHelper';
 import { toast } from 'react-hot-toast';
 
 const CheckoutPage = () => {
@@ -600,7 +601,7 @@ const CheckoutPage = () => {
                     <div className="w-12 h-12 bg-primary-100 rounded-lg overflow-hidden flex-shrink-0">
                       {item.product.images && item.product.images[0] ? (
                         <img
-                          src={`${API_SERVER_URL}${item.product.images[0].url}`}
+                          src={getProductImageUrl(item.product, 0)}
                           alt={item.product.name}
                           className="w-full h-full object-cover"
                         />

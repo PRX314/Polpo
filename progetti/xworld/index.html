@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X World Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --iridescent-1: hsl(0, 0%, 90%);
+            --iridescent-2: hsl(180, 100%, 50%);
+            --iridescent-3: hsl(270, 100%, 70%);
+            --iridescent-4: hsl(330, 100%, 60%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            line-height: 1.3;
+        }
+
+        /* Single screen layout for desktop */
+        .container {
+            height: 100vh;
+            display: grid;
+            grid-template-areas:
+                "header header"
+                "main sidebar"
+                "footer footer";
+            grid-template-rows: auto 1fr auto;
+            grid-template-columns: 1fr 350px;
+            gap: 1px;
+            background: linear-gradient(135deg,
+                var(--iridescent-2) 0%,
+                var(--iridescent-3) 50%,
+                var(--iridescent-4) 100%);
+            padding: 1px;
+        }
+
+        /* Header */
+        .header {
+            grid-area: header;
+            background: #000;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid transparent;
+            border-image: linear-gradient(90deg,
+                var(--iridescent-2),
+                var(--iridescent-3),
+                var(--iridescent-4)) 1;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 100;
+            letter-spacing: 0.3em;
+            background: linear-gradient(90deg,
+                var(--iridescent-2),
+                var(--iridescent-3),
+                var(--iridescent-4));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s infinite;
+            background-size: 200% 100%;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -100% 0; }
+            100% { background-position: 100% 0; }
+        }
+
+        .header p {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.5rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Main content area */
+        .main {
+            grid-area: main;
+            background: #000;
+            padding: 2rem;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--iridescent-3) #000;
+        }
+
+        .main::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .main::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        .main::-webkit-scrollbar-thumb {
+            background: var(--iridescent-3);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            grid-area: sidebar;
+            background: #000;
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--iridescent-2) #000;
+            border-left: 1px solid transparent;
+            border-image: linear-gradient(180deg,
+                var(--iridescent-2),
+                var(--iridescent-3),
+                var(--iridescent-4)) 1;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--iridescent-2);
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 2rem;
+            border-left: 1px solid #222;
+            padding-left: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            border-left-color: var(--iridescent-3);
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .section-title:hover {
+            color: var(--iridescent-3);
+        }
+
+        .section-title::before {
+            content: '▸';
+            font-size: 0.7rem;
+            transition: transform 0.3s ease;
+        }
+
+        .section.active .section-title::before {
+            transform: rotate(90deg);
+        }
+
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.4s ease;
+            opacity: 0;
+        }
+
+        .section.active .section-content {
+            max-height: 1000px;
+            opacity: 1;
+        }
+
+        .section-content p {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #aaa;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Grid items */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: linear-gradient(135deg,
+                var(--iridescent-2) 0%,
+                var(--iridescent-3) 50%,
+                var(--iridescent-4) 100%);
+            margin-bottom: 2rem;
+        }
+
+        .grid-item {
+            background: #000;
+            padding: 1.5rem 1rem;
+            border: 1px solid #111;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--iridescent-3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .grid-item:hover::before {
+            left: 100%;
+        }
+
+        .grid-item:hover {
+            border-color: var(--iridescent-3);
+            background: #0a0a0a;
+        }
+
+        .grid-item h3 {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .grid-item p {
+            font-size: 0.7rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        /* Cycle visualization */
+        .cycle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 2rem 0;
+            padding: 1rem 0;
+        }
+
+        .cycle-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            padding: 1rem 0.5rem;
+            border: 1px solid #111;
+            transition: all 0.3s ease;
+        }
+
+        .cycle-item:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--iridescent-3);
+            font-size: 1.2rem;
+            z-index: 10;
+        }
+
+        .cycle-item:hover {
+            border-color: var(--iridescent-3);
+            background: #0a0a0a;
+        }
+
+        .cycle-item h4 {
+            font-size: 0.7rem;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.3rem;
+        }
+
+        .cycle-item p {
+            font-size: 0.65rem;
+            color: #666;
+        }
+
+        /* Sidebar items */
+        .sidebar-item {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #111;
+        }
+
+        .sidebar-item:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-item h3 {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .sidebar-item p {
+            font-size: 0.7rem;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .sidebar-item ul {
+            list-style: none;
+            padding-left: 1rem;
+        }
+
+        .sidebar-item li {
+            font-size: 0.7rem;
+            color: #888;
+            margin-bottom: 0.3rem;
+            position: relative;
+        }
+
+        .sidebar-item li::before {
+            content: '·';
+            position: absolute;
+            left: -0.8rem;
+            color: var(--iridescent-3);
+        }
+
+        /* Footer */
+        .footer {
+            grid-area: footer;
+            background: #000;
+            padding: 1rem 2rem;
+            border-top: 1px solid transparent;
+            border-image: linear-gradient(90deg,
+                var(--iridescent-2),
+                var(--iridescent-3),
+                var(--iridescent-4)) 1;
+        }
+
+        .footer p {
+            font-size: 0.65rem;
+            color: #444;
+            text-align: center;
+            letter-spacing: 0.1em;
+        }
+
+        /* Particles effect */
+        .particle {
+            position: fixed;
+            width: 1px;
+            height: 1px;
+            background: var(--iridescent-3);
+            opacity: 0.5;
+            pointer-events: none;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.5;
+            }
+            90% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translate(100px, -100vh) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-areas:
+                    "header"
+                    "main"
+                    "sidebar"
+                    "footer";
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto auto;
+                height: auto;
+            }
+
+            .sidebar {
+                border-left: none;
+                border-top: 1px solid transparent;
+                border-image: linear-gradient(90deg,
+                    var(--iridescent-2),
+                    var(--iridescent-3),
+                    var(--iridescent-4)) 1;
+            }
+
+            .main {
+                min-height: 50vh;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 1px;
+            }
+
+            .cycle {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .cycle-item:not(:last-child)::after {
+                content: '↓';
+                right: 50%;
+                top: auto;
+                bottom: -1.5rem;
+                transform: translateX(50%);
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .section-content {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 1.2rem;
+                letter-spacing: 0.2em;
+            }
+
+            .header p {
+                font-size: 0.65rem;
+            }
+
+            .main, .sidebar {
+                padding: 1rem;
+            }
+
+            .grid-item {
+                padding: 1rem;
+            }
+        }
+
+        /* Smooth reveal animation */
+        .reveal {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: reveal 0.6s ease forwards;
+        }
+
+        @keyframes reveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .reveal:nth-child(1) { animation-delay: 0.1s; }
+        .reveal:nth-child(2) { animation-delay: 0.2s; }
+        .reveal:nth-child(3) { animation-delay: 0.3s; }
+        .reveal:nth-child(4) { animation-delay: 0.4s; }
+        .reveal:nth-child(5) { animation-delay: 0.5s; }
+        .reveal:nth-child(6) { animation-delay: 0.6s; }
+        .reveal:nth-child(7) { animation-delay: 0.7s; }
+        .reveal:nth-child(8) { animation-delay: 0.8s; }
+    </style>
+</head>
+<body>
+    <!-- Floating particles -->
+    <div id="particles"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>X WORLD PROJECT</h1>
+            <p>Ecosistema Decentralizzato · NFT · Blockchain · Community</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Collection, House, Hunter Grid -->
+            <div class="grid reveal">
+                <div class="grid-item">
+                    <h3>Collection</h3>
+                    <p>Crowdfunding evoluto + utilità personalizzate. NFT come titoli di partecipazione tangibile</p>
+                </div>
+                <div class="grid-item">
+                    <h3>House</h3>
+                    <p>Spazi fisici, laboratori, punti di connessione. Il ponte tra blockchain e vita reale</p>
+                </div>
+                <div class="grid-item">
+                    <h3>Hunter</h3>
+                    <p>Gioco, crescita personale, identità evolutiva. Sfide reali che sbloccano NFT e livelli</p>
+                </div>
+            </div>
+
+            <!-- Cycle -->
+            <div class="section reveal">
+                <div class="section-title">X World Cycle (~3 settimane)</div>
+                <div class="section-content">
+                    <div class="cycle">
+                        <div class="cycle-item">
+                            <h4>Creazione</h4>
+                            <p>Ideazione</p>
+                        </div>
+                        <div class="cycle-item">
+                            <h4>Storytelling</h4>
+                            <p>Condivisione</p>
+                        </div>
+                        <div class="cycle-item">
+                            <h4>Feedback</h4>
+                            <p>Partecipazione</p>
+                        </div>
+                        <div class="cycle-item">
+                            <h4>Sintesi</h4>
+                            <p>Conclusione</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sections -->
+            <div class="section reveal">
+                <div class="section-title">Profilo Decentralizzato</div>
+                <div class="section-content">
+                    <p><strong>Wallet-Based Identity</strong> · NFT posseduti · Progetti partecipati · Reputazione</p>
+                    <p><strong>Livello X</strong> · Sistema di esperienza che traccia la crescita nell'ecosistema</p>
+                    <p><strong>Crei, Cresci, Guadagni</strong> · Ecosistema partecipativo</p>
+                </div>
+            </div>
+
+            <div class="section reveal">
+                <div class="section-title">Sistema Token / Coin</div>
+                <div class="section-content">
+                    <p><strong>BIC Token</strong> · Cripto interna unificata</p>
+                    <p><strong>Utilizzi</strong> · Ricompense · NFT · Oggetti fisici · Servizi · Governance</p>
+                    <p><strong>Economia Circolare</strong> · Token → Ecosistema → Progetti → Token</p>
+                </div>
+            </div>
+
+            <div class="section reveal">
+                <div class="section-title">Crowd-Creation</div>
+                <div class="section-content">
+                    <p><strong>4 Livelli</strong> · Denaro · Idee · Scelte · Feedback</p>
+                    <p><strong>X World Lab</strong> · Concept · Prototipi · Avanzamento trasparente</p>
+                    <p><strong>Co-Creazione</strong> · Community che costruisce insieme</p>
+                </div>
+            </div>
+
+            <div class="section reveal">
+                <div class="section-title">Esempio: La Valigetta X</div>
+                <div class="section-content">
+                    <div class="grid">
+                        <div class="grid-item">
+                            <h3>Seed · 0.05 ETH</h3>
+                            <p>Valigetta fisica + NFT gemello + 10 BIC</p>
+                        </div>
+                        <div class="grid-item">
+                            <h3>Builder · 0.2 ETH</h3>
+                            <p>Voto materiale + Numerata + Badge + 50 BIC</p>
+                        </div>
+                        <div class="grid-item">
+                            <h3>Visionary · 1 ETH</h3>
+                            <p>Incisione custom + 1/1 + Crediti + 200 BIC</p>
+                        </div>
+                    </div>
+                    <p style="text-align: center; color: #888; font-size: 0.7rem; margin-top: 1rem;">
+                        Goal: 10 ETH → 106 valigette + NFT + distribuzione BIC
+                    </p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-item reveal">
+                <h3>Community</h3>
+                <p>Discord come centro nevralgico</p>
+                <ul>
+                    <li>Studio blockchain, NFT, DeFi</li>
+                    <li>Canali progetti attivi</li>
+                    <li>Team Chiavari</li>
+                    <li>Formazione continua</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-item reveal">
+                <h3>Filosofia</h3>
+                <p>"Ogni NFT è un frammento di futuro. Ogni persona, un esploratore. Ogni ciclo, una nuova missione."</p>
+            </div>
+
+            <div class="sidebar-item reveal">
+                <h3>Principi</h3>
+                <ul>
+                    <li>Costruzione attiva del futuro</li>
+                    <li>Decentralizzazione</li>
+                    <li>Sinergia digitale-fisico</li>
+                    <li>Crescita autentica</li>
+                    <li>Trasparenza totale</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-item reveal">
+                <h3>Tecnologie</h3>
+                <ul>
+                    <li>Blockchain & Smart Contract</li>
+                    <li>NFT ERC-721/1155</li>
+                    <li>Token ERC-20</li>
+                    <li>IPFS Storage</li>
+                    <li>DAO Governance</li>
+                </ul>
+            </div>
+
+            <div class="sidebar-item reveal">
+                <h3>Riassunto</h3>
+                <p style="color: #aaa; line-height: 1.6;">
+                    Un mondo decentralizzato dove ogni NFT è una porta, ogni Cycle una missione, ogni persona un costruttore del futuro.
+                </p>
+            </div>
+        </aside>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>X WORLD PROJECT © 2025 · ECOSISTEMA DECENTRALIZZATO</p>
+        </footer>
+    </div>
+
+    <script>
+        // Generate particles
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + 'vw';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (Math.random() * 15 + 15) + 's';
+            particlesContainer.appendChild(particle);
+        }
+
+        // Toggle sections on click
+        document.querySelectorAll('.section-title').forEach(title => {
+            title.addEventListener('click', () => {
+                const section = title.parentElement;
+                section.classList.toggle('active');
+            });
+        });
+
+        // Auto-open first section on desktop
+        if (window.innerWidth > 1024) {
+            document.querySelector('.section').classList.add('active');
+        }
+
+        // Mobile: collapse all by default
+        if (window.innerWidth <= 1024) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+        }
+    </script>
+</body>
+</html>

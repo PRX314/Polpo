@@ -9,7 +9,8 @@ import {
   Download,
   Mail
 } from 'lucide-react';
-import { ordersAPI, API_SERVER_URL } from '../services/api';
+import { ordersAPI } from '../services/api';
+import { getProductImageUrl } from '../utils/imageHelper';
 
 const OrderConfirmationPage = () => {
   const { orderId } = useParams();
@@ -208,7 +209,7 @@ const OrderConfirmationPage = () => {
                 <div className="w-16 h-16 bg-primary-100 rounded-lg overflow-hidden flex-shrink-0">
                   {item.product?.images?.[0] ? (
                     <img
-                      src={`${API_SERVER_URL}${item.product.images[0].url}`}
+                      src={getProductImageUrl(item.product, 0)}
                       alt={item.product.name}
                       className="w-full h-full object-cover"
                     />

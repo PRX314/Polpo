@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Trash2, Star } from 'lucide-react';
-import { wishlistAPI, cartAPI, API_SERVER_URL } from '../services/api';
+import { wishlistAPI, cartAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { getProductImageUrl } from '../utils/imageHelper';
 import toast from 'react-hot-toast';
 
 const WishlistPage = () => {
@@ -187,7 +188,7 @@ const WishlistPage = () => {
                 <Link to={`/products/${product._id}`}>
                   {product.images && product.images.length > 0 ? (
                     <img
-                      src={`${API_SERVER_URL}${product.images[0].url}`}
+                      src={getProductImageUrl(product, 0)}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                     />

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { API_SERVER_URL } from '../services/api';
+import { getProductImageUrl } from '../utils/imageHelper';
 
 const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, clearCart, cartTotal, loading } = useCart();
@@ -173,7 +173,7 @@ const CartPage = () => {
                       <div className="w-24 h-24 bg-primary-50 rounded-lg overflow-hidden">
                         {item.product.images && item.product.images[0] ? (
                           <img
-                            src={`${API_SERVER_URL}${item.product.images[0].url}`}
+                            src={getProductImageUrl(item.product, 0)}
                             alt={item.product.name}
                             className="w-full h-full object-cover hover:scale-105 transition-transform"
                           />

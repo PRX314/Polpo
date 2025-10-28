@@ -41,7 +41,7 @@ const productSchema = Joi.object({
     Joi.object({
       size: Joi.string().valid('XS', 'S', 'M', 'L', 'XL', 'XXL').required(),
       color: Joi.string().required(),
-      colorCode: Joi.string().optional(),
+      colorCode: Joi.string().allow('', null).optional(),
       stock: Joi.number().min(0).required(),
       sku: Joi.string().required(),
       priceModifier: Joi.number().default(0)
@@ -53,8 +53,9 @@ const productSchema = Joi.object({
     length: Joi.number().min(0),
     width: Joi.number().min(0),
     height: Joi.number().min(0)
-  }).optional()
-});
+  }).optional(),
+  isActive: Joi.boolean().optional().default(true)
+}).unknown(true);
 
 module.exports = {
   validateRequest,

@@ -15,7 +15,8 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { ordersAPI, authAPI, API_SERVER_URL } from '../services/api';
+import { ordersAPI, authAPI } from '../services/api';
+import { getProductImageUrl } from '../utils/imageHelper';
 import { toast } from 'react-hot-toast';
 
 const ProfilePage = () => {
@@ -602,7 +603,7 @@ const ProfilePage = () => {
                               <div key={index} className="w-10 h-10 bg-primary-100 rounded overflow-hidden">
                                 {item.product?.images?.[0] ? (
                                   <img
-                                    src={`${API_SERVER_URL}${item.product.images[0].url}`}
+                                    src={getProductImageUrl(item.product, 0)}
                                     alt={item.product.name}
                                     className="w-full h-full object-cover"
                                   />

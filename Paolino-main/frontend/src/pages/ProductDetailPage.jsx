@@ -14,9 +14,10 @@ import {
   Plus,
   Minus
 } from 'lucide-react';
-import { productsAPI, wishlistAPI, API_SERVER_URL } from '../services/api';
+import { productsAPI, wishlistAPI } from '../services/api';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { getProductImageUrl } from '../utils/imageHelper';
 import toast from 'react-hot-toast';
 
 const ProductDetailPage = () => {
@@ -251,7 +252,7 @@ const ProductDetailPage = () => {
             {product.images && product.images.length > 0 ? (
               <>
                 <img
-                  src={`${API_SERVER_URL}${product.images[selectedImageIndex].url}`}
+                  src={getProductImageUrl(product, selectedImageIndex)}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />

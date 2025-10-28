@@ -22,7 +22,14 @@ const productSchema = new mongoose.Schema({
     min: 0
   },
   images: [{
-    url: String,
+    url: {
+      type: String,
+      required: true
+    },
+    publicId: {
+      type: String,
+      required: true
+    },
     alt: String,
     isPrimary: {
       type: Boolean,

@@ -9,7 +9,8 @@ import {
   Users,
   ShoppingCart
 } from 'lucide-react';
-import { adminAPI, API_SERVER_URL } from '../../services/api';
+import { adminAPI } from '../../services/api';
+import { getProductImageUrl } from '../../utils/imageHelper';
 import StatsCard from '../../components/admin/StatsCard';
 
 const AnalyticsAdmin = () => {
@@ -282,7 +283,7 @@ const AnalyticsAdmin = () => {
                     <div className="w-12 h-12 bg-primary-100 rounded-lg overflow-hidden">
                       {item.product?.images?.[0] ? (
                         <img
-                          src={`${API_SERVER_URL}${item.product.images[0].url}`}
+                          src={getProductImageUrl(item.product, 0)}
                           alt={item.product.name}
                           className="w-full h-full object-cover"
                         />
