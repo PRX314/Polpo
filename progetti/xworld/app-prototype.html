@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X Project App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #000;
+            --bg: #fff;
+            --border: #ddd;
+            --gray: #666;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .app-container {
+            display: grid;
+            grid-template-columns: 30px 1fr 30px;
+            grid-template-rows: 60px 1fr 60px;
+            height: 100vh;
+            max-width: 480px;
+            margin: 0 auto;
+            background: var(--bg);
+            gap: 0;
+        }
+
+        /* ===== LEFT SIDEBAR (Vertical Text) ===== */
+        .left-sidebar {
+            grid-column: 1;
+            grid-row: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            border-right: 1px solid var(--border);
+        }
+
+        .left-text {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--gray);
+        }
+
+        /* ===== RIGHT SIDEBAR (Vertical Text) ===== */
+        .right-sidebar {
+            grid-column: 3;
+            grid-row: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            border-left: 1px solid var(--border);
+        }
+
+        .right-text {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--gray);
+        }
+
+        /* ===== TOP BAR ===== */
+        .top-bar {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 12px;
+            border-bottom: 1px solid var(--border);
+            gap: 12px;
+        }
+
+        .top-bar-logo {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--primary);
+        }
+
+        .top-bar-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--border);
+        }
+
+        .top-bar-projects {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .top-bar-project {
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0.4;
+            transition: all 0.2s;
+        }
+
+        .top-bar-project:hover {
+            opacity: 0.7;
+        }
+
+        .top-bar-project.active {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            grid-column: 2;
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr 80px;
+            gap: 8px;
+            padding: 12px;
+            overflow: hidden;
+        }
+
+        /* ===== BOXES ===== */
+        .box {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .box-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            color: var(--gray);
+        }
+
+        /* CHAT BOX (Left, spans 2 rows) */
+        .chat-box {
+            grid-column: 1;
+            grid-row: 1 / 3;
+        }
+
+        /* NFT CARD BOX (Bottom, spans 2 columns) */
+        .nft-box {
+            grid-column: 1 / 3;
+            grid-row: 3;
+            padding: 0;
+        }
+
+        .chat-content {
+            flex: 1;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .chat-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chat-room {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-room:hover:not(.locked) {
+            background: #f8f8f8;
+        }
+
+        .chat-room:active:not(.locked) {
+            transform: scale(0.98);
+        }
+
+        .chat-room.locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .chat-room-icon {
+            font-size: 14px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .chat-room-info {
+            flex: 1;
+        }
+
+        .chat-room-name {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .chat-room-tier {
+            font-size: 8px;
+            color: var(--gray);
+            text-transform: uppercase;
+        }
+
+        .chat-room-lock {
+            font-size: 12px;
+        }
+
+        .project-divider {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--gray);
+            padding: 8px 10px 4px;
+            text-transform: uppercase;
+            background: #fafafa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        /* CHAT VIEWER (Full screen overlay) */
+        .chat-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .chat-viewer.active {
+            display: flex;
+        }
+
+        .chat-viewer-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-btn {
+            font-size: 20px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .chat-viewer-title {
+            flex: 1;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .chat-viewer-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .message-group {
+            margin-bottom: 16px;
+        }
+
+        .message-group-header {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--gray);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tier-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 9px;
+        }
+
+        .tier-badge.base {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .tier-badge.advanced {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .tier-badge.creator {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .tier-badge.founder {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 10px 12px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .chat-message.locked {
+            background: #f0f0f0;
+            opacity: 0.6;
+            position: relative;
+        }
+
+        .message-author {
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .message-text {
+            font-size: 11px;
+            line-height: 1.4;
+            color: var(--text);
+        }
+
+        .message-time {
+            font-size: 9px;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+
+        .locked-message {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--gray);
+        }
+
+        /* NFT SELECTOR */
+        .nft-selector {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .nft-selector.active {
+            display: flex;
+        }
+
+        .nft-panel {
+            background: var(--bg);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 380px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .nft-panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .nft-item {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nft-item.owned {
+            background: #f0fff4;
+            border-color: #48bb78;
+        }
+
+        .nft-item.locked {
+            opacity: 0.5;
+        }
+
+        .nft-item-icon {
+            font-size: 32px;
+        }
+
+        .nft-item-info {
+            flex: 1;
+        }
+
+        .nft-item-name {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .nft-item-status {
+            font-size: 10px;
+            color: var(--gray);
+        }
+
+        .nft-toggle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .nft-item.owned .nft-toggle {
+            background: #48bb78;
+            border-color: #48bb78;
+            color: white;
+        }
+
+        .close-btn {
+            margin-top: 16px;
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .close-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* NFT CARD in bottom-left box */
+        .nft-card-container {
+            padding: 12px;
+        }
+
+        .nft-mini-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            padding: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nft-mini-card:active {
+            transform: scale(0.98);
+        }
+
+        .nft-mini-title {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .nft-owned-list {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .nft-owned-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* PROGETTI BOX (Top-right) */
+        .progetti-box {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .project-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .scroll-indicator {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .arrow {
+            font-size: 12px;
+            color: var(--gray);
+            cursor: pointer;
+        }
+
+        .dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--gray);
+        }
+
+        .dot.active {
+            background: var(--primary);
+        }
+
+        /* SHOP BOX (Bottom-right) */
+        .shop-box {
+            grid-column: 2;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .shop-box:active {
+            transform: scale(0.98);
+        }
+
+        .shop-image {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        /* ===== BOTTOM BAR (Discord icons) ===== */
+        .bottom-bar {
+            grid-column: 2;
+            grid-row: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 0 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .discord-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg);
+        }
+
+        .discord-icon:active {
+            transform: scale(0.9);
+            background: var(--primary);
+            color: var(--bg);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- LEFT SIDEBAR -->
+        <div class="left-sidebar">
+            <div class="left-text">GESTIONE NFT APP view</div>
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <div class="right-sidebar">
+            <div class="right-text">X W.P. Project</div>
+        </div>
+
+        <!-- TOP BAR -->
+        <div class="top-bar">
+            <div class="top-bar-logo">XWP</div>
+            <div class="top-bar-divider"></div>
+            <div class="top-bar-projects">
+                <div class="top-bar-project active" title="Occhiali AR">👓</div>
+                <div class="top-bar-project" title="OOX Gaming">⭕</div>
+                <div class="top-bar-project" title="Sciarcuffia Tech">🧣</div>
+                <div class="top-bar-project" title="ArtLab">🎨</div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT GRID -->
+        <div class="main-content">
+            <!-- CHAT BOX (Left, spanning 2 rows) -->
+            <div class="box chat-box">
+                <div class="box-title">CHAT PROGETTI</div>
+                <div class="chat-content" id="chat-container">
+                    <!-- Chat messages will be dynamically generated -->
+                </div>
+            </div>
+
+            <!-- PROGETTI BOX (Top-right) -->
+            <div class="box progetti-box">
+                <div class="box-title">PROGETTI</div>
+                <div class="project-icon" id="current-project">⭕</div>
+                <div class="scroll-indicator">
+                    <div class="arrow" onclick="prevProject()">←</div>
+                    <div class="dots">
+                        <div class="dot active"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                    <div class="arrow" onclick="nextProject()">→</div>
+                </div>
+            </div>
+
+            <!-- SHOP BOX (Bottom-right) -->
+            <div class="box shop-box" onclick="alert('Shop coming soon!')">
+                <div class="box-title">SHOP</div>
+                <div class="shop-image">🧣</div>
+            </div>
+
+            <!-- NFT CARD BOX (Bottom, full width) -->
+            <div class="box nft-box">
+                <div class="nft-card-container">
+                    <div class="nft-mini-card" onclick="openNFTSelector()">
+                        <div class="nft-mini-title">I Miei NFT</div>
+                        <div class="nft-owned-list" id="nft-mini-list">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM BAR (Discord Icons) -->
+        <div class="bottom-bar">
+            <div class="discord-icon">💬</div>
+            <div class="discord-icon">📢</div>
+            <div class="discord-icon">👥</div>
+        </div>
+    </div>
+
+    <!-- NFT SELECTOR PANEL -->
+    <div class="nft-selector" id="nft-selector" onclick="closeNFTSelector(event)">
+        <div class="nft-panel" onclick="event.stopPropagation()">
+            <div class="nft-panel-title">I Miei NFT</div>
+            <div id="nft-list">
+                <!-- NFT items will be dynamically generated -->
+            </div>
+            <button class="close-btn" onclick="closeNFTSelector()">Chiudi</button>
+        </div>
+    </div>
+
+    <!-- CHAT VIEWER (Full screen) -->
+    <div class="chat-viewer" id="chat-viewer">
+        <div class="chat-viewer-header">
+            <button class="back-btn" onclick="closeChatViewer()">←</button>
+            <div class="chat-viewer-title" id="chat-viewer-title"></div>
+        </div>
+        <div class="chat-viewer-messages" id="chat-viewer-messages">
+            <!-- Messages will be dynamically generated -->
+        </div>
+    </div>
+
+    <script>
+        // ===== TIER LEVELS (hierarchy) =====
+        const tierLevels = {
+            'Base': 1,
+            'Advanced': 2,
+            'Creator': 3,
+            'Founder': 4
+        };
+
+        // ===== NFT DATA =====
+        const nftData = [
+            { id: 'i8i', icon: '👓', name: 'I8I Eyewear', tier: 'Creator' },
+            { id: '00x', icon: '🎩', name: '00X Collection', tier: 'Advanced' },
+            { id: 'sciarcuffia', icon: '🧣', name: 'Sciarcuffia', tier: 'Founder' },
+            { id: 'polpoverse', icon: '🐙', name: 'PolpoVerse', tier: 'Base' }
+        ];
+
+        // User's owned NFTs with their tiers
+        let ownedNFTs = {
+            '00x': 'Advanced',
+            'sciarcuffia': 'Founder'
+        }; // Example: user owns 00X (Advanced) and Sciarcuffia (Founder)
+
+        // ===== CHAT MESSAGES DATA (organized by project and tier) =====
+        const chatMessagesData = {
+            'i8i': {
+                icon: '👓',
+                name: 'I8I Eyewear',
+                messages: [
+                    { tier: 'Base', author: 'Info_Bot', text: 'Benvenuto in I8I Eyewear! Occhiali senza stanghetta.', time: '09:00' },
+                    { tier: 'Advanced', author: 'Design_Team', text: 'Prototipo funzionante pronto! Sistema di fissaggio innovativo testato ✅', time: '10:30' },
+                    { tier: 'Creator', author: 'Paolo_Founder', text: 'Beta testing aperto: chi vuole provare i prototipi?', time: '14:23' },
+                    { tier: 'Creator', author: 'Materials_Lead', text: 'Voto materiali: Titanio vs Fibra di carbonio. Decidete!', time: '14:25' },
+                    { tier: 'Founder', author: 'CFO', text: 'Budget produzione confermato: 100 unità edizione limitata', time: '15:00' }
+                ]
+            },
+            '00x': {
+                icon: '🎩',
+                name: '00X Collection',
+                messages: [
+                    { tier: 'Base', author: 'Info_Bot', text: 'Benvenuto in 00X Collection! Valigetta + abbigliamento 007 style 🕴️', time: '08:00' },
+                    { tier: 'Base', author: 'Community', text: 'Primo drop valigette: 15 Gennaio 2025!', time: '09:30' },
+                    { tier: 'Advanced', author: 'Design_James', text: 'Preview esclusiva gadget tech: mini-camera, penna USB, torcia LED', time: '14:18' },
+                    { tier: 'Advanced', author: 'Materials_Vote', text: '🗳️ VOTO APERTO: Materiale valigetta (Alluminio/Legno/Carbonio)', time: '14:20' },
+                    { tier: 'Creator', author: 'Production_Lead', text: 'Abbigliamento tech in sviluppo: giacca con tasche RFID, cravatta-microfono', time: '16:00' },
+                    { tier: 'Founder', author: 'CFO', text: 'Revenue share Q1: 15% profitti distribuiti agli holder', time: '17:00' }
+                ]
+            },
+            'sciarcuffia': {
+                icon: '🧣',
+                name: 'Sciarcuffia',
+                messages: [
+                    { tier: 'Base', author: 'Info_Bot', text: 'Benvenuto in Sciarcuffia! Fashion-tech wearable innovativo 🧣', time: '07:00' },
+                    { tier: 'Advanced', author: 'Fashion_Designer', text: 'Nuove colorazioni votate dalla community: Nero Opaco, Viola Neon, Verde Smeraldo', time: '12:45' },
+                    { tier: 'Advanced', author: 'Production', text: 'Produzione Batch 1 completata: 50 unità ready to ship 📦', time: '13:00' },
+                    { tier: 'Creator', author: 'Design_Lead', text: 'Preview esclusiva Collezione Estate 2025: materiali tech-fabric con protezione UV', time: '14:00' },
+                    { tier: 'Founder', author: 'Partnerships', text: 'Collaborazione confermata con brand sustainable fashion', time: '15:30' },
+                    { tier: 'Founder', author: 'CFO', text: 'Revenue distribution NFT holder: 20% profitti Q4 → wallet automaticamente', time: '16:00' }
+                ]
+            },
+            'polpoverse': {
+                icon: '🐙',
+                name: 'PolpoVerse',
+                messages: [
+                    { tier: 'Base', author: 'Info_Bot', text: 'Benvenuto in PolpoVerse! Il metaverso di X World Project 🌐', time: '06:00' },
+                    { tier: 'Base', author: 'Community_Mod', text: 'Prossimi progetti in votazione: Surf House Chiavari, X World Hunter Alpha', time: '11:30' },
+                    { tier: 'Base', author: 'Events', text: 'Meetup Chiavari: 20 Gennaio @ X World Hub', time: '12:00' },
+                    { tier: 'Advanced', author: 'Governance', text: '🗳️ Proposta #003 aperta: Budget marketing Q1 - Votate!', time: '13:00' },
+                    { tier: 'Creator', author: 'Dev_Team', text: 'Sneak peek: X World Hunter gameplay teaser in arrivo 🎮', time: '14:30' },
+                    { tier: 'Founder', author: 'DAO_Treasury', text: 'Treasury update: 150 ETH + 500k BIC token. Strategia investimenti House in review', time: '16:00' }
+                ]
+            }
+        };
+
+        // ===== GET USER TIER FOR PROJECT =====
+        function getUserTierLevel(projectId) {
+            if (ownedNFTs[projectId]) {
+                return tierLevels[ownedNFTs[projectId]];
+            }
+            return 0; // No access
+        }
+
+        // ===== RENDER CHAT LIST (One entry per project) =====
+        function renderChatList() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = '';
+
+            Object.keys(chatMessagesData).forEach(projectId => {
+                const chat = chatMessagesData[projectId];
+                const hasAccess = ownedNFTs[projectId] !== undefined;
+
+                const chatItem = document.createElement('div');
+                chatItem.className = `chat-room ${hasAccess ? '' : 'locked'}`;
+
+                if (hasAccess) {
+                    chatItem.onclick = () => openProjectChat(projectId);
+                }
+
+                chatItem.innerHTML = `
+                    <div class="chat-room-icon">${chat.icon}</div>
+                    <div class="chat-room-info">
+                        <div class="chat-room-name">${chat.name}</div>
+                        <div class="chat-room-tier">${hasAccess ? ownedNFTs[projectId] + ' Tier' : 'Bloccato'}</div>
+                    </div>
+                    ${hasAccess ? '' : '<div class="chat-room-lock">🔒</div>'}
+                `;
+
+                chatContainer.appendChild(chatItem);
+            });
+        }
+
+        // ===== UPDATE NFT MINI CARD =====
+        function updateNFTMiniCard() {
+            const miniList = document.getElementById('nft-mini-list');
+            miniList.innerHTML = '';
+
+            if (Object.keys(ownedNFTs).length === 0) {
+                miniList.innerHTML = '<div style="font-size: 10px; opacity: 0.8;">Nessun NFT posseduto</div>';
+                return;
+            }
+
+            Object.keys(ownedNFTs).forEach(projectId => {
+                const nft = nftData.find(n => n.id === projectId);
+                if (!nft) return;
+
+                const badge = document.createElement('div');
+                badge.className = 'nft-owned-badge';
+                badge.innerHTML = `<span>${nft.icon}</span><span>${nft.tier}</span>`;
+                miniList.appendChild(badge);
+            });
+        }
+
+        // ===== OPEN PROJECT CHAT (show list of tier chat rooms) =====
+        function openProjectChat(projectId) {
+            const chat = chatMessagesData[projectId];
+            const userTierLevel = getUserTierLevel(projectId);
+
+            // Set title
+            document.getElementById('chat-viewer-title').innerHTML = `${chat.icon} ${chat.name}`;
+
+            const messagesContainer = document.getElementById('chat-viewer-messages');
+            messagesContainer.innerHTML = '';
+
+            // Show list of available chat rooms by tier
+            const allTiers = ['Base', 'Advanced', 'Creator', 'Founder'];
+
+            allTiers.forEach(tier => {
+                const tierLevel = tierLevels[tier];
+                const hasAccess = userTierLevel >= tierLevel;
+
+                // Check if there are messages for this tier
+                const tierHasMessages = chat.messages.some(m => m.tier === tier);
+                if (!tierHasMessages) return; // Skip if no messages for this tier
+
+                const roomItem = document.createElement('div');
+                roomItem.className = `chat-room ${hasAccess ? '' : 'locked'}`;
+                roomItem.style.margin = '12px 0';
+
+                if (hasAccess) {
+                    roomItem.onclick = () => openChatRoom(projectId, tier);
+                }
+
+                roomItem.innerHTML = `
+                    <div class="chat-room-icon">#</div>
+                    <div class="chat-room-info">
+                        <div class="chat-room-name">Chat ${tier}</div>
+                        <div class="chat-room-tier">${hasAccess ? 'Accessibile' : 'NFT ' + tier + ' richiesto'}</div>
+                    </div>
+                    ${hasAccess ? '' : '<div class="chat-room-lock">🔒</div>'}
+                `;
+
+                messagesContainer.appendChild(roomItem);
+            });
+
+            document.getElementById('chat-viewer').classList.add('active');
+        }
+
+        // ===== OPEN SPECIFIC CHAT ROOM (single tier messages) =====
+        function openChatRoom(projectId, tier) {
+            const chat = chatMessagesData[projectId];
+            const userTierLevel = getUserTierLevel(projectId);
+            const tierLevel = tierLevels[tier];
+
+            // Set title with project and tier
+            document.getElementById('chat-viewer-title').innerHTML = `${chat.icon} ${chat.name} - ${tier}`;
+
+            const messagesContainer = document.getElementById('chat-viewer-messages');
+            messagesContainer.innerHTML = '';
+
+            // Add back button to return to room list
+            const backBtn = document.createElement('div');
+            backBtn.style.cssText = 'padding: 12px; background: #f0f0f0; margin-bottom: 16px; cursor: pointer; border-radius: 8px; display: flex; align-items: center; gap: 8px;';
+            backBtn.innerHTML = '<span>←</span><span>Torna alle chat rooms</span>';
+            backBtn.onclick = () => openProjectChat(projectId);
+            messagesContainer.appendChild(backBtn);
+
+            // Only show messages for this specific tier
+            const tierMessages = chat.messages.filter(m => m.tier === tier);
+
+            if (tierMessages.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.style.cssText = 'padding: 20px; text-align: center; color: #999;';
+                emptyMsg.textContent = 'Nessun messaggio ancora';
+                messagesContainer.appendChild(emptyMsg);
+                return;
+            }
+
+            // Show messages
+            tierMessages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'chat-message';
+
+                messageDiv.innerHTML = `
+                    <div class="message-author">${msg.author}</div>
+                    <div class="message-text">${msg.text}</div>
+                    <div class="message-time">${msg.time}</div>
+                `;
+
+                messagesContainer.appendChild(messageDiv);
+            });
+        }
+
+        // ===== CLOSE CHAT VIEWER =====
+        function closeChatViewer() {
+            document.getElementById('chat-viewer').classList.remove('active');
+        }
+
+        // ===== NFT SELECTOR =====
+        function openNFTSelector() {
+            document.getElementById('nft-selector').classList.add('active');
+            renderNFTList();
+        }
+
+        function closeNFTSelector(event) {
+            if (event && event.target.id !== 'nft-selector') return;
+            document.getElementById('nft-selector').classList.remove('active');
+        }
+
+        function renderNFTList() {
+            const nftList = document.getElementById('nft-list');
+            nftList.innerHTML = '';
+
+            nftData.forEach(nft => {
+                const isOwned = ownedNFTs[nft.id] !== undefined;
+                const nftItem = document.createElement('div');
+                nftItem.className = `nft-item ${isOwned ? 'owned' : 'locked'}`;
+                nftItem.onclick = () => toggleNFT(nft.id, nft.tier);
+
+                nftItem.innerHTML = `
+                    <div class="nft-item-icon">${nft.icon}</div>
+                    <div class="nft-item-info">
+                        <div class="nft-item-name">${nft.name}</div>
+                        <div class="nft-item-status">${isOwned ? 'Posseduto • ' + nft.tier : '🔒 Non posseduto'}</div>
+                    </div>
+                    <div class="nft-toggle">${isOwned ? '✓' : ''}</div>
+                `;
+
+                nftList.appendChild(nftItem);
+            });
+        }
+
+        function toggleNFT(nftId, tier) {
+            if (ownedNFTs[nftId]) {
+                delete ownedNFTs[nftId];
+            } else {
+                ownedNFTs[nftId] = tier;
+            }
+            renderNFTList();
+            renderChatList();
+            updateNFTMiniCard();
+        }
+
+        // ===== PROJECT SCROLLER =====
+        const projects = ['🎩', '👓', '🧣', '🐙'];
+        let currentProjectIndex = 0;
+
+        function updateProject() {
+            document.getElementById('current-project').textContent = projects[currentProjectIndex];
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentProjectIndex);
+            });
+        }
+
+        function nextProject() {
+            currentProjectIndex = (currentProjectIndex + 1) % projects.length;
+            updateProject();
+        }
+
+        function prevProject() {
+            currentProjectIndex = (currentProjectIndex - 1 + projects.length) % projects.length;
+            updateProject();
+        }
+
+        // ===== RANDOM SHOP IMAGE =====
+        const shopImages = ['🧣', '👓', '⭕', '🎨', '👕', '🎒', '⌚'];
+        function randomizeShopImage() {
+            const randomIndex = Math.floor(Math.random() * shopImages.length);
+            document.querySelector('.shop-image').textContent = shopImages[randomIndex];
+        }
+
+        setInterval(randomizeShopImage, 3000);
+
+        // ===== INIT =====
+        document.addEventListener('DOMContentLoaded', () => {
+            renderChatList();
+            updateNFTMiniCard();
+        });
+    </script>
+</body>
+</html>

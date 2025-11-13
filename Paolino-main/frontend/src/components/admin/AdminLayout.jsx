@@ -45,11 +45,12 @@ const AdminLayout = ({ children }) => {
     <div className="min-h-screen bg-primary-50">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 lg:hidden" 
+        <div
+          className="fixed inset-0 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
+          aria-label="Chiudi menu"
         >
-          <div className="fixed inset-0 bg-black opacity-50"></div>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm"></div>
         </div>
       )}
 
@@ -68,7 +69,8 @@ const AdminLayout = ({ children }) => {
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-white hover:text-primary-200"
+              className="lg:hidden text-white hover:text-primary-200 p-1 rounded transition-colors"
+              aria-label="Chiudi menu"
             >
               <X size={24} />
             </button>
@@ -137,23 +139,25 @@ const AdminLayout = ({ children }) => {
       {/* Main content */}
       <div className="lg:ml-64">
         {/* Top bar */}
-        <div className="sticky top-0 z-30 flex items-center justify-between h-16 bg-white border-b border-primary-200 px-4 lg:px-6">
+        <div className="sticky top-0 z-30 flex items-center justify-between h-16 bg-white border-b border-primary-200 px-4 lg:px-6 shadow-sm">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-primary-600 hover:text-primary-900"
+            className="lg:hidden flex items-center gap-2 text-primary-900 hover:text-primary-700 font-medium px-3 py-2 rounded-lg hover:bg-primary-50 transition-all"
+            aria-label="Apri menu"
           >
             <Menu size={24} />
+            <span className="text-sm">Menu</span>
           </button>
-          
+
           <div className="flex-1 lg:hidden"></div>
-          
-          {/* Breadcrumb or page title could go here */}
-          <div className="text-sm text-primary-600">
-            {new Date().toLocaleDateString('it-IT', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+
+          {/* Date display */}
+          <div className="hidden sm:block text-sm text-primary-600 font-medium">
+            {new Date().toLocaleDateString('it-IT', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             })}
           </div>
         </div>

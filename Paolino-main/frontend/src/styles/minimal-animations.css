@@ -1,0 +1,422 @@
+/* ============================================================================
+   MINIMAL AESTHETIC - Spacing, Animazioni, Ombreggiature
+   Focus: Clean, Breathable, Smooth
+   ============================================================================ */
+
+/* ============================================================================
+   GLOBAL MINIMAL RESETS
+   ============================================================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Smoother animations */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================================
+   SPACING SYSTEM - Minimal & Breathable
+   ============================================================================ */
+
+.space-xs { margin: 0.25rem; }
+.space-sm { margin: 0.5rem; }
+.space-md { margin: 1rem; }
+.space-lg { margin: 1.5rem; }
+.space-xl { margin: 2rem; }
+.space-xxl { margin: 3rem; }
+
+.gap-xs { gap: 0.25rem; }
+.gap-sm { gap: 0.5rem; }
+.gap-md { gap: 1rem; }
+.gap-lg { gap: 1.5rem; }
+.gap-xl { gap: 2rem; }
+
+.p-xs { padding: 0.25rem; }
+.p-sm { padding: 0.5rem; }
+.p-md { padding: 1rem; }
+.p-lg { padding: 1.5rem; }
+.p-xl { padding: 2rem; }
+.p-xxl { padding: 3rem; }
+
+/* ============================================================================
+   OMBREGGIATURE ELEGANTI - Depth System
+   ============================================================================ */
+
+.shadow-minimal {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06),
+              0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-soft {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08),
+              0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-medium {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10),
+              0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.shadow-elevated {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12),
+              0 4px 12px rgba(0, 0, 0, 0.10);
+}
+
+.shadow-float {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15),
+              0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Ombreggiature colorate per temi */
+.shadow-primary {
+  box-shadow: 0 4px 16px var(--color-shadow, rgba(0, 0, 0, 0.1));
+}
+
+.shadow-primary-hover {
+  box-shadow: 0 8px 32px var(--color-shadow, rgba(0, 0, 0, 0.15));
+}
+
+/* ============================================================================
+   MICRO-ANIMAZIONI - Subtle & Smooth
+   ============================================================================ */
+
+/* Fade In Up - Entry animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Scale In - Gentle appearance */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Slide In - From sides */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Pulse - Attention grabber */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Shimmer - Loading effect */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Ripple - Button click effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.6), transparent);
+  border-radius: inherit;
+  animation: ripple 0.6s ease-out;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   HOVER EFFECTS - Minimal & Elegant
+   ============================================================================ */
+
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.hover-scale {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+.hover-glow {
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-glow::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: var(--gradient-primary);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  filter: blur(8px);
+}
+
+.hover-glow:hover::before {
+  opacity: 0.6;
+}
+
+.hover-brighten {
+  transition: filter 0.3s ease;
+}
+
+.hover-brighten:hover {
+  filter: brightness(1.1);
+}
+
+/* ============================================================================
+   BUTTON ENHANCEMENTS - Minimal Style
+   ============================================================================ */
+
+.btn-minimal {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md, 10px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.btn-minimal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.btn-minimal:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Button ripple effect */
+.btn-minimal::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease;
+}
+
+.btn-minimal:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* ============================================================================
+   CARD ENHANCEMENTS - Clean & Minimal
+   ============================================================================ */
+
+.card-minimal {
+  background: var(--color-bg-card, #fff);
+  border-radius: var(--radius-md, 16px);
+  padding: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-minimal:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  border-color: var(--color-primary, rgba(0, 0, 0, 0.1));
+}
+
+/* Card with gradient border on hover */
+.card-gradient-border {
+  position: relative;
+  background: var(--color-bg-card, #fff);
+  border-radius: var(--radius-md, 16px);
+  padding: 1.5rem;
+}
+
+.card-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: var(--gradient-primary);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card-gradient-border:hover::before {
+  opacity: 1;
+}
+
+/* ============================================================================
+   LOADING STATES - Minimal
+   ============================================================================ */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.04) 50%,
+    rgba(0, 0, 0, 0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm, 8px);
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ============================================================================
+   TRANSITIONS - Smooth Everything
+   ============================================================================ */
+
+.transition-all {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-fast {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-slow {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================================
+   GLASSMORPHISM - Modern blur effects
+   ============================================================================ */
+
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================================================
+   RESPONSIVE UTILITIES
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .hover-lift:hover,
+  .hover-scale:hover {
+    transform: none; /* Disable hover effects on touch devices */
+  }
+
+  /* Reduce spacing on mobile */
+  .space-xxl { margin: 2rem; }
+  .p-xxl { padding: 2rem; }
+}
+
+/* ============================================================================
+   ACCESSIBILITY - Respect user preferences
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

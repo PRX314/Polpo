@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import fijoTheme from '../themes/fijoTheme';
+import gpowerTheme from '../themes/gpowerTheme';
 
 const ThemeContext = createContext();
 
@@ -8,6 +10,12 @@ export const useTheme = () => {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
+};
+
+// Theme registry - mappa slug collezione → theme object
+const themeRegistry = {
+  'fijo-de-n-amore': fijoTheme,
+  'g-power': gpowerTheme,
 };
 
 export const ThemeProvider = ({ children }) => {
@@ -20,7 +28,7 @@ export const ThemeProvider = ({ children }) => {
     { name: 'ocean', icon: '☀️', label: 'Light', displayName: 'Ocean' }
   ];
 
-  // Collection themes (quando cambi collezione)
+  // LEGACY - Collection themes semplici (mantenuti per retro-compatibilità)
   const collectionThemes = {
     romantic: {
       name: 'romantic',
@@ -76,6 +84,12 @@ export const ThemeProvider = ({ children }) => {
   const [bannerData, setBannerData] = useState(null);
   const [showBanner, setShowBanner] = useState(false);
 
+  // NUOVO: Current detailed theme (dai file theme dedicati)
+  const [currentDetailedTheme, setCurrentDetailedTheme] = useState(() => {
+    const saved = localStorage.getItem('detailed-theme-slug');
+    return themeRegistry[saved] || fijoTheme; // Default: Fijo de'n Amore
+  });
+
   // Apply theme to document
   useEffect(() => {
     // Apply header theme
@@ -86,11 +100,11 @@ export const ThemeProvider = ({ children }) => {
     document.body.dataset.globalTheme = globalDarkMode ? 'dark' : 'light';
     localStorage.setItem('global-theme', globalDarkMode ? 'dark' : 'light');
 
-    // Apply collection theme
+    // Apply collection theme (legacy)
     document.body.dataset.collectionTheme = currentCollectionTheme.name;
     localStorage.setItem('collection-theme', currentCollectionTheme.name);
 
-    // Apply CSS variables
+    // Apply CSS variables (legacy)
     const root = document.documentElement;
     root.style.setProperty('--theme-primary', currentCollectionTheme.colors.primary);
     root.style.setProperty('--theme-secondary', currentCollectionTheme.colors.secondary);
@@ -98,6 +112,51 @@ export const ThemeProvider = ({ children }) => {
     root.style.setProperty('--theme-font', currentCollectionTheme.font);
     root.style.setProperty('--theme-gradient', currentCollectionTheme.gradient);
   }, [currentHeaderTheme, globalDarkMode, currentCollectionTheme]);
+
+  // Apply detailed theme CSS variables
+  useEffect(() => {
+    const theme = currentDetailedTheme;
+    const root = document.documentElement;
+
+    // Colors
+    root.style.setProperty('--color-primary', theme.colors.primary);
+    root.style.setProperty('--color-secondary', theme.colors.secondary);
+    root.style.setProperty('--color-accent', theme.colors.accent);
+    root.style.setProperty('--color-text-primary', theme.colors.text.primary);
+    root.style.setProperty('--color-text-secondary', theme.colors.text.secondary);
+    root.style.setProperty('--color-text-light', theme.colors.text.light);
+    root.style.setProperty('--color-bg-main', theme.colors.background.main);
+    root.style.setProperty('--color-bg-secondary', theme.colors.background.secondary);
+    root.style.setProperty('--color-bg-card', theme.colors.background.card);
+    root.style.setProperty('--color-border', theme.colors.border);
+
+    // Typography
+    root.style.setProperty('--font-heading', theme.fonts.heading);
+    root.style.setProperty('--font-body', theme.fonts.body);
+    root.style.setProperty('--font-accent', theme.fonts.accent);
+
+    // Spacing
+    root.style.setProperty('--spacing-sm', theme.spacing.sm);
+    root.style.setProperty('--spacing-md', theme.spacing.md);
+    root.style.setProperty('--spacing-lg', theme.spacing.lg);
+
+    // Border radius
+    root.style.setProperty('--radius-sm', theme.borderRadius.sm);
+    root.style.setProperty('--radius-md', theme.borderRadius.md);
+    root.style.setProperty('--radius-lg', theme.borderRadius.lg);
+
+    // Shadows
+    root.style.setProperty('--shadow-sm', theme.shadows.sm);
+    root.style.setProperty('--shadow-md', theme.shadows.md);
+    root.style.setProperty('--shadow-hover', theme.shadows.hover);
+
+    // Gradients
+    root.style.setProperty('--gradient-primary', theme.gradients.primary);
+    root.style.setProperty('--gradient-hero', theme.gradients.hero);
+
+    // Save to localStorage
+    localStorage.setItem('detailed-theme-slug', theme.slug);
+  }, [currentDetailedTheme]);
 
   // Cycle through header themes
   const cycleHeaderTheme = () => {
@@ -154,6 +213,54 @@ export const ThemeProvider = ({ children }) => {
     setShowBanner(false);
   };
 
+  // NUOVO: Cambia detailed theme con banner animato
+  const changeDetailedTheme = (collectionSlug, forceShowBanner = false) => {
+    const newTheme = themeRegistry[collectionSlug];
+
+    if (!newTheme) {
+      console.warn(`Theme "${collectionSlug}" not found in registry`);
+      return;
+    }
+
+    // Se è lo stesso tema e non è forzato, non fare nulla
+    if (newTheme.slug === currentDetailedTheme.slug && !forceShowBanner) {
+      return;
+    }
+
+    // Cambia tema solo se diverso
+    if (newTheme.slug !== currentDetailedTheme.slug) {
+      setCurrentDetailedTheme(newTheme);
+    }
+
+    // Mostra banner con tutti i dati dal theme
+    const bannerInfo = {
+      theme: newTheme.slug,
+      title: newTheme.banner.title,
+      subtitle: newTheme.banner.subtitle,
+      icon: newTheme.banner.icon,
+      collectionName: newTheme.name,
+      backgroundColor: newTheme.banner.backgroundColor,
+      textColor: newTheme.banner.textColor,
+      textShadow: newTheme.banner.textShadow || 'none',
+      duration: newTheme.banner.duration,
+      animation: newTheme.banner.animation,
+    };
+
+    setBannerData(bannerInfo);
+    setShowBanner(true);
+
+    // Auto-chiudi banner dopo la durata
+    setTimeout(() => {
+      setShowBanner(false);
+    }, newTheme.banner.duration);
+  };
+
+  // NUOVO: Ottieni lista temi disponibili
+  const availableDetailedThemes = Object.keys(themeRegistry).map(slug => ({
+    slug,
+    name: themeRegistry[slug].name,
+  }));
+
   const value = {
     // Header theme
     currentHeaderTheme,
@@ -164,10 +271,16 @@ export const ThemeProvider = ({ children }) => {
     globalDarkMode,
     toggleGlobalDarkMode,
 
-    // Collection theme
+    // Collection theme (legacy)
     currentCollectionTheme,
     collectionThemes,
     changeCollectionTheme,
+
+    // NUOVO: Detailed themes
+    currentDetailedTheme,
+    changeDetailedTheme,
+    availableDetailedThemes,
+    themeRegistry,
 
     // Banner
     bannerData,

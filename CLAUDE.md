@@ -4,531 +4,458 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is Paolo Repetto's portfolio hub repository with three distinct parts:
-1. **Portfolio Showcase** (`/`, `/minigiochi/`, `/progetti/`, `/Sito Magliette/`) - Static HTML/CSS/JS projects and games showcasing creative web development
-2. **Production Application** (`/gestionale-x/`) - A fully functional React + Firebase project management tool deployed at gestionalepolpo.netlify.app
-3. **E-commerce Platform** (`/Paolino-main/`) - Full-stack MERN application for t-shirt sales with Stripe integration (currently untracked in git)
+This is Paolo Repetto's portfolio hub repository containing four distinct parts:
+1. **Portfolio Showcase** (`/`, `/minigiochi/`, `/progetti/`, `/Sito Magliette/`) - Static HTML/CSS/JS projects and games
+2. **Gestionale-X** (`/gestionale-x/`) - React + Firebase project management application deployed at gestionalepolpo.netlify.app
+3. **OG-2025** (`/OG-2025/`) - Olimpiadi Goliardiche event management system with Google Sheets integration
+4. **Paolino E-commerce** (`/Paolino-main/`) - Full-stack MERN e-commerce platform (currently untracked in git)
 
 **Primary Entry Point**: `/index.html` (main portfolio hub)
-**Production App**: `gestionale-x/` (deployed application)
-**E-commerce Platform**: `Paolino-main/` (development/staging)
 **Language**: Italian (all user-facing content)
 
-## Repository Structure
+### Repository Structure Note
+This is a **monorepo** containing multiple independent projects. Each sub-project has its own:
+- Package.json and dependencies (Gestionale-X, Paolino frontend/backend)
+- Development environment and build process
+- Documentation (most have their own CLAUDE.md or README.md)
+- Deployment target (Netlify, local server, GitHub Pages)
 
-### 1. Main Portfolio Hub (`/`)
-- **Entry Point**: `index.html`
-- **Alternative Version**: `index-thread.html` (thread-based variation - experimental)
-- **Tech Stack**: Vanilla HTML5, CSS3, JavaScript ES6+
-- **Key Features**:
-  - Dark/light theme toggle with localStorage persistence
-  - CSS Grid-based responsive layout (6/3/2 columns)
-  - Mobile-first touch optimization
-  - SVG polpo (octopus) logo with 1.5s long-press redirect to gestionale
-  - Project card expansion on hover (desktop) or tap (mobile)
+## Quick Reference
 
-### 2. Mini Games Collection (`/minigiochi/`)
-- **Entry Point**: `minigiochi/index.html`
-- **Architecture**: Self-contained HTML files with embedded CSS/JS
-- **Games**:
-  - **TRIX Bolt Edition** (`trix.html`): Three game modes (Classic, Memory Mobile, Ultimate Bolt Timer)
-  - **Rhythm Click** (`rhythm-click.html`): Music rhythm game with timing-based gameplay
-  - **DVD Screensaver** (`dvd-screensaver/`): Class-based game with betting system and image upload
-  - **Pixxa Generator** (`pixxa/`): Pizza recipe generator with modular data files
-  - **Test ISTINTO** (`test/istinto.html`): Personality assessment game
-  - **Style Generator** (`style-generator.html`): T-shirt style combination generator
+### Starting Development
+```bash
+# Portfolio/Mini Games - Choose one:
+python -m http.server 8000        # Python HTTP server
+# OR use VS Code Live Server        # Right-click index.html → "Open with Live Server"
 
-### 3. Gestionale-X React Application (`/gestionale-x/`)
-- **Type**: React 19 + Vite 7 + Firebase 12
-- **Purpose**: Project and note management with Firebase backend
-- **Key Features**:
-  - Firebase Authentication (email/password + Google OAuth)
-  - Firestore database with real-time subscriptions
-  - User data isolation via security rules
-  - Component-based architecture with CRUD operations
+# Gestionale-X
+cd gestionale-x && npm run dev    # Port 5173
 
-### 4. E-commerce Store (`/Sito Magliette/`)
-- **Entry Point**: `Sito Magliette/index.html`
-- **Type**: Static e-commerce with PayPal integration
-- **Key Features**:
-  - Multi-collection product catalog
-  - Shopping cart with localStorage persistence
-  - PayPal SDK integration
-  - Italian language interface
-- **Laboratorio Subfolder** (`/Sito Magliette/laboratorio/`):
-  - Business admin panel with KPI tracking
-  - Style generator with 2000+ T-shirt combinations
-  - Creative and technical specification tabs
+# OG-2025 (Olimpiadi Goliardiche) - Static site
+cd OG-2025
+python -m http.server 8000        # Then open http://localhost:8000/homepage.html
+# OR npx serve .
 
-### 5. Projects Showcase (`/progetti/`)
-- Portfolio page for larger development projects
-- Consistent design system with main hub
+# Paolino (MUST start in order: MongoDB → Backend → Frontend)
+sudo service mongodb start                    # Step 1: Database
+cd Paolino-main/backend && npm run dev        # Step 2: Backend (port 5031)
+cd Paolino-main/frontend && npm run dev       # Step 3: Frontend (port 5173)
+```
 
-### 6. Paolino E-commerce Platform (`/Paolino-main/`)
-- **Type**: Full-stack MERN e-commerce application (currently untracked in git)
-- **Purpose**: Complete t-shirt and textile products online store
-- **Tech Stack**: Node.js/Express backend (port 5031), React 19 frontend (port 5173), MongoDB, Stripe payments
-- **Key Features**:
-  - Complete admin panel with analytics dashboard
-  - Product management with variants (size/color) and stock tracking
-  - Shopping cart and order management
-  - JWT authentication with role-based access (customer/admin)
-  - Stripe payment integration
-  - File upload for product images
-- **Development Commands**:
-  ```bash
-  # Backend (port 5031)
-  cd Paolino-main/backend
-  npm run dev
-  npm run setup  # Initialize admin user and sample products
-
-  # Frontend (port 5173)
-  cd Paolino-main/frontend
-  npm run dev
-  ```
-- **Test Credentials**: admin@paolino.com / admin123
-- **Status**: 95% complete - core functionality working, some UI pages pending
-- **Documentation**: See `/Paolino-main/CLAUDE.md` for detailed architecture and setup
-
-## Deployment
-
-### Netlify Configuration
-The repository is configured for Netlify deployment with the following setup (`netlify.toml`):
-- **Build Base**: `gestionale-x/`
-- **Build Command**: `npm run build`
-- **Publish Directory**: `dist`
-- **Node Version**: 20
-- **SPA Redirect**: All routes redirect to `/index.html` (status 200) for React Router support
-
-**Note**: The main portfolio hub static files are NOT deployed via the Netlify build process. Only the gestionale-x React application is built and deployed. The static portfolio pages can be served directly or via a separate static hosting setup.
+### Portfolio Showcase Contents
+- **Mini Games** (`/minigiochi/`): Interactive browser games
+  - Pixxa Generator - Pizza name generator with modular data files
+  - DVD Screensaver - Classic bouncing logo animation
+  - Trix - Interactive game
+  - Rhythm Click - Rhythm-based clicking game
+  - Style Generator - CSS style generation tool
+- **Projects** (`/progetti/`): Showcased projects
+  - **X World Project** (`/progetti/xworld/`) - Complete Web3 ecosystem with NFT crowdfunding and tokenized investments
+    - `index.html` - Visual showcase with POLPOPOLI projects (Sciarcuffia 🧣, 00X 🎩, I8I 👓, PolpoVerse 🐙)
+    - `whitepaper.html` - Comprehensive documentation (~1100 lines) with blockchain strategy, tokenomics, risks
+    - `app-prototype.html` - NFT-gated app simulator with tier-based chat access
+    - `crypto-academy.html` - Advanced blockchain learning platform with progress tracking
+    - `crypto-studio.html` - Basic crypto education with live CoinGecko price ticker
+    - `nav-hub.html` - Navigation hub for all X World apps
+    - `blockchain-study/` - Study materials and resources subdirectory
+  - Olimpiadi - Links to OG-2025 event management system
+  - Quotify - External project showcase
+  - Documenti - Document showcase
+- **Sito Magliette** - T-shirt website demo
 
 ## Development Commands
 
-### Static Sites (Portfolio, Mini Games, E-commerce)
+### Static Sites (Portfolio, Mini Games)
 ```bash
-# Serve with Python 3 (recommended)
+# Serve with Python 3
 python -m http.server 8000
 
-# Or with Node.js
-npx serve .
-
-# Or use VS Code Live Server extension (recommended for development)
-# Right-click any HTML file → "Open with Live Server"
+# Or use VS Code Live Server (recommended for development)
+# Right-click HTML file → "Open with Live Server"
 ```
 
 ### Gestionale-X React Application
 ```bash
 cd gestionale-x
+npm install           # First time only
+npm run dev           # Development server (port 5173)
+npm run build         # Production build
+npm run lint          # ESLint code quality check
+npm run preview       # Preview production build
+```
 
-# Install dependencies (first time only)
+### OG-2025 Olimpiadi Goliardiche
+```bash
+cd OG-2025
+
+# Serve with Python 3
+python -m http.server 8000
+
+# Or with Node.js
+npx serve .
+
+# Then open browser to:
+http://localhost:8000/homepage.html      # Landing page (start here)
+http://localhost:8000/index.html         # Classifica Finale (main scoreboard)
+http://localhost:8000/hub-capitani.html  # Captain Hub (team management)
+```
+
+**Note**: Pure vanilla JavaScript, no build process or dependencies required. All files run directly in browser.
+
+### Paolino E-commerce Platform
+```bash
+# Step 1: Start MongoDB (REQUIRED)
+sudo service mongodb start         # Linux/WSL
+# Or use MongoDB Compass
+
+# Step 2: Backend (port 5031) - MUST BE RUNNING
+cd Paolino-main/backend
 npm install
+npm run dev                        # Development with nodemon
+npm run setup                      # Initialize admin user and sample products
+npm run clean:products             # Delete all products from database
 
-# Start development server (port 5173)
-npm run dev
-
-# Build for production
-npm run build
-
-# Run linting
-npm run lint
-
-# Preview production build
-npm run preview
+# Step 3: Frontend (port 5173)
+cd Paolino-main/frontend
+npm install
+npm run dev                        # Development server
+npm run build                      # Production build
+npm run lint                       # ESLint analysis
 ```
 
-## Architecture Patterns
+**⚠️ CRITICAL**: Backend must be running BEFORE frontend for proper operation.
+**Paolino Test Credentials**: admin@paolino.com / admin123
+**Database**: MongoDB on port 27017, database name `paolino_ecommerce`
 
-### Frontend Architecture (Static Sites)
-- **Pure Vanilla JavaScript** - No frameworks or build tools
-- **ES6+ Features** - Classes, arrow functions, modules, template literals
-- **CSS Custom Properties** - Theme system with CSS variables (--bg-primary, --text-primary, etc.)
-- **Mobile-First Design** - Progressive enhancement for larger screens
-- **Self-contained Files** - Each game is a complete HTML document with inline CSS/JS
-- **Event-driven** - DOMContentLoaded events, touch/mouse event listeners
-- **LocalStorage** - Theme persistence and user preferences
+## Architecture Overview
 
-### Gestionale-X React Architecture
-- **Component-based** - Modular React components with single responsibility
-- **Hooks-based state** - useState, useEffect for local and side-effect state
-- **Firebase integration** - Real-time subscriptions via `subscribeToProjects()` and `subscribeToNotes()`
-- **Service layer** - `firebaseService.js` abstracts Firestore operations (CRUD + subscriptions)
-- **Authentication flow** - `onAuthStateChanged` listener in App.jsx
-- **Form modals** - Reusable AddProjectForm/AddNoteForm with edit capabilities
-- **Inline styles** - Strategic use alongside CSS classes for dynamic styling
-- **Italian language** - All UI text in Italian for target audience
+### Portfolio Hub Architecture
+- **Pure Vanilla JavaScript** - No frameworks, self-contained HTML files with inline CSS/JS for games
+- **CSS Custom Properties** - Theme system with light/dark modes
+  - Variables: `--bg-primary`, `--bg-secondary`, `--bg-card`, `--text-primary`, `--text-secondary`, `--border-color`, `--gradient-accent`
+  - Theme toggle button in header with localStorage persistence
+  - Attribute-based switching: `[data-theme="dark"]`
+- **Mobile-First Design** - Touch-optimized with responsive grid (6/3/2 columns)
+- **Font**: JetBrains Mono (monospace) for developer aesthetic
+- **LocalStorage** - Theme persistence across sessions
+- **Key Interactive Features**:
+  - Polpo logo long-press (1.5s) redirects to gestionalepolpo.netlify.app (script.js:68-76)
+  - Touch-based card expansion for mobile devices (script.js:2-38)
 
-### Theme System Pattern
+### Gestionale-X Architecture
+**Tech Stack**: React 19.1 + Vite 7.1 + Firebase 12.3
+
+**Component Structure**:
+- `App.jsx`: Main router with authentication flow, real-time subscriptions, CRUD operations
+- `firebaseService.js`: Abstracted Firestore operations with `subscribeToProjects()` and `subscribeToNotes()`
+- `components/`: Auth, Home, AddProjectForm, AddNoteForm, ProjectCard, NoteCard, StatusBadge, PriorityBadge
+
+**Data Models** (Firestore):
+- **Projects**: `{id, name, description, status, tags, links, roadmap, obiettivi, todos, createdAt, userId}`
+- **Notes**: `{id, title, content, type, priority, projectTags, createdAt, userId}`
+
+**Key Patterns**:
+- Real-time data via Firebase subscriptions (App.jsx:83-111)
+- User data isolation enforced by `userId` field in security rules
+- Auto-dismiss toast notifications (3-5 seconds)
+- Inline styles strategically combined with CSS classes
+
+### OG-2025 Olimpiadi Goliardiche Architecture
+**Tech Stack**: Pure Vanilla JavaScript + HTML5 + CSS3 (no frameworks, no build process)
+
+**Three-Page Application**:
+1. **`homepage.html`**: Landing page with event info, 14 temples/bars, rules, navigation
+2. **`index.html`**: Main scoreboard (Classifica Finale) with Google Sheets integration
+3. **`hub-capitani.html`**: Team captain dashboard with challenge logging and team management
+
+**Core Files**:
+- `script.js`: ES6+ class-based logic for captain hub (`OlympicCaptainHub` class)
+- `styles.css`: Greek vase aesthetic (gold/bronze theme: #daa520, #ffd700, #b8860b)
+- `template_classifica.csv`: Google Sheets template structure
+
+**Data Storage**:
+- **LocalStorage Keys**:
+  - `olimpiadiClassifica`: Scoreboard data (team names, scores, rankings)
+  - `olympicCaptainHubData`: Captain hub data (team info, members, challenges, stats)
+- **Google Sheets Integration**: JSONP technique for live data sync (avoids CORS issues)
+  - Automatic silent loading on page load
+  - Manual sync via 5-second logo long-press
+  - Hardcoded Sheet ID in index.html:664
+
+**Key Features**:
+- 14 Temples/Bars (Caligo, Casa Gotuzzo, Cereria, Circolo Sport, Excalibur, Le Fontane, Loomi, Mary Jo, Storico, Teleria 108, Tirebouchon, Vinoria, Vinoteca, Vitae)
+- Team scoring system (0-100 points per challenge + bonus)
+- Responsive design with separate mobile/desktop views (768px breakpoint)
+- Captain hub stats tracking: Morale, Energy, Strategy (0-100)
+- Developer console commands for testing/debugging
+- Greek/Olympic design system (Cinzel font for headings, JetBrains Mono for UI)
+
+**Architecture Patterns**:
+- No backend - pure client-side application
+- No authentication - all data is local and public
+- Auto-save to LocalStorage on all changes
+- Event-driven with DOM event listeners
+- Functional programming for scoreboard logic
+- Object-oriented for captain hub (`OlympicCaptainHub` class)
+
+### Paolino E-commerce Architecture
+**Tech Stack**: Node.js/Express 4.18 + MongoDB 7.5 + React 19.1 + Vite 7.1 + Tailwind CSS 3.3 + Stripe 13.6
+
+**Backend Structure** (`/Paolino-main/backend/`):
+- `serverPaolino.js`: Express server with helmet, CORS, rate limiting
+- `models/`: Mongoose schemas (User, Product, Order, Cart)
+- `routes/`: API endpoints (auth, products, cart, orders, admin)
+- `services/`: Stripe integration
+- `middlewares/`: Auth, upload validation
+
+**Frontend Structure** (`/Paolino-main/frontend/`):
+- `App.jsx`: Router with protected routes and admin route guards
+- `contexts/`: AuthContext (user auth), CartContext (shopping cart state)
+- `pages/`: ProductShowcasePage (new landing), HomePage, ProductsPage, CartPage, CheckoutPage, ProfilePage
+- `pages/admin/`: Dashboard, ProductsAdmin, OrdersAdmin, UsersAdmin, AnalyticsAdmin, SettingsAdmin
+- `components/`: Header with navigation, Footer, ProductCard, Layout
+- `services/api.js`: Axios-based API layer with auth interceptors
+
+**API Endpoints**:
+- `/api/auth/*`: Authentication (register, login, profile, logout)
+- `/api/products/*`: Catalog with search/filters/pagination, single product details
+- `/api/cart/*`: Shopping cart (authenticated users only)
+- `/api/orders/*`: Order management and Stripe payment processing
+- `/api/admin/*`: Admin CRUD, analytics, user management, product uploads
+- `/api/wishlist/*`: User wishlist management
+
+**Key Backend Dependencies**:
+- `express`: Web framework with middleware
+- `mongoose`: MongoDB ODM with schemas
+- `bcryptjs`: Password hashing
+- `jsonwebtoken`: JWT authentication
+- `stripe`: Payment processing
+- `cloudinary` + `multer-storage-cloudinary`: Image upload and storage
+- `helmet`: Security headers
+- `express-rate-limit`: API rate limiting
+- `joi`: Request validation
+- `cors`: Cross-origin resource sharing
+
+**Key Frontend Dependencies**:
+- `react` + `react-dom`: v19.1.1 UI library
+- `react-router-dom`: v6.20 Client-side routing
+- `@stripe/stripe-js`: Stripe payment integration
+- `axios`: HTTP client with interceptors
+- `tailwindcss`: v3.3 Utility-first CSS
+- `lucide-react`: Icon library
+- `react-hot-toast`: Toast notifications
+- `clsx` + `tailwind-merge`: Conditional CSS classes
+
+## Important Code Locations
+
+### Portfolio Hub Touch Behavior
+Mobile card expansion system in `script.js:2-38` handles touch events to expand project cards on mobile devices.
+
+### Gestionale-X Real-time Subscriptions
+Firebase real-time listeners in `App.jsx:83-111` use `onSnapshot` to sync projects and notes instantly across clients.
+
+### Gestionale-X Project-Note Relationship
+Notes link to projects via shared tags (App.jsx:114-118):
 ```javascript
-function toggleTheme() {
-    const body = document.body;
-    const newTheme = body.dataset.theme === 'dark' ? 'light' : 'dark';
-    body.dataset.theme = newTheme;
-    localStorage.setItem('theme', newTheme);
+const getProjectNotes = (project) => {
+  return notes.filter(note =>
+    note.projectTags && note.projectTags.some(tag =>
+      project.tags && project.tags.includes(tag)
+    )
+  )
 }
-
-// Load saved theme on initialization
-const savedTheme = localStorage.getItem('theme') || 'light';
-document.body.dataset.theme = savedTheme;
 ```
 
-### Mobile Touch Handling Pattern
+### Portfolio Hub Theme System
+Light/dark theme implementation in `index.html`:
+- Theme state stored in localStorage as `theme` key
+- Toggle function switches between light/dark modes
+- CSS custom properties automatically update via `[data-theme="dark"]` attribute
+- Theme persists across page reloads
+- No JavaScript framework required - pure DOM manipulation
+
+### Mini Games Modular Data Pattern
+Pixxa Generator uses separate data files (`minigiochi/pixxa/ingredienti.js`, `pizzeClassiche.js`, etc.) with core logic in `main.js` and smart naming algorithm. Games are self-contained in single HTML files with inline CSS/JS for maximum portability.
+
+### OG-2025 Google Sheets Integration
+Scoreboard (`index.html`) uses JSONP technique to fetch data from Google Sheets:
+- Sheet ID hardcoded at line 664
+- Automatic silent loading on page load via `loadFromGoogleSheets(false)`
+- Logo long-press (5 seconds) triggers manual sync with visual feedback
+- JSONP creates script tag: `https://docs.google.com/spreadsheets/d/{sheetId}/gviz/tq?tqx=out:json`
+- Data parsed via `window.google.visualization.Query.setResponse()` callback
+- Sheet must be publicly accessible: "Anyone with the link can view"
+
+### OG-2025 Developer Console Commands
+Hidden debugging commands available in browser console:
 ```javascript
-// Touch optimization for mobile card expansion
-card.addEventListener('click', function(e) {
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-        if (!this.classList.contains('mobile-expanded')) {
-            e.preventDefault();
-            // Close other expanded cards
-            cards.forEach(otherCard => {
-                if (otherCard !== this) {
-                    otherCard.classList.remove('mobile-expanded');
-                }
-            });
-            this.classList.add('mobile-expanded');
-        }
-    }
-});
+olympicCommands.reset()           // Reset all data
+olympicCommands.export()          // Export backup JSON
+olympicCommands.summary()         // Show team summary
+olympicCommands.addPoints(n)      // Add points to team
+olympicCommands.setMorale(n)      // Set morale (0-100)
+olympicCommands.help()            // Show all commands
 ```
 
-### Class-Based Game Architecture
-```javascript
-// Example: DVDScreensaver class pattern
-class DVDScreensaver {
-    constructor() {
-        this.x = 100;
-        this.y = 100;
-        this.speedX = 3;
-        this.speedY = 2;
-        this.players = [];
-        this.init();
-    }
+## Deployment
 
-    init() {
-        // Event listeners
-        // Initialize game state
-    }
+### Netlify Configuration
+Configured in `netlify.toml` for Gestionale-X deployment:
+- **Build base**: `gestionale-x/`
+- **Build command**: `npm run build`
+- **Publish directory**: `dist`
+- **Node version**: 20
+- **SPA redirect**: All routes → `/index.html` (status 200)
+- **Deployed at**: https://gestionalepolpo.netlify.app/
 
-    start() { /* animation loop */ }
-    stop() { /* cleanup */ }
-}
-```
+**Important**: Only the Gestionale-X React app is built and deployed via Netlify. The static portfolio files (`/index.html`, `/minigiochi/`, `/progetti/`) are NOT part of the Netlify build process.
 
-### Modular Data Management (Pixxa Generator)
-- **Separate data files**: `ingredienti.js`, `pizzeClassiche.js`, `pizzeLeggendarie.js`, `pizzeRegionali.js`
-- **Core logic**: `main.js` with `generaNomeDaIngredienti()` smart naming algorithm
-- **Random selection utility**: `scegliRandom(lista, quanti)` for ingredient combinations
+### Portfolio Hub Deployment
+Static files can be deployed separately to any static hosting service (GitHub Pages, Netlify static, Vercel, etc.) or served via Python HTTP server for local development.
 
-## Key Interactive Features
-
-### Portfolio Hub (`index.html` + `script.js`)
-- **Polpo Logo Long Press** (script.js:42-85): 1.5s hold redirects to `gestionalepolpo.netlify.app`
-- **Project Card Mobile Expansion** (script.js:1-39): Touch-based card reveal system
-- **Theme Toggle**: Dark/light mode with localStorage persistence
-- **Responsive Grid**: 6 columns (1400px+), 3 columns (900px+), 2 columns (mobile)
-- **Touch Optimization**: Separate hover states for touch vs. mouse devices
-
-### Gestionale-X React Application
-- **Real-time Data**: Firestore subscriptions for live updates
-- **Authentication Flow**: Email/password and Google OAuth
-- **Security**: User data isolation via Firestore rules
-- **Component Structure**: Auth, Home, AddProjectForm, AddNoteForm, ProjectCard, NoteCard, StatusBadge, PriorityBadge
-- **App State Management**: React hooks with useState/useEffect for UI, Firebase subscriptions for data
-- **Views**: Home dashboard, Projects list, Notes list, Project detail with associated notes
-- **Sample Data Initialization**: Automatic on first user login via `initializeSampleData()`
-
-## File Organization
-
-### Key File Locations
-
-**Root Level**
-- `index.html` - Main portfolio hub entry point
-- `index-thread.html` - Alternative thread-based portfolio hub (experimental)
-- `script.js` - Touch handlers, polpo long-press, mobile card expansion
-- `netlify.toml` - Netlify deployment configuration
-- `CLAUDE.md` - This file (project documentation for Claude Code)
-
-**Mini Games** (`/minigiochi/`)
-- `index.html` - Games collection landing page
-- `trix.html` - TRIX Bolt Edition game
-- `rhythm-click.html` - Music rhythm game
-- `dvd-screensaver/` - DVD screensaver with betting system
-- `pixxa/` - Pizza generator with modular data files
-- `test/istinto.html` - Personality assessment game
-- `style-generator.html` - T-shirt style combination generator
-
-**E-commerce** (`/Sito Magliette/`)
-- `index.html` - Store front with PayPal integration
-- `productData.js` - Product catalog data
-- `laboratorio/` - Business admin panel and configuration tools
-
-**Gestionale-X** (`/gestionale-x/`)
-- `src/App.jsx` - Main application component with routing and state
-- `src/firebase.js` - Firebase configuration and initialization
-- `src/firebaseService.js` - Firestore CRUD operations and subscriptions
-- `src/components/Auth.jsx` - Authentication component
-- `src/components/Home.jsx` - Dashboard home view
-- `src/components/AddProjectForm.jsx` - Project creation/editing form
-- `src/components/AddNoteForm.jsx` - Note/idea creation/editing form
-- `src/components/ProjectCard.jsx` - Project display card
-- `src/components/NoteCard.jsx` - Note/idea display card
-- `src/components/ui/StatusBadge.jsx` - Status indicator component
-- `src/components/ui/PriorityBadge.jsx` - Priority indicator component
-
-### Naming Conventions
-- **Files**: kebab-case (e.g., `dvd-screensaver`, `style-generator.html`)
-- **CSS Classes**: kebab-case with descriptive names
-- **JavaScript Variables/Functions**: camelCase
-- **JavaScript Classes**: PascalCase (e.g., `DVDScreensaver`)
-- **IDs**: camelCase for DOM element references
-
-### Project Structure Best Practices
-- **Self-contained HTML files** for games (inline CSS/JS for portability)
-- **Modular data files** for game content (separate logic from data)
-- **Consistent theme system** across all static pages
-- **Mobile-first responsive design** with 768px breakpoint
-
-## Development Workflow
-
-### Working with Static Sites
-1. Open files directly in browser or use local server
-2. Modify HTML/CSS/JS in place (no build step required)
-3. Test responsive behavior using browser dev tools
-4. Verify theme switching across pages
-5. Test touch interactions on actual mobile devices when possible
-
-### Working with Gestionale-X
-1. Navigate to `/gestionale-x/` directory
-2. Firebase settings in `src/firebase.js` are already configured for production deployment
-3. Run `npm install` first time
-4. Use `npm run dev` for development with hot reload (port 5173)
-5. Run `npm run lint` before committing changes
-6. Test production builds with `npm run build`
-7. Preview production build with `npm run preview`
-
-**IMPORTANT**: The Firebase configuration includes public API keys which is normal for Firebase web apps. Security is enforced through Firestore security rules on the backend, not through hiding the config.
-
-### Adding New Mini Games
-1. Create self-contained HTML file in `/minigiochi/` directory
-2. Include embedded CSS and JavaScript (avoid external dependencies)
-3. Implement responsive design with mobile-first approach
-4. Add back navigation link to `/minigiochi/index.html`
-5. Update `/minigiochi/index.html` games grid with new card
-6. Follow touch optimization patterns for mobile devices
-7. Consider adding to main portfolio hub (`/index.html`) if significant
-
-### Modifying Existing Games
-- **Pixxa Generator**: Edit data files (`ingredienti.js`, `pizzeClassiche.js`, etc.) or logic in `main.js`
-- **DVD Screensaver**: Modify `DVDScreensaver` class in `script.js`
-- **TRIX**: Edit self-contained `trix.html` file
-- **Rhythm Click**: Edit self-contained `rhythm-click.html` file
-- **Style Generator**: Edit self-contained `style-generator.html` file
-
-### Working with Paolino E-commerce
-1. **Database Setup**: Ensure MongoDB is running on port 27017
-2. **Environment Files**: Create `.env` files in both backend and frontend directories (see `/Paolino-main/CLAUDE.md` for required variables)
-3. **Initialize Data**: Run `npm run setup` in backend to create admin user and sample products
-4. **Start Services**: Run backend first, then frontend
-5. **Stripe Integration**: Configure Stripe API keys for payment processing
-6. **Admin Access**: Use admin@paolino.com / admin123 for admin panel access
-
-## Data Models
-
-### Gestionale-X Firebase Collections
-
-**Projects Collection** (`projects`)
-- `id` (auto-generated)
-- `name` - Project name
-- `description` - Project description
-- `status` - One of: `pending`, `in_progress`, `completed`, `paused`
-- `tags` - Array of tag strings for categorization
-- `links` - Array of objects with `{title, url}` for project links
-- `roadmap` - Text field for project roadmap/timeline
-- `obiettivi` - Text field for project objectives
-- `todos` - Array of objects with `{text, completed}` for task tracking
-- `createdAt` - ISO timestamp
-- `userId` - Owner's Firebase Auth UID (for data isolation)
-
-**Notes Collection** (`notes`)
-- `id` (auto-generated)
-- `title` - Note/idea title
-- `content` - Note/idea content
-- `type` - One of: `note`, `idea`
-- `priority` - One of: `high`, `medium`, `low`
-- `projectTags` - Array of tag strings linking to projects
-- `createdAt` - ISO timestamp
-- `userId` - Owner's Firebase Auth UID (for data isolation)
-
-**Data Relationships**
-- Notes are associated with projects via shared tags in `projectTags` and `project.tags`
-- Each user's data is isolated by `userId` field (enforced by Firestore security rules)
-- Real-time subscriptions keep UI synchronized with database changes
-
-## Important Technical Details
-
-### Portfolio Hub Long-Press Feature
-The polpo logo uses a 1.5-second long press (mouse or touch) to redirect:
-```javascript
-// Location: script.js:68-76
-polpoLongPressTimer = setTimeout(() => {
-    if (polpoPressed) {
-        window.location.href = 'https://gestionalepolpo.netlify.app/';
-    }
-}, 1500);
-```
-
-### CSS Grid Responsive Breakpoints
+## CSS Responsive Breakpoints
 ```css
-/* 6 columns for large desktop (1400px+) */
-@media (min-width: 1400px) {
-    .projects-grid { grid-template-columns: repeat(6, 1fr); }
-}
+/* 6 columns: 1400px+ */
+@media (min-width: 1400px) { grid-template-columns: repeat(6, 1fr); }
 
-/* 3 columns for medium desktop/tablet (900px - 1200px) */
-@media (max-width: 1200px) and (min-width: 900px) {
-    .projects-grid { grid-template-columns: repeat(3, 1fr); }
-}
+/* 3 columns: 900px-1200px */
+@media (max-width: 1200px) and (min-width: 900px) { grid-template-columns: repeat(3, 1fr); }
 
-/* 2 columns for mobile (<600px) */
-@media (max-width: 600px) {
-    .projects-grid { grid-template-columns: repeat(2, 1fr); }
-}
-```
-
-### Touch Device Detection
-```javascript
-// Check for touch capability
-if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-    // Touch-specific behavior
-}
+/* 2 columns: <600px */
+@media (max-width: 600px) { grid-template-columns: repeat(2, 1fr); }
 ```
 
 ## Security Considerations
 
-### Static Projects
-- **No server-side code** - Pure client-side implementation
-- **Local storage only** - No external data transmission (except PayPal in e-commerce)
-- **XSS prevention** - Avoid `innerHTML` with user data
-- **File upload validation** - Image type checking in games
-
 ### Gestionale-X Firebase
-- **Authentication required** - Firebase Auth enforces user identity via email/password or Google OAuth
-- **Data isolation** - Each user can only access their own projects and notes (enforced via Firestore rules)
-- **Real-time security** - Rules apply to all queries and subscriptions
-- **Public API keys** - Firebase config in `src/firebase.js` contains public keys, which is normal and expected
-- **Backend security** - Security is enforced through Firestore security rules on the Firebase backend, not client-side code hiding
-
-## Performance Considerations
-
-### Static Sites
-- **No build process** - Direct file serving for fast development
-- **Optimized animations** - CSS transitions over JavaScript
-- **Lazy loading** - Games load content on demand
-- **Mobile optimization** - Touch-first interaction design
-- **Asset-light** - Minimal external dependencies
-
-### React Application (Gestionale-X)
-- **Vite HMR** - Fast hot module replacement during development
-- **Firebase optimization** - Real-time subscriptions with efficient queries
-- **Production builds** - Minification and tree-shaking via Vite
-- **State management** - React hooks-based architecture without external state libraries
-- **Toast notifications** - Auto-dismiss after 3-5 seconds for user feedback
-
-## Testing and Quality Assurance
-
-### Gestionale-X
-- **ESLint**: Run `npm run lint` to check code quality
-- **Manual testing**: Test authentication flows, CRUD operations, and real-time subscriptions
-- **Firebase Emulator**: Consider using Firebase Local Emulator Suite for safe development testing without affecting production data
-- **Browser testing**: Test in Chrome, Firefox, Safari on both desktop and mobile
-
-### Static Sites
-- **Browser testing**: Test in Chrome, Firefox, Safari (desktop and mobile)
-- **Responsive testing**: Use browser DevTools device emulation (320px to 1920px)
-- **Touch testing**: Test on actual mobile devices when possible for touch interactions
-- **Theme testing**: Verify dark/light theme switching and localStorage persistence across sessions
-- **Cross-browser**: Verify CSS Grid, Custom Properties, and ES6+ features work correctly
-
-## Browser Compatibility
-
-- **Modern browser features**: ES6+ syntax, CSS Grid, Custom Properties
-- **Mobile-first responsive design**: Works across device sizes
-- **Touch device optimization**: Separate hover states for touch vs. mouse
-- **Audio API**: Required for radio player in laboratorio interfaces
-- **WebGL support**: Required for advanced visualizations (if any)
-
-## External Resources
-
-### Portfolio Hub
-- **Fonts**: Google Fonts (JetBrains Mono)
-- **Icons**: Inline SVG (polpo logo, social icons)
-- **No external JS libraries**: Pure vanilla JavaScript
-
-### Gestionale-X
-- **Firebase**: Version 12.3.0 - Authentication, Firestore database, deployed at gestionalepolpo.netlify.app
-- **React**: Version 19.1.1
-- **React DOM**: Version 19.1.1
-- **Vite**: Version 7.1.6 for build tooling
-- **ESLint**: Version 9.35.0 for code quality
+- Firebase config contains **public API keys** (normal and expected for Firebase web apps)
+- Security enforced through **Firestore security rules** on backend, not client-side
+- Each user accesses only their own data via `userId` field filtering
 
 ### Paolino E-commerce
-- **Backend**: Express.js with JWT authentication, Stripe payments, Multer file uploads
-- **Frontend**: React 19, Tailwind CSS, Axios, Lucide icons
-- **Database**: MongoDB with Mongoose ODM
-- **Payment**: Stripe SDK for payment processing
-- **Authentication**: JWT tokens with bcryptjs hashing
-
-## Git Workflow
-
-### Branch Strategy
-- **Main branch**: Production-ready code (current branch)
-- Commit directly to main for small changes
-- Use feature branches for larger changes (optional)
-
-### Common Git Commands
-```bash
-# Check repository status
-git status
-
-# View recent commits
-git log --oneline -10
-
-# View changes before committing
-git diff
-
-# Stage all changes
-git add .
-
-# Stage specific files
-git add path/to/file.js
-
-# Commit with descriptive message (in Italian preferred)
-git commit -m "Descrizione del cambiamento"
-
-# Push to remote
-git push
-
-# Pull latest changes
-git pull
-```
-
-### Commit Message Guidelines
-- Write in Italian for consistency with codebase
-- Use descriptive messages that explain the "why" not just the "what"
-- Examples: "Aggiornamento tema scuro nel portfolio hub", "Correzione bug nel sistema di autenticazione"
-
-### Current Git Status Notes
-- `Paolino-main/` directory is currently untracked (shown as `??` in git status)
-- If committing Paolino, consider whether it should be a separate repository or integrated into this one
-- `minigiochi/index.html` and `minigiochi/rhythm-click.html` have modifications
-- Root-level `package.json` exists primarily for Firebase dependency used in other projects
+- Bcrypt password hashing
+- JWT token-based authentication (7-day expiry)
+- Express rate limiting on API endpoints
+- Helmet security headers
+- Input validation with Joi schemas
+- File upload validation (5MB max, JPEG/PNG/WebP only)
 
 ## Port Assignments
-
-To avoid conflicts when running multiple applications simultaneously:
-- **Portfolio static sites**: Use python HTTP server on port 8000
+- **Static sites**: Port 8000 (Python HTTP server)
 - **Gestionale-X frontend**: Port 5173 (Vite default)
-- **Paolino frontend**: Port 5173 (Vite default - conflicts with gestionale-x if both run)
+- **Paolino frontend**: Port 5173 (conflicts with gestionale-x if both run simultaneously)
 - **Paolino backend**: Port 5031
 - **MongoDB**: Port 27017 (required for Paolino)
 
-This repository represents a creative showcase of modern web development techniques using both vanilla technologies and modern frameworks, emphasizing performance, accessibility, and mobile-first design principles.
+**Port Conflict Resolution**:
+```bash
+# Check what's running on a port
+lsof -i :5173
+
+# Kill a process on a port
+kill -9 $(lsof -t -i:5173)
+
+# Or use different port for Vite
+vite --port 5174
+```
+
+## Git Workflow Notes
+- Main branch is production-ready
+- Commit messages in Italian preferred for consistency
+- `Paolino-main/` directory currently untracked (consider separate repo if committing)
+- **Modified files often include**: CLAUDE.md updates, .env configuration, package.json dependencies
+- Use `git status` to check tracked changes before committing
+- `.nojekyll` file at root enables GitHub Pages deployment without Jekyll processing
+
+### Recent Development Focus (from git history)
+- Reorganized homepage navigation (Olimpiadi, Quotify, Brand sections)
+- Fixed onclick handlers for button navigation
+- Renamed "I Miei Progetti" to "Progetti" for cleaner presentation
+- Updated project showcase with X World, Olimpiadi Goliardiche, and Quotify
+
+## Project Status
+- **Portfolio Hub**: ✅ Stable, production-ready, deployed
+- **Gestionale-X**: ✅ Fully functional, deployed at gestionalepolpo.netlify.app
+- **OG-2025 (Olimpiadi Goliardiche)**: ✅ Complete, production-ready
+  - **Event**: Olimpiadi Goliardiche 2025 (Chiavari, Italy)
+  - **Features**: 14 temples/bars, 20 teams, Google Sheets integration, captain dashboard
+  - **Tech**: Pure vanilla JavaScript, no dependencies, no build process
+  - **Deployment**: Static files deployable to any hosting (GitHub Pages, Netlify, etc.)
+  - **Documentation**: Complete CLAUDE.md in `/OG-2025/CLAUDE.md`
+- **Paolino E-commerce**: 🚧 ~90% complete, core functionality working
+  - **Test Credentials**: admin@paolino.com / admin123
+  - ✅ Completed: Backend API, Authentication, Admin panel, Product catalog, Cart functionality, ProductShowcasePage landing
+  - 🚧 In Progress: Checkout flow with Stripe, User profile with order history
+  - ⚠️ Known Issues: Frontend requires backend running at all times (see QUICK_START.md)
+  - 📁 Status: Currently untracked in git (consider separate repository)
+
+## Browser Compatibility
+- Modern browser features required: ES6+ syntax, CSS Grid, Custom Properties
+- Touch device optimization with separate hover states
+- WebGL support recommended for advanced visualizations
+
+## File Organization Best Practices
+- **Self-contained HTML files** for games (inline CSS/JS for portability)
+- **Modular data files** for game content (separate logic from data)
+- **Maximum 500 lines per file** - Split larger files into modules
+- **Naming conventions**:
+  - Files: kebab-case (e.g., `style-generator.html`)
+  - React Components: PascalCase (e.g., `AddProjectForm.jsx`)
+  - Functions/Variables: camelCase
+  - Constants: UPPER_SNAKE_CASE
+
+## Common Troubleshooting
+
+### Paolino: "ERR_CONNECTION_REFUSED"
+**Problem**: Backend not running
+**Solution**: Start backend first (`cd Paolino-main/backend && npm run dev`), wait for "Server running on port 5031", then refresh frontend
+
+### Paolino: "MongoDB connection failed"
+**Problem**: MongoDB not running
+**Solution**: `sudo service mongodb start` or use MongoDB Compass
+
+### Paolino: No products displayed
+**Problem**: Empty database
+**Solution**: Run `npm run setup` in backend directory to create admin and sample products
+
+### Gestionale-X: Firebase errors
+**Problem**: Security rules or authentication issues
+**Solution**: Check that user is logged in, Firebase config is correct in environment
+
+### Static sites: Not loading correctly
+**Problem**: Incorrect paths or server not running
+**Solution**: Use Python HTTP server (`python -m http.server 8000`) or VS Code Live Server
+
+### OG-2025: Google Sheets not syncing
+**Problem**: Scoreboard not loading data from Google Sheets
+**Solution**:
+1. Verify sheet is set to "Anyone with the link can view"
+2. Check Sheet ID is correct in `index.html` line 664
+3. Ensure internet connection is active
+4. Check browser console for JSONP errors
+5. Try logo long-press (5 seconds) for manual sync
+
+### OG-2025: LocalStorage data lost
+**Problem**: Team data or scores disappeared
+**Solution**:
+- Browser privacy mode blocks LocalStorage
+- Cache clearing deletes data
+- Use export functionality (`olympicCommands.export()` in console) to create backups
+- Google Sheets data overwrites LocalStorage on page load
+
+## Additional Resources
+
+### Paolino E-commerce Documentation
+- **`/Paolino-main/CLAUDE.md`** - Complete backend/frontend architecture reference
+- **`/Paolino-main/QUICK_START.md`** - Step-by-step troubleshooting guide
+- **`/Paolino-main/SECURITY.md`** - ⚠️ **CRITICAL**: Security checklist, .env setup, key rotation
+- **`/Paolino-main/STRIPE_SETUP.md`** - Stripe payment integration configuration (referenced but may not exist)
+- **`/Paolino-main/CLOUDINARY_INTEGRATION.md`** - Image upload and storage setup
+- **`/Paolino-main/STATUS.md`** - Project completion status and roadmap
+- **`/Paolino-main/deploy.md`** - Deployment instructions
+
+### Other Project Documentation
+- **`/OG-2025/CLAUDE.md`** - Complete Olimpiadi Goliardiche implementation and developer commands
+- **`/OG-2025/README.md`** - Italian-language project overview and features
+- **`/gestionale-x/SECURITY_SETUP.md`** - Firebase security configuration
+- **`/gestionale-x/firestore.rules`** - Firestore security rules

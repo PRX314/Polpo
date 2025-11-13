@@ -1,6 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './styles/collection-themes.css'
+import './styles/minimal-animations.css'
 import App from './App.jsx'
 
 // Eruda per debugging (solo in development)

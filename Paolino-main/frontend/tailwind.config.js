@@ -16,8 +16,8 @@ export default {
           500: '#9aa0a6',
           600: '#666666',
           700: '#333333',
-          800: '#48dbfb',
-          900: '#54a0ff',
+          800: '#202124',  // Dark gray for admin header
+          900: '#1a1a1a',  // Darker gray for admin accents
         },
         accent: {
           cyan: '#48dbfb',

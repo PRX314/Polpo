@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏺 Olimpiadi Goliardiche 2025 - Documentazione Completa</title>
+    <style>
+        :root {
+            --gold: #daa520;
+            --gold-light: #ffd700;
+            --bronze: #b8860b;
+            --cream: #fff8dc;
+            --ivory: #ffefd5;
+            --dark: #2c3e50;
+            --white: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background: var(--cream);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--bronze) 100%);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(218, 165, 32, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1rem;
+            opacity: 0.95;
+        }
+
+        /* NAVIGATION */
+        nav {
+            background: var(--white);
+            padding: 1rem;
+            box-shadow: 0 2px 10px var(--shadow);
+            position: sticky;
+            top: 100px;
+            z-index: 999;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        nav a {
+            display: inline-block;
+            padding: 0.6rem 1rem;
+            background: var(--ivory);
+            color: var(--dark);
+            text-decoration: none;
+            border-radius: 5px;
+            border-left: 3px solid var(--gold);
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover {
+            background: var(--gold);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px var(--shadow);
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* SECTIONS */
+        section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px var(--shadow);
+            margin-bottom: 2rem;
+            border-top: 4px solid var(--gold);
+        }
+
+        section h2 {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--ivory);
+            padding-bottom: 0.5rem;
+        }
+
+        section h3 {
+            font-family: 'Cinzel', serif;
+            color: var(--bronze);
+            font-size: 1.5rem;
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        section h4 {
+            color: var(--gold);
+            font-size: 1.2rem;
+            margin: 1rem 0 0.5rem 0;
+        }
+
+        /* STATS GRID */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: var(--ivory);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid var(--gold);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+
+        .stat-card .number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--gold);
+            display: block;
+        }
+
+        .stat-card .label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        /* TABLE */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: white;
+        }
+
+        table thead {
+            background: var(--gold);
+            color: white;
+        }
+
+        table th, table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--ivory);
+        }
+
+        table tbody tr:hover {
+            background: var(--cream);
+        }
+
+        /* GAME CARDS */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .game-card {
+            background: var(--ivory);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid var(--gold);
+            transition: all 0.3s;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px var(--shadow);
+        }
+
+        .game-header {
+            background: var(--gold);
+            color: white;
+            padding: 1.5rem;
+            font-family: 'Cinzel', serif;
+        }
+
+        .game-header h4 {
+            color: white;
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .game-meta {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            opacity: 0.95;
+        }
+
+        .game-body {
+            padding: 1.5rem;
+        }
+
+        .game-body p {
+            margin-bottom: 1rem;
+        }
+
+        .game-body ul, .game-body ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .game-body li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* DIFFICULTY STARS */
+        .difficulty {
+            color: var(--gold-light);
+            font-size: 1.1rem;
+        }
+
+        /* HIGHLIGHT BOXES */
+        .highlight-box {
+            background: var(--ivory);
+            border-left: 4px solid var(--gold);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 5px;
+        }
+
+        .highlight-box strong {
+            color: var(--gold);
+        }
+
+        /* CHECKLIST */
+        .checklist {
+            background: var(--cream);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .checklist li {
+            list-style: none;
+            padding: 0.5rem 0 0.5rem 2rem;
+            position: relative;
+        }
+
+        .checklist li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--gold);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* FOOTER */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 3rem 1rem;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        footer p {
+            margin: 0.5rem 0;
+        }
+
+        /* CODE BLOCKS */
+        code {
+            background: var(--ivory);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--bronze);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+
+            nav ul {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            table th, table td {
+                padding: 0.6rem;
+            }
+
+            nav {
+                top: 80px;
+            }
+        }
+
+        /* SCROLL BEHAVIOR */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* SECTION SPACING */
+        section:target {
+            animation: highlight 1s ease;
+        }
+
+        @keyframes highlight {
+            0% { background: var(--ivory); }
+            100% { background: white; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <h1>🏺 Olimpiadi Goliardiche 2025</h1>
+        <p>Documentazione Completa e Riferimenti</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#panoramica">📖 Panoramica</a></li>
+            <li><a href="#templi">🏛️ I 14 Templi</a></li>
+            <li><a href="#sistema">🎮 Sistema di Gioco</a></li>
+            <li><a href="#giochi">🎯 I 12 Giochi</a></li>
+            <li><a href="#valutazione">⚖️ Valutazione</a></li>
+            <li><a href="#strategia">💡 Strategia</a></li>
+            <li><a href="#social">📱 Social & Viral</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <!-- PANORAMICA GENERALE -->
+        <section id="panoramica">
+            <h2>📖 Panoramica Generale</h2>
+
+            <div class="highlight-box">
+                <p><strong>Le Olimpiadi Goliardiche 2025</strong> sono un evento competitivo di 60 giorni ambientato nei bar e locali di Chiavari, Italia. Le squadre affrontano sfide creative, intellettuali e performative per conquistare punti e salire in classifica.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="number">60</span>
+                    <span class="label">Giorni Evento</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">14</span>
+                    <span class="label">Templi/Bar</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">12</span>
+                    <span class="label">Giochi Totali</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">4-8</span>
+                    <span class="label">Membri/Squadra</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">0-15</span>
+                    <span class="label">Punti/Gioco</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">45</span>
+                    <span class="label">Domande DB</span>
+                </div>
+            </div>
+
+            <h3>🎨 Design System</h3>
+            <div class="highlight-box">
+                <p><strong>Palette Colori:</strong></p>
+                <ul>
+                    <li><code>#daa520</code> - Oro primario (goldenrod)</li>
+                    <li><code>#ffd700</code> - Oro chiaro (gold)</li>
+                    <li><code>#b8860b</code> - Bronzo scuro (darkgoldenrod)</li>
+                    <li><code>#fff8dc</code> - Crema (cornsilk)</li>
+                    <li><code>#ffefd5</code> - Avorio (papayawhip)</li>
+                </ul>
+                <p><strong>Tipografia:</strong></p>
+                <ul>
+                    <li><strong>Titoli:</strong> Cinzel (serif greco)</li>
+                    <li><strong>UI/Corpo:</strong> JetBrains Mono (monospace)</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- I 14 TEMPLI -->
+        <section id="templi">
+            <h2>🏛️ I 14 Templi/Bar</h2>
+
+            <p>Ogni tempio rappresenta una location fisica dove le squadre devono completare una o più sfide.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Tempio</th>
+                        <th>Orari</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td><strong>CALIGO</strong></td>
+                        <td>Tutti i giorni 7:00-2:00</td>
+                        <td>Orario più esteso</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td><strong>CASA GOTUZZO</strong></td>
+                        <td>Lun-Dom 7:00-24:00</td>
+                        <td>Sempre aperto</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td><strong>CERERIA</strong></td>
+                        <td>Lun-Dom 18:00-1:00</td>
+                        <td>Serale</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td><strong>CIRCOLO SPORT</strong></td>
+                        <td>Lun-Sab 8:30-12:30 / 15:00-20:00</td>
+                        <td>Orario spezzato, chiuso domenica</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td><strong>EXCALIBUR</strong></td>
+                        <td>Mar-Dom 18:00-1:00</td>
+                        <td>Chiuso lunedì</td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td><strong>LE FONTANE</strong></td>
+                        <td>Lun-Dom 8:00-24:00</td>
+                        <td>Sempre aperto</td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td><strong>LOOMI</strong></td>
+                        <td>Mar-Dom 18:30-1:00</td>
+                        <td>Chiuso lunedì</td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td><strong>MARY JO</strong></td>
+                        <td>Lun-Dom 6:30-21:00</td>
+                        <td>Apertura mattutina</td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td><strong>STORICO</strong></td>
+                        <td>Tutti i giorni 6:30-1:00</td>
+                        <td>Orario molto esteso</td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td><strong>TELERIA 108</strong></td>
+                        <td>Lun-Dom 7:00-24:00</td>
+                        <td>Sempre aperto</td>
+                    </tr>
+                    <tr>
+                        <td>11</td>
+                        <td><strong>TIREBOUCHON</strong></td>
+                        <td>Lun-Sab 18:30-1:00</td>
+                        <td>Chiuso domenica</td>
+                    </tr>
+                    <tr>
+                        <td>12</td>
+                        <td><strong>VINORIA</strong></td>
+                        <td>Mar-Dom 18:00-24:00</td>
+                        <td>Chiuso lunedì</td>
+                    </tr>
+                    <tr>
+                        <td>13</td>
+                        <td><strong>VINOTECA</strong></td>
+                        <td>Lun-Dom 18:00-1:00</td>
+                        <td>Sempre aperto</td>
+                    </tr>
+                    <tr>
+                        <td>14</td>
+                        <td><strong>VITAE</strong></td>
+                        <td>Lun-Dom 7:00-1:00</td>
+                        <td>Orario esteso</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                <p><strong>⏰ Slot migliore per sfide multiple:</strong> 18:00-24:00 (13 templi disponibili)</p>
+                <p><strong>✅ Templi sempre aperti:</strong> Casa Gotuzzo, Le Fontane, Teleria 108, Vinoteca</p>
+                <p><strong>❌ Chiusure settimanali:</strong></p>
+                <ul>
+                    <li>Lunedì: Excalibur, Loomi, Vinoria</li>
+                    <li>Domenica: Circolo Sport, Tirebouchon</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SISTEMA DI GIOCO -->
+        <section id="sistema">
+            <h2>🎮 Sistema di Gioco</h2>
+
+            <h3>Struttura delle Squadre</h3>
+            <ul>
+                <li><strong>Minimo:</strong> 4 membri</li>
+                <li><strong>Massimo:</strong> 8 membri</li>
+                <li><strong>Ruoli:</strong> Ogni squadra ha un capitano</li>
+                <li><strong>Requisito:</strong> Tutti i membri devono partecipare alle sfide (salvo eccezioni specifiche)</li>
+            </ul>
+
+            <h3>Meccanica di Progressione</h3>
+            <ol>
+                <li>Le squadre visitano i templi secondo il proprio ritmo</li>
+                <li>In ogni tempio completano la sfida assegnata</li>
+                <li>La performance viene documentata (foto/video obbligatori)</li>
+                <li>La giuria valuta e assegna il punteggio</li>
+                <li>Il punteggio viene aggiunto alla classifica generale</li>
+            </ol>
+
+            <h3>Sistema di Punteggio</h3>
+            <div class="highlight-box">
+                <ul>
+                    <li><strong>Punteggio base per sfida:</strong> 0-15 punti (dalla giuria)</li>
+                    <li><strong>Formula:</strong> 3 criteri × 5 punti = 15 punti max</li>
+                    <li><strong>Bonus:</strong> Punti extra per creatività, coinvolgimento pubblico, viralità social</li>
+                    <li><strong>Penalità:</strong> Possibili detrazioni per mancato rispetto delle regole</li>
+                </ul>
+            </div>
+
+            <h3>Classifica e Ranking</h3>
+            <ul>
+                <li><strong>Aggiornamento:</strong> Continuo via Google Sheets</li>
+                <li><strong>Vista Desktop:</strong> Tabella completa con tutti i punteggi</li>
+                <li><strong>Vista Mobile:</strong> Card squadre + filtro per bar</li>
+                <li><strong>Finale:</strong> Classifica definitiva al termine dei 60 giorni</li>
+            </ul>
+        </section>
+
+        <!-- I 12 GIOCHI -->
+        <section id="giochi">
+            <h2>🎯 I 12 Giochi - Catalogo Completo</h2>
+
+            <h3>⭐⭐⭐ Difficoltà Media (6 giochi)</h3>
+
+            <div class="games-grid">
+                <!-- GIOCO 1 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>🌊 Sussurro delle Sirene</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐</span>
+                            <span>Coraggio e Verità</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> Le squadre scelgono tra due percorsi:</p>
+                        <ol>
+                            <li><strong>Sussurro Segreto:</strong> Condividere un aneddoto inconfessato</li>
+                            <li><strong>Canto del Coraggio:</strong> Accettare una sfida misteriosa</li>
+                        </ol>
+                        <p><strong>Database:</strong> 45 domande divise in 3 categorie (Piccanti, Personali, Divertenti)</p>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Autenticità (0-5)</li>
+                            <li>Coinvolgimento (0-5)</li>
+                            <li>Originalità (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GIOCO 2 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>⛵ Costruzione Imbarcazione</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐</span>
+                            <span>Ingegno e Manualità</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> Costruire un'imbarcazione in miniatura che galleggi e sostenga un piccolo carico.</p>
+                        <p><strong>Materiali:</strong> Cannucce, nastro adesivo, materiali umili</p>
+                        <p><strong>Requisito:</strong> Reggere il carico per almeno 30 secondi senza affondare</p>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Galleggiabilità (0-5)</li>
+                            <li>Resistenza (0-5)</li>
+                            <li>Creatività (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GIOCO 3 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>🏴 Bandiera + Inno</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐</span>
+                            <span>Identità e Creatività</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> Creare una bandiera che rappresenti la squadra e comporre un inno breve (max 4 versi).</p>
+                        <p><strong>Requisiti:</strong></p>
+                        <ul>
+                            <li>Disegnare bandiera su carta</li>
+                            <li>Comporre inno di max 4 versi</li>
+                            <li>Presentare con fierezza e teatralità</li>
+                        </ul>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Creatività (0-5)</li>
+                            <li>Esecuzione (0-5)</li>
+                            <li>Impatto (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GIOCO 4 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>⚡ Quiz Mitologia</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐</span>
+                            <span>Conoscenza e Saggezza</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> Quiz a tempo sulla mitologia greca e romana.</p>
+                        <p><strong>Regole:</strong></p>
+                        <ul>
+                            <li>Rispondere entro il tempo assegnato</li>
+                            <li>Attenzione ai falsi miti e distorsioni</li>
+                            <li>Vietato uso di telefoni o appunti</li>
+                        </ul>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Precisione (0-5)</li>
+                            <li>Astuzia (0-5)</li>
+                            <li>Velocità (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GIOCO 5 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>📸 Selfie Creativo</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐</span>
+                            <span>Creatività ed Espressività</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> Scattare un selfie di gruppo che includa almeno 5 elementi specifici.</p>
+                        <p><strong>Requisiti:</strong></p>
+                        <ul>
+                            <li>Tutti i membri visibili nella foto</li>
+                            <li>5 elementi richiesti chiaramente identificabili</li>
+                            <li>Possibilità di coinvolgere estranei</li>
+                        </ul>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Creatività (0-5)</li>
+                            <li>Composizione (0-5)</li>
+                            <li>Adesione ai requisiti (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GIOCO 6 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>🎶 Canto del Destino</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐</span>
+                            <span>Espressività e Gioco</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> La squadra pesca una regola speciale e canta una canzone seguendola.</p>
+                        <p><strong>Esempi regole:</strong></p>
+                        <ul>
+                            <li>Bocca piena (senza ingoiare)</li>
+                            <li>Voce buffa (falsetto, cartone animato)</li>
+                            <li>Sostituire parole con "MIAO"</li>
+                            <li>Senza muovere le labbra</li>
+                        </ul>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Rispetto della regola (0-5)</li>
+                            <li>Coinvolgimento (0-5)</li>
+                            <li>Divertimento (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>⭐⭐⭐⭐ Difficoltà Alta (6 giochi)</h3>
+
+            <div class="games-grid">
+                <!-- GIOCO 7 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>🎭 Creazione Gioco</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐⭐</span>
+                            <span>Creatività e Design</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> Inventare un gioco completamente nuovo, adatto ai bar.</p>
+                        <p><strong>Requisiti:</strong></p>
+                        <ul>
+                            <li>Gioco inedito o variazione innovativa</li>
+                            <li>Regole in massimo 5 enunciati chiari</li>
+                            <li>Veloce, scaltre e fattibile con mezzi umili</li>
+                        </ul>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Giocabilità (0-5)</li>
+                            <li>Innovazione (0-5)</li>
+                            <li>Fattibilità (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GIOCO 8 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>🎭 Performance Creativa</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐⭐</span>
+                            <span>Espressività e Spettacolo</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> Eseguire una performance artistica davanti al pubblico (monologo, danza, teatro, canzone, sketch).</p>
+                        <p><strong>Requisiti:</strong></p>
+                        <ul>
+                            <li>Tutti i membri devono contribuire</li>
+                            <li>Durata: 30 secondi - 2 minuti</li>
+                            <li>Coinvolgente e memorabile</li>
+                        </ul>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Coinvolgimento (0-5)</li>
+                            <li>Espressività (0-5)</li>
+                            <li>Originalità (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GIOCO 9 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>🔍 Risoluzione Crimine</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐⭐</span>
+                            <span>Logica e Deduzione</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> Risolvere un crimine fictizio esaminando indizi e identificando colpevole + movente.</p>
+                        <p><strong>Meccanica:</strong></p>
+                        <ul>
+                            <li>Osservare la scena del crimine</li>
+                            <li>Esaminare gli indizi nascosti</li>
+                            <li>Ricostruire la vicenda tramite logica</li>
+                            <li>Formulare l'accusa finale</li>
+                        </ul>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Esattezza (0-5)</li>
+                            <li>Metodo Deduttivo (0-5)</li>
+                            <li>Intuizione (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GIOCO 10 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>🍸 Creazione Drink</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐⭐</span>
+                            <span>Creatività e Persuasione</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> Inventare un cocktail originale e convincere un avventore a ordinarlo.</p>
+                        <p><strong>⭐ SPECIALE - Menu Olimpiadi Goliardiche:</strong> I drink creati vengono aggiunti al menu e possono essere votati dai clienti!</p>
+                        <p><strong>Regole:</strong></p>
+                        <ul>
+                            <li>Ingredienti disponibili al bar</li>
+                            <li>Almeno un avventore esterno deve provarlo</li>
+                            <li>Presentazione teatrale obbligatoria</li>
+                        </ul>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Originalità (0-5)</li>
+                            <li>Eloquenza (0-5)</li>
+                            <li>Successo pubblico e social (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GIOCO 11 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>🧠 Quiz al Contrario</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐⭐</span>
+                            <span>Strategia e Logica</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> Un quiz paradossale dove le squadre devono fornire la risposta PIÙ SBAGLIATA possibile, ma con coerenza.</p>
+                        <p><strong>Meccanica:</strong></p>
+                        <ul>
+                            <li>Rispondere con l'errore più assurdo</li>
+                            <li>L'errore deve essere ben argomentato</li>
+                            <li>Risposte banali non sono valide</li>
+                        </ul>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Creatività (0-5)</li>
+                            <li>Coerenza (0-5)</li>
+                            <li>Rapidità di risposta (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- GIOCO 12 -->
+                <div class="game-card">
+                    <div class="game-header">
+                        <h4>🌉 Ponte Cannucce</h4>
+                        <div class="game-meta">
+                            <span class="difficulty">⭐⭐⭐⭐</span>
+                            <span>Abilità Tecniche</span>
+                        </div>
+                    </div>
+                    <div class="game-body">
+                        <p><strong>Descrizione:</strong> Costruire un ponte con cannucce e nastro adesivo che sostenga una lattina per 10 secondi.</p>
+                        <p><strong>Requisiti:</strong></p>
+                        <ul>
+                            <li>Solo materiali forniti</li>
+                            <li>Il più lungo e stabile possibile</li>
+                            <li>Deve reggere lattina per 10+ secondi</li>
+                        </ul>
+                        <p><strong>Valutazione:</strong></p>
+                        <ul>
+                            <li>Resistenza (0-5)</li>
+                            <li>Lunghezza (0-5)</li>
+                            <li>Struttura e creatività (0-5)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VALUTAZIONE -->
+        <section id="valutazione">
+            <h2>⚖️ Sistema di Valutazione</h2>
+
+            <div class="highlight-box">
+                <h3>Formula Standard</h3>
+                <p><strong>3 criteri × 5 punti = 15 punti massimi per gioco</strong></p>
+            </div>
+
+            <h3>Scale di Valutazione</h3>
+            <ul>
+                <li><strong>5 punti:</strong> Eccellente, supera le aspettative</li>
+                <li><strong>4 punti:</strong> Ottimo, performance solida</li>
+                <li><strong>3 punti:</strong> Buono, nella media</li>
+                <li><strong>2 punti:</strong> Sufficiente, ma migliorabile</li>
+                <li><strong>1 punto:</strong> Scarso, appena accettabile</li>
+                <li><strong>0 punti:</strong> Fallimento o non completato</li>
+            </ul>
+
+            <h3>📸 Documentazione Obbligatoria</h3>
+            <div class="highlight-box">
+                <p>Ogni sfida richiede <strong>documentazione visiva</strong>:</p>
+                <ul>
+                    <li><strong>Foto:</strong> Per prove statiche (creazioni, opere d'arte, selfie)</li>
+                    <li><strong>Video:</strong> Per performance, esibizioni, prove dinamiche</li>
+                    <li><strong>Registrazione audio:</strong> Per confessioni o spiegazioni</li>
+                </ul>
+                <p>⚠️ <strong>IMPORTANTE:</strong> Senza documentazione, la prova può essere invalidata o penalizzata.</p>
+            </div>
+
+            <h3>✨ Bonus Possibili</h3>
+            <ul>
+                <li><strong>Viralità social:</strong> +5 punti se il contenuto diventa virale</li>
+                <li><strong>Apprezzamento pubblico:</strong> +3 punti per standing ovation spontanea</li>
+                <li><strong>Creatività estrema:</strong> +2 punti per soluzioni brillanti</li>
+                <li><strong>Fair play:</strong> +1 punto per sportività esemplare</li>
+            </ul>
+
+            <h3>❌ Penalità</h3>
+            <ul>
+                <li><strong>Ritardo:</strong> -2 punti per ogni 10 minuti</li>
+                <li><strong>Regole non rispettate:</strong> -5 punti</li>
+                <li><strong>Mancanza di documentazione:</strong> -10 punti o prova invalidata</li>
+                <li><strong>Comportamento scorretto:</strong> -5 a -15 punti (può portare a squalifica)</li>
+            </ul>
+
+            <h3>📊 Distribuzione Categorie</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="number">33%</span>
+                    <span class="label">Creatività (4 giochi)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">25%</span>
+                    <span class="label">Performance (3 giochi)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">17%</span>
+                    <span class="label">Logica (2 giochi)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">17%</span>
+                    <span class="label">Costruzione (2 giochi)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">8%</span>
+                    <span class="label">Coraggio (1 gioco)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- STRATEGIA -->
+        <section id="strategia">
+            <h2>💡 Strategia per le Squadre</h2>
+
+            <h3>🎯 Consigli Generali</h3>
+            <ol>
+                <li><strong>Pianificazione:</strong> Visitare templi con orari compatibili</li>
+                <li><strong>Specializzazione:</strong> Assegnare ruoli in base ai talenti</li>
+                <li><strong>Documentazione:</strong> Investire in video editing per bonus social</li>
+                <li><strong>Networking:</strong> Fare amicizia con baristi per vantaggio nelle sfide drink</li>
+                <li><strong>Coerenza:</strong> Mantenere tono e identità della squadra</li>
+            </ol>
+
+            <h3>🏆 Sfide High-Score Potential</h3>
+            <div class="highlight-box">
+                <ul>
+                    <li><strong>🍸 Creazione Drink:</strong> Viralità + voto pubblico</li>
+                    <li><strong>🎭 Performance Creative:</strong> Impatto emotivo</li>
+                    <li><strong>🔍 Crimine:</strong> Punteggio pieno se soluzione perfetta</li>
+                </ul>
+            </div>
+
+            <h3>⚡ Quick Wins</h3>
+            <ul>
+                <li><strong>📸 Selfie Creativo:</strong> Veloce da completare</li>
+                <li><strong>⚡ Quiz Mitologia:</strong> Se preparati</li>
+                <li><strong>🎶 Canto del Destino:</strong> Divertente e rapido</li>
+            </ul>
+
+            <h3>⏰ Timing Ottimale</h3>
+            <div class="highlight-box">
+                <p><strong>Sfide social (18:00-21:00):</strong> Orario aperitivo, più pubblico, weekend ideale</p>
+                <p><strong>Sfide tranquille (mattina/pomeriggio):</strong> Meno affollamento per costruzioni e prove complesse</p>
+            </div>
+
+            <h3>✅ Checklist Squadra</h3>
+            <div class="checklist">
+                <p><strong>Pre-Sfida:</strong></p>
+                <ul>
+                    <li>Verificato orari tempio</li>
+                    <li>Materiali preparati</li>
+                    <li>Smartphone carico</li>
+                    <li>Ruoli assegnati</li>
+                </ul>
+            </div>
+            <div class="checklist">
+                <p><strong>Durante:</strong></p>
+                <ul>
+                    <li>Timer attivo</li>
+                    <li>Documentazione continua</li>
+                    <li>Rispetto regole</li>
+                    <li>Coinvolgimento pubblico</li>
+                </ul>
+            </div>
+            <div class="checklist">
+                <p><strong>Post:</strong></p>
+                <ul>
+                    <li>Upload immediato prove</li>
+                    <li>Condivisione social</li>
+                    <li>Feedback team</li>
+                    <li>Pianificazione prossima</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SOCIAL & VIRAL -->
+        <section id="social">
+            <h2>📱 Social e Aspetti Virali</h2>
+
+            <h3>🌐 Piattaforme Consigliate</h3>
+            <ul>
+                <li><strong>Instagram:</strong> Stories e Reel per sfide video</li>
+                <li><strong>TikTok:</strong> Format brevi per performance</li>
+                <li><strong>YouTube:</strong> Video lunghi di behind-the-scenes</li>
+                <li><strong>Facebook:</strong> Condivisione con community locale</li>
+            </ul>
+
+            <h3>#️⃣ Hashtag Suggeriti</h3>
+            <div class="highlight-box">
+                <ul>
+                    <li>#OlimpiadiGoliardiche2025</li>
+                    <li>#OG2025</li>
+                    <li>#ChiavariGames</li>
+                    <li>#OlympicChallenge</li>
+                    <li>[Nome Squadra] (hashtag personale)</li>
+                </ul>
+            </div>
+
+            <h3>🔥 Contenuti Virali - Alto Potenziale</h3>
+            <ol>
+                <li><strong>Fail compilation</strong> delle sfide</li>
+                <li><strong>Behind-the-scenes</strong> delle costruzioni</li>
+                <li><strong>Reaction dei baristi</strong> ai drink</li>
+                <li><strong>Performance più assurde</strong></li>
+                <li><strong>Confessioni più scioccanti</strong> (censurate)</li>
+            </ol>
+
+            <h3>🏆 Classifica e Premio Finale</h3>
+            <div class="highlight-box">
+                <p><strong>Classifica Live:</strong> Aggiornamento in tempo reale via Google Sheets, vista pubblica per trasparenza</p>
+                <p><strong>Criteri di Parità:</strong></p>
+                <ol>
+                    <li>Numero totale di sfide completate</li>
+                    <li>Media voti giuria (qualità vs quantità)</li>
+                    <li>Engagement social</li>
+                    <li>Sorteggio finale</li>
+                </ol>
+                <p><strong>Premio - Gloria Eterna:</strong></p>
+                <ul>
+                    <li>Nome inciso nell'albo d'oro</li>
+                    <li>Trofeo "Vaso Greco" personalizzato</li>
+                    <li>Menzione su tutti i canali social</li>
+                    <li>Drink signature permanente in un bar</li>
+                    <li>Corona d'alloro cerimoniale</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- MECCANICHE SPECIALI -->
+        <section>
+            <h2>🎨 Meccaniche Speciali</h2>
+
+            <h3>🗣️ Doppio Linguaggio</h3>
+            <p>Ogni gioco presenta <strong>due versioni dell'introduzione</strong>:</p>
+            <ol>
+                <li><strong>Linguaggio Odierno:</strong> Moderno, diretto, accessibile</li>
+                <li><strong>Linguaggio Forbito e Arcaico:</strong> Epico, mitologico, teatrale</li>
+            </ol>
+            <p>Questa dualità rinforza il tema olimpico/greco e permette adattamento a pubblici diversi.</p>
+
+            <h3>🏛️ Integrazione con i Bar</h3>
+            <div class="highlight-box">
+                <p><strong>Menu Olimpiadi Goliardiche (Gioco "Nettare o Veleno"):</strong></p>
+                <ul>
+                    <li>I drink creati vengono aggiunti a un menu speciale</li>
+                    <li>I clienti dei bar possono ordinarli e votarli</li>
+                    <li>I voti contribuiscono al punteggio finale</li>
+                    <li>Crea engagement continuo oltre la sfida</li>
+                </ul>
+            </div>
+
+            <h3>👥 Coinvolgimento del Pubblico</h3>
+            <p>Molte sfide richiedono <strong>interazione con estranei</strong>:</p>
+            <ul>
+                <li>Convincere clienti a provare drink</li>
+                <li>Coinvolgere passanti nei selfie</li>
+                <li>Performance davanti a pubblico spontaneo</li>
+            </ul>
+            <p>Questo aumenta difficoltà, viralità potenziale e divertimento generale.</p>
+
+            <h3>⭐ Sistema di Difficoltà</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="number">0</span>
+                    <span class="label">Giochi ⭐ Facile</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">0</span>
+                    <span class="label">Giochi ⭐⭐ Media-Bassa</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">6</span>
+                    <span class="label">Giochi ⭐⭐⭐ Media (50%)</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">6</span>
+                    <span class="label">Giochi ⭐⭐⭐⭐ Alta (50%)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- NUMERI CHIAVE -->
+        <section>
+            <h2>🔑 Numeri Chiave da Ricordare</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="number">60</span>
+                    <span class="label">Giorni evento</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">14</span>
+                    <span class="label">Templi/bar</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">12</span>
+                    <span class="label">Giochi diversi</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">15</span>
+                    <span class="label">Punti max/gioco</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">4-8</span>
+                    <span class="label">Membri squadra</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">45</span>
+                    <span class="label">Domande Sussurro Sirene</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">10</span>
+                    <span class="label">Secondi lattina su ponte</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">30-120</span>
+                    <span class="label">Sec durata performance</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">5</span>
+                    <span class="label">Elementi selfie creativo</span>
+                </div>
+                <div class="stat-card">
+                    <span class="number">3×5</span>
+                    <span class="label">Formula valutazione</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- FONTI -->
+        <section>
+            <h2>🔍 Fonti e Riferimenti</h2>
+
+            <div class="highlight-box">
+                <h3>Fonti Originali Analizzate</h3>
+                <ul class="checklist">
+                    <li>/OG-2025/INFO/OG Giochi.pdf (19 pagine)</li>
+                    <li>/OG-2025/homepage.html (struttura e info evento)</li>
+                    <li>/OG-2025/index.html (classifica e sistema punteggi)</li>
+                    <li>/OG-2025/hub-capitani.html (dashboard capitani)</li>
+                    <li>/OG-2025/CLAUDE.md (documentazione tecnica)</li>
+                </ul>
+            </div>
+
+            <h3>Dati Estratti</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="label">14 templi con orari completi</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">12 giochi con regole dettagliate</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">45 domande database</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Sistema valutazione 3×5</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Palette colori oro/bronzo</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Meccaniche speciali (Menu OG)</span>
+                </div>
+            </div>
+
+            <h3>📞 Contatti</h3>
+            <p><strong>Instagram:</strong> @olimpiadigoliardiche</p>
+            <p><strong>Progetto Originale:</strong> OG-2025</p>
+            <p><strong>Documentazione:</strong> Paolo Repetto - 2025-11-07</p>
+        </section>
+    </div>
+
+    <footer>
+        <p><strong>🏺 Olimpiadi Goliardiche 2025 - OGv2</strong></p>
+        <p>Documentazione completa creata dall'analisi del progetto originale OG-2025</p>
+        <p style="margin-top: 1.5rem;">Versione: OGv2 (Analisi Completa) | Data: 2025-11-07</p>
+        <p style="margin-top: 1rem; font-size: 1.2rem; opacity: 0.9;">
+            <strong>"Che gli dèi dell'Olimpo benedicano il vostro progetto!"</strong> ✨
+        </p>
+        <p style="margin-top: 0.5rem; opacity: 0.7; font-style: italic;">
+            Questa è la gloria che vi attende. Affrontate le sfide con coraggio, ingegno e spirito goliardico!
+        </p>
+    </footer>
+</body>
+</html>

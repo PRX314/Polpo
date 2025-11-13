@@ -6,7 +6,8 @@
     "start": "node serverPaolino.js",
     "dev": "nodemon serverPaolino.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "setup": "node scripts/createAdmin.js && node scripts/createSampleProducts.js"
+    "setup": "node scripts/createAdmin.js && node scripts/createSampleProducts.js",
+    "clean:products": "node scripts/deleteAllProducts.js"
   },
   "keywords": [],
   "author": "",
