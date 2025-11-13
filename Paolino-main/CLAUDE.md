@@ -2,14 +2,29 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ CRITICAL SECURITY WARNINGS
+
+**BEFORE STARTING:** Read `/SECURITY.md` for critical security information.
+
+### 🔴 Immediate Actions Required
+1. **Verify `.env` files are NOT committed** to git
+2. **Check Cloudinary keys** - If exposed, rotate immediately (see SECURITY.md)
+3. **Configure Stripe keys** - See STRIPE_SETUP.md for complete guide
+4. **Review security checklist** in SECURITY.md before deployment
+
+### 🔒 Protected Files
+- `/backend/.env` - Contains secrets (JWT, Cloudinary, Stripe)
+- `/frontend/.env` - Contains Stripe publishable key
+- Both are protected by `.gitignore` ✅
+
 ## Project Overview
 
 Paolino is a complete e-commerce platform for t-shirts and textile products with:
 - Node.js/Express backend with MongoDB
 - React 19 frontend with Vite and Tailwind CSS
-- Stripe payment integration
+- Stripe payment integration (requires configuration)
 - Complete admin panel with analytics
-- JWT authentication system
+- JWT authentication system (cryptographically secure keys)
 
 ## Development Commands
 
@@ -102,21 +117,45 @@ npm run setup        # Creates admin user and 6 sample products
 
 ## Environment Configuration
 
+### 🔧 First Time Setup
+
+1. **Backend Environment:**
+   ```bash
+   cd backend
+   cp .env.example .env
+   # Edit .env with your actual keys (see .env.example comments)
+   ```
+
+2. **Frontend Environment:**
+   ```bash
+   cd frontend
+   cp .env.example .env
+   # Edit .env with your Stripe publishable key
+   ```
+
+3. **Configure Stripe:** Follow `/STRIPE_SETUP.md` for complete guide
+
 ### Backend (.env)
-Required environment variables:
-- `NODE_ENV=development`
-- `PORT=5031`
-- `MONGODB_URI=mongodb://localhost:27017/paolino_ecommerce`
-- `JWT_SECRET=your_jwt_secret_here`
-- `JWT_EXPIRE=7d`
-- `STRIPE_SECRET_KEY=your_stripe_secret_key`
-- `STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key`
-- `STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret`
+See `.env.example` for template. Required variables:
+- `NODE_ENV` - Environment (development/production)
+- `PORT` - Server port (5031)
+- `MONGODB_URI` - MongoDB connection string
+- `JWT_SECRET` - **CRITICAL:** Cryptographically secure (512-bit) ✅ Generated
+- `JWT_REFRESH_SECRET` - **CRITICAL:** Different from JWT_SECRET ✅ Generated
+- `JWT_EXPIRE` - Token expiry (7d)
+- `STRIPE_SECRET_KEY` - Stripe secret key (sk_test_... or sk_live_...)
+- `STRIPE_PUBLISHABLE_KEY` - Stripe publishable key
+- `STRIPE_WEBHOOK_SECRET` - Webhook signing secret
+- `CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name
+- `CLOUDINARY_API_KEY` - Cloudinary API key
+- `CLOUDINARY_API_SECRET` - **CRITICAL:** Keep secret
+- `CORS_ORIGIN` - Frontend URL (http://localhost:5173)
 
 ### Frontend (.env)
-Required environment variables:
-- `VITE_API_URL=http://localhost:5031/api`
-- `VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key`
+See `.env.example` for template. Required variables:
+- `VITE_API_URL` - Backend API URL (http://localhost:5031/api)
+- `VITE_SERVER_URL` - Backend server URL (http://localhost:5031)
+- `VITE_STRIPE_PUBLISHABLE_KEY` - Stripe publishable key (safe to expose)
 
 ## Testing Credentials
 - **Admin Email**: admin@paolino.com
@@ -140,13 +179,34 @@ Required environment variables:
 - User profile page with order history
 
 ## Security Implementation
-- Bcrypt password hashing
-- JWT token-based authentication
-- Express rate limiting
-- Helmet security headers
-- CORS configuration for frontend domains
-- Input validation with Joi schemas
-- File upload validation and size limits
+
+### ✅ Security Features Active
+- **Bcrypt password hashing** - 10 salt rounds
+- **JWT authentication** - Cryptographically secure 512-bit secrets
+- **Rate limiting** - 100 req/15min (production), 500 req/15min (dev)
+- **Helmet security headers** - XSS, clickjacking protection
+- **CORS whitelist** - Only authorized origins
+- **Input validation** - Joi schemas on all endpoints
+- **File upload security** - Type/size validation (5MB max)
+- **Cloudinary integration** - Secure image storage with transformations
+- **Admin-only routes** - Role-based access control
+- **Environment isolation** - .env files protected by .gitignore
+
+### 🔒 Security Checklist (Pre-Production)
+See `/SECURITY.md` for complete checklist:
+- [ ] .env files NOT committed (verified)
+- [ ] Cloudinary keys rotated if exposed
+- [ ] Stripe keys configured (test → live)
+- [ ] MongoDB authentication enabled
+- [ ] HTTPS enforced in production
+- [ ] Webhook secrets configured
+- [ ] Admin password changed from default
+
+### 📚 Security Documentation
+- **Full Security Guide:** `/SECURITY.md`
+- **Stripe Configuration:** `/STRIPE_SETUP.md`
+- **NPM Audit Status:** 0 vulnerabilities ✅
+- **Last Security Review:** 2025-11-04
 
 ## Database Prerequisites
 - MongoDB must be running locally on port 27017
@@ -154,7 +214,10 @@ Required environment variables:
 - No additional setup required (schemas auto-create)
 
 ## File Upload Configuration
-- Local storage in `/backend/uploads/products/`
-- Supported formats: JPEG, PNG, WebP
-- Maximum file size: 5MB
-- Multer middleware handles validation and storage
+- **Storage:** Cloudinary (cloud-based, production-ready)
+- **Supported formats:** JPEG, PNG, WebP
+- **Maximum file size:** 5MB per file
+- **Auto-transformations:** 1200x1200 max, auto quality, auto format
+- **Folder structure:** `paolino/products/`
+- **Cleanup:** Auto-delete images when products are deleted
+- **Middleware:** Multer + CloudinaryStorage integration

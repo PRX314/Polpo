@@ -249,12 +249,11 @@ router.delete('/:id', adminAuth, async (req, res) => {
       }
     }
 
-    // Disattiva il prodotto invece di eliminarlo definitivamente
-    product.isActive = false;
-    await product.save();
+    // Eliminazione definitiva dal database (hard delete)
+    await Product.findByIdAndDelete(req.params.id);
 
     res.json({
-      message: 'Product deleted successfully',
+      message: 'Product deleted permanently',
       imagesDeleted: product.images?.length || 0
     });
   } catch (error) {

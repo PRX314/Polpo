@@ -6,6 +6,7 @@ import Layout from './components/layout/Layout';
 
 // Pages
 import HomePage from './pages/HomePage';
+import ProductShowcasePage from './pages/ProductShowcasePage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
@@ -34,7 +35,8 @@ function App() {
           <CartProvider>
             <Layout>
               <Routes>
-              <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<ProductShowcasePage />} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/products/:id" element={<ProductDetailPage />} />
               <Route path="/cart" element={<CartPage />} />

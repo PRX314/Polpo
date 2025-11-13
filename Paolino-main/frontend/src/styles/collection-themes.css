@@ -1,0 +1,103 @@
+/* ============================================================================
+   COLLECTION-SPECIFIC THEMES - Dal prototipo Sito Magliette
+   Micro-animazioni, button styles, effetti avanzati
+   ============================================================================ */
+
+/* Fijo Theme - Wave patterns per banner */
+.collection-banner.fade-slide-up .collection-banner__wave {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0px,
+    rgba(255, 255, 255, 0.2) 10px,
+    rgba(255, 255, 255, 0.1) 20px,
+    transparent 30px,
+    transparent 50px
+  );
+}
+
+.collection-banner.fade-slide-up .collection-banner__icon {
+  color: #FFE0E6;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+.collection-banner.fade-slide-up .collection-banner__title {
+  font-family: 'Poppins', sans-serif;
+}
+
+.collection-banner.fade-slide-up .collection-banner__subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 400;
+}
+
+/* G Power Theme - Wave patterns per banner */
+.collection-banner.explosive-zoom {
+  background-size: 300% 300%;
+  animation: gpowerBannerShift 4s ease infinite;
+}
+
+@keyframes gpowerBannerShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.collection-banner.explosive-zoom .collection-banner__wave {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.2) 0px,
+    transparent 10px,
+    rgba(255, 255, 255, 0.3) 20px,
+    transparent 30px
+  );
+}
+
+.collection-banner.explosive-zoom .collection-banner__icon {
+  color: #FFFFFF;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+  animation: iconPulse 1s ease-in-out infinite, iconRotate 3s linear infinite;
+}
+
+@keyframes iconRotate {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(10deg) scale(1.1); }
+  50% { transform: rotate(-5deg) scale(1.2); }
+  75% { transform: rotate(15deg) scale(1.1); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+.collection-banner.explosive-zoom .collection-banner__title {
+  font-family: 'Montserrat', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.collection-banner.explosive-zoom .collection-banner__subtitle {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+}
+
+/* ============================================================================
+   MOBILE OPTIMIZATIONS
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .collection-banner {
+    height: 100px;
+  }
+
+  .collection-banner__content {
+    gap: 15px;
+    padding: 0 20px;
+  }
+
+  .collection-banner__icon {
+    font-size: 2.5rem;
+  }
+
+  .collection-banner__title {
+    font-size: 1.4rem;
+  }
+
+  .collection-banner__subtitle {
+    font-size: 0.8rem;
+  }
+}
