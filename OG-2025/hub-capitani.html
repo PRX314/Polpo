@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OLIMPIADI GOLIARDICHE - Hub Capitani</title>
+    <link rel="icon" type="image/png" href="Loghi Bar/Logo olimpiadi goliardiche.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="desktop-version">
+    <div class="version-tag">V1</div>
+    
+    <!-- MOBILE VERSION -->
+    <div class="mobile-container" id="mobile-version">
+        <div class="mobile-header">
+            <div class="mobile-logo"><img src="Loghi Bar/Logo olimpiadi goliardiche.png" alt="Logo Olimpiadi" style="width: 60px; height: 60px; object-fit: contain;"></div>
+            <h1>HUB CAPITANO</h1>
+            <div class="mobile-subtitle">Gestione Olimpica</div>
+        </div>
+
+        <div id="mobile-welcome" class="mobile-section">
+            <h3>👑 Crea la Squadra</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <input type="text" id="mobile-team-name" placeholder="Nome Squadra" style="padding: 12px; border: 2px solid #1e5ba8; border-radius: 8px; font-family: 'JetBrains Mono', monospace;">
+                <input type="text" id="mobile-captain-name" placeholder="Nome Capitano" style="padding: 12px; border: 2px solid #1e5ba8; border-radius: 8px; font-family: 'JetBrains Mono', monospace;">
+                <button id="mobile-create-team" class="primary-btn">⚡ Fonda Squadra</button>
+            </div>
+        </div>
+
+        <div id="mobile-dashboard" class="mobile-section" style="display: none;">
+            <h3 id="mobile-team-display">🏆 Squadra</h3>
+            <div class="quick-stats">
+                <div class="quick-stat" id="mobile-challenges">0 <span>sfide</span></div>
+                <div class="quick-stat" id="mobile-points">0 <span>punti</span></div>
+                <div class="quick-stat" id="mobile-members">1 <span>membri</span></div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="primary-btn" onclick="showMobileModal()">🎯 Registra Sfida</button>
+                <a href="index.html" class="primary-btn" style="text-decoration: none; text-align: center;">🏆 Classifica</a>
+                <button class="secondary-btn" onclick="toggleMobileSection('membri')">⚔️ Gestisci Membri</button>
+                <button class="secondary-btn" onclick="toggleMobileSection('tools')">🛠️ Strumenti</button>
+            </div>
+        </div>
+
+        <div class="mobile-section" id="mobile-section-membri" style="display: none;">
+            <h3>⚔️ Membri Squadra</h3>
+            <div id="mobile-members-list"></div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <input type="text" id="mobile-new-member" placeholder="Nuovo membro" style="flex: 1; padding: 10px; border: 2px solid #1e5ba8; border-radius: 6px;">
+                <button id="mobile-add-member" class="secondary-btn" style="padding: 10px 15px;">➕</button>
+            </div>
+        </div>
+
+        <div class="mobile-section" id="mobile-section-tools" style="display: none;">
+            <h3>🛠️ Strumenti Capitano</h3>
+            <div class="action-buttons">
+                <button class="secondary-btn" onclick="mobileAction('rally')">📢 Raduna</button>
+                <button class="secondary-btn" onclick="mobileAction('strategy')">🗺️ Strategia</button>
+                <button class="secondary-btn" onclick="mobileAction('victory')">🎺 Vittoria</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DESKTOP VERSION -->
+    <div class="main-container" id="desktop-version">
+        
+        <!-- LEFT COLUMN - MAIN CONTENT -->
+        <div class="main-content">
+            <h1>OLIMPIADI GOLIARDICHE</h1>
+            <div class="tagline">Hub dei Capitani - Comando Supremo</div>
+            
+            <div class="greek-quote">
+                🏛️ <em>"Arete kai Sophia"</em> - Eccellenza e Saggezza 🏛️<br><br>
+                <strong>Il portale esclusivo per i comandanti delle squadre olimpiche.</strong><br>
+                Gestisci la tua squadra, traccia le sfide, pianifica le strategie e conduci i tuoi atleti alla gloria eterna.
+            </div>
+
+            <h2>Setup & Gestione Squadra</h2>
+            
+            <div id="welcome-section" class="olympic-step active-step">
+                <h4>👑 Inizializzazione Comando</h4>
+                <div class="team-form">
+                    <input type="text" id="team-name" placeholder="Nome della Squadra Olimpica" maxlength="30">
+                    <input type="text" id="captain-name" placeholder="Nome del Capitano" maxlength="25">
+                    <button id="create-team-btn" class="btn">⚡ Fonda la Squadra ⚡</button>
+                </div>
+            </div>
+            
+            <div id="dashboard-section" class="olympic-step" style="display: none;">
+                <h4 id="team-display">🏆 Squadra: <span id="team-name-display"></span></h4>
+                <p class="captain-info">Comandata dal Capitano <strong id="captain-name-display"></strong></p>
+                
+                <div class="members-management">
+                    <h3>⚔️ Gestione Membri</h3>
+                    <div id="members-list" class="members-grid"></div>
+                    <div class="add-member-form">
+                        <input type="text" id="new-member" placeholder="Aggiungi nuovo atleta" maxlength="25">
+                        <button id="add-member-btn" class="btn-secondary">➕</button>
+                    </div>
+                    <p class="member-count">Atleti nella squadra: <span id="member-count">1</span>/8</p>
+                </div>
+            </div>
+
+            <div class="olympic-tools">
+                <h2>⚔️ Strumenti del Capitano</h2>
+                <div class="tools-grid">
+                    <button class="tool-btn" id="add-challenge">🎯 Registra Sfida</button>
+                    <button class="tool-btn" id="rally-troops">📢 Raduna Truppe</button>
+                    <button class="tool-btn" id="strategy-meeting">🗺️ Consiglio di Guerra</button>
+                    <button class="tool-btn" id="victory-horn">🎺 Suona la Vittoria</button>
+                    <a href="index.html" class="tool-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">🏆 Classifica Finale</a>
+                    <a href="homepage.html" class="tool-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">🏛️ Homepage</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN - SIDEBAR -->
+        <div class="sidebar">
+            
+            <h2>📊 Statistiche Olimpiche</h2>
+            <div class="stats-overview">
+                <div class="stat-card">
+                    <div class="stat-number" id="challenges-completed">0</div>
+                    <div class="stat-label">Sfide Completate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="total-points">0</div>
+                    <div class="stat-label">Punti Totali</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="bars-visited">0</div>
+                    <div class="stat-label">Templi Visitati</div>
+                </div>
+            </div>
+
+            <h2>🏺 Sfide Disponibili</h2>
+            <button class="collapsible">Tipologie di Prove Divine</button>
+            <div class="collapsible-content">
+                <div class="challenge-types">
+                    <div class="challenge-type">
+                        <h4>🧠 Quiz Olimpico</h4>
+                        <p>Prove di conoscenza sulla storia antica</p>
+                    </div>
+                    <div class="challenge-type">
+                        <h4>🎭 Performance Teatrale</h4>
+                        <p>Esibizioni artistiche degne degli dèi</p>
+                    </div>
+                    <div class="challenge-type">
+                        <h4>🎨 Creatività Divina</h4>
+                        <p>Opere d'arte ispirate dal monte Olimpo</p>
+                    </div>
+                    <div class="challenge-type">
+                        <h4>😅 Penitenze Goliardiche</h4>
+                        <p>Prove di coraggio e spirito olimpico</p>
+                    </div>
+                    <div class="challenge-type">
+                        <h4>🔍 Enigmi Ancestrali</h4>
+                        <p>Codici cifrati degli antichi sapienti</p>
+                    </div>
+                    <div class="challenge-type">
+                        <h4>🏆 Gran Finale</h4>
+                        <p>La prova suprema per la gloria eterna</p>
+                    </div>
+                </div>
+            </div>
+
+            <h2>⚡ Status Squadra</h2>
+            <div class="status-meters">
+                <div class="status-item">
+                    <span class="status-label">Morale:</span>
+                    <div class="status-bar">
+                        <div class="status-fill morale" id="morale-bar" style="width: 100%;"></div>
+                    </div>
+                    <span class="status-value">100%</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Energia:</span>
+                    <div class="status-bar">
+                        <div class="status-fill energy" id="energy-bar" style="width: 85%;"></div>
+                    </div>
+                    <span class="status-value">85%</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Strategia:</span>
+                    <div class="status-bar">
+                        <div class="status-fill strategy" id="strategy-bar" style="width: 70%;"></div>
+                    </div>
+                    <span class="status-value">70%</span>
+                </div>
+            </div>
+
+            <h2>📝 Note Strategiche</h2>
+            <div class="notes-section">
+                <textarea id="strategy-notes" placeholder="Annota qui le tue tattiche, informazioni sui templi, strategie per le sfide..."></textarea>
+                <button id="save-notes" class="btn-secondary">💾 Salva nell'Archivio</button>
+            </div>
+
+            <button class="collapsible">Guida del Capitano Olimpico</button>
+            <div class="collapsible-content">
+                <div class="guide-content">
+                    <h3>👑 Doveri del Capitano</h3>
+                    <ul>
+                        <li>Guidare la squadra verso la vittoria</li>
+                        <li>Gestire le risorse e le strategie</li>
+                        <li>Motivare gli atleti nelle difficoltà</li>
+                        <li>Registrare le sfide completate</li>
+                    </ul>
+                    
+                    <h3>🏆 Obiettivi Olimpici</h3>
+                    <ul>
+                        <li>Completare almeno 10 sfide diverse</li>
+                        <li>Visitare tutti i templi sacri</li>
+                        <li>Mantenere alto il morale della squadra</li>
+                        <li>Conquistare la gloria eterna</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Challenge Registration -->
+    <div id="challenge-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>🎯 Registrazione Sfida Olimpica</h2>
+            
+            <form id="challenge-form">
+                <div class="form-group">
+                    <label>🏛️ Nome del Tempio/Bar:</label>
+                    <input type="text" id="bar-name" placeholder="Es. Tempio di Dioniso, Bar Olimpo..." required>
+                </div>
+                
+                <div class="form-group">
+                    <label>⚡ Tipo di Sfida:</label>
+                    <select id="challenge-type" required>
+                        <option value="">Seleziona il tipo di prova</option>
+                        <option value="quiz">🧠 Quiz Olimpico</option>
+                        <option value="performance">🎭 Performance Teatrale</option>
+                        <option value="creativity">🎨 Creatività Divina</option>
+                        <option value="penalty">😅 Penitenze Goliardiche</option>
+                        <option value="code">🔍 Enigmi Ancestrali</option>
+                        <option value="final">🏆 Gran Finale</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>🏆 Punti Conquistati:</label>
+                    <input type="number" id="points-earned" placeholder="0-100" min="0" max="100">
+                </div>
+                
+                <div class="form-group">
+                    <label>📜 Note della Battaglia:</label>
+                    <textarea id="challenge-notes" placeholder="Descrivi come si è svolta la sfida, le difficoltà incontrate, le strategie utilizzate..."></textarea>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="submit" class="btn">✅ Registra nella Storia</button>
+                    <button type="button" id="cancel-challenge" class="btn-secondary">❌ Annulla</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Action Feedback Overlay -->
+    <div id="feedback-overlay" class="feedback-overlay">
+        <div class="feedback-content">
+            <div class="greek-vase"><img src="Loghi Bar/Logo olimpiadi goliardiche.png" alt="Logo Olimpiadi" style="width: 80px; height: 80px; object-fit: contain;"></div>
+            <h2 id="feedback-title"></h2>
+            <p id="feedback-message"></p>
+            <div class="olympic-flame">🔥</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

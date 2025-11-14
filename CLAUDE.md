@@ -4,11 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is Paolo Repetto's portfolio hub repository containing four distinct parts:
+This is Paolo Repetto's portfolio hub repository containing five distinct parts:
 1. **Portfolio Showcase** (`/`, `/minigiochi/`, `/progetti/`, `/Sito Magliette/`) - Static HTML/CSS/JS projects and games
 2. **Gestionale-X** (`/gestionale-x/`) - React + Firebase project management application deployed at gestionalepolpo.netlify.app
 3. **OG-2025** (`/OG-2025/`) - Olimpiadi Goliardiche event management system with Google Sheets integration
-4. **Paolino E-commerce** (`/Paolino-main/`) - Full-stack MERN e-commerce platform (currently untracked in git)
+4. **OGv2** (`/OGv2/`) - Comprehensive documentation and analysis for Olimpiadi Goliardiche 2025 (documentation only, no code)
+5. **Paolino E-commerce** (`/Paolino-main/`) - Full-stack MERN e-commerce platform (currently untracked in git)
 
 **Primary Entry Point**: `/index.html` (main portfolio hub)
 **Language**: Italian (all user-facing content)
@@ -101,6 +102,29 @@ http://localhost:8000/hub-capitani.html  # Captain Hub (team management)
 ```
 
 **Note**: Pure vanilla JavaScript, no build process or dependencies required. All files run directly in browser.
+
+### OGv2 - Documentation Only
+```bash
+# OGv2 is a documentation-only directory (no code to run)
+# Contains markdown files extracted from OG-2025 project and PDF sources
+
+cd OGv2
+# Read documentation with any markdown viewer or text editor
+```
+
+**Available Documentation**:
+- **`DOCUMENTAZIONE_COMPLETA_OG.md`**: Complete event documentation (~400 lines) - full reference, organizer manual
+- **`QUICK_REFERENCE.md`**: Quick reference guide (~150 lines) - cheat sheet, essential info tables
+- **`README.md`**: Index and usage guide for the documentation
+
+**Key Content**:
+- 14 temples/bars with complete schedules
+- 12 games with detailed rules
+- 45 questions for "Sussurro delle Sirene" game
+- Evaluation system (3 criteria × 5 points)
+- 8 challenge categories
+- Special mechanics (Menu OG, dual language)
+- Team strategies and organizer guidelines
 
 ### Paolino E-commerce Platform
 ```bash
@@ -382,6 +406,12 @@ vite --port 5174
   - **Tech**: Pure vanilla JavaScript, no dependencies, no build process
   - **Deployment**: Static files deployable to any hosting (GitHub Pages, Netlify, etc.)
   - **Documentation**: Complete CLAUDE.md in `/OG-2025/CLAUDE.md`
+- **OGv2 (Olimpiadi Goliardiche Documentation)**: ✅ Complete, documentation-only
+  - **Purpose**: Comprehensive documentation and analysis extracted from OG-2025 and PDF sources
+  - **Created**: 2025-11-07
+  - **Content**: 3 markdown files with event details, game rules, strategies, quick reference
+  - **Sources**: OG-2025 codebase + "OG Giochi.pdf" (19 pages)
+  - **Use Cases**: Event organizers, participating teams, developers planning OGv2 features
 - **Paolino E-commerce**: 🚧 ~90% complete, core functionality working
   - **Test Credentials**: admin@paolino.com / admin123
   - ✅ Completed: Backend API, Authentication, Admin panel, Product catalog, Cart functionality, ProductShowcasePage landing
@@ -457,5 +487,8 @@ vite --port 5174
 ### Other Project Documentation
 - **`/OG-2025/CLAUDE.md`** - Complete Olimpiadi Goliardiche implementation and developer commands
 - **`/OG-2025/README.md`** - Italian-language project overview and features
+- **`/OGv2/DOCUMENTAZIONE_COMPLETA_OG.md`** - Complete event documentation (~400 lines) with all game rules
+- **`/OGv2/QUICK_REFERENCE.md`** - Quick reference guide with tables and checklists
+- **`/OGv2/README.md`** - Index and usage guide for OGv2 documentation
 - **`/gestionale-x/SECURITY_SETUP.md`** - Firebase security configuration
 - **`/gestionale-x/firestore.rules`** - Firestore security rules

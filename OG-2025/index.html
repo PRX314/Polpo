@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLASSIFICA FINALE - Olimpiadi Goliardiche 2025</title>
+    <link rel="icon" type="image/png" href="Loghi Bar/Logo olimpiadi goliardiche.png">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Base styles */
+        .scoreboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #e8f4fc 0%, #d0e8f7 50%, #b8ddf0 100%);
+            min-height: 100vh;
+        }
+
+        .scoreboard-header {
+            text-align: center;
+            padding: 30px 20px;
+            background: #ffffff;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            border-top: 4px solid;
+            border-image: linear-gradient(90deg, #e31e24, #ff8c00, #ffd700, #00a651, #00aeef, #1e5ba8, #e31e24) 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .olympic-logo-sync {
+            width: 90px;
+            height: 90px;
+            background: url('Loghi Bar/Logo olimpiadi goliardiche.png') center/contain no-repeat;
+            background-color: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(30, 91, 168, 0.4);
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .olympic-logo-sync:hover {
+            transform: scale(1.05);
+        }
+
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .scoreboard-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2em;
+            font-weight: 600;
+            letter-spacing: 3px;
+            background: linear-gradient(45deg, #1e5ba8, #00aeef, #ffd700, #ff8c00, #e31e24);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        .scoreboard-subtitle {
+            font-size: 1.1em;
+            color: #666;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+
+        /* Navigation */
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 12px 25px;
+            border: 2px solid #1e5ba8;
+            background: white;
+            color: #1e5ba8;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-btn:hover {
+            background: linear-gradient(135deg, #1e5ba8, #00aeef);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 91, 168, 0.4);
+        }
+
+        /* Stats Section */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            text-align: center;
+            border-left: 4px solid #1e5ba8;
+        }
+
+        .stat-card-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .stat-card-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #1e5ba8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-card-label {
+            color: #666;
+            margin-top: 5px;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+        }
+
+        /* Desktop Table View */
+        .desktop-view {
+            display: block;
+        }
+
+        .mobile-view {
+            display: none;
+        }
+
+        .score-table-wrapper {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+
+        .table-header {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .score-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
+        }
+
+        .score-table thead {
+            background: linear-gradient(135deg, #1e5ba8, #00aeef);
+            color: white;
+        }
+
+        .score-table th {
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #00aeef;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            text-transform: uppercase;
+            font-size: 0.8em;
+        }
+
+        .score-table th.team-col {
+            text-align: left;
+            min-width: 150px;
+            font-family: 'Cinzel', serif;
+            font-size: 1em;
+        }
+
+        .score-table th.total-col {
+            background: linear-gradient(135deg, #e31e24, #ff8c00);
+            font-size: 1em;
+            min-width: 100px;
+        }
+
+        .score-table tbody tr:nth-child(odd) {
+            background: #fafafa;
+        }
+
+        .score-table tbody tr:nth-child(even) {
+            background: #ffffff;
+        }
+
+        .score-table tbody tr:hover {
+            background: linear-gradient(90deg, #fff8dc, #fffef0);
+            transform: scale(1.01);
+            box-shadow: 0 2px 8px rgba(184, 134, 11, 0.2);
+        }
+
+        .score-table td {
+            padding: 12px 10px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .score-table td.team-name {
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            font-family: 'Cinzel', serif;
+            font-size: 1em;
+        }
+
+        .score-table td.rank {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #e31e24;
+        }
+
+        .score-table td.total-score {
+            font-weight: bold;
+            font-size: 1.3em;
+            color: #1e5ba8;
+            background: linear-gradient(135deg, #e8f4fc, #d0e8f7);
+        }
+
+        .score-input {
+            width: 60px;
+            padding: 6px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .score-input:focus {
+            outline: none;
+            border-color: #1e5ba8;
+            box-shadow: 0 0 0 3px rgba(30, 91, 168, 0.15);
+        }
+
+        /* Mobile View Styles - Simplified */
+
+        /* Team Cards */
+        .team-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .team-card {
+            background: linear-gradient(145deg, #ffffff 0%, #e8f4fc 100%);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .team-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #1e5ba8, #00aeef, #ffd700);
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        .team-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(30, 91, 168, 0.15);
+            background: linear-gradient(145deg, #ffffff 0%, #d0e8f7 100%);
+        }
+
+        .team-card:hover::before {
+            opacity: 0.8;
+        }
+
+        .team-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .team-card-rank {
+            font-size: 0.75em;
+            font-weight: 600;
+            color: #aaa;
+            font-family: 'JetBrains Mono', monospace;
+            flex-shrink: 0;
+        }
+
+        .team-card-name {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #1e5ba8;
+            font-family: 'Cinzel', serif;
+            text-align: center;
+            line-height: 1.2;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .team-card-total {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #1e5ba8;
+            font-family: 'JetBrains Mono', monospace;
+            flex-shrink: 0;
+        }
+
+        .team-card-scores {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 6px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.7em;
+        }
+
+        .score-item-name {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        .score-item-value {
+            font-weight: bold;
+            color: #2c3e50;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .expand-btn {
+            width: 100%;
+            padding: 5px;
+            margin-top: 6px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #666;
+        }
+
+        .expand-btn:hover {
+            background: linear-gradient(135deg, #1e5ba8, #00aeef);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(30, 91, 168, 0.25);
+        }
+
+
+        .google-sheets-info {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            border-left: 4px solid #4caf50;
+        }
+
+        .sheets-status {
+            font-weight: 600;
+            color: #2e7d32;
+        }
+
+        /* Animations */
+        @keyframes flame {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-5deg); }
+            75% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        .olympic-flame {
+            display: inline-block;
+            animation: flame 2s ease-in-out infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .desktop-view {
+                display: none;
+            }
+
+            .mobile-view {
+                display: block;
+            }
+
+            /* Riduzione spazi generali */
+            .scoreboard-container {
+                padding: 10px;
+            }
+
+            .scoreboard-header {
+                padding: 20px 12px;
+                margin-bottom: 15px;
+                gap: 15px;
+            }
+
+            .olympic-logo-sync {
+                width: 60px;
+                height: 60px;
+            }
+
+            .scoreboard-title {
+                font-size: 1.3em;
+                letter-spacing: 1px;
+                margin-bottom: 5px;
+            }
+
+            .scoreboard-subtitle {
+                font-size: 0.75em;
+                margin-top: 5px;
+            }
+
+            /* Google Sheets Info */
+            .google-sheets-info {
+                padding: 10px;
+                margin-bottom: 12px;
+                font-size: 0.8em;
+            }
+
+            /* Navigation buttons */
+            .nav-buttons {
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+
+            .nav-btn {
+                padding: 8px 12px;
+                font-size: 0.85em;
+            }
+
+            /* Stats section */
+            .stats-section {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            .stat-card {
+                padding: 10px;
+            }
+
+            .stat-card-icon {
+                font-size: 1.8em;
+                margin-bottom: 5px;
+            }
+
+            .stat-card-value {
+                font-size: 1.5em;
+            }
+
+            .stat-card-label {
+                font-size: 0.75em;
+                margin-top: 3px;
+            }
+
+
+            /* Team cards - compatto per mobile */
+            .team-cards {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+            }
+
+            .team-card {
+                padding: 8px;
+                margin-bottom: 0;
+            }
+
+            .team-card-header {
+                margin-bottom: 6px;
+                gap: 4px;
+            }
+
+            .team-card-rank {
+                font-size: 0.7em;
+            }
+
+            .team-card-name {
+                font-size: 0.8em;
+            }
+
+            .team-card-total {
+                font-size: 1em;
+            }
+
+            .team-card-scores {
+                gap: 3px;
+                margin-top: 5px;
+            }
+
+            .score-item {
+                padding: 3px 5px;
+                font-size: 0.65em;
+            }
+
+            .score-item-name {
+                font-size: 0.85em;
+            }
+
+            .expand-btn {
+                padding: 4px;
+                margin-top: 5px;
+                font-size: 0.65em;
+            }
+
+        }
+    </style>
+</head>
+<body>
+    <div class="scoreboard-container">
+        <!-- Header -->
+        <div class="scoreboard-header">
+            <div class="olympic-logo-sync"></div>
+            <div class="header-content">
+                <div class="scoreboard-title">🏆 CLASSIFICA 🏆</div>
+                <div class="scoreboard-subtitle">Olimpiadi Goliardiche 2025 - La Gloria Eterna</div>
+                <div style="margin-top: 8px; color: #888; font-style: italic; font-size: 0.9em;">
+                    14 Bar Olimpici • 13 Squadre Leggendarie
+                </div>
+            </div>
+            <div class="olympic-logo-sync"></div>
+        </div>
+
+        <!-- Google Sheets Info -->
+        <div class="google-sheets-info" id="sheetsInfo" style="display: none;">
+            <div style="font-size: 0.9em; font-weight: 600;">📊 Ultimo aggiornamento: <span id="lastUpdate">-</span></div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="hub-capitani.html" class="nav-btn">👑 Hub Capitani</a>
+            <a href="homepage.html" class="nav-btn">🏛️ Home Olimpiadi</a>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-card-icon">🏆</div>
+                <div class="stat-card-value" id="total-teams">13</div>
+                <div class="stat-card-label">Squadre in Gara</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-icon">🏛️</div>
+                <div class="stat-card-value">14</div>
+                <div class="stat-card-label">Bar Partecipanti</div>
+            </div>
+        </div>
+
+        <!-- DESKTOP VIEW - Full Table -->
+        <div class="desktop-view">
+            <div class="score-table-wrapper">
+                <div class="table-header">📊 TABELLA COMPLETA PUNTEGGI</div>
+                <div style="overflow-x: auto;">
+                    <table class="score-table" id="scoreTable">
+                        <thead>
+                            <tr>
+                                <th class="team-col">#</th>
+                                <th class="team-col">SQUADRA</th>
+                                <th>CALIGO</th>
+                                <th>CASA<br>GOTUZZO</th>
+                                <th>CERERIA</th>
+                                <th>CIRCOLO<br>SPORT</th>
+                                <th>EXCALIBUR</th>
+                                <th>LE<br>FONTANE</th>
+                                <th>LOOMI</th>
+                                <th>MARY JO</th>
+                                <th>STORICO</th>
+                                <th>TELERIA<br>108</th>
+                                <th>TIRE-<br>BOUCHON</th>
+                                <th>VINORIA</th>
+                                <th>VINOTECA</th>
+                                <th>VITAE</th>
+                                <th>BONUS</th>
+                                <th class="total-col">TOTALE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scoreTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOBILE VIEW - Two Column Cards -->
+        <div class="mobile-view">
+            <div class="team-cards" id="teamCards"></div>
+        </div>
+    </div>
+
+    <script>
+        // Bar names mapping
+        const BAR_NAMES = {
+            caligo: 'CALIGO',
+            casaGotuzzo: 'CASA GOTUZZO',
+            cereria: 'CERERIA',
+            circoloSport: 'CIRCOLO SPORT',
+            excalibur: 'EXCALIBUR',
+            leFontane: 'LE FONTANE',
+            loomi: 'LOOMI',
+            maryJo: 'MARY JO',
+            storico: 'STORICO',
+            teleria108: 'TELERIA 108',
+            tirebouchon: 'TIREBOUCHON',
+            vinoria: 'VINORIA',
+            vinoteca: 'VINOTECA',
+            vitae: 'VITAE',
+            bonus: 'BONUS'
+        };
+
+        // Team data structure
+        let teamsData = [];
+        let googleSheetsId = '1aGLJYQEfh54yUvY6VvyJtbnf8tysTcYtNobDURq34RI'; // ID foglio Google Sheets
+        let googleSheetsRange = 'Sheet1!A1:Q14'; // 13 teams + 1 header row
+
+        // Initialize teams
+        function initializeTeams() {
+            teamsData = [];
+            for (let i = 1; i <= 13; i++) {
+                teamsData.push({
+                    name: `Squadra ${i}`,
+                    scores: {
+                        caligo: 0,
+                        casaGotuzzo: 0,
+                        cereria: 0,
+                        circoloSport: 0,
+                        excalibur: 0,
+                        leFontane: 0,
+                        loomi: 0,
+                        maryJo: 0,
+                        storico: 0,
+                        teleria108: 0,
+                        tirebouchon: 0,
+                        vinoria: 0,
+                        vinoteca: 0,
+                        vitae: 0,
+                        bonus: 0
+                    },
+                    total: 0
+                });
+            }
+        }
+
+        // Generate desktop table
+        function generateTable() {
+            const tbody = document.getElementById('scoreTableBody');
+            tbody.innerHTML = '';
+
+            teamsData.forEach((team, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="rank">${index + 1}</td>
+                    <td class="team-name">${team.name}</td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="caligo" value="${team.scores.caligo}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="casaGotuzzo" value="${team.scores.casaGotuzzo}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="cereria" value="${team.scores.cereria}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="circoloSport" value="${team.scores.circoloSport}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="excalibur" value="${team.scores.excalibur}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="leFontane" value="${team.scores.leFontane}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="loomi" value="${team.scores.loomi}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="maryJo" value="${team.scores.maryJo}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="storico" value="${team.scores.storico}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="teleria108" value="${team.scores.teleria108}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="tirebouchon" value="${team.scores.tirebouchon}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="vinoria" value="${team.scores.vinoria}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="vinoteca" value="${team.scores.vinoteca}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="vitae" value="${team.scores.vitae}" min="0" max="100"></td>
+                    <td><input type="number" class="score-input" data-team="${index}" data-game="bonus" value="${team.scores.bonus}" min="0" max="100"></td>
+                    <td class="total-score">${team.total}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.querySelectorAll('.score-input').forEach(input => {
+                input.addEventListener('input', handleScoreInput);
+            });
+        }
+
+        // Generate mobile cards
+        function generateMobileCards() {
+            const container = document.getElementById('teamCards');
+            container.innerHTML = '';
+
+            teamsData.forEach((team, index) => {
+                const card = document.createElement('div');
+                card.className = 'team-card';
+
+                const scoresHtml = Object.entries(team.scores).map(([key, value]) => {
+                    if (value === 0) return '';
+                    return `
+                        <div class="score-item">
+                            <span class="score-item-name">${BAR_NAMES[key]}</span>
+                            <span class="score-item-value">${value}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                card.innerHTML = `
+                    <div class="team-card-header">
+                        <div class="team-card-rank">#${index + 1}</div>
+                        <div class="team-card-name">${team.name}</div>
+                        <div class="team-card-total">${team.total}</div>
+                    </div>
+                    <div class="team-card-scores" id="scores-${index}" style="display: none;">
+                        ${scoresHtml || '<div style="text-align: center; color: #999;">Nessun punteggio</div>'}
+                    </div>
+                    <button class="expand-btn" onclick="toggleScores(${index})">
+                        <span id="expand-text-${index}">▼ Dettagli</span>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Toggle score visibility in cards
+        function toggleScores(index) {
+            const scoresDiv = document.getElementById(`scores-${index}`);
+            const expandText = document.getElementById(`expand-text-${index}`);
+
+            if (scoresDiv.style.display === 'none') {
+                scoresDiv.style.display = 'grid';
+                expandText.textContent = '▲ Nascondi';
+            } else {
+                scoresDiv.style.display = 'none';
+                expandText.textContent = '▼ Dettagli';
+            }
+        }
+
+
+        // Handle score input
+        function handleScoreInput(event) {
+            const teamIndex = parseInt(event.target.dataset.team);
+            const game = event.target.dataset.game;
+            const value = parseInt(event.target.value) || 0;
+
+            teamsData[teamIndex].scores[game] = value;
+            setTimeout(calculateScores, 100);
+        }
+
+        // Calculate all scores
+        function calculateScores() {
+            teamsData.forEach(team => {
+                team.total = Object.values(team.scores).reduce((sum, score) => sum + score, 0);
+            });
+
+            teamsData.sort((a, b) => b.total - a.total);
+
+            // Update desktop table
+            const tbody = document.getElementById('scoreTableBody');
+            const rows = tbody.getElementsByTagName('tr');
+            teamsData.forEach((team, index) => {
+                if (rows[index]) {
+                    rows[index].querySelector('.rank').textContent = index + 1;
+                    rows[index].querySelector('.total-score').textContent = team.total;
+                }
+            });
+
+            // Update mobile cards
+            generateMobileCards();
+
+            // Update stats
+            updateStats();
+            saveData();
+        }
+
+        // Update statistics
+        function updateStats() {
+            // Update dynamic team count
+            document.getElementById('total-teams').textContent = teamsData.length;
+        }
+
+        // Save to localStorage
+        function saveData() {
+            try {
+                localStorage.setItem('olimpiadiClassifica', JSON.stringify(teamsData));
+            } catch (error) {
+                console.error('Errore salvataggio:', error);
+            }
+        }
+
+        // Load from localStorage
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('olimpiadiClassifica');
+                if (saved) {
+                    teamsData = JSON.parse(saved);
+                    generateTable();
+                    generateMobileCards();
+                    calculateScores();
+                    return true;
+                }
+            } catch (error) {
+                console.error('Errore caricamento:', error);
+            }
+            return false;
+        }
+
+        // Google Sheets Integration - Using JSONP to avoid CORS
+        function loadFromGoogleSheets(showAlert = true) {
+            // Usa l'ID hardcodato (può essere sovrascritto tramite prompt se necessario)
+            const sheetId = googleSheetsId;
+
+            // Setup google.visualization namespace if not exists
+            if (!window.google) {
+                window.google = {};
+            }
+            if (!window.google.visualization) {
+                window.google.visualization = {};
+            }
+            if (!window.google.visualization.Query) {
+                window.google.visualization.Query = {};
+            }
+
+            // Define the callback that Google Sheets will call
+            window.google.visualization.Query.setResponse = function(response) {
+                try {
+                    if (response.table && response.table.rows) {
+                        parseGoogleSheetsData(response.table.rows);
+                        document.getElementById('sheetsInfo').style.display = 'block';
+                        document.getElementById('lastUpdate').textContent = new Date().toLocaleString('it-IT');
+                        console.log('✅ Dati caricati da Google Sheets:', response.table.rows.length, 'squadre');
+                        if (showAlert) {
+                            alert('✅ Dati caricati da Google Sheets!\n\n' + response.table.rows.length + ' squadre importate!');
+                        }
+                    } else {
+                        throw new Error('Formato dati non valido');
+                    }
+                } catch (error) {
+                    console.error('Errore Google Sheets:', error);
+                    if (showAlert) {
+                        alert('❌ Errore nel caricamento da Google Sheets.\n\nDettaglio: ' + error.message + '\n\nAssicurati che:\n1. Il foglio sia pubblico\n2. L\'ID sia corretto\n3. Il formato sia: SQUADRA | CALIGO | CASA GOTUZZO | ... | BONUS');
+                    }
+                } finally {
+                    // Cleanup: remove script tag
+                    const scriptTag = document.getElementById('googlesheet-script');
+                    if (scriptTag) scriptTag.remove();
+                }
+            };
+
+            // Remove old script if exists
+            const oldScript = document.getElementById('googlesheet-script');
+            if (oldScript) oldScript.remove();
+
+            // Create script tag for JSONP request
+            const script = document.createElement('script');
+            script.id = 'googlesheet-script';
+            script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&tq=&gid=0`;
+
+            // Handle script load errors
+            script.onerror = function() {
+                alert('❌ Errore nel caricamento da Google Sheets.\n\nAssicurati che:\n1. Il foglio sia pubblico ("Chiunque con il link può visualizzare")\n2. L\'ID sia corretto\n3. Hai una connessione internet attiva');
+                script.remove();
+            };
+
+            // Append script to document to trigger request
+            document.head.appendChild(script);
+        }
+
+        // Parse Google Sheets data
+        function parseGoogleSheetsData(rows) {
+            // Assuming first row is header, starting from row 1 (index 0)
+            teamsData = [];
+
+            for (let i = 0; i < rows.length && i < 13; i++) {
+                const row = rows[i];
+                if (!row.c || !row.c[0]) continue;
+
+                // Helper function to safely parse numbers
+                const getScore = (cell) => {
+                    if (!cell || cell.v === null || cell.v === undefined) return 0;
+                    return Math.round(Number(cell.v)) || 0;
+                };
+
+                const team = {
+                    name: row.c[0]?.v || `Squadra ${i + 1}`,
+                    scores: {
+                        caligo: getScore(row.c[1]),
+                        casaGotuzzo: getScore(row.c[2]),
+                        cereria: getScore(row.c[3]),
+                        circoloSport: getScore(row.c[4]),
+                        excalibur: getScore(row.c[5]),
+                        leFontane: getScore(row.c[6]),
+                        loomi: getScore(row.c[7]),
+                        maryJo: getScore(row.c[8]),
+                        storico: getScore(row.c[9]),
+                        teleria108: getScore(row.c[10]),
+                        tirebouchon: getScore(row.c[11]),
+                        vinoria: getScore(row.c[12]),
+                        vinoteca: getScore(row.c[13]),
+                        vitae: getScore(row.c[14]),
+                        bonus: getScore(row.c[15])
+                    },
+                    total: 0
+                };
+
+                teamsData.push(team);
+            }
+
+            console.log('📊 Dati caricati:', teamsData.length, 'squadre');
+            generateTable();
+            generateMobileCards();
+            calculateScores();
+        }
+
+        // Export data
+        function exportData() {
+            const dataStr = JSON.stringify(teamsData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `olimpiadi_classifica_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+
+            URL.revokeObjectURL(url);
+            alert('📊 Dati esportati con successo!');
+        }
+
+        // Long press sul logo per sincronizzare (5 secondi, silenzioso)
+        let longPressTimer = null;
+
+        function initLogoLongPress() {
+            const logo = document.querySelector('.olympic-logo-sync');
+            if (!logo) return;
+
+            const startPress = (e) => {
+                // Animazione visiva sul logo stesso
+                logo.style.transform = 'scale(1.1)';
+                logo.style.boxShadow = '0 0 20px rgba(218, 165, 32, 0.8)';
+
+                longPressTimer = setTimeout(() => {
+                    // Dopo 5 secondi, sincronizza silenziosamente
+                    logo.style.transform = 'scale(1)';
+                    logo.style.boxShadow = '0 4px 12px rgba(184, 134, 11, 0.4)';
+                    loadFromGoogleSheets(true);
+                }, 5000);
+            };
+
+            const endPress = () => {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                logo.style.transform = 'scale(1)';
+                logo.style.boxShadow = '0 4px 12px rgba(184, 134, 11, 0.4)';
+            };
+
+            // Eventi mouse
+            logo.addEventListener('mousedown', startPress);
+            logo.addEventListener('mouseup', endPress);
+            logo.addEventListener('mouseleave', endPress);
+
+            // Eventi touch per mobile
+            logo.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startPress(e);
+            });
+            logo.addEventListener('touchend', endPress);
+            logo.addEventListener('touchcancel', endPress);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // SEMPRE carica da Google Sheets per avere dati aggiornati (silenzioso)
+            console.log('📊 Caricamento automatico da Google Sheets...');
+            loadFromGoogleSheets(false); // false = nessun alert popup
+
+            // Inizializza long press sul logo
+            initLogoLongPress();
+
+            console.log('%c🏺 CLASSIFICA OLIMPICA CARICATA',
+                'color: #1e5ba8; font-size: 16px; font-weight: bold;');
+            console.log('%cVista mobile con cards e filtri per bar attivata!',
+                'color: #666; font-size: 12px;');
+            console.log('%c💡 TIP: Tieni premuto il logo per 3 secondi per sincronizzare!',
+                'color: #00aeef; font-size: 12px;');
+        });
+    </script>
+</body>
+</html>

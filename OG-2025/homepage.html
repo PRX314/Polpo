@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OLIMPIADI GOLIARDICHE 2025 - Benvenuto Capitani</title>
+    <link rel="icon" type="image/png" href="Loghi Bar/Logo olimpiadi goliardiche.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="version-tag">HOMEPAGE</div>
+    
+    <div class="mobile-container">
+        <div class="mobile-header">
+            <div class="mobile-logo"><img src="Loghi Bar/Logo olimpiadi goliardiche.png" alt="Logo Olimpiadi" style="width: 60px; height: 60px; object-fit: contain;"></div>
+            <h1>OLIMPIADI 2025</h1>
+            <div class="mobile-subtitle">Hub Capitani</div>
+        </div>
+
+        <div class="quick-stats">
+            <div class="quick-stat">60 <span>giorni</span></div>
+            <div class="quick-stat">14 <span>templi</span></div>
+            <div class="quick-stat">4-8 <span>membri</span></div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="index.html" class="primary-btn">🏆 Classifica Finale</a>
+            <a href="hub-capitani.html" class="primary-btn">👑 Hub Capitani</a>
+            <button class="secondary-btn" onclick="toggleSection('templi')">🏛️ Templi</button>
+            <button class="secondary-btn" onclick="toggleSection('sfide')">⚡ Sfide</button>
+            <button class="secondary-btn" onclick="toggleSection('regole')">📜 Regole</button>
+        </div>
+
+        <!-- MOBILE SECTIONS -->
+        <div class="mobile-section" id="section-templi" style="display: none;">
+            <h3>🏛️ I 14 Templi</h3>
+            <div class="temple-list">
+                <div class="temple-item"><strong>CALIGO</strong> • Tutti i giorni 7-2</div>
+                <div class="temple-item"><strong>CASA GOTUZZO</strong> • Lun-Dom 7-24</div>
+                <div class="temple-item"><strong>CERERIA</strong> • Lun-Dom 18-1</div>
+                <div class="temple-item"><strong>CIRCOLO SPORT</strong> • Lun-Sab 8:30-12:30/15-20</div>
+                <div class="temple-item"><strong>EXCALIBUR</strong> • Mar-Dom 18-1</div>
+                <div class="temple-item"><strong>LE FONTANE</strong> • Lun-Dom 8-24</div>
+                <div class="temple-item"><strong>LOOMI</strong> • Mar-Dom 18:30-1</div>
+                <div class="temple-item"><strong>MARY JO</strong> • Lun-Dom 6:30-21</div>
+                <div class="temple-item"><strong>STORICO</strong> • Tutti i giorni 6:30-1</div>
+                <div class="temple-item"><strong>TELERIA 108</strong> • Lun-Dom 7-24</div>
+                <div class="temple-item"><strong>TIREBOUCHON</strong> • Lun-Sab 18:30-1</div>
+                <div class="temple-item"><strong>VINORIA</strong> • Mar-Dom 18-24</div>
+                <div class="temple-item"><strong>VINOTECA</strong> • Lun-Dom 18-1</div>
+                <div class="temple-item"><strong>VITAE</strong> • Lun-Dom 7-1</div>
+            </div>
+        </div>
+
+        <div class="mobile-section" id="section-sfide" style="display: none;">
+            <h3>⚡ Tipi di Sfide</h3>
+            <div class="challenge-list">
+                <div class="challenge-item">🧠 <strong>Quiz</strong> - Cultura olimpica</div>
+                <div class="challenge-item">🎭 <strong>Teatro</strong> - Performance artistiche</div>
+                <div class="challenge-item">🎨 <strong>Creatività</strong> - Opere originali</div>
+                <div class="challenge-item">😅 <strong>Penitenze</strong> - Prove di coraggio</div>
+                <div class="challenge-item">🔍 <strong>Enigmi</strong> - Misteri da risolvere</div>
+                <div class="challenge-item">🏆 <strong>Gran Finale</strong> - Prova suprema</div>
+            </div>
+        </div>
+
+        <div class="mobile-section" id="section-regole" style="display: none;">
+            <h3>📜 Regole Base</h3>
+            <div class="rules-list">
+                <div class="rule-item">✅ Rispetto per templi e clienti</div>
+                <div class="rule-item">✅ Fair play sempre</div>
+                <div class="rule-item">✅ Squadra 4-8 membri</div>
+                <div class="rule-item">❌ No disturbo nei locali</div>
+                <div class="rule-item">❌ No eccessi alcolici</div>
+                <div class="rule-item">❌ No danni alle proprietà</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Animation Overlay -->
+    <div id="welcome-overlay" class="feedback-overlay" style="display: none;">
+        <div class="feedback-content">
+            <div class="greek-vase"><img src="Loghi Bar/Logo olimpiadi goliardiche.png" alt="Logo Olimpiadi" style="width: 80px; height: 80px; object-fit: contain;"></div>
+            <h2>Benvenuto nelle Olimpiadi Goliardiche 2025!</h2>
+            <p>Preparati per 60 giorni di sfide epiche.<br>
+            Che gli dèi benedicano la tua squadra!</p>
+            <div class="olympic-flame">🔥</div>
+        </div>
+    </div>
+
+    <script>
+        let activeSection = null;
+
+        function toggleSection(sectionName) {
+            const section = document.getElementById('section-' + sectionName);
+            const buttons = document.querySelectorAll('.secondary-btn');
+            
+            // Hide all sections first
+            document.querySelectorAll('.mobile-section').forEach(s => s.style.display = 'none');
+            
+            // Reset all buttons
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            if (activeSection === sectionName) {
+                // If clicking the same section, close it
+                activeSection = null;
+            } else {
+                // Show the clicked section
+                section.style.display = 'block';
+                event.target.classList.add('active');
+                activeSection = sectionName;
+                
+                // Smooth scroll to section
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Show welcome on first visit
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!localStorage.getItem('welcomeShownMobile')) {
+                setTimeout(() => {
+                    document.getElementById('welcome-overlay').style.display = 'block';
+                    localStorage.setItem('welcomeShownMobile', 'true');
+                }, 800);
+            }
+
+            document.getElementById('welcome-overlay').addEventListener('click', function() {
+                this.style.display = 'none';
+            });
+        });
+
+        console.log('%c🏺 OLIMPIADI MOBILE', 'color: #1e5ba8; font-size: 14px; font-weight: bold;');
+    </script>
+</body>
+</html>
