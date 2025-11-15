@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Table of Contents
+- [Repository Overview](#repository-overview)
+- [Quick Reference](#quick-reference)
+- [Development Commands](#development-commands)
+- [Architecture Overview](#architecture-overview)
+- [Important Code Locations](#important-code-locations)
+- [Deployment](#deployment)
+- [Security Considerations](#security-considerations)
+- [Common Troubleshooting](#common-troubleshooting)
+- [Additional Resources](#additional-resources)
+
 ## Repository Overview
 
 This is Paolo Repetto's portfolio hub repository containing five distinct parts:
@@ -14,6 +25,9 @@ This is Paolo Repetto's portfolio hub repository containing five distinct parts:
 **Primary Entry Point**: `/index.html` (main portfolio hub)
 **Language**: Italian (all user-facing content)
 
+### Root-Level Dependencies
+The root `/package.json` contains Firebase 12.3.0 as a shared dependency, used by static portfolio files that may integrate Firebase features (analytics, hosting, etc.). Individual projects maintain their own `package.json` files with specific dependencies.
+
 ### Repository Structure Note
 This is a **monorepo** containing multiple independent projects. Each sub-project has its own:
 - Package.json and dependencies (Gestionale-X, Paolino frontend/backend)
@@ -22,6 +36,35 @@ This is a **monorepo** containing multiple independent projects. Each sub-projec
 - Deployment target (Netlify, local server, GitHub Pages)
 
 ## Quick Reference
+
+### First-Time Setup
+```bash
+# 1. Clone repository
+git clone <repository-url>
+cd polpo
+
+# 2. Install root dependencies (optional, for Firebase features)
+npm install
+
+# 3. Choose which project to work on and follow its specific setup
+# See "Starting Development" section below for each project
+```
+
+### Which Project Should I Work On?
+
+**Decision Tree**:
+- **Portfolio/Mini Games**: Work in `/index.html`, `/minigiochi/`, `/progetti/` (static HTML/CSS/JS, no build)
+- **Project Management App**: Work in `/gestionale-x/` (React + Firebase, needs `npm run dev`)
+- **Event Management System**: Work in `/OG-2025/` (pure vanilla JS, no build)
+- **Event Documentation**: Work in `/OGv2/` (markdown files only, no code)
+- **E-commerce Platform**: Work in `/Paolino-main/` (MERN stack, needs MongoDB + backend + frontend)
+
+**Quick Indicators**:
+- Need to modify portfolio homepage? → `/index.html`
+- Need to work on task management features? → `/gestionale-x/`
+- Need to update Olympics scoring/teams? → `/OG-2025/`
+- Need to write event documentation? → `/OGv2/`
+- Need to work on online store? → `/Paolino-main/`
 
 ### Starting Development
 ```bash
@@ -349,6 +392,47 @@ Static files can be deployed separately to any static hosting service (GitHub Pa
 @media (max-width: 600px) { grid-template-columns: repeat(2, 1fr); }
 ```
 
+## Environment Variables
+
+### Portfolio Hub
+No environment variables required for static files. Firebase configuration (if used) is embedded in HTML/JS files.
+
+### Gestionale-X
+```env
+# Firebase configuration embedded in src/firebase.js
+# No .env file needed - uses Firebase public API keys
+```
+
+### OG-2025 (Olimpiadi Goliardiche)
+```env
+# No environment variables required
+# Google Sheets ID hardcoded in index.html:664
+```
+
+### Paolino E-commerce
+
+**Backend** (`/Paolino-main/backend/.env`):
+```env
+NODE_ENV=development
+PORT=5031
+MONGODB_URI=mongodb://localhost:27017/paolino_ecommerce
+JWT_SECRET=your-secret-key-here
+JWT_REFRESH_SECRET=your-refresh-secret-here
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+STRIPE_SECRET_KEY=sk_test_...
+CORS_ORIGIN=http://localhost:5173
+```
+
+**Frontend** (`/Paolino-main/frontend/.env`):
+```env
+VITE_API_URL=http://localhost:5031/api
+VITE_STRIPE_PUBLIC_KEY=pk_test_...
+```
+
+**Security Note**: Never commit `.env` files. Use `.env.example` as templates. See `/Paolino-main/SECURITY.md` for complete security setup.
+
 ## Security Considerations
 
 ### Gestionale-X Firebase
@@ -384,12 +468,13 @@ vite --port 5174
 ```
 
 ## Git Workflow Notes
-- Main branch is production-ready
-- Commit messages in Italian preferred for consistency
-- `Paolino-main/` directory currently untracked (consider separate repo if committing)
-- **Modified files often include**: CLAUDE.md updates, .env configuration, package.json dependencies
-- Use `git status` to check tracked changes before committing
-- `.nojekyll` file at root enables GitHub Pages deployment without Jekyll processing
+- **Branch Strategy**: Single `main` branch is production-ready (no development/staging branches)
+- **Commit Messages**: Italian preferred for consistency with user-facing content
+- **Untracked Projects**: `Paolino-main/` directory currently untracked (consider separate repo if committing)
+- **Common Modified Files**: CLAUDE.md updates, .env configuration, package.json dependencies
+- **Pre-commit Check**: Always run `git status` before committing to verify tracked changes
+- **GitHub Pages**: `.nojekyll` file at root enables deployment without Jekyll processing
+- **No Remote Conflicts**: Repository appears to be personal/solo development (no merge conflicts expected)
 
 ### Recent Development Focus (from git history)
 - Reorganized homepage navigation (Olimpiadi, Quotify, Brand sections)
@@ -433,6 +518,43 @@ vite --port 5174
   - React Components: PascalCase (e.g., `AddProjectForm.jsx`)
   - Functions/Variables: camelCase
   - Constants: UPPER_SNAKE_CASE
+
+## Common Gotchas and Best Practices
+
+### Multi-Project Repository Pitfalls
+1. **Port Conflicts**: Both Gestionale-X and Paolino frontend use port 5173. Never run both simultaneously without changing ports.
+2. **Wrong Directory**: Always `cd` into the correct project directory before running `npm` commands.
+3. **Missing Backend**: Paolino frontend will fail silently if backend isn't running. Always start backend first.
+4. **MongoDB Not Running**: Paolino requires MongoDB service to be running before starting backend.
+5. **Build vs Source**: Netlify only builds `/gestionale-x/`. Don't expect other projects to be built by Netlify.
+
+### Development Best Practices
+1. **Static Files First**: When testing changes to portfolio/mini games, use Python HTTP server or Live Server (no build needed).
+2. **Check Git Status**: Before committing, verify which project's files you modified with `git status`.
+3. **Project Isolation**: Each project has its own dependencies. Run `npm install` in each project directory separately.
+4. **LocalStorage Debugging**: OG-2025 stores data in browser LocalStorage. Use browser DevTools → Application → Local Storage to debug.
+5. **Firebase Public Keys**: Gestionale-X Firebase config keys in source code are normal and expected (security is in Firestore rules).
+
+### Common Command Mistakes
+```bash
+# ❌ WRONG - Running npm in root for project-specific command
+npm run dev
+
+# ✅ CORRECT - Navigate to project first
+cd gestionale-x && npm run dev
+
+# ❌ WRONG - Forgetting to start MongoDB for Paolino
+cd Paolino-main/backend && npm run dev
+
+# ✅ CORRECT - Start MongoDB first
+sudo service mongodb start && cd Paolino-main/backend && npm run dev
+
+# ❌ WRONG - Trying to build static HTML files
+cd minigiochi && npm run build
+
+# ✅ CORRECT - Serve static files directly
+python -m http.server 8000
+```
 
 ## Common Troubleshooting
 
