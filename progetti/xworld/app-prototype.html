@@ -31,8 +31,8 @@
             display: grid;
             grid-template-columns: 30px 1fr 30px;
             grid-template-rows: 60px 1fr 60px;
-            height: 100vh;
-            max-width: 480px;
+            min-height: 100vh;
+            max-width: 768px;
             margin: 0 auto;
             background: var(--bg);
             gap: 0;
@@ -618,6 +618,102 @@
             transform: scale(0.9);
             background: var(--primary);
             color: var(--bg);
+        }
+
+        /* ===== RESPONSIVE ===== */
+
+        /* Small Mobile (< 480px) - Remove sidebars for more space */
+        @media (max-width: 480px) {
+            .app-container {
+                grid-template-columns: 15px 1fr 15px;
+                max-width: 100%;
+            }
+
+            .left-text,
+            .right-text {
+                font-size: 8px;
+            }
+
+            .top-bar {
+                padding: 0 8px;
+            }
+
+            .top-bar-logo {
+                font-size: 12px;
+            }
+
+            .top-bar-title {
+                font-size: 10px;
+            }
+
+            .wallet-btn {
+                font-size: 9px;
+                padding: 4px 8px;
+            }
+
+            .content-area {
+                padding: 12px;
+            }
+
+            .bottom-nav-item span {
+                font-size: 9px;
+            }
+        }
+
+        /* Landscape Mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .app-container {
+                grid-template-rows: 50px 1fr 50px;
+            }
+
+            .top-bar {
+                padding: 0 10px;
+            }
+
+            .content-area {
+                padding: 12px 15px;
+            }
+
+            .top-bar-logo {
+                font-size: 13px;
+            }
+        }
+
+        /* Tablet (481px - 768px) */
+        @media (min-width: 481px) and (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 25px 1fr 25px;
+            }
+
+            .left-text,
+            .right-text {
+                font-size: 11px;
+            }
+
+            .content-area {
+                padding: 18px;
+            }
+        }
+
+        /* Touch optimization */
+        @media (hover: none) and (pointer: coarse) {
+            .bottom-nav-item,
+            .tier-lock,
+            .chat-item,
+            .profile-edit-btn,
+            .wallet-btn {
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+            }
+
+            .bottom-nav-item:active {
+                transform: scale(0.95);
+            }
+
+            .tier-lock:active,
+            .wallet-btn:active {
+                transform: scale(0.98);
+            }
         }
     </style>
 </head>
