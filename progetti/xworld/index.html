@@ -84,6 +84,132 @@
             text-transform: uppercase;
         }
 
+        /* Layer Toggle System */
+        .layer-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .toggle-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #888;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--iridescent-3);
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(135deg,
+                var(--iridescent-2),
+                var(--iridescent-3));
+            border-color: transparent;
+            color: #000;
+            font-weight: 600;
+        }
+
+        .toggle-btn .icon {
+            font-size: 1rem;
+        }
+
+        /* Layer Content */
+        .layer-tech {
+            display: none;
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .layer-tech.visible {
+            display: block;
+        }
+
+        .layer-simple.hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Tech Layer Styling */
+        .tech-details {
+            background: rgba(0, 100, 200, 0.05);
+            border-left: 2px solid var(--iridescent-2);
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+        }
+
+        .tech-details h4 {
+            color: var(--iridescent-2);
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .tech-details ul {
+            list-style: none;
+            padding-left: 0;
+            font-size: 0.75rem;
+            color: #aaa;
+            line-height: 1.8;
+        }
+
+        .tech-details li:before {
+            content: "▹ ";
+            color: var(--iridescent-3);
+            font-weight: bold;
+        }
+
+        .flowchart {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: #999;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        /* Warning Badge */
+        .tech-warning {
+            display: inline-block;
+            background: rgba(255, 200, 0, 0.1);
+            border: 1px solid rgba(255, 200, 0, 0.3);
+            color: #ffcc00;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            margin-top: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+
         /* Main content area */
         .main {
             grid-area: main;
@@ -599,6 +725,21 @@
         <header class="header">
             <h1>X WORLD PROJECT</h1>
             <p>Ecosistema Decentralizzato · NFT · Blockchain · Community</p>
+
+            <!-- Layer Toggle -->
+            <div class="layer-toggle">
+                <button class="toggle-btn active" data-layer="simple">
+                    <span class="icon">👁️</span>
+                    <span>Vista Semplice</span>
+                </button>
+                <button class="toggle-btn" data-layer="tech">
+                    <span class="icon">⚙️</span>
+                    <span>Vista Tecnica</span>
+                </button>
+            </div>
+            <div class="tech-warning" id="tech-warning" style="display: none;">
+                ⚠️ Vista Tecnica: dettagli blockchain e smart contracts
+            </div>
         </header>
 
         <!-- Main Content -->
@@ -617,15 +758,75 @@
             <div class="grid reveal">
                 <div class="grid-item">
                     <h3>Collection</h3>
-                    <p><strong>Crowdfunding tramite NFT</strong> per finanziare progetti reali. Ogni NFT è un titolo di partecipazione con utilità concrete: prodotti fisici, governance, e revenue share.</p>
+                    <!-- Layer Simple -->
+                    <div class="layer-simple">
+                        <p><strong>Crowdfunding tramite NFT</strong> per finanziare progetti reali. Ogni NFT è un titolo di partecipazione con utilità concrete: prodotti fisici, governance, e revenue share.</p>
+                    </div>
+                    <!-- Layer Tech -->
+                    <div class="layer-tech">
+                        <p><strong>Crowdfunding tramite NFT</strong> per finanziare progetti reali.</p>
+                        <div class="tech-details">
+                            <h4>⚙️ Come Funziona</h4>
+                            <ul>
+                                <li><strong>Smart Contract</strong>: ERC-721 su Polygon/Base</li>
+                                <li><strong>3 Tier System</strong>: Bronze (€30), Silver (€60), Gold (€90)</li>
+                                <li><strong>Metadata</strong>: IPFS per decentralizzazione</li>
+                                <li><strong>Royalties</strong>: 5% su secondary sales</li>
+                                <li><strong>Governance</strong>: Token gating con NFT ownership</li>
+                            </ul>
+                            <div class="flowchart">
+                                User → Connect Wallet → Mint NFT → Receive Physical + Digital Assets → Stake per Rewards
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="grid-item">
                     <h3>House</h3>
-                    <p><strong>Investimenti immobiliari tokenizzati</strong>. NFT come quote di proprietà in case vacanza, surf house e spazi ricreativi. Guadagni reali reinvestiti dalla community.</p>
+                    <!-- Layer Simple -->
+                    <div class="layer-simple">
+                        <p><strong>Investimenti immobiliari tokenizzati</strong>. NFT come quote di proprietà in case vacanza, surf house e spazi ricreativi. Guadagni reali reinvestiti dalla community.</p>
+                    </div>
+                    <!-- Layer Tech -->
+                    <div class="layer-tech">
+                        <p><strong>Investimenti immobiliari tokenizzati</strong>.</p>
+                        <div class="tech-details">
+                            <h4>⚙️ Come Funziona</h4>
+                            <ul>
+                                <li><strong>Smart Contract</strong>: ERC-721 su Ethereum Mainnet</li>
+                                <li><strong>Ownership</strong>: NFT = % proprietà immobile</li>
+                                <li><strong>Revenue Distribution</strong>: Automatica via smart contract</li>
+                                <li><strong>Governance</strong>: DAO per decisioni immobiliare</li>
+                                <li><strong>Security</strong>: Audit + Legal wrapper società reale</li>
+                            </ul>
+                            <div class="flowchart">
+                                NFT Ownership → Legal Rights → Revenue Share → Governance Vote
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="grid-item">
                     <h3>Hunter</h3>
-                    <p><strong>Gioco AR futuristico</strong> con alter ego digitale. La tua vita reale si fonde nel digitale: sfide, collezione carte, realtà aumentata. Ispirato a HunterxHunter Greed Island.</p>
+                    <!-- Layer Simple -->
+                    <div class="layer-simple">
+                        <p><strong>Gioco AR futuristico</strong> con alter ego digitale. La tua vita reale si fonde nel digitale: sfide, collezione carte, realtà aumentata. Ispirato a HunterxHunter Greed Island.</p>
+                    </div>
+                    <!-- Layer Tech -->
+                    <div class="layer-tech">
+                        <p><strong>Gioco AR futuristico</strong> con blockchain integration.</p>
+                        <div class="tech-details">
+                            <h4>⚙️ Come Funziona</h4>
+                            <ul>
+                                <li><strong>Layer 2</strong>: Arbitrum/Optimism per gas bassi</li>
+                                <li><strong>NFT Cards</strong>: ERC-1155 per collezioni</li>
+                                <li><strong>In-game Currency</strong>: Token fungibile per acquisti</li>
+                                <li><strong>AR Integration</strong>: Wallet-connected mobile app</li>
+                                <li><strong>Rewards</strong>: Play-to-earn meccanica</li>
+                            </ul>
+                            <div class="flowchart">
+                                Real Life Actions → AR App → Blockchain Validation → NFT/Token Rewards
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -851,6 +1052,82 @@
                 section.classList.remove('active');
             });
         }
+
+        // ===== LAYER TOGGLE SYSTEM =====
+        const toggleBtns = document.querySelectorAll('.toggle-btn');
+        const techWarning = document.getElementById('tech-warning');
+
+        // Load saved preference from localStorage
+        const savedLayer = localStorage.getItem('xworld-layer') || 'simple';
+        setActiveLayer(savedLayer);
+
+        function setActiveLayer(layer) {
+            // Toggle button active states
+            toggleBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.layer === layer);
+            });
+
+            // Show/hide content layers
+            const simpleLayers = document.querySelectorAll('.layer-simple');
+            const techLayers = document.querySelectorAll('.layer-tech');
+
+            if (layer === 'tech') {
+                simpleLayers.forEach(el => {
+                    el.style.display = 'none';
+                });
+                techLayers.forEach(el => {
+                    el.style.display = 'block';
+                    el.style.opacity = '0';
+                    // Trigger animation
+                    setTimeout(() => {
+                        el.style.opacity = '1';
+                    }, 10);
+                });
+                if (techWarning) {
+                    techWarning.style.display = 'flex';
+                }
+            } else {
+                simpleLayers.forEach(el => {
+                    el.style.display = 'block';
+                });
+                techLayers.forEach(el => {
+                    el.style.display = 'none';
+                });
+                if (techWarning) {
+                    techWarning.style.display = 'none';
+                }
+            }
+
+            // Save preference to localStorage
+            localStorage.setItem('xworld-layer', layer);
+
+            // Console feedback
+            console.log(`🔄 Layer switched to: ${layer === 'tech' ? 'Technical View' : 'Simple View'}`);
+        }
+
+        // Click handlers for toggle buttons
+        toggleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetLayer = btn.dataset.layer;
+                setActiveLayer(targetLayer);
+
+                // Smooth scroll to top on toggle (optional UX enhancement)
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Keyboard shortcut: Alt+T to toggle layers
+        document.addEventListener('keydown', (e) => {
+            if (e.altKey && e.key === 't') {
+                e.preventDefault();
+                const currentLayer = localStorage.getItem('xworld-layer') || 'simple';
+                const newLayer = currentLayer === 'simple' ? 'tech' : 'simple';
+                setActiveLayer(newLayer);
+            }
+        });
     </script>
 </body>
 </html>
