@@ -388,7 +388,7 @@
             }
         }
 
-        /* Mobile responsive */
+        /* Tablet/Small Desktop (768px - 1024px) */
         @media (max-width: 1024px) {
             .container {
                 grid-template-areas:
@@ -397,8 +397,9 @@
                     "sidebar"
                     "footer";
                 grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr auto auto;
+                grid-template-rows: auto auto auto auto;
                 height: auto;
+                min-height: 100vh;
             }
 
             .sidebar {
@@ -411,17 +412,18 @@
             }
 
             .main {
-                min-height: 50vh;
+                min-height: auto;
+                max-height: none;
             }
 
             .grid {
                 grid-template-columns: 1fr;
-                gap: 1px;
+                gap: 1rem;
             }
 
             .cycle {
                 flex-direction: column;
-                gap: 0.5rem;
+                gap: 0.75rem;
             }
 
             .cycle-item:not(:last-child)::after {
@@ -433,30 +435,134 @@
             }
 
             .header h1 {
-                font-size: 1.5rem;
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 0.8rem;
+            }
+
+            .section-title {
+                font-size: 1rem;
             }
 
             .section-content {
-                font-size: 0.75rem;
+                font-size: 0.9rem;
+                line-height: 1.6;
             }
         }
 
-        @media (max-width: 640px) {
+        /* Mobile (480px - 768px) */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.25rem 1.5rem;
+            }
+
             .header h1 {
-                font-size: 1.2rem;
+                font-size: 1.75rem;
+                letter-spacing: 0.25em;
+            }
+
+            .header p {
+                font-size: 0.75rem;
+            }
+
+            .main, .sidebar {
+                padding: 1.5rem;
+            }
+
+            .section {
+                margin-bottom: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 0.95rem;
+                padding: 0.75rem 0;
+                cursor: pointer;
+                user-select: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .section-content {
+                font-size: 0.875rem;
+                line-height: 1.7;
+            }
+
+            .grid-item {
+                padding: 1.25rem;
+            }
+
+            .grid-item h3 {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+            }
+
+            /* Touch-friendly sections */
+            .section-title::after {
+                content: ' ▼';
+                font-size: 0.7em;
+                opacity: 0.5;
+                transition: transform 0.3s ease;
+            }
+
+            .section.active .section-title::after {
+                transform: rotate(180deg);
+            }
+        }
+
+        /* Small Mobile (< 480px) */
+        @media (max-width: 480px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
                 letter-spacing: 0.2em;
             }
 
             .header p {
-                font-size: 0.65rem;
+                font-size: 0.7rem;
             }
 
             .main, .sidebar {
                 padding: 1rem;
             }
 
+            .section-content {
+                font-size: 0.85rem;
+            }
+
             .grid-item {
                 padding: 1rem;
+            }
+
+            .sidebar-item {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .sidebar-item h3 {
+                font-size: 0.95rem;
+            }
+
+            .sidebar-item p, .sidebar-item ul {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Landscape mobile optimization */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .container {
+                min-height: auto;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .main, .sidebar {
+                padding: 1rem 1.5rem;
             }
         }
 
