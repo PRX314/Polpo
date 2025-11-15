@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Table of Contents
 - [Repository Overview](#repository-overview)
 - [Quick Reference](#quick-reference)
+- [X World Project - Deep Dive](#x-world-project---deep-dive)
 - [Development Commands](#development-commands)
 - [Architecture Overview](#architecture-overview)
 - [Important Code Locations](#important-code-locations)
@@ -54,6 +55,7 @@ npm install
 
 **Decision Tree**:
 - **Portfolio/Mini Games**: Work in `/index.html`, `/minigiochi/`, `/progetti/` (static HTML/CSS/JS, no build)
+- **X World Web3 Ecosystem**: Work in `/progetti/xworld/` (Web3/NFT platform, static HTML + Solidity)
 - **Project Management App**: Work in `/gestionale-x/` (React + Firebase, needs `npm run dev`)
 - **Event Management System**: Work in `/OG-2025/` (pure vanilla JS, no build)
 - **Event Documentation**: Work in `/OGv2/` (markdown files only, no code)
@@ -61,6 +63,7 @@ npm install
 
 **Quick Indicators**:
 - Need to modify portfolio homepage? → `/index.html`
+- Need to work on Web3/NFT/blockchain features? → `/progetti/xworld/`
 - Need to work on task management features? → `/gestionale-x/`
 - Need to update Olympics scoring/teams? → `/OG-2025/`
 - Need to write event documentation? → `/OGv2/`
@@ -106,6 +109,373 @@ cd Paolino-main/frontend && npm run dev       # Step 3: Frontend (port 5173)
   - Quotify - External project showcase
   - Documenti - Document showcase
 - **Sito Magliette** - T-shirt website demo
+
+## X World Project - Deep Dive
+
+**Location**: `/progetti/xworld/`
+**Type**: Web3 Ecosystem - NFT Crowdfunding Platform
+**Tech Stack**: Vanilla HTML/CSS/JS + Solidity Smart Contracts
+**Total Lines**: ~6,271 HTML + ~40KB Markdown docs + Solidity contracts
+
+### Overview
+X World è un ecosistema Web3 completo per crowdfunding tramite NFT, tokenomics e governance DAO. Il progetto combina applicazioni web interattive con smart contracts Ethereum per creare un sistema decentralizzato di finanziamento progetti.
+
+### Core Applications (5 HTML Pages)
+
+1. **`index.html`** (750 lines) - **Main Showcase**
+   - Homepage del progetto con design iridescente
+   - Showcase dei 4 progetti POLPOPOLI:
+     - 🧣 **Sciarcuffia**: Accessorio streetwear (€30, 50 NFT)
+     - 🎩 **00X**: Cappello limited edition (€60, 100 NFT)
+     - 👓 **I8I**: Occhiali tech-fashion (€90, 75 NFT)
+     - 🐙 **PolpoVerse**: Universo digitale multimediale (€150, 200 NFT)
+   - Grid layout responsive con animazioni shimmer
+   - Single-screen desktop layout con sidebar verticale
+
+2. **`whitepaper.html`** (1,185 lines) - **Comprehensive Documentation**
+   - Documentazione completa dell'ecosistema (~1100 linee)
+   - Sezioni principali:
+     - Introduzione e filosofia X World
+     - Sistema NFT a 3 tier (Bronze/Silver/Gold)
+     - BIC Token (X World Coin) tokenomics
+     - Cicli di crowdfunding e roadmap
+     - Sistema di governance DAO
+     - Analisi rischi e strategie
+     - Sostenibilità economica
+   - Design: Stile accademico con serif font (Georgia)
+   - Table of contents navigabile
+
+3. **`app-prototype.html`** (1,033 lines) - **NFT-Gated App Simulator**
+   - Prototipo funzionale di app mobile (480px max-width)
+   - **Tier-based access system**:
+     - Bronze NFT: Chat generale (tutti)
+     - Silver NFT: Chat founder + forum (+ €30)
+     - Gold NFT: Video calls + bonus (+ €60)
+   - Features:
+     - Wallet connection simulator
+     - Chat interface con messaggi scrollabili
+     - User profile management
+     - Navigation bottom bar
+   - Design: Mobile-first con sidebars verticali
+
+4. **`crypto-academy.html`** (1,836 lines) - **Advanced Learning Platform**
+   - Piattaforma educativa completa su blockchain/crypto
+   - **3 percorsi di apprendimento**:
+     - 🎓 Blockchain Basics (4 moduli)
+     - 💎 Advanced Crypto (3 moduli)
+     - 🚀 DeFi & Web3 (4 moduli)
+   - Features interattive:
+     - Sistema quiz con tracking
+     - Progress bars per modulo
+     - Badge achievement system
+     - Certificati al completamento
+   - LocalStorage per salvare progress
+   - Design: Gradiente viola/cyan con cards espandibili
+
+5. **`crypto-studio.html`** (990 lines) - **Basic Crypto Education**
+   - Introduzione semplificata a crypto e blockchain
+   - Sezioni:
+     - Cos'è la blockchain
+     - Wallet e chiavi private
+     - NFT explained
+     - DeFi basics
+   - **Live Price Ticker** via CoinGecko API
+     - Prezzi real-time BTC, ETH, BNB, ADA, SOL
+     - Auto-refresh ogni 30 secondi
+   - Design: Clean and minimal, focus su contenuto
+
+6. **`nav-hub.html`** (477 lines) - **Navigation Hub**
+   - Centro di navigazione per tutte le app X World
+   - Link alle 5 applicazioni principali
+   - Design: Minimale con grid layout
+
+### Blockchain Study Materials
+
+**Location**: `/progetti/xworld/blockchain-study/`
+**Purpose**: Studio completo blockchain per implementare X World su Ethereum
+
+**Struttura Directory**:
+```
+blockchain-study/
+├── README.md (9KB) - Indice generale e quick start
+├── BLOCKCHAIN_STUDY.md (18KB) - Guida principale 3 livelli
+├── PIANO_SETTIMANALE.md (13KB) - 12 settimane dettagliate
+│
+├── basics/ - Settimane 1-4
+│   └── 01_SETUP.md - Installazione tools (MetaMask, Hardhat, Node.js)
+│
+├── intermediate/ - Settimane 5-10
+│   ├── XWORLD_NFT_CONTRACT.sol - NFT Collection completa (ERC-721)
+│   └── BIC_TOKEN.sol - Token ERC-20 per ecosistema
+│
+├── advanced/ - Settimane 11-18
+│   └── (Staking, DAO, DeFi contracts - in sviluppo)
+│
+├── resources/
+│   ├── RISORSE_COMPLETE.md - Corsi, tools, community
+│   └── PROGETTI_PRATICI.md - 10 progetti progressivi
+│
+└── projects/ - Workspace per sviluppo
+```
+
+**Piano di Studio (12 settimane, 1-2h/giorno)**:
+- **Fase 1 (Mese 1)**: Blockchain basics, Solidity fundamentals, Hardhat, OpenZeppelin
+- **Fase 2 (Mesi 2-3)**: BIC Token (ERC-20), NFT Collection (ERC-721), Frontend integration
+- **Fase 3 (Mesi 4-6)**: Staking system, DAO governance, IPFS storage, Security audit
+
+**10 Progetti Pratici Progressivi**:
+1. Hello X World (2h) - Primo contratto
+2. Guest Book (3h) - Mappings & structs
+3. Simple X Badge (4h) - NFT base
+4. BIC Token Lite (5h) - ERC-20 base
+5. X World Collection V1 (8h) - NFT con pricing
+6. BIC Airdrop (4h) - Token distribution
+7. X World Staking (10h) - Staking con rewards
+8. X World Governance (12h) - DAO voting
+9. NFT Staking (12h) - Stake NFT per BIC rewards
+10. Crowdfunding (15h) - Sistema completo funding
+
+### Smart Contracts
+
+**BIC_TOKEN.sol** (ERC-20):
+- Token nativo dell'ecosistema X World
+- Standard OpenZeppelin ERC-20
+- Funzionalità: transfer, approve, minting controllato
+- Utilizzo: Governance, rewards, staking
+
+**XWORLD_NFT_CONTRACT.sol** (ERC-721):
+- NFT Collection a 3 tier (Bronze/Silver/Gold)
+- Metadata IPFS integration
+- Pricing dinamico per tier
+- Royalties per creatori
+- Whitelist/presale system
+
+### Architettura X World
+
+**Filosofia del Progetto**:
+> "X World non è un singolo prodotto, ma un mondo di progetti interconnessi. Ogni iniziativa può prendere vita all'ecosistema con supporto della community e tecnologie decentralizzate."
+
+**Sistema NFT 3-Tier**:
+- 🥉 **Bronze NFT** (€30): Accesso base, chat community
+- 🥈 **Silver NFT** (€60): + Chat founder, forum esclusivo
+- 🥇 **Gold NFT** (€90): + Video calls, bonus esclusivi, governance vote
+
+**Ciclo di Crowdfunding**:
+1. **Presentazione progetto** (POLPOPOLI)
+2. **Mint NFT** (3 tier disponibili)
+3. **Funding goal reached** → Sviluppo inizia
+4. **Milestone updates** via chat tier-based
+5. **Prodotto finale** + rewards BIC Token
+6. **Nuovo ciclo** con progetto successivo
+
+**Token Economics (BIC)**:
+- Utility token per governance e rewards
+- Stake BIC = voting power in DAO
+- Earn BIC tramite NFT staking
+- Burn mechanism per deflazione
+
+### Development Workflow
+
+**Nessun Build Process Richiesto**:
+```bash
+# Serve static files directly
+cd /home/paolo/polpo/progetti/xworld
+python -m http.server 8000
+
+# Apri browser:
+http://localhost:8000/index.html           # Main showcase
+http://localhost:8000/whitepaper.html      # Documentazione
+http://localhost:8000/app-prototype.html   # App simulator
+http://localhost:8000/crypto-academy.html  # Learning platform
+http://localhost:8000/crypto-studio.html   # Crypto basics
+http://localhost:8000/nav-hub.html         # Navigation hub
+```
+
+**Modificare le Applicazioni**:
+- Tutti i file sono self-contained HTML con inline CSS/JS
+- Nessuna dipendenza esterna (tranne CoinGecko API in crypto-studio)
+- LocalStorage per persistenza dati (crypto-academy progress)
+- Modifiche immediate visibili con refresh browser
+
+**Blockchain Development**:
+```bash
+# Setup ambiente (prima volta)
+cd blockchain-study/basics
+# Seguire 01_SETUP.md per installare MetaMask, Hardhat, etc.
+
+# Testare contratti
+cd intermediate
+# Usare Remix IDE (remix.ethereum.org) per deploy su Sepolia testnet
+
+# Seguire piano settimanale
+cd ..
+cat PIANO_SETTIMANALE.md
+# Seguire settimana per settimana (12 settimane totali)
+```
+
+### Design System
+
+**Color Palette**:
+- **Index.html**: Iridescent gradient (cyan/purple/pink)
+  - `--iridescent-2: hsl(180, 100%, 50%)` (cyan)
+  - `--iridescent-3: hsl(270, 100%, 70%)` (purple)
+  - `--iridescent-4: hsl(330, 100%, 60%)` (pink)
+- **Whitepaper**: Academic style
+  - Background: `#f5f5f0` (off-white paper)
+  - Primary: `#0f3460` (navy blue)
+  - Accent: `#7b2cbf` (purple)
+- **App Prototype**: Minimalist mobile
+  - `--primary: #000`, `--bg: #fff`, `--border: #ddd`
+- **Crypto Academy**: Tech gradient
+  - Purple/cyan gradient with dark mode
+
+**Typography**:
+- **Index**: System fonts (`-apple-system, BlinkMacSystemFont`)
+- **Whitepaper**: Serif (`Georgia, Times New Roman`)
+- **Academy**: Sans-serif with monospace code blocks
+
+**Responsive Breakpoints**:
+- Desktop: Full layout con sidebars (index.html)
+- Mobile: Max 480px per app-prototype.html
+- Academy: Adaptive grid (1/2/3 colonne)
+
+### Key Features & Interactions
+
+**Index.html**:
+- Shimmer animation su header con `@keyframes shimmer`
+- Project cards con hover effects
+- Sidebar verticale con testo ruotato
+- Grid layout responsive
+
+**App Prototype**:
+- Tier unlock simulation (click su lock icons)
+- Chat scrollabile con messages
+- Bottom navigation bar
+- Profile modal
+
+**Crypto Academy**:
+- Quiz interattivo per ogni modulo
+- Progress tracking con LocalStorage keys:
+  - `xworld-academy-progress-{moduleId}`
+  - `xworld-academy-quiz-{moduleId}`
+- Badge achievement system
+- Certificato download (simulato)
+
+**Crypto Studio**:
+- Live price ticker con `fetch('https://api.coingecko.com/api/v3/simple/price')`
+- Auto-refresh ogni 30 secondi
+- Error handling per API failures
+
+### Integration Points
+
+**Wallet Connection** (simulato in app-prototype):
+```javascript
+// Simula MetaMask connection
+function connectWallet() {
+  // In produzione: window.ethereum.request()
+  showWalletConnected = true;
+  userTier = 'bronze'; // Simulato
+}
+```
+
+**IPFS Metadata** (previsto per NFT contracts):
+```javascript
+// Metadata structure per XWORLD_NFT
+{
+  "name": "X World Bronze #001",
+  "description": "Bronze tier access to X World ecosystem",
+  "image": "ipfs://QmXXXXX...",
+  "attributes": [
+    {"trait_type": "Tier", "value": "Bronze"},
+    {"trait_type": "Project", "value": "Sciarcuffia"}
+  ]
+}
+```
+
+### Testing & Deployment
+
+**Frontend Testing**:
+- Nessun testing framework (static HTML)
+- Test manuale su browser
+- Responsive testing: Chrome DevTools mobile view
+
+**Smart Contract Testing**:
+```bash
+# Usando Hardhat
+cd blockchain-study/intermediate
+npx hardhat test
+
+# Deploy su Sepolia testnet
+npx hardhat run scripts/deploy.js --network sepolia
+```
+
+**Deployment Targets**:
+- **Frontend**: Static hosting (GitHub Pages, Netlify, Vercel)
+- **Smart Contracts**: Ethereum mainnet (dopo audit)
+- **Metadata**: IPFS/Arweave per decentralizzazione
+
+### Project Status & Roadmap
+
+**Stato Attuale** (Novembre 2024):
+- ✅ 5 applicazioni HTML complete e funzionanti
+- ✅ Whitepaper completo con tokenomics
+- ✅ Materiali studio blockchain completi (40KB+ docs)
+- ✅ Contratti Solidity base (BIC_TOKEN, XWORLD_NFT)
+- 🚧 Smart contracts testing (in progress)
+- ⏳ IPFS integration (planned)
+- ⏳ Frontend-blockchain integration (planned)
+- ⏳ Security audit (planned)
+
+**Next Steps**:
+1. Completare testing contratti su Sepolia testnet
+2. Integrare Web3.js in app-prototype.html
+3. Deploy NFT collection su testnet
+4. Community feedback e iterazione
+5. Security audit professionale
+6. Deploy su Ethereum mainnet
+
+### Common Tasks
+
+**Modificare progetti POLPOPOLI**:
+- File: `index.html`
+- Cerca: `<!-- Projects Grid -->`
+- Modifica: emoji, titoli, pricing, descriptions
+
+**Aggiornare whitepaper**:
+- File: `whitepaper.html`
+- Cerca sezione specifica via table of contents
+- Formato: standard HTML `<h2>`, `<h3>`, `<p>`, `<ul>`
+
+**Aggiungere moduli crypto-academy**:
+- File: `crypto-academy.html`
+- Cerca: `const modules = [...]`
+- Aggiungi oggetto modulo con: `id, title, category, lessons, quiz`
+
+**Modificare tier access system**:
+- File: `app-prototype.html`
+- Cerca: funzione `unlockTier(tier)`
+- Modifica: pricing, features per tier
+
+### Resources & Documentation
+
+**Internal Docs**:
+- `/progetti/xworld/blockchain-study/README.md` - Start here
+- `/progetti/xworld/blockchain-study/PIANO_SETTIMANALE.md` - 12-week plan
+- `/progetti/xworld/blockchain-study/resources/RISORSE_COMPLETE.md` - External resources
+
+**External Learning**:
+- **CryptoZombies**: cryptozombies.io (Solidity gamificato)
+- **Buildspace**: buildspace.so (Full DApps)
+- **Alchemy University**: university.alchemy.com
+- **Patrick Collins**: YouTube 16+ ore tutorial
+
+**Tools Used**:
+- **Remix IDE**: remix.ethereum.org (browser Solidity IDE)
+- **Hardhat**: hardhat.org (local dev environment)
+- **OpenZeppelin**: openzeppelin.com/contracts (secure contracts)
+- **MetaMask**: metamask.io (wallet browser extension)
+- **Sepolia Testnet**: sepoliafaucet.com (ETH di test)
+- **Etherscan**: sepolia.etherscan.io (block explorer)
 
 ## Development Commands
 
@@ -484,6 +854,14 @@ vite --port 5174
 
 ## Project Status
 - **Portfolio Hub**: ✅ Stable, production-ready, deployed
+- **X World Project**: 🚧 ~80% complete, frontend ready, blockchain integration in progress
+  - **Location**: `/progetti/xworld/`
+  - ✅ Completed: 5 HTML applications (6,271 lines), Whitepaper, Blockchain study materials (40KB+), Base smart contracts
+  - 🚧 In Progress: Smart contracts testing on Sepolia, Web3.js integration
+  - ⏳ Planned: IPFS metadata, Security audit, Mainnet deployment
+  - **Tech Stack**: Vanilla HTML/CSS/JS + Solidity + Ethereum
+  - **Apps**: Main showcase, Whitepaper, NFT-gated app prototype, Crypto Academy, Crypto Studio, Nav hub
+  - **Blockchain**: BIC Token (ERC-20), X World NFT Collection (ERC-721), 3-tier access system
 - **Gestionale-X**: ✅ Fully functional, deployed at gestionalepolpo.netlify.app
 - **OG-2025 (Olimpiadi Goliardiche)**: ✅ Complete, production-ready
   - **Event**: Olimpiadi Goliardiche 2025 (Chiavari, Italy)
