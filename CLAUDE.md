@@ -122,15 +122,23 @@ X World è un ecosistema Web3 completo per crowdfunding tramite NFT, tokenomics 
 
 ### Core Applications (5 HTML Pages)
 
-1. **`index.html`** (750 lines) - **Main Showcase**
+1. **`index.html`** (~1,030 lines) - **Main Showcase with Toggle Layer System**
    - Homepage del progetto con design iridescente
+   - **🔄 Toggle Layer System** (Progressive Disclosure UX):
+     - 👁️ **Vista Semplice**: Per utenti non tecnici, focus su vantaggi e benefici
+     - ⚙️ **Vista Tecnica**: Dettagli blockchain, smart contracts, tokenomics, flowcharts
+     - LocalStorage persistence - ricorda preferenza utente
+     - Keyboard shortcut: `Alt+T` per toggle rapido
+     - Smooth transitions e fade-in animations
    - Showcase dei 4 progetti POLPOPOLI:
      - 🧣 **Sciarcuffia**: Accessorio streetwear (€30, 50 NFT)
      - 🎩 **00X**: Cappello limited edition (€60, 100 NFT)
      - 👓 **I8I**: Occhiali tech-fashion (€90, 75 NFT)
      - 🐙 **PolpoVerse**: Universo digitale multimediale (€150, 200 NFT)
+   - **Layer Tech Content**: ERC-721/1155/20, IPFS metadata, smart contract architecture
    - Grid layout responsive con animazioni shimmer
    - Single-screen desktop layout con sidebar verticale
+   - **IP Protection Strategy**: Educazione progressiva senza esporre tutti i dettagli
 
 2. **`whitepaper.html`** (1,185 lines) - **Comprehensive Documentation**
    - Documentazione completa dell'ecosistema (~1100 linee)
@@ -710,6 +718,48 @@ Light/dark theme implementation in `index.html`:
 - CSS custom properties automatically update via `[data-theme="dark"]` attribute
 - Theme persists across page reloads
 - No JavaScript framework required - pure DOM manipulation
+
+### X World Toggle Layer System
+Progressive disclosure UX pattern in `progetti/xworld/index.html` for IP protection and education:
+```javascript
+// Location: index.html lines 1056-1130
+// Toggle between Simple View (non-technical) and Technical View (blockchain details)
+
+// Key Components:
+// 1. Toggle Buttons (lines ~90-100)
+<div class="layer-toggle">
+    <button class="toggle-btn active" data-layer="simple">👁️ Vista Semplice</button>
+    <button class="toggle-btn" data-layer="tech">⚙️ Vista Tecnica</button>
+</div>
+
+// 2. Dual Content Layers (example from Collection section)
+<div class="layer-simple">
+    <p><strong>Crowdfunding tramite NFT</strong> per finanziare progetti reali.</p>
+</div>
+<div class="layer-tech">
+    <h4>⚙️ Come Funziona</h4>
+    <ul>
+        <li><strong>Smart Contract</strong>: ERC-721 su Polygon/Base</li>
+        <li><strong>3 Tier System</strong>: Bronze (€30), Silver (€60), Gold (€90)</li>
+    </ul>
+</div>
+
+// 3. JavaScript Toggle Logic (lines 1056-1130)
+function setActiveLayer(layer) {
+    // Show/hide layers with fade-in animation
+    // Save preference to localStorage as 'xworld-layer'
+    // Update toggle button active states
+}
+
+// 4. Features:
+// - LocalStorage persistence (key: 'xworld-layer')
+// - Keyboard shortcut: Alt+T
+// - Smooth scroll to top on toggle
+// - Fade-in animations (0.3s ease)
+// - Console feedback for debugging
+```
+
+**Strategy**: Educate non-blockchain users progressively while protecting intellectual property from being fully exposed in Simple View.
 
 ### Mini Games Modular Data Pattern
 Pixxa Generator uses separate data files (`minigiochi/pixxa/ingredienti.js`, `pizzeClassiche.js`, etc.) with core logic in `main.js` and smart naming algorithm. Games are self-contained in single HTML files with inline CSS/JS for maximum portability.
