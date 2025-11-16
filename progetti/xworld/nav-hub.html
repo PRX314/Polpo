@@ -27,7 +27,7 @@
             background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
             min-height: 100vh;
             color: white;
-            padding: 15px;
+            padding: 10px;
         }
 
         .container {
@@ -38,8 +38,8 @@
         /* ===== HEADER ===== */
         .header {
             text-align: center;
-            margin-bottom: 15px;
-            padding: 15px 10px 10px;
+            margin-bottom: 12px;
+            padding: 12px 8px 8px;
         }
 
         .logo {
@@ -64,16 +64,17 @@
         .nav-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
         .nav-card {
             background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            padding: 15px 12px;
-            transition: all 0.3s ease;
+            padding: 12px 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             text-decoration: none;
             color: white;
@@ -99,7 +100,13 @@
         }
 
         .nav-card:hover::before {
-            opacity: 0.15;
+            opacity: 0.2;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+            border-color: var(--primary);
         }
 
         .nav-card:active {
@@ -344,12 +351,12 @@
         /* Small Mobile (< 480px) */
         @media (max-width: 480px) {
             body {
-                padding: 12px;
+                padding: 8px;
             }
 
             .header {
-                padding: 15px 12px;
-                margin-bottom: 20px;
+                padding: 10px 8px;
+                margin-bottom: 15px;
             }
 
             .logo {
@@ -362,12 +369,12 @@
 
             .nav-grid {
                 grid-template-columns: 1fr;
-                gap: 12px;
+                gap: 10px;
             }
 
             .nav-card {
-                padding: 20px 15px;
-                min-height: 120px;
+                padding: 15px 12px;
+                min-height: 110px;
                 justify-content: center;
             }
 
