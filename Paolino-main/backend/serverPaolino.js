@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -44,6 +45,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Nota: Le immagini sono ora servite da Cloudinary, non più da filesystem locale
 // app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Serve Doc. vari tools as static files
+app.use('/tools', express.static(path.join(__dirname, '..', 'Doc. vari')));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

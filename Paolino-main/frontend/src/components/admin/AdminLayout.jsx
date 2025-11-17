@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  Users, 
-  BarChart3, 
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Users,
+  BarChart3,
   Settings,
   Menu,
   X,
   LogOut,
-  Home
+  Home,
+  Wrench
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -27,6 +28,7 @@ const AdminLayout = ({ children }) => {
     { name: 'Utenti', href: '/admin/users', icon: Users },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { name: 'Impostazioni', href: '/admin/settings', icon: Settings },
+    { name: 'Laboratorio X', href: '/tools/lab-x', icon: Wrench, external: true },
   ];
 
   const handleLogout = () => {
