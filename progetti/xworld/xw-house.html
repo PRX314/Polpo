@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XW House - Real Estate Tokenizzato</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #000;
+            --bg: #fff;
+            --border: #ddd;
+            --gray: #666;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: var(--gray);
+            text-decoration: none;
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: #f8f8f8;
+            border-color: var(--primary);
+        }
+
+        .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .intro {
+            background: #f8f8f8;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .intro p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .intro p:last-child {
+            margin-bottom: 0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 20px 0 10px;
+        }
+
+        p {
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            font-size: 13px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+        }
+
+        .flow-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .flow-text {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .property-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            background: var(--bg);
+            transition: all 0.2s;
+        }
+
+        .property-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .property-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .property-icon {
+            font-size: 32px;
+        }
+
+        .property-name {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .property-desc {
+            font-size: 12px;
+            line-height: 1.5;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .property-features {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .property-features li {
+            font-size: 10px;
+            padding: 4px 0;
+            color: var(--gray);
+            margin: 0;
+        }
+
+        .property-features li::before {
+            content: '•';
+            margin-right: 6px;
+            color: #48bb78;
+            font-weight: 700;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .highlight-box h3 {
+            color: white;
+            font-size: 16px;
+            margin-top: 0;
+        }
+
+        .highlight-box p {
+            color: rgba(255,255,255,0.9);
+            font-size: 12px;
+        }
+
+        .example-box {
+            background: #f0f8ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .example-box h3 {
+            color: #0066cc;
+            margin-top: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #b3d9ff;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0066cc;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--gray);
+            text-transform: uppercase;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .warning-box p {
+            font-size: 11px;
+            color: #856404;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .view-nfts-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .view-nfts-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .benefit-column h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .property-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="app-prototype.html" class="back-link">← Torna all'App</a>
+            <div class="icon">🏠</div>
+            <h1>XW HOUSE</h1>
+            <p class="subtitle">Real Estate Tokenizzato</p>
+        </div>
+
+        <div class="intro">
+            <p><strong>XW House</strong> reinventa l'investimento immobiliare attraverso la blockchain: invece di acquistare interi immobili, la community investe in <strong>quote tokenizzate tramite NFT</strong>, partecipando ai guadagni generati dalle proprietà.</p>
+            <p>Gli NFT non sono semplici immagini, ma <strong>certificati di proprietà digitale</strong> registrati on-chain che garantiscono revenue share automatica e diritto di voto sulla gestione.</p>
+        </div>
+
+        <div class="section">
+            <h2>Il Ciclo Virtuoso</h2>
+            <p>Ogni progetto X World House segue un modello trasparente e sostenibile:</p>
+
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="flow-number">1</div>
+                    <div class="flow-text"><strong>Acquisto</strong> - La DAO raccoglie fondi tramite vendita NFT e acquista un immobile strategico</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">2</div>
+                    <div class="flow-text"><strong>Ristrutturazione</strong> - L'immobile viene ristrutturato e preparato secondo le esigenze della community</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">3</div>
+                    <div class="flow-text"><strong>Creazione Esperienza</strong> - Trasformazione in casa vacanza, surf house, co-working o altro</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">4</div>
+                    <div class="flow-text"><strong>Generazione Reddito</strong> - Affitti, prenotazioni, eventi, corsi generano entrate costanti</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">5</div>
+                    <div class="flow-text"><strong>Distribuzione Automatica</strong> - Smart contract distribuisce i guadagni agli NFT holder proporzionalmente</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">6</div>
+                    <div class="flow-text"><strong>Reinvestimento</strong> - Parte dei profitti viene reinvestita in nuove proprietà o miglioramenti</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Strutture Flessibili</h2>
+            <p>X World House non si limita alla ristrutturazione di edifici tradizionali. Il modello include anche <strong>soluzioni modulari e alternative</strong>:</p>
+
+            <ul>
+                <li><strong>🏠 Ristrutturazioni</strong> - Case esistenti da riqualificare in location strategiche</li>
+                <li><strong>🏕️ Bungalow</strong> - Strutture prefabbricate eco-sostenibili in aree naturali</li>
+                <li><strong>📦 Container</strong> - Container marittimi convertiti in spazi abitativi moderni</li>
+                <li><strong>🏗️ Modulari</strong> - Costruzioni modulari personalizzabili e scalabili</li>
+            </ul>
+
+            <p style="margin-top: 16px;">Questa flessibilità permette di <strong>minimizzare i costi di investimento</strong> e adattarsi rapidamente a diverse location e target di mercato.</p>
+        </div>
+
+        <div class="section">
+            <h2>Tipologie di Proprietà</h2>
+            <p>Ogni proprietà X World House può essere <strong>customizzata per specifiche community</strong>, dalle esperienze tematiche targetizzate ai concept generici:</p>
+
+            <div class="property-grid">
+                <div class="property-card">
+                    <div class="property-header">
+                        <span class="property-icon">🏎️</span>
+                        <span class="property-name">Auto d'Epoca</span>
+                    </div>
+                    <p class="property-desc">Alloggio + garage con collezione auto classiche da testare</p>
+                    <ul class="property-features">
+                        <li>Target: collezionisti, appassionati auto storiche</li>
+                        <li>Location: Costa Ligure, Toscana, Langhe</li>
+                        <li>Esperienza: test drive settimanale auto diverse</li>
+                        <li>Revenue: affitti premium, eventi automotive</li>
+                    </ul>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-header">
+                        <span class="property-icon">🍷🍺🫒</span>
+                        <span class="property-name">Produzione Alimentare</span>
+                    </div>
+                    <p class="property-desc">Vino, birra o olio - esperienze immersive di produzione artigianale</p>
+                    <ul class="property-features">
+                        <li>Vino: vigna + cantina (Toscana, Piemonte)</li>
+                        <li>Birra: microbirrificio artigianale (zone rurali)</li>
+                        <li>Olio: oliveto + frantoio DOP (Liguria, Umbria)</li>
+                        <li>Revenue: affitti + vendita prodotti + degustazioni</li>
+                    </ul>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-header">
+                        <span class="property-icon">🏖️</span>
+                        <span class="property-name">Case Vacanza</span>
+                    </div>
+                    <p class="property-desc">Proprietà in location turistiche gestite per affitti brevi</p>
+                    <ul class="property-features">
+                        <li>Target: turisti, famiglie, gruppi</li>
+                        <li>Revenue: affitti settimanali/mensili</li>
+                        <li>Gestione: piattaforme booking online</li>
+                    </ul>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-header">
+                        <span class="property-icon">🏄</span>
+                        <span class="property-name">Surf House</span>
+                    </div>
+                    <p class="property-desc">Spazi vicino al mare con focus su sport acquatici</p>
+                    <ul class="property-features">
+                        <li>Alloggio + scuola surf + noleggio</li>
+                        <li>Target: surfisti, comunità sportive</li>
+                        <li>Revenue: corsi, affitti, eventi</li>
+                    </ul>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-header">
+                        <span class="property-icon">💼</span>
+                        <span class="property-name">Co-working & Lab</span>
+                    </div>
+                    <p class="property-desc">Spazi di lavoro condiviso con laboratori per makers</p>
+                    <ul class="property-features">
+                        <li>Postazioni, sale riunioni, attrezzature</li>
+                        <li>Target: freelancer, startup, tech</li>
+                        <li>Revenue: abbonamenti mensili, eventi</li>
+                    </ul>
+                </div>
+
+                <div class="property-card">
+                    <div class="property-header">
+                        <span class="property-icon">🎮</span>
+                        <span class="property-name">X World Hub</span>
+                    </div>
+                    <p class="property-desc">Centri fisici per la community X World</p>
+                    <ul class="property-features">
+                        <li>Eventi, meetup, gaming Hunter</li>
+                        <li>Formazione blockchain e Web3</li>
+                        <li>Revenue: membership, corsi, eventi</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <h3>🎯 Il Potere del Targeting</h3>
+            <p>X World House crea <strong>esperienze su misura per community di appassionati specifici</strong>. Invece di competere nel mercato generico delle case vacanza, ci rivolgiamo a nicchie ad alto valore:</p>
+            <ul style="margin: 12px 0 0 20px;">
+                <li style="color: rgba(255,255,255,0.9);"><strong>Premium pricing</strong> - Appassionati pagano di più per esperienze autentiche</li>
+                <li style="color: rgba(255,255,255,0.9);"><strong>Fidelizzazione</strong> - Community ritorna ogni anno, passa parola</li>
+                <li style="color: rgba(255,255,255,0.9);"><strong>Brand forte</strong> - Ogni proprietà diventa punto di riferimento per la nicchia</li>
+                <li style="color: rgba(255,255,255,0.9);"><strong>Revenue multiple</strong> - Affitto + vendita prodotti + eventi + corsi</li>
+            </ul>
+        </div>
+
+        <div class="highlight-box" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">
+            <h3>💎 NFT = Certificati di Proprietà</h3>
+            <p>Gli NFT X World House non sono semplici JPEG, ma asset on-chain che garantiscono:</p>
+            <ul style="margin: 12px 0 0 20px;">
+                <li style="color: rgba(255,255,255,0.9);"><strong>Trasparenza totale</strong> - Ogni transazione verificabile su blockchain</li>
+                <li style="color: rgba(255,255,255,0.9);"><strong>Revenue share automatica</strong> - Smart contract distribuisce guadagni senza intermediari</li>
+                <li style="color: rgba(255,255,255,0.9);"><strong>Governance</strong> - Holder votano su acquisizioni, ristrutturazioni, gestione</li>
+                <li style="color: rgba(255,255,255,0.9);"><strong>Liquidità</strong> - NFT vendibili sul mercato secondario</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Esempio Concreto: Surf House Chiavari</h2>
+
+            <div class="example-box">
+                <h3>🏄 Primo Progetto Pianificato (Ipotetico)</h3>
+                <p><strong>Location:</strong> Chiavari, Liguria - città sul mare con comunità surf attiva</p>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">150mq</div>
+                        <div class="stat-label">Superficie</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">6</div>
+                        <div class="stat-label">Posti Letto</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">€300k</div>
+                        <div class="stat-label">Investimento</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">300</div>
+                        <div class="stat-label">NFT Emessi</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">€3k/m</div>
+                        <div class="stat-label">Revenue Attesa</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">10-12%</div>
+                        <div class="stat-label">ROI Annuo</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px;">Come Funzionerebbe</h3>
+                <ul>
+                    <li><strong>Fundraising:</strong> 300 NFT × 1 ETH = ~€300k (prezzo ETH variabile)</li>
+                    <li><strong>Revenue Sources:</strong> Affitti brevi, corsi surf, noleggio attrezzatura, eventi</li>
+                    <li><strong>Distribuzione:</strong> Profitti distribuiti mensilmente agli holder via smart contract</li>
+                    <li><strong>Governance:</strong> Holder votano su pricing, gestione, espansioni future</li>
+                </ul>
+
+                <div style="text-align: center;">
+                    <a href="xw-house-nft-viewer.html" class="view-nfts-btn">
+                        📅 Visualizza 52 NFT Settimanali →
+                    </a>
+                </div>
+
+                <div class="warning-box">
+                    <p><strong>⚠️ NOTA IMPORTANTE:</strong> Questo progetto non è ancora in fase attiva. Richiede raccolta fondi significativa, analisi legale complessa e strutturazione DAO. Verrà considerato solo dopo il successo iniziale dei progetti POLPOPOLI.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Esempio: Vintage Car Experience</h2>
+
+            <div class="example-box" style="background: #fff5e6; border-color: #ffcc80;">
+                <h3 style="color: #d84315;">🏎️ Auto d'Epoca sulla Costa Ligure (Concept)</h3>
+                <p><strong>Concept:</strong> Villa + garage con 5 auto classiche italiane degli anni '60-'80 che gli ospiti possono guidare liberamente lungo la costa</p>
+
+                <div class="stats-grid">
+                    <div class="stat-item" style="border-color: #ffcc80;">
+                        <div class="stat-value" style="color: #d84315;">200mq</div>
+                        <div class="stat-label">Villa + Garage</div>
+                    </div>
+                    <div class="stat-item" style="border-color: #ffcc80;">
+                        <div class="stat-value" style="color: #d84315;">5</div>
+                        <div class="stat-label">Auto Classiche</div>
+                    </div>
+                    <div class="stat-item" style="border-color: #ffcc80;">
+                        <div class="stat-value" style="color: #d84315;">€400k</div>
+                        <div class="stat-label">Investimento</div>
+                    </div>
+                    <div class="stat-item" style="border-color: #ffcc80;">
+                        <div class="stat-value" style="color: #d84315;">€2k/gg</div>
+                        <div class="stat-label">Affitto Giornaliero</div>
+                    </div>
+                    <div class="stat-item" style="border-color: #ffcc80;">
+                        <div class="stat-value" style="color: #d84315;">15-20%</div>
+                        <div class="stat-label">ROI Annuo</div>
+                    </div>
+                    <div class="stat-item" style="border-color: #ffcc80;">
+                        <div class="stat-value" style="color: #d84315;">Premium</div>
+                        <div class="stat-label">Target Market</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 20px; color: #d84315;">Auto Fleet Esempio</h3>
+                <ul>
+                    <li><strong>Alfa Romeo Spider 1969</strong> - Iconica roadster italiana, perfetta per la costa</li>
+                    <li><strong>Fiat 500 Abarth 1970</strong> - Piccola ma potente, per vie strette liguri</li>
+                    <li><strong>Lancia Fulvia Coupé 1974</strong> - Eleganza rally anni '70</li>
+                    <li><strong>Ferrari 308 GTS 1980</strong> - Dream car per gli appassionati</li>
+                    <li><strong>Porsche 911 Targa 1985</strong> - Classico tedesco per contrasto</li>
+                </ul>
+
+                <h3 style="margin-top: 20px; color: #d84315;">Esperienza</h3>
+                <ul>
+                    <li><strong>Check-in:</strong> Presentazione auto, storia, consigli percorsi panoramici</li>
+                    <li><strong>Durante soggiorno:</strong> Ogni giorno un'auto diversa, itinerari consigliati coast-to-coast</li>
+                    <li><strong>Extra:</strong> Eventi automotive, raduni, tour organizzati weekend</li>
+                    <li><strong>Revenue multiple:</strong> Affitto premium + merchandising + partnership assicurazioni + eventi</li>
+                </ul>
+
+                <p style="font-style: italic; color: #888; margin-top: 1rem;">
+                    <strong>Target:</strong> Collezionisti, appassionati auto storiche, aziende per team building automotive, influencer automotive per contenuti.
+                </p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Chiavari Hub - Visione Futura</h2>
+            <p>Oltre alla Surf House, Chiavari potrebbe ospitare il primo <strong>X World Hub</strong>: uno spazio fisico permanente per la community dove:</p>
+
+            <ul>
+                <li>📚 <strong>Formazione</strong> - Corsi su blockchain, smart contracts, Web3 e NFT</li>
+                <li>🤝 <strong>Networking</strong> - Eventi, meetup, collaborazioni con community locali</li>
+                <li>🎮 <strong>Gaming</strong> - Competizioni e attività legate a X World Hunter</li>
+                <li>💼 <strong>Co-working</strong> - Spazio di lavoro per la community e progetti collaborativi</li>
+                <li>🌊 <strong>Local Bridge</strong> - Connessione tra tradizione ligure e innovazione tech</li>
+            </ul>
+
+            <p style="font-style: italic; color: #888; margin-top: 1rem;">
+                Questo è un obiettivo a lungo termine, subordinato al successo delle prime fasi del progetto.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>Vantaggi del Modello</h2>
+
+            <div class="benefits-grid">
+                <div class="benefit-column">
+                    <h3>Per la Community</h3>
+                    <ul>
+                        <li><strong>Accesso democratico</strong> - Investire in immobili premium da piccole quote NFT</li>
+                        <li><strong>Revenue passivo</strong> - Guadagni distribuiti automaticamente ogni mese</li>
+                        <li><strong>Governance diretta</strong> - Voto su acquisti, esperienze, target</li>
+                        <li><strong>Esperienza personale</strong> - Sconti per holder su affitti e prodotti</li>
+                        <li><strong>Liquidità</strong> - NFT rivendibili sul mercato secondario</li>
+                        <li><strong>Trasparenza</strong> - Tutte le transazioni pubbliche on-chain</li>
+                    </ul>
+                </div>
+
+                <div class="benefit-column">
+                    <h3>Strategia Competitiva</h3>
+                    <ul>
+                        <li><strong>Targeting nicchie</strong> - No competizione generica, focus appassionati</li>
+                        <li><strong>Premium pricing</strong> - Esperienze uniche giustificano costi più alti</li>
+                        <li><strong>Revenue multiple</strong> - Affitto + vendita prodotti + eventi</li>
+                        <li><strong>Costi flessibili</strong> - Container e bungalow riducono investimenti</li>
+                        <li><strong>Scalabilità</strong> - Modello replicabile per infinite nicchie</li>
+                        <li><strong>Brand forte</strong> - Ogni proprietà diventa riferimento settore</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Smart Contracts & Sicurezza</h2>
+            <p>Gli investimenti immobiliari richiedono <strong>massima sicurezza</strong>. X World House utilizza <strong>Ethereum Mainnet</strong>:</p>
+
+            <ul>
+                <li><strong>Sicurezza provata</strong> - Network più testato e sicuro per smart contract finanziari</li>
+                <li><strong>Immutabilità</strong> - Certificati di proprietà permanenti e non modificabili</li>
+                <li><strong>Standard consolidati</strong> - ERC-721 per NFT proprietà, ERC-20 per revenue token</li>
+                <li><strong>Audit professionali</strong> - Smart contract verificati da security firm specializzate</li>
+                <li><strong>Multi-signature wallets</strong> - Fondi DAO protetti da firma multipla</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Roadmap House</h2>
+            <ol>
+                <li><strong>Q3 2025</strong> - Analisi legale e strutturazione DAO per gestione immobiliare tokenizzata</li>
+                <li><strong>Q4 2025</strong> - Ricerca e valutazione prima proprietà (possibile Surf House Chiavari)</li>
+                <li><strong>Q1 2026</strong> - Fundraising tramite NFT emission, audit smart contract</li>
+                <li><strong>Q2 2026</strong> - Acquisto e ristrutturazione prima proprietà</li>
+                <li><strong>Q3 2026</strong> - Lancio operativo, inizio distribuzione revenue agli holder</li>
+                <li><strong>2027+</strong> - Espansione portfolio, apertura Chiavari Hub, nuove città</li>
+            </ol>
+
+            <p style="font-style: italic; color: #888; margin-top: 1rem;">
+                <strong>Nota:</strong> La roadmap è subordinata al successo dei progetti POLPOPOLI e alla disponibilità di capitale necessario.
+            </p>
+        </div>
+
+    </div>
+</body>
+</html>

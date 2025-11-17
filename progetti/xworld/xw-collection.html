@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XW Collection - NFT System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #000;
+            --bg: #fff;
+            --border: #ddd;
+            --gray: #666;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: var(--gray);
+            text-decoration: none;
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: #f8f8f8;
+            border-color: var(--primary);
+        }
+
+        .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .intro {
+            background: #f8f8f8;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .intro p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .intro p:last-child {
+            margin-bottom: 0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 20px 0 10px;
+        }
+
+        p {
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            font-size: 13px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .tier-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .tier-card {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            background: var(--bg);
+            transition: all 0.2s;
+        }
+
+        .tier-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .tier-card.bronze {
+            border-color: #cd7f32;
+        }
+
+        .tier-card.silver {
+            border-color: #c0c0c0;
+        }
+
+        .tier-card.gold {
+            border-color: #ffd700;
+        }
+
+        .tier-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .tier-icon {
+            font-size: 24px;
+        }
+
+        .tier-name {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .tier-price {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+        .tier-benefits {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .tier-benefits li {
+            font-size: 11px;
+            padding: 6px 0;
+            border-bottom: 1px solid #f0f0f0;
+            margin: 0;
+        }
+
+        .tier-benefits li:last-child {
+            border-bottom: none;
+        }
+
+        .tier-benefits li::before {
+            content: '✓';
+            margin-right: 8px;
+            color: #48bb78;
+            font-weight: 700;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .project-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            background: var(--bg);
+            transition: all 0.2s;
+        }
+
+        .project-card:hover {
+            background: #f8f8f8;
+        }
+
+        .project-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .project-name {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .project-desc {
+            font-size: 10px;
+            color: var(--gray);
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .highlight-box h3 {
+            color: white;
+            font-size: 16px;
+            margin-top: 0;
+        }
+
+        .highlight-box p {
+            color: rgba(255,255,255,0.9);
+            font-size: 12px;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+        }
+
+        .flow-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .flow-text {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .tier-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .projects-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="app-prototype.html" class="back-link">← Torna all'App</a>
+            <div class="icon">💎</div>
+            <h1>XW COLLECTION</h1>
+            <p class="subtitle">NFT Crowdfunding System</p>
+        </div>
+
+        <div class="intro">
+            <p><strong>XW Collection</strong> è il sistema di crowdfunding basato su NFT che permette di finanziare progetti reali attraverso un modello innovativo a 3 tier.</p>
+            <p>Ogni NFT garantisce accesso esclusivo a benefici crescenti, dalla community base fino alla governance completa del progetto.</p>
+        </div>
+
+        <div class="section">
+            <h2>Sistema NFT a 3 Tier</h2>
+            <p>Ogni progetto viene finanziato attraverso la vendita di NFT divisi in 3 livelli di accesso. Più alto è il tier, maggiori sono i benefici e l'influenza sul progetto.</p>
+
+            <div class="tier-grid">
+                <div class="tier-card bronze">
+                    <div class="tier-header">
+                        <span class="tier-icon">🥉</span>
+                        <span class="tier-name">BRONZE</span>
+                    </div>
+                    <div class="tier-price">€30</div>
+                    <ul class="tier-benefits">
+                        <li>Accesso chat community</li>
+                        <li>Aggiornamenti pubblici</li>
+                        <li>Early access prodotti</li>
+                        <li>Badge Bronze NFT</li>
+                    </ul>
+                </div>
+
+                <div class="tier-card silver">
+                    <div class="tier-header">
+                        <span class="tier-icon">🥈</span>
+                        <span class="tier-name">SILVER</span>
+                    </div>
+                    <div class="tier-price">€60</div>
+                    <ul class="tier-benefits">
+                        <li>Tutto Bronze +</li>
+                        <li>Chat founder privata</li>
+                        <li>Forum esclusivo</li>
+                        <li>Voto su decisioni design</li>
+                        <li>Sconti 15% prodotti</li>
+                    </ul>
+                </div>
+
+                <div class="tier-card gold">
+                    <div class="tier-header">
+                        <span class="tier-icon">🥇</span>
+                        <span class="tier-name">GOLD</span>
+                    </div>
+                    <div class="tier-price">€90</div>
+                    <ul class="tier-benefits">
+                        <li>Tutto Silver +</li>
+                        <li>Video call con founder</li>
+                        <li>Accesso beta testing</li>
+                        <li>Revenue share 10%</li>
+                        <li>Governance DAO completa</li>
+                        <li>BIC Token rewards</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Come Funziona</h2>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="flow-number">1</div>
+                    <div class="flow-text"><strong>Presentazione Progetto</strong> - Un nuovo progetto viene annunciato con dettagli, obiettivi e funding goal</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">2</div>
+                    <div class="flow-text"><strong>Mint NFT</strong> - Gli utenti possono acquistare NFT Bronze, Silver o Gold per supportare il progetto</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">3</div>
+                    <div class="flow-text"><strong>Funding Goal</strong> - Una volta raggiunto il goal, lo sviluppo del progetto inizia ufficialmente</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">4</div>
+                    <div class="flow-text"><strong>Sviluppo Trasparente</strong> - Aggiornamenti regolari nelle chat tier-based, holder votano su decisioni chiave</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">5</div>
+                    <div class="flow-text"><strong>Lancio Prodotto</strong> - Il prodotto viene lanciato, holder ricevono early access e rewards BIC Token</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-number">6</div>
+                    <div class="flow-text"><strong>Revenue Share</strong> - I profitti vengono distribuiti automaticamente agli holder Gold NFT</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <h3>🪙 BIC Token (X World Coin)</h3>
+            <p>I possessori di NFT guadagnano BIC Token come reward per il supporto ai progetti. BIC può essere utilizzato per:</p>
+            <ul style="margin: 12px 0 0 20px;">
+                <li style="color: rgba(255,255,255,0.9);">Votare nelle decisioni DAO (1 BIC = 1 voto)</li>
+                <li style="color: rgba(255,255,255,0.9);">Ottenere sconti su prodotti X World</li>
+                <li style="color: rgba(255,255,255,0.9);">Accedere a drop NFT esclusivi</li>
+                <li style="color: rgba(255,255,255,0.9);">Fare staking per rewards passivi</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Progetti POLPOPOLI</h2>
+            <p>La prima wave di progetti finanziabili tramite XW Collection. Ogni progetto è indipendente ma parte dell'ecosistema X World.</p>
+
+            <div class="projects-grid">
+                <div class="project-card">
+                    <div class="project-icon">🎩</div>
+                    <div class="project-name">00X Collection</div>
+                    <div class="project-desc">Valigetta 007 style con gadget tech</div>
+                </div>
+                <div class="project-card">
+                    <div class="project-icon">👓</div>
+                    <div class="project-name">I8I Eyewear</div>
+                    <div class="project-desc">Occhiali senza stanghette innovativi</div>
+                </div>
+                <div class="project-card">
+                    <div class="project-icon">🧣</div>
+                    <div class="project-name">Sciarcuffia</div>
+                    <div class="project-desc">Fashion-tech wearable</div>
+                </div>
+                <div class="project-card">
+                    <div class="project-icon">🐙</div>
+                    <div class="project-name">PolpoVerse</div>
+                    <div class="project-desc">Metaverso X World</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Vantaggi del Sistema</h2>
+            <h3>Per i Creator</h3>
+            <ul>
+                <li><strong>Funding garantito</strong> - Capitale disponibile prima di iniziare lo sviluppo</li>
+                <li><strong>Community engaged</strong> - Supporter motivati dal successo del progetto</li>
+                <li><strong>Feedback continuo</strong> - Holder Silver e Gold partecipano alle decisioni</li>
+                <li><strong>Marketing organico</strong> - Holder promuovono il progetto per aumentarne il valore</li>
+            </ul>
+
+            <h3>Per gli Holder</h3>
+            <ul>
+                <li><strong>Early access</strong> - Accesso anticipato a prodotti innovativi</li>
+                <li><strong>Revenue share</strong> - Profitti distribuiti agli holder Gold</li>
+                <li><strong>Influenza diretta</strong> - Voto su design, features e roadmap</li>
+                <li><strong>Asset rivendibile</strong> - NFT può essere venduto sul marketplace</li>
+                <li><strong>BIC rewards</strong> - Token passivi per supporto continuativo</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Smart Contracts</h2>
+            <p>Il sistema è basato su smart contracts Ethereum (ERC-721 per NFT, ERC-20 per BIC Token) che garantiscono:</p>
+            <ul>
+                <li><strong>Trasparenza totale</strong> - Tutte le transazioni sono pubbliche on-chain</li>
+                <li><strong>Distribuzione automatica</strong> - Revenue share e rewards distribuiti automaticamente</li>
+                <li><strong>Governance decentralizzata</strong> - DAO gestita da smart contract senza intermediari</li>
+                <li><strong>Sicurezza</strong> - Audit professionale pre-lancio, codice open source</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Roadmap Collection</h2>
+            <ol>
+                <li><strong>Q1 2025</strong> - Deploy smart contracts su Sepolia testnet, testing interno</li>
+                <li><strong>Q2 2025</strong> - Security audit, lancio primo progetto (Sciarcuffia) su testnet</li>
+                <li><strong>Q3 2025</strong> - Mainnet launch, mint NFT per Sciarcuffia e 00X</li>
+                <li><strong>Q4 2025</strong> - Lancio BIC Token, staking rewards, DAO governance attiva</li>
+                <li><strong>2026</strong> - Espansione progetti, marketplace NFT secondario, integrazione metaverso</li>
+            </ol>
+        </div>
+
+    </div>
+</body>
+</html>

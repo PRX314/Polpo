@@ -63,6 +63,7 @@ npm install
 
 **Quick Indicators**:
 - Need to modify portfolio homepage? → `/index.html`
+- Need to update CV/resume? → `/cv.html`
 - Need to work on Web3/NFT/blockchain features? → `/progetti/xworld/`
 - Need to work on task management features? → `/gestionale-x/`
 - Need to update Olympics scoring/teams? → `/OG-2025/`
@@ -90,6 +91,7 @@ cd Paolino-main/frontend && npm run dev       # Step 3: Frontend (port 5173)
 ```
 
 ### Portfolio Showcase Contents
+- **Curriculum Vitae** (`/cv.html`): Interactive CV with 3D models and animated skills showcase
 - **Mini Games** (`/minigiochi/`): Interactive browser games
   - Pixxa Generator - Pizza name generator with modular data files
   - DVD Screensaver - Classic bouncing logo animation
@@ -897,10 +899,16 @@ vite --port 5174
 - **No Remote Conflicts**: Repository appears to be personal/solo development (no merge conflicts expected)
 
 ### Recent Development Focus (from git history)
-- Reorganized homepage navigation (Olimpiadi, Quotify, Brand sections)
-- Fixed onclick handlers for button navigation
-- Renamed "I Miei Progetti" to "Progetti" for cleaner presentation
-- Updated project showcase with X World, Olimpiadi Goliardiche, and Quotify
+- **X World Project Enhancements** (Nov 2024):
+  - Implemented Toggle Layer System (Simple/Technical views) with Alt+T shortcut
+  - Unified Crypto Studio/Academy into 4-level learning platform
+  - Completed glassmorphism design with backdrop-filter blur effects
+  - Optimized mobile responsive (-30% padding, ultra-compact layouts)
+- **Portfolio Hub Updates**:
+  - Added interactive CV (cv.html) with 3D models and animated skills
+  - Reorganized homepage navigation (Olimpiadi, Quotify, Brand sections)
+  - Fixed onclick handlers for button navigation
+  - Renamed "I Miei Progetti" to "Progetti" for cleaner presentation
 
 ## Project Status
 - **Portfolio Hub**: ✅ Stable, production-ready, deployed

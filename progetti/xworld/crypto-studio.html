@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Studio - Percorso Completo Blockchain</title>
+    <title>Crypto Studio - Percorso Completo Blockchain & Crypto</title>
     <style>
         * {
             margin: 0;
@@ -27,50 +27,50 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             min-height: 100vh;
-            margin: 0;
-            padding: 0;
-            line-height: 1.6;
+            line-height: 1.7;
             color: #2d3748;
         }
 
-        /* ===== LIVE CRYPTO BANNER ===== */
+        /* ===== CRYPTO BANNER ===== */
         .crypto-banner {
             background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
             color: white;
-            padding: 10px 0;
+            padding: 12px 0;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            border-bottom: 2px solid var(--accent);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-bottom: 3px solid var(--accent);
         }
 
         .banner-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            max-width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 0 20px;
-            gap: 15px;
+            gap: 20px;
         }
 
         .banner-logo {
-            font-size: 1em;
-            font-weight: bold;
+            font-size: 1.1em;
+            font-weight: 700;
             white-space: nowrap;
             flex-shrink: 0;
+            letter-spacing: 1px;
         }
 
         .crypto-ticker {
             display: flex;
-            gap: 25px;
+            gap: 30px;
             align-items: center;
             flex: 1;
             overflow-x: auto;
             scrollbar-width: none;
-            padding: 0 10px;
+            padding: 0 15px;
         }
 
         .crypto-ticker::-webkit-scrollbar {
@@ -80,148 +80,116 @@
         .ticker-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             white-space: nowrap;
-            font-size: 0.85em;
+            font-size: 0.9em;
         }
 
         .ticker-icon {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
         }
 
         .ticker-name {
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .ticker-price {
             color: #a8dadc;
-            font-weight: 500;
+            font-weight: 600;
             transition: all 0.3s ease;
         }
 
-        .ticker-price.price-up {
-            animation: priceUp 0.5s ease;
-        }
-
-        .ticker-price.price-down {
-            animation: priceDown 0.5s ease;
-        }
-
-        @keyframes priceUp {
-            0%, 100% { color: #a8dadc; }
-            50% { color: #48bb78; transform: scale(1.1); }
-        }
-
-        @keyframes priceDown {
-            0%, 100% { color: #a8dadc; }
-            50% { color: #f56565; transform: scale(1.1); }
-        }
-
         .ticker-change {
-            font-size: 0.8em;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 600;
+            font-size: 0.85em;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 700;
         }
 
         .ticker-change.positive {
-            background: rgba(72, 187, 120, 0.2);
+            background: rgba(72, 187, 120, 0.25);
             color: #48bb78;
         }
 
         .ticker-change.negative {
-            background: rgba(245, 101, 101, 0.2);
+            background: rgba(245, 101, 101, 0.25);
             color: #f56565;
         }
 
         .banner-timer {
-            font-size: 0.75em;
+            font-size: 0.8em;
             color: #a8dadc;
             white-space: nowrap;
             flex-shrink: 0;
+            font-weight: 600;
         }
 
         /* ===== MAIN CONTAINER ===== */
         .container {
             max-width: 1400px;
-            margin: 70px auto 30px;
-            padding: 15px;
+            margin: 80px auto 40px;
+            padding: 20px;
         }
 
-        /* ===== HEADER ===== */
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 30px;
-            animation: fadeInDown 0.8s ease;
+            margin-bottom: 50px;
         }
 
         .header h1 {
             font-size: 3em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header .subtitle {
-            font-size: 1.3em;
-            opacity: 0.95;
-            font-weight: 300;
-        }
-
-        /* ===== PROGRESS TRACKER ===== */
-        .progress-section {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        .progress-section h2 {
-            color: var(--primary);
             margin-bottom: 15px;
-            font-size: 1.8em;
+            font-weight: 800;
+            letter-spacing: -1px;
         }
 
-        .level-progress {
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+            font-weight: 400;
+        }
+
+        /* ===== PROGRESS DASHBOARD ===== */
+        .progress-dashboard {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .progress-dashboard h2 {
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            color: var(--dark);
+        }
+
+        .level-progress-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+            gap: 20px;
         }
 
-        .level-card {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 12px;
-            padding: 15px;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s ease;
+        .level-progress-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #fff 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
         }
 
-        .level-card:hover {
+        .level-progress-card:hover {
             transform: translateY(-5px);
-        }
-
-        .level-card.completed {
-            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
-        }
-
-        .level-card.in-progress {
-            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-        }
-
-        .level-icon {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+            border-color: var(--primary);
         }
 
         .level-title {
-            font-size: 1.2em;
-            font-weight: 600;
+            font-size: 1.1em;
+            font-weight: 700;
             color: var(--dark);
             margin-bottom: 10px;
         }
@@ -229,25 +197,26 @@
         .level-status {
             font-size: 0.9em;
             color: var(--gray);
+            margin-bottom: 12px;
         }
 
         .progress-bar-container {
-            background: rgba(255,255,255,0.5);
-            height: 8px;
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
             border-radius: 10px;
-            margin-top: 10px;
             overflow: hidden;
         }
 
         .progress-bar {
-            background: linear-gradient(90deg, var(--primary), var(--accent));
             height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
             border-radius: 10px;
             transition: width 0.5s ease;
         }
 
-        /* ===== NAVIGATION TABS ===== */
-        .nav-tabs {
+        /* ===== TAB NAVIGATION ===== */
+        .tab-navigation {
             display: flex;
             gap: 15px;
             margin-bottom: 30px;
@@ -257,174 +226,46 @@
 
         .tab-button {
             background: white;
-            border: 2px solid transparent;
-            padding: 15px 30px;
-            border-radius: 10px;
-            cursor: pointer;
+            border: 2px solid #e2e8f0;
+            padding: 15px 25px;
+            border-radius: 12px;
             font-size: 1em;
             font-weight: 600;
-            color: var(--gray);
+            cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark);
         }
 
         .tab-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
         }
 
         .tab-button.active {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
-            border-color: white;
+            border-color: transparent;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
 
         .tab-button .icon {
-            font-size: 1.5em;
-            display: block;
-            margin-bottom: 5px;
+            font-size: 1.3em;
         }
 
-        /* ===== CONTENT SECTIONS ===== */
-        .content-section {
+        /* ===== CONTENT AREAS ===== */
+        .content-area {
             display: none;
             animation: fadeIn 0.5s ease;
         }
 
-        .content-section.active {
+        .content-area.active {
             display: block;
         }
 
-        .lesson-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
-        }
-
-        .lesson-card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(5px);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-
-        .lesson-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            border-color: var(--primary);
-        }
-
-        .lesson-card h3 {
-            color: var(--primary);
-            font-size: 1.5em;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .lesson-card h4 {
-            color: var(--secondary);
-            font-size: 1.2em;
-            margin: 15px 0 8px;
-        }
-
-        .lesson-card p {
-            color: #4a5568;
-            line-height: 1.8;
-            margin-bottom: 15px;
-        }
-
-        .lesson-card ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .lesson-card ul li {
-            padding: 8px 0;
-            padding-left: 25px;
-            position: relative;
-            color: #4a5568;
-        }
-
-        .lesson-card ul li::before {
-            content: "→";
-            position: absolute;
-            left: 0;
-            color: var(--accent);
-            font-weight: bold;
-        }
-
-        .lesson-card ol {
-            padding-left: 20px;
-            color: #4a5568;
-        }
-
-        .lesson-card ol li {
-            margin: 10px 0;
-            line-height: 1.6;
-        }
-
-        /* ===== HIGHLIGHT BOXES ===== */
-        .highlight-box {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-            border-left: 4px solid var(--primary);
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-        }
-
-        .warning-box {
-            background: linear-gradient(135deg, rgba(237, 137, 54, 0.1), rgba(245, 87, 108, 0.1));
-            border-left: 4px solid var(--warning);
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-        }
-
-        .success-box {
-            background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(104, 211, 145, 0.1));
-            border-left: 4px solid var(--success);
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-        }
-
-        .code-box {
-            background: #2d3748;
-            color: #e2e8f0;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            overflow-x: auto;
-            margin: 15px 0;
-        }
-
-        /* ===== BACK BUTTON ===== */
-        .back-button {
-            display: inline-block;
-            background: white;
-            color: var(--primary);
-            padding: 12px 24px;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 600;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-
-        .back-button:hover {
-            transform: translateX(-5px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        }
-
-        /* ===== ANIMATIONS ===== */
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -436,15 +277,132 @@
             }
         }
 
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* ===== TOPICS ===== */
+        .topic {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border-left: 5px solid var(--primary);
+        }
+
+        .topic h3 {
+            font-size: 1.6em;
+            color: var(--dark);
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .topic h4 {
+            font-size: 1.3em;
+            color: var(--secondary);
+            margin: 20px 0 10px;
+            font-weight: 600;
+        }
+
+        .topic p {
+            font-size: 1.05em;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            color: #4a5568;
+        }
+
+        .topic ul {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+
+        .topic li {
+            margin-bottom: 10px;
+            font-size: 1.05em;
+            color: #4a5568;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .example-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e3e8ef 100%);
+            border-left: 4px solid var(--success);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 1em;
+            color: #2d3748;
+        }
+
+        /* ===== TASK CHECKLIST ===== */
+        .task-list {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid #e2e8f0;
+        }
+
+        .task-item:hover {
+            background: #f7fafc;
+            border-color: var(--primary);
+        }
+
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--primary);
+            border-radius: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .task-checkbox.checked {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .task-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 5px;
+            font-size: 1.05em;
+        }
+
+        .task-description {
+            font-size: 0.95em;
+            color: var(--gray);
+            line-height: 1.6;
         }
 
         /* ===== RESPONSIVE ===== */
@@ -453,60 +411,281 @@
                 font-size: 2em;
             }
 
-            .header .subtitle {
-                font-size: 1em;
-            }
-
-            .lesson-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .nav-tabs {
+            .tab-navigation {
                 flex-direction: column;
             }
 
             .tab-button {
                 width: 100%;
+                justify-content: center;
             }
 
-            .crypto-ticker {
-                gap: 15px;
+            .topic {
+                padding: 20px;
             }
 
-            .ticker-item {
-                font-size: 0.75em;
-            }
-
-            .banner-logo {
-                font-size: 0.9em;
+            .level-progress-grid {
+                grid-template-columns: 1fr;
             }
         }
 
-        @media (max-width: 480px) {
-            .container {
-                padding: 15px;
-                margin-top: 60px;
-            }
+        /* ===== ENHANCED AESTHETICS ===== */
 
-            .progress-section {
-                padding: 20px;
-            }
+        /* Animated background particles */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
 
-            .lesson-card {
-                padding: 20px;
-            }
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+        }
 
-            .header h1 {
-                font-size: 1.8em;
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(100vh) translateX(0) rotate(0deg);
+                opacity: 0;
             }
+            10% { opacity: 0.6; }
+            50% { opacity: 0.8; }
+            90% { opacity: 0.6; }
+            100% {
+                transform: translateY(-10vh) translateX(100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            padding: 18px 28px;
+            border-radius: 15px;
+            box-shadow: 0 10px 35px rgba(72, 187, 120, 0.5);
+            z-index: 2000;
+            transform: translateX(400px);
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.05em;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            animation: shake 0.5s ease 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .toast-icon {
+            font-size: 2em;
+            animation: rotate 0.6s ease;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg) scale(0); }
+            to { transform: rotate(360deg) scale(1); }
+        }
+
+        /* Enhanced hover effects */
+        .topic {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .topic::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .topic:hover::before {
+            left: 100%;
+        }
+
+        .topic:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.25);
+            border-left-width: 8px;
+        }
+
+        /* Pulse for checkbox */
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(102, 126, 234, 0);
+            }
+        }
+
+        .task-checkbox:not(.checked):hover {
+            animation: pulse 1.5s infinite;
+            transform: scale(1.1);
+        }
+
+        /* Footer */
+        .footer {
+            background: rgba(255, 255, 255, 0.98);
+            border-top: 4px solid var(--primary);
+            padding: 40px 20px;
+            margin-top: 60px;
+            text-align: center;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 35px;
+            justify-content: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+            position: relative;
+        }
+
+        .footer-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+        }
+
+        .footer-link:hover::after {
+            width: 100%;
+        }
+
+        .footer-link:hover {
+            color: var(--secondary);
+            transform: translateY(-3px);
+        }
+
+        .footer-text {
+            color: var(--gray);
+            font-size: 1em;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Level completion badge */
+        .completion-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 25px;
+            font-size: 0.85em;
+            font-weight: 800;
+            margin-left: 12px;
+            animation: slideInBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        @keyframes slideInBounce {
+            0% {
+                transform: translateX(-30px) scale(0);
+                opacity: 0;
+            }
+            60% {
+                transform: translateX(5px) scale(1.1);
+            }
+            100% {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Glow effect on active tab */
+        .tab-button.active {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            }
+            50% {
+                box-shadow: 0 5px 30px rgba(102, 126, 234, 0.7), 0 0 20px rgba(102, 126, 234, 0.3);
+            }
+        }
+
+        /* Progress bar animation */
+        .progress-bar {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
     </style>
 </head>
 <body>
-    <!-- ===== LIVE CRYPTO BANNER ===== -->
+    <!-- Background particles -->
+    <div class="bg-particles" id="bgParticles"></div>
+    <!-- Crypto Banner -->
     <div class="crypto-banner">
         <div class="banner-content">
-            <div class="banner-logo">💎 Crypto Studio</div>
+            <div class="banner-logo">📊 CRYPTO LIVE</div>
             <div class="crypto-ticker" id="cryptoTicker">
                 <span style="color: #a8dadc;">Caricamento prezzi...</span>
             </div>
@@ -514,66 +693,52 @@
         </div>
     </div>
 
+    <!-- Main Container -->
     <div class="container">
-        <!-- ===== BACK BUTTON ===== -->
-        <a href="nav-hub.html" class="back-button">← Torna all'Hub</a>
-
-        <!-- ===== HEADER ===== -->
         <div class="header">
             <h1>🎓 Crypto Studio</h1>
-            <p class="subtitle">Il tuo percorso completo nel mondo Blockchain</p>
+            <p>Percorso Completo: Blockchain, Crypto e Web3</p>
         </div>
 
-        <!-- ===== PROGRESS TRACKER ===== -->
-        <div class="progress-section">
+        <!-- Progress Dashboard -->
+        <div class="progress-dashboard">
             <h2>🎯 Il Tuo Progresso</h2>
-            <p style="color: var(--gray); margin-bottom: 20px;">
-                Completa i moduli per padroneggiare blockchain, crypto e NFT
-            </p>
-
-            <div class="level-progress">
-                <div class="level-card" data-level="0">
-                    <div class="level-icon">🚀</div>
-                    <div class="level-title">Livello 0: Quick Start</div>
+            <div class="level-progress-grid">
+                <div class="level-progress-card">
+                    <div class="level-title">📘 Quick Start</div>
                     <div class="level-status">0 / 5 completati</div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar" style="width: 0%"></div>
+                        <div class="progress-bar" id="progress-0" style="width: 0%"></div>
                     </div>
                 </div>
-
-                <div class="level-card" data-level="1">
-                    <div class="level-icon">📚</div>
-                    <div class="level-title">Livello 1: Fondamenti</div>
+                <div class="level-progress-card">
+                    <div class="level-title">📚 Fondamenti</div>
                     <div class="level-status">0 / 6 completati</div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar" style="width: 0%"></div>
+                        <div class="progress-bar" id="progress-1" style="width: 0%"></div>
                     </div>
                 </div>
-
-                <div class="level-card" data-level="2">
-                    <div class="level-icon">💎</div>
-                    <div class="level-title">Livello 2: Intermedio</div>
+                <div class="level-progress-card">
+                    <div class="level-title">💎 Intermedio</div>
                     <div class="level-status">0 / 5 completati</div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar" style="width: 0%"></div>
+                        <div class="progress-bar" id="progress-2" style="width: 0%"></div>
                     </div>
                 </div>
-
-                <div class="level-card" data-level="3">
-                    <div class="level-icon">🔬</div>
-                    <div class="level-title">Livello 3: Avanzato</div>
+                <div class="level-progress-card">
+                    <div class="level-title">🔬 Avanzato</div>
                     <div class="level-status">0 / 4 completati</div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar" style="width: 0%"></div>
+                        <div class="progress-bar" id="progress-3" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ===== NAVIGATION TABS ===== -->
-        <div class="nav-tabs">
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
             <button class="tab-button active" onclick="showLevel(0)">
-                <span class="icon">🚀</span>
+                <span class="icon">⚡</span>
                 Quick Start
             </button>
             <button class="tab-button" onclick="showLevel(1)">
@@ -590,1321 +755,492 @@
             </button>
         </div>
 
-        <!-- ===== LIVELLO 0: QUICK START ===== -->
-        <div class="content-section active" id="level-0">
-            <div class="lesson-grid">
-                <!-- Lezione 1: Setup Wallet -->
-                <div class="lesson-card">
-                    <h3>👛 Setup del tuo Wallet</h3>
-                    <p>Il wallet è la tua "banca personale" nel mondo crypto. Impara a configurare MetaMask, il wallet più usato.</p>
-
-                    <h4>📥 Come Installare MetaMask</h4>
-                    <ol>
-                        <li>Vai su <strong>metamask.io</strong></li>
-                        <li>Clicca "Download" e scegli l'estensione per il tuo browser</li>
-                        <li>Aggiungi l'estensione a Chrome/Firefox/Brave</li>
-                        <li>Clicca "Create a new wallet"</li>
-                        <li><strong>IMPORTANTISSIMO:</strong> Salva la tua seed phrase (12 parole) in un posto sicuro!</li>
-                    </ol>
-
-                    <div class="warning-box">
-                        <strong>⚠️ ATTENZIONE:</strong> Non condividere MAI la tua seed phrase con nessuno. Chi ha le 12 parole ha accesso completo ai tuoi fondi. Scrivile su carta, non farle screenshot!
-                    </div>
-
-                    <h4>🔑 Concetti Base</h4>
-                    <ul>
-                        <li><strong>Public Address</strong>: Come il tuo IBAN, puoi condividerlo per ricevere crypto (es: 0x1234...5678)</li>
-                        <li><strong>Private Key</strong>: Come il PIN del bancomat, NON condividerla mai</li>
-                        <li><strong>Seed Phrase</strong>: 12 parole per recuperare il wallet se perdi il telefono</li>
-                    </ul>
-
-                    <div class="success-box">
-                        <strong>✅ Checklist di Sicurezza:</strong>
-                        <ul style="margin-top: 10px;">
-                            <li>✓ Seed phrase scritta su carta e conservata al sicuro</li>
-                            <li>✓ Password forte sul wallet</li>
-                            <li>✓ Estensione browser scaricata SOLO dal sito ufficiale</li>
-                            <li>✓ Mai condividere chiavi private o seed</li>
-                        </ul>
+        <!-- LEVEL 0: QUICK START -->
+        <div id="level0" class="content-area active">
+            <div class="task-list">
+                <div class="task-item" onclick="toggleTask(this, 0, 0)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">💼 Crea il tuo primo wallet</div>
+                        <div class="task-description">Installa MetaMask e crea un wallet sicuro. Annota la seed phrase in un posto sicuro.</div>
                     </div>
                 </div>
-
-                <!-- Lezione 2: Studiare una Crypto -->
-                <div class="lesson-card">
-                    <h3>📊 Come Studiare una Crypto</h3>
-                    <p>Prima di investire, devi saper analizzare un progetto. Impara a usare CoinMarketCap e CoinGecko.</p>
-
-                    <h4>🔍 Dove Cercare Informazioni</h4>
-                    <ul>
-                        <li><strong>CoinMarketCap.com</strong> - Il sito più famoso</li>
-                        <li><strong>CoinGecko.com</strong> - Alternative con più dettagli</li>
-                        <li><strong>Sito Ufficiale</strong> del progetto</li>
-                        <li><strong>Whitepaper</strong> - Documento tecnico del progetto</li>
-                    </ul>
-
-                    <h4>📈 Dati da Analizzare</h4>
-                    <ul>
-                        <li><strong>Market Cap</strong>: Valore totale di tutte le monete in circolazione (prezzo × supply)</li>
-                        <li><strong>Volume 24h</strong>: Quanti soldi vengono scambiati al giorno (più alto = più liquidità)</li>
-                        <li><strong>Circulating Supply</strong>: Quante monete sono già in circolazione</li>
-                        <li><strong>Max Supply</strong>: Limite massimo di monete che esisteranno (Bitcoin: 21M)</li>
-                        <li><strong>All-Time High/Low</strong>: Prezzo massimo/minimo mai raggiunto</li>
-                    </ul>
-
-                    <h4>🚩 Red Flags da Evitare</h4>
-                    <div class="warning-box">
-                        <ul>
-                            <li>🚩 Team anonimo senza track record</li>
-                            <li>🚩 Whitepaper copiato o generico</li>
-                            <li>🚩 Promesse di guadagni garantiti</li>
-                            <li>🚩 Supply infinito senza burn mechanism</li>
-                            <li>🚩 Nessun audit del codice</li>
-                            <li>🚩 Community solo focalizzata sul prezzo</li>
-                        </ul>
-                    </div>
-
-                    <h4>✅ Good Signs</h4>
-                    <div class="success-box">
-                        <ul>
-                            <li>✓ Team pubblico e verificabile su LinkedIn</li>
-                            <li>✓ Partnership con aziende reali</li>
-                            <li>✓ Codice open-source su GitHub</li>
-                            <li>✓ Audit di sicurezza da CertiK/PeckShield</li>
-                            <li>✓ Community attiva e tecnica</li>
-                            <li>✓ Roadmap realistica e trasparente</li>
-                        </ul>
+                <div class="task-item" onclick="toggleTask(this, 0, 1)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🎨 Esplora OpenSea</div>
+                        <div class="task-description">Visita OpenSea.io e scopri collezioni NFT popolari. Comprendi come funziona un marketplace.</div>
                     </div>
                 </div>
-
-                <!-- Lezione 3: Comprare Crypto -->
-                <div class="lesson-card">
-                    <h3>💰 Come Comprare Crypto</h3>
-                    <p>Guida step-by-step per il tuo primo acquisto di criptovalute.</p>
-
-                    <h4>🏛️ Scegliere un Exchange</h4>
-                    <ul>
-                        <li><strong>Binance</strong> - Exchange più grande, commissioni basse (0.1%)</li>
-                        <li><strong>Coinbase</strong> - User-friendly ma commissioni alte (~2%)</li>
-                        <li><strong>Kraken</strong> - Sicuro e regolamentato</li>
-                        <li><strong>Young Platform</strong> - Italiano, perfetto per iniziare</li>
-                    </ul>
-
-                    <h4>📝 Step per Comprare</h4>
-                    <ol>
-                        <li><strong>Registrazione</strong>: Email + password forte</li>
-                        <li><strong>KYC</strong> (Know Your Customer): Carica documento identità + selfie</li>
-                        <li><strong>Deposito</strong>: Bonifico SEPA (1-2 giorni) o carta (istantaneo ma fees alte)</li>
-                        <li><strong>Acquisto</strong>: Cerca la crypto → Inserisci importo → Conferma</li>
-                        <li><strong>Prelievo</strong>: (Opzionale) Sposta le crypto sul tuo wallet MetaMask</li>
-                    </ol>
-
-                    <div class="highlight-box">
-                        <strong>💡 Consiglio per Iniziare:</strong>
-                        <p style="margin-top: 10px;">
-                            Compra prima delle "stablecoin" come USDT o USDC (1 USDT = 1 EUR sempre). Così hai liquidità pronta per comprare altre crypto senza dover aspettare il bonifico ogni volta.
-                        </p>
-                    </div>
-
-                    <h4>💸 Commissioni da Conoscere</h4>
-                    <ul>
-                        <li><strong>Trading Fee</strong>: 0.1% - 1% per ogni trade</li>
-                        <li><strong>Withdrawal Fee</strong>: Variabile (€1-€25) per prelevare su wallet esterno</li>
-                        <li><strong>Gas Fee</strong>: Costo per transazioni on-chain (Ethereum può costare €5-€50!)</li>
-                        <li><strong>Spread</strong>: Differenza tra prezzo compra/vendi (nascosto ma può essere alto)</li>
-                    </ul>
-
-                    <div class="warning-box">
-                        <strong>⚠️ Mai investire più di quanto puoi permetterti di perdere!</strong> Le crypto sono volatili. Inizia con piccole somme (€50-€100) per imparare.
+                <div class="task-item" onclick="toggleTask(this, 0, 2)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">💰 Ottieni crypto di test</div>
+                        <div class="task-description">Usa un faucet per ottenere ETH testnet (Sepolia/Goerli). Sperimenta senza rischi.</div>
                     </div>
                 </div>
-
-                <!-- Lezione 4: NFT Basics -->
-                <div class="lesson-card">
-                    <h3>🎨 Principi Base degli NFT</h3>
-                    <p>NFT = Non-Fungible Token. Impara cosa sono e come funzionano.</p>
-
-                    <h4>🤔 Cosa Significa "Non-Fungible"?</h4>
-                    <ul>
-                        <li><strong>Fungible</strong>: 1 Bitcoin = 1 Bitcoin (interscambiabili)</li>
-                        <li><strong>Non-Fungible</strong>: La Gioconda ≠ un'altra opera d'arte (unici)</li>
-                    </ul>
-
-                    <p>Gli NFT sono <strong>certificati di proprietà digitali</strong> su blockchain. Ogni NFT è unico e tracciabile.</p>
-
-                    <h4>📦 Cosa Può Essere un NFT?</h4>
-                    <ul>
-                        <li>🎨 Arte digitale (JPEG, GIF, video)</li>
-                        <li>🎵 Musica e album</li>
-                        <li>🎮 Oggetti in-game (armi, skin, personaggi)</li>
-                        <li>🏠 Proprietà nel metaverso</li>
-                        <li>🎫 Biglietti per eventi</li>
-                        <li>📜 Certificati e documenti</li>
-                        <li>👔 Membership e accesso esclusivo (es: X World NFT)</li>
-                    </ul>
-
-                    <h4>⚙️ Come Funzionano Tecnicamente</h4>
-                    <div class="code-box">
-Standard: ERC-721 (Ethereum) o ERC-1155 (Multi-token)
-Metadata: JSON su IPFS
-Immagine: Ospitata su IPFS o Arweave (decentralizzato)
-Smart Contract: Definisce proprietà e trasferimenti
-                    </div>
-
-                    <h4>💰 Utility degli NFT nel Mondo Reale</h4>
-                    <div class="highlight-box">
-                        <strong>Esempio: X World Project</strong>
-                        <ul style="margin-top: 10px;">
-                            <li>🥉 <strong>Bronze NFT (€30)</strong>: Accesso chat community</li>
-                            <li>🥈 <strong>Silver NFT (€60)</strong>: + Forum founder + Sconti progetti</li>
-                            <li>🥇 <strong>Gold NFT (€90)</strong>: + Video call mensili + Governance DAO</li>
-                        </ul>
-                        <p style="margin-top: 10px;">L'NFT non è solo un'immagine, è una <strong>chiave di accesso</strong> a benefici esclusivi!</p>
+                <div class="task-item" onclick="toggleTask(this, 0, 3)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">📖 Studia i termini base</div>
+                        <div class="task-description">Familiarizza con: Blockchain, NFT, Gas Fee, Smart Contract, DeFi, DAO.</div>
                     </div>
                 </div>
-
-                <!-- Lezione 5: Comprare e Vendere NFT -->
-                <div class="lesson-card">
-                    <h3>🛒 Come Comprare e Vendere NFT</h3>
-                    <p>Guida pratica ai marketplace NFT e al tuo primo acquisto.</p>
-
-                    <h4>🏪 Marketplace NFT Principali</h4>
-                    <ul>
-                        <li><strong>OpenSea</strong> - Il più grande, multi-chain (Ethereum, Polygon, Base)</li>
-                        <li><strong>Blur</strong> - Per trader professionisti, 0% fees</li>
-                        <li><strong>Rarible</strong> - Community-driven</li>
-                        <li><strong>Magic Eden</strong> - Solana NFT</li>
-                    </ul>
-
-                    <h4>🛍️ Come Comprare un NFT (OpenSea)</h4>
-                    <ol>
-                        <li><strong>Connetti Wallet</strong>: Clicca "Connect Wallet" → Scegli MetaMask</li>
-                        <li><strong>Cerca Collezione</strong>: Usa la search bar o esplora categorie</li>
-                        <li><strong>Verifica Collezione</strong>: Controlla la spunta blu ✓ (verified)</li>
-                        <li><strong>Scegli NFT</strong>: Guarda traits, rarity, prezzo floor</li>
-                        <li><strong>Buy Now o Make Offer</strong>:
-                            <ul style="margin-top: 5px;">
-                                <li>"Buy Now" = Compri subito al prezzo fissato</li>
-                                <li>"Make Offer" = Fai un'offerta più bassa (owner può accettare)</li>
-                            </ul>
-                        </li>
-                        <li><strong>Conferma + Paga Gas</strong>: Approva transazione su MetaMask</li>
-                        <li><strong>NFT nel tuo Wallet!</strong>: Vai su "Profile" per vedere i tuoi NFT</li>
-                    </ol>
-
-                    <h4>💼 Come Vendere un NFT</h4>
-                    <ol>
-                        <li>Vai su "Profile" → Seleziona l'NFT da vendere</li>
-                        <li>Clicca "List for Sale"</li>
-                        <li>Scegli tipo di vendita:
-                            <ul style="margin-top: 5px;">
-                                <li><strong>Fixed Price</strong>: Prezzo fisso</li>
-                                <li><strong>Auction</strong>: Asta con durata (1h, 1 giorno, 1 settimana)</li>
-                            </ul>
-                        </li>
-                        <li>Inserisci prezzo e durata</li>
-                        <li>Paga gas fee per listare</li>
-                        <li>Attendi acquirente!</li>
-                    </ol>
-
-                    <h4>📊 Concetti Importanti</h4>
-                    <ul>
-                        <li><strong>Floor Price</strong>: Prezzo più basso nella collezione (buon punto di riferimento)</li>
-                        <li><strong>Rarity</strong>: Quanto è raro il tuo NFT (traits più rari = più valore)</li>
-                        <li><strong>Royalty</strong>: % che va al creator quando rivendi (di solito 5-10%)</li>
-                        <li><strong>Gas Fee</strong>: Paghi tu quando compri/listi, non quando vendi</li>
-                    </ul>
-
-                    <div class="warning-box">
-                        <strong>🚨 Sicurezza NFT:</strong>
-                        <ul style="margin-top: 10px;">
-                            <li>✓ Controlla sempre la spunta blu ✓ della collezione</li>
-                            <li>✓ Verifica l'indirizzo del contratto sul sito ufficiale</li>
-                            <li>✓ Non cliccare link sospetti da DM</li>
-                            <li>✓ Usa wallet separati per "holding" e "trading"</li>
-                            <li>✓ Revoca permessi su revoke.cash periodicamente</li>
-                        </ul>
+                <div class="task-item" onclick="toggleTask(this, 0, 4)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🔍 Esplora Etherscan</div>
+                        <div class="task-description">Visita Etherscan.io e leggi transazioni reali. Comprendi come funziona un block explorer.</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ===== LIVELLO 1: FONDAMENTI ===== -->
-        <div class="content-section" id="level-1">
-            <div class="lesson-grid">
-                <div class="lesson-card">
-                    <h3>🎯 Cos'è la Blockchain</h3>
-                    <p>La blockchain è un <strong>database distribuito</strong> che registra transazioni in modo permanente, trasparente e immutabile.</p>
+        <!-- LEVEL 1: FONDAMENTI -->
+        <div id="level1" class="content-area">
+            <div class="topic">
+                <h3>🎯 Cos'è la Blockchain</h3>
+                <p>La blockchain è una <span class="highlight">tecnologia di registro distribuito (DLT)</span> che permette di registrare informazioni in modo sicuro, trasparente e immutabile senza la necessità di un'autorità centrale.</p>
 
-                    <h4>🔗 Analogia Semplice</h4>
-                    <p>Immagina un <strong>quaderno condiviso</strong> dove:</p>
-                    <ul>
-                        <li>Tutti hanno una copia identica (decentralizzato)</li>
-                        <li>Ogni pagina (blocco) è numerata e collegata alla precedente</li>
-                        <li>Non puoi strappare una pagina senza che tutti se ne accorgano</li>
-                        <li>Per aggiungere una pagina, la maggioranza deve essere d'accordo (consensus)</li>
-                    </ul>
-
-                    <h4>🏗️ Architettura della Rete</h4>
-                    <ul>
-                        <li><strong>Nodi</strong>: Computer che mantengono una copia della blockchain</li>
-                        <li><strong>Full Node</strong>: Scarica TUTTA la blockchain (~500GB per Bitcoin)</li>
-                        <li><strong>Light Node</strong>: Scarica solo gli header dei blocchi</li>
-                        <li><strong>Mining Node</strong>: Nodi che creano nuovi blocchi (PoW)</li>
-                        <li><strong>Validator</strong>: Nodi che validano blocchi (PoS)</li>
-                    </ul>
-
-                    <div class="highlight-box">
-                        <strong>💡 Perché è Rivoluzionaria?</strong>
-                        <p style="margin-top: 10px;">
-                            Per la prima volta nella storia possiamo <strong>trasferire valore digitale</strong> senza intermediari (banche),
-                            senza poter duplicare o falsificare (double-spending problem risolto).
-                        </p>
-                    </div>
+                <h4>Analogia Semplice</h4>
+                <div class="example-box">
+                    <strong>Immagina un quaderno condiviso:</strong> Invece di avere un quaderno custodito da una sola persona (banca, ente centrale), tutti hanno una copia identica del quaderno. Ogni volta che qualcuno scrive qualcosa, tutti aggiornano la loro copia. Nessuno può cancellare o modificare ciò che è già scritto.
                 </div>
 
-                <div class="lesson-card">
-                    <h3>🧱 Struttura di un Blocco</h3>
-                    <p>Ogni blocco è come una "scatola" che contiene transazioni + metadati.</p>
-
-                    <h4>📦 Anatomia di un Blocco</h4>
-                    <div class="code-box">
-{
-  "block_number": 12345678,
-  "timestamp": "2024-01-15 14:30:00",
-  "prev_hash": "0x7a3b...4c2d",
-  "merkle_root": "0x9f1e...8b4a",
-  "nonce": 4215648931,
-  "difficulty": "25.05T",
-  "transactions": [
-    { "from": "0xABC...", "to": "0xDEF...", "value": 1.5 },
-    { "from": "0x123...", "to": "0x456...", "value": 0.05 },
-    ...
-  ]
-}
-                    </div>
-
-                    <h4>🔑 Campi Spiegati</h4>
-                    <ul>
-                        <li><strong>prev_hash</strong>: Hash del blocco precedente (crea la "catena")</li>
-                        <li><strong>merkle_root</strong>: Hash di tutte le transazioni (verifica integrità)</li>
-                        <li><strong>nonce</strong>: Numero casuale per il mining (PoW)</li>
-                        <li><strong>difficulty</strong>: Quanto è difficile minare il blocco</li>
-                        <li><strong>timestamp</strong>: Quando è stato creato</li>
-                    </ul>
-
-                    <h4>⛓️ Come si Collegano i Blocchi</h4>
-                    <div class="code-box">
-Blocco 1: hash = A
-         ↓
-Blocco 2: prev_hash = A, hash = B
-         ↓
-Blocco 3: prev_hash = B, hash = C
-         ↓
-Blocco 4: prev_hash = C, hash = D
-                    </div>
-                    <p>Se modifichi il Blocco 2, l'hash B cambia → Blocco 3 non corrisponde più → catena rotta!</p>
-                </div>
-
-                <div class="lesson-card">
-                    <h3>⛏️ Mining e Proof of Work (PoW)</h3>
-                    <p>Il mining è il processo di <strong>validazione e creazione di nuovi blocchi</strong> tramite calcolo computazionale.</p>
-
-                    <h4>🎲 Come Funziona il Mining</h4>
-                    <ol>
-                        <li>Raccogli transazioni dalla mempool</li>
-                        <li>Crea un blocco candidato</li>
-                        <li>Trova un <strong>nonce</strong> che produce un hash con N zeri iniziali</li>
-                        <li>Il primo che trova il nonce vince il block reward</li>
-                    </ol>
-
-                    <div class="code-box">
-Obiettivo: hash con 4 zeri iniziali
-
-nonce = 1 → hash = 7a3b4c2d... ❌
-nonce = 2 → hash = 9f1e8b4a... ❌
-...
-nonce = 4,215,648,931 → hash = 0000a7b3... ✅ TROVATO!
-                    </div>
-
-                    <h4>💰 Ricompense del Mining</h4>
-                    <ul>
-                        <li><strong>Block Reward</strong>: 6.25 BTC (si dimezza ogni 4 anni, halving)</li>
-                        <li><strong>Transaction Fees</strong>: Somma di tutte le fee delle tx nel blocco</li>
-                        <li>Esempio: 6.25 BTC + 0.5 BTC fees = 6.75 BTC totali (~€250k)</li>
-                    </ul>
-
-                    <h4>🔋 Consumo Energetico</h4>
-                    <div class="warning-box">
-                        Bitcoin consuma ~150 TWh/anno (come l'Argentina intera). Questo ha portato alla nascita di Proof of Stake (PoS) che usa il 99.95% di energia in meno.
-                    </div>
-                </div>
-
-                <div class="lesson-card">
-                    <h3>🔄 Proof of Stake (PoS)</h3>
-                    <p>Alternativa eco-friendly al PoW. Invece di computazione, usi <strong>"skin in the game"</strong> (stake).</p>
-
-                    <h4>🎰 Come Funziona PoS</h4>
-                    <ol>
-                        <li>Fai <strong>staking</strong> di crypto (es: 32 ETH per Ethereum)</li>
-                        <li>Vieni scelto casualmente per validare il prossimo blocco</li>
-                        <li>Più stake hai, più probabilità di essere scelto</li>
-                        <li>Se validi correttamente → Ricevi rewards</li>
-                        <li>Se cerchi di frodare → Perdi lo stake (slashing)</li>
-                    </ol>
-
-                    <h4>⚖️ PoW vs PoS - Confronto</h4>
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                        <tr style="background: #f7fafc;">
-                            <th style="padding: 10px; text-align: left; border: 1px solid #e2e8f0;"></th>
-                            <th style="padding: 10px; border: 1px solid #e2e8f0;">PoW (Bitcoin)</th>
-                            <th style="padding: 10px; border: 1px solid #e2e8f0;">PoS (Ethereum 2.0)</th>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;"><strong>Energia</strong></td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">150 TWh/anno ❌</td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">0.01 TWh/anno ✅</td>
-                        </tr>
-                        <tr style="background: #f7fafc;">
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;"><strong>Hardware</strong></td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">ASIC costosi</td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">Computer normale</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;"><strong>Barriera entrata</strong></td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">Alta (~€10k)</td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">Media (32 ETH)</td>
-                        </tr>
-                        <tr style="background: #f7fafc;">
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;"><strong>Sicurezza</strong></td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">Provata 15+ anni</td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">Più recente</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;"><strong>Centralizzazione</strong></td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">Mining pool (risk)</td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">Più distribuito</td>
-                        </tr>
-                    </table>
-
-                    <div class="success-box">
-                        <strong>✅ Ethereum è passato a PoS nel 2022</strong> (The Merge), riducendo il consumo energetico del 99.95% e aprendo la strada a maggiore scalabilità.
-                    </div>
-                </div>
-
-                <div class="lesson-card">
-                    <h3>🍴 Fork: Soft Fork vs Hard Fork</h3>
-                    <p>Un fork è una <strong>modifica al protocollo</strong> della blockchain. Può essere compatibile (soft) o incompatibile (hard).</p>
-
-                    <h4>🔧 Soft Fork (Compatibile)</h4>
-                    <ul>
-                        <li>Modifica retrocompatibile</li>
-                        <li>I nodi vecchi continuano a funzionare</li>
-                        <li>Esempio: SegWit su Bitcoin (2017)</li>
-                        <li>Non crea una nuova coin</li>
-                    </ul>
-
-                    <h4>⚡ Hard Fork (Incompatibile)</h4>
-                    <ul>
-                        <li>Modifica NON retrocompatibile</li>
-                        <li>I nodi devono aggiornare il software</li>
-                        <li>Può creare una nuova blockchain</li>
-                        <li>Esempio: Bitcoin → Bitcoin Cash (2017)</li>
-                    </ul>
-
-                    <div class="code-box">
-Blockchain Originale (Bitcoin)
-         |
-         | Hard Fork (2017)
-         |
-    ----+----
-    |        |
-Bitcoin   Bitcoin Cash
-(BTC)     (BCH)
-
-Ora esistono 2 crypto separate!
-                    </div>
-
-                    <h4>📜 Fork Famosi</h4>
-                    <ul>
-                        <li><strong>Bitcoin → Bitcoin Cash</strong> (2017): Aumento block size 1MB → 8MB</li>
-                        <li><strong>Ethereum → Ethereum Classic</strong> (2016): DAO hack, rollback controverso</li>
-                        <li><strong>Bitcoin → Bitcoin SV</strong> (2018): Fork di Bitcoin Cash per "Satoshi Vision"</li>
-                    </ul>
-                </div>
-
-                <div class="lesson-card">
-                    <h3>⚡ Il Trilemma della Blockchain</h3>
-                    <p>È impossibile ottimizzare contemporaneamente <strong>Decentralizzazione, Sicurezza e Scalabilità</strong>. Puoi averne solo 2 su 3.</p>
-
-                    <div class="code-box">
-         Decentralizzazione
-              /\
-             /  \
-            /    \
-           / BTC  \
-          /________\
-    Sicurezza    Scalabilità
-                    </div>
-
-                    <h4>🔺 Il Trilemma Spiegato</h4>
-                    <ul>
-                        <li><strong>Bitcoin</strong>: Decentralizzato ✅ + Sicuro ✅ → Lento ❌ (7 tx/sec)</li>
-                        <li><strong>Solana</strong>: Veloce ✅ (65k tx/sec) → Meno decentralizzato ❌</li>
-                        <li><strong>Ethereum</strong>: Bilanciato, usa Layer 2 per scalare</li>
-                    </ul>
-
-                    <h4>🚀 Soluzioni al Trilemma</h4>
-                    <ul>
-                        <li><strong>Sharding</strong>: Dividere la blockchain in "frammenti" paralleli</li>
-                        <li><strong>Layer 2</strong>: Spostare le tx fuori dalla mainnet (Optimism, Arbitrum)</li>
-                        <li><strong>Sidechains</strong>: Blockchain parallele connesse alla main (Polygon)</li>
-                        <li><strong>State Channels</strong>: Transazioni off-chain, settlement on-chain</li>
-                    </ul>
-                </div>
+                <h4>🔑 Caratteristiche Principali</h4>
+                <ul>
+                    <li><strong>Decentralizzazione:</strong> Non esiste un server centrale. La blockchain è distribuita su migliaia di computer in tutto il mondo.</li>
+                    <li><strong>Immutabilità:</strong> I dati scritti nella blockchain sono praticamente impossibili da modificare.</li>
+                    <li><strong>Trasparenza:</strong> Tutti possono vedere tutte le transazioni (le identità sono pseudonime).</li>
+                    <li><strong>Sicurezza Crittografica:</strong> Algoritmi matematici avanzati proteggono i dati.</li>
+                </ul>
             </div>
-        </div>
 
-        <!-- CONTINUA CON LIVELLO 2 E 3... -->
-        <!-- Per brevità, inserisco struttura placeholder -->
-
-        <!-- ===== LIVELLO 2: INTERMEDIO ===== -->
-        <div class="content-section" id="level-2">
-            <div class="lesson-grid">
-                <div class="lesson-card">
-                    <h3>⚙️ Smart Contracts</h3>
-                    <p>Programmi che girano sulla blockchain e si eseguono <strong>automaticamente</strong> quando si verificano certe condizioni.</p>
-
-                    <h4>📜 Esempio Pratico</h4>
-                    <div class="highlight-box">
-                        <strong>"SE Paolo paga 100 ETH ALLORA la proprietà della casa viene trasferita a Paolo"</strong>
-                        <p style="margin-top: 10px;">
-                            Il contratto si esegue automaticamente, senza notaio o intermediari. Il codice è legge.
-                        </p>
-                    </div>
-
-                    <h4>🔧 Caratteristiche Smart Contract</h4>
-                    <ul>
-                        <li><strong>Deterministici</strong>: Stesso input = stesso output sempre</li>
-                        <li><strong>Immutabili</strong>: Una volta deployati, non si possono modificare</li>
-                        <li><strong>Trasparenti</strong>: Il codice è pubblico e verificabile su Etherscan</li>
-                        <li><strong>Self-executing</strong>: Si eseguono senza intervento umano</li>
-                        <li><strong>Trustless</strong>: Non devi fidarti della controparte, solo del codice</li>
-                    </ul>
-
-                    <h4>💻 Linguaggi di Programmazione</h4>
-                    <ul>
-                        <li><strong>Solidity</strong>: Il più usato (Ethereum, Polygon, Base, Arbitrum)</li>
-                        <li><strong>Vyth on</strong>: Python-like, più sicuro ma meno flessibile</li>
-                        <li><strong>Rust</strong>: Usato su Solana e Polkadot</li>
-                        <li><strong>Move</strong>: Linguaggio di Aptos e Sui</li>
-                    </ul>
-
-                    <h4>📦 Esempio Smart Contract (Solidity)</h4>
-                    <div class="code-box">
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-contract SimpleStorage {
-    uint256 private storedData;
-
-    function set(uint256 x) public {
-        storedData = x;
-    }
-
-    function get() public view returns (uint256) {
-        return storedData;
-    }
-}
-                    </div>
-
-                    <h4>🔥 Gas ed Esecuzione</h4>
-                    <p>Il <strong>gas</strong> è l'unità che misura il costo computazionale di un'operazione su Ethereum.</p>
-
-                    <div class="highlight-box">
-                        <strong>Costo Transazione = Gas Usato × Gas Price (Gwei)</strong>
-                        <p style="margin-top: 10px;">
-                            Esempio: 21,000 gas × 50 Gwei = 1,050,000 Gwei = 0.00105 ETH ≈ €2-€5
-                        </p>
-                    </div>
-
-                    <h4>🎯 Perché Esiste il Gas?</h4>
-                    <ul>
-                        <li>Previene loop infiniti e spam sulla rete</li>
-                        <li>Compensa i validatori per l'esecuzione di codice</li>
-                        <li>Raziona le risorse computazionali limitate della blockchain</li>
-                        <li>Crea un mercato delle fees (domanda/offerta)</li>
-                    </ul>
-
-                    <div class="warning-box">
-                        <strong>⚠️ Gas Wars:</strong> Quando la rete è congestionata (NFT drop, airdrop), il gas può salire da €2 a €200+ per transazione! Usa <strong>gas trackers</strong> come etherscan.io/gastracker per vedere il momento migliore.
+            <div class="task-list">
+                <div class="task-item" onclick="toggleTask(this, 1, 0)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">📚 Studia la struttura dei blocchi</div>
+                        <div class="task-description">Comprendi: hash, timestamp, dati transazioni, collegamento tra blocchi.</div>
                     </div>
                 </div>
-
-                <div class="lesson-card">
-                    <h3>🏦 DeFi - Finanza Decentralizzata</h3>
-                    <p>DeFi = <strong>Decentralized Finance</strong>. Servizi finanziari senza banche o intermediari, solo smart contracts.</p>
-
-                    <h4>🔄 DEX - Decentralized Exchange</h4>
-                    <p>Scambia crypto direttamente con altri utenti, senza che l'exchange custodisca i tuoi fondi.</p>
-
-                    <ul>
-                        <li><strong>Uniswap</strong>: Il più famoso, usa AMM (Automated Market Maker)</li>
-                        <li><strong>PancakeSwap</strong>: Versione su Binance Smart Chain</li>
-                        <li><strong>Curve</strong>: Specializzato in stablecoin (bassi slippage)</li>
-                        <li><strong>1inch</strong>: Aggregatore che trova il prezzo migliore</li>
-                    </ul>
-
-                    <h4>💧 Liquidity Pools</h4>
-                    <p>Invece di orderbook (compratori/venditori), i DEX usano <strong>pool di liquidità</strong>.</p>
-
-                    <div class="highlight-box">
-                        <strong>Come Funziona:</strong>
-                        <ol style="margin-top: 10px; padding-left: 20px;">
-                            <li>Gli utenti depositano coppie di token (es: ETH/USDC) nel pool</li>
-                            <li>Ricevono LP tokens come ricevuta</li>
-                            <li>Guadagnano una % delle fees di trading (0.3% su Uniswap)</li>
-                            <li>Il prezzo si aggiusta automaticamente in base alla formula: x × y = k</li>
-                        </ol>
-                    </div>
-
-                    <h4>📈 Yield Farming</h4>
-                    <p>"Coltivare" rendimenti mettendo le tue crypto a lavorare in vari protocolli DeFi.</p>
-
-                    <ul>
-                        <li><strong>Staking</strong>: Blocca token per validare e guadagnare rewards (4-20% APY)</li>
-                        <li><strong>Liquidity Providing</strong>: Fornisci liquidità a DEX per guadagnare fees (5-300% APY)</li>
-                        <li><strong>Lending</strong>: Presta crypto su Aave/Compound e guadagna interessi (2-15% APY)</li>
-                    </ul>
-
-                    <h4>💰 Lending & Borrowing</h4>
-                    <p>Prestiti crypto decentralizzati senza KYC o credit score.</p>
-
-                    <div class="code-box">
-Protocolli Principali:
-- Aave: Depositi USDC, guadagni 5% APY
-- Compound: Presti DAI, prendi in prestito ETH
-- MakerDAO: Depositi ETH, minti DAI stablecoin
-
-Collaterale: Devi depositare 150-200% del valore che prendi in prestito
-                    </div>
-
-                    <h4>🎰 Impermanent Loss</h4>
-                    <div class="warning-box">
-                        <strong>⚠️ Rischio LP:</strong> Se fornisci liquidità e il prezzo dei token cambia molto, puoi perdere soldi rispetto a tenerli semplicemente in wallet (impermanent loss). È "impermanente" perché si realizza solo quando ritiri la liquidità.
-                    </div>
-
-                    <h4>✅ Vantaggi DeFi</h4>
-                    <ul>
-                        <li>🌍 Accessibile a chiunque (no KYC)</li>
-                        <li>🔓 Non-custodial (tu controlli i fondi)</li>
-                        <li>🔍 Trasparente (tutto on-chain)</li>
-                        <li>⚡ 24/7 disponibile</li>
-                        <li>💸 Rendimenti più alti della finanza tradizionale</li>
-                    </ul>
-
-                    <h4>❌ Rischi DeFi</h4>
-                    <ul>
-                        <li>🐛 Smart contract bugs (hack)</li>
-                        <li>📉 Impermanent loss</li>
-                        <li>🏃 Rug pulls (exit scam)</li>
-                        <li>⛽ Gas fees alte</li>
-                        <li>📚 Curva di apprendimento ripida</li>
-                    </ul>
-                </div>
-
-                <div class="lesson-card">
-                    <h3>🪙 Tokenomics</h3>
-                    <p>L'economia di un token: distribuzione, utilità, incentivi e sostenibilità.</p>
-
-                    <h4>💎 Coin vs Token</h4>
-                    <ul>
-                        <li><strong>Coin</strong>: Ha la sua blockchain (BTC su Bitcoin, ETH su Ethereum, SOL su Solana)</li>
-                        <li><strong>Token</strong>: Vive su una blockchain esistente (USDT su Ethereum, LINK su Ethereum)</li>
-                    </ul>
-
-                    <h4>🎯 Utility del Token</h4>
-                    <p>Perché il token dovrebbe avere valore? Deve avere una <strong>utility</strong>:</p>
-
-                    <ul>
-                        <li><strong>Governance</strong>: Voto su decisioni del protocollo (UNI, AAVE)</li>
-                        <li><strong>Staking</strong>: Blocca per guadagnare rewards (ETH, MATIC)</li>
-                        <li><strong>Fee Token</strong>: Paghi commissioni con quel token (BNB su BSC)</li>
-                        <li><strong>Access</strong>: Sblocca features (NFT membership, private chat)</li>
-                        <li><strong>Yield</strong>: Genera rendimenti passivi (staking rewards, dividendi)</li>
-                    </ul>
-
-                    <h4>📊 Token Distribution</h4>
-                    <div class="code-box">
-Esempio Distribuzione Tipica:
-
-🌍 Public Sale: 30% (community)
-👥 Team: 15% (locked 2 anni)
-💰 Investors: 20% (locked 1 anno)
-🎁 Ecosystem/Rewards: 25%
-💧 Liquidity: 10%
-                    </div>
-
-                    <h4>🔒 Vesting</h4>
-                    <p>Rilascio graduale dei token per evitare dump massicci.</p>
-
-                    <div class="highlight-box">
-                        <strong>Esempio:</strong> Team ha 15% dei token con vesting di 2 anni.
-                        <ul style="margin-top: 10px;">
-                            <li>Cliff: 6 mesi (nessun token rilasciato)</li>
-                            <li>Linear vesting: 1.25% ogni mese per 18 mesi</li>
-                        </ul>
-                        <p>Questo allinea gli incentivi del team con il successo a lungo termine.</p>
-                    </div>
-
-                    <h4>🔥 Token Burns</h4>
-                    <p>Meccanismi di <strong>deflazione</strong> per aumentare scarsità e valore.</p>
-
-                    <ul>
-                        <li><strong>EIP-1559 (Ethereum)</strong>: Brucia parte delle gas fees (deflationary)</li>
-                        <li><strong>BNB Burn</strong>: Binance brucia BNB ogni trimestre</li>
-                        <li><strong>Buyback & Burn</strong>: Protocollo compra token dal mercato e li brucia</li>
-                    </ul>
-
-                    <h4>💰 Tokenomics del BIC Token (X World)</h4>
-                    <div class="success-box">
-                        <strong>Esempio Reale:</strong>
-                        <ul style="margin-top: 10px;">
-                            <li><strong>Supply</strong>: 1,000,000 BIC</li>
-                            <li><strong>Crowdfunding</strong>: 50% venduto tramite NFT</li>
-                            <li><strong>Team</strong>: 10% (vesting 2 anni)</li>
-                            <li><strong>Rewards</strong>: 30% per staking/governance</li>
-                            <li><strong>Liquidity</strong>: 10% su Uniswap</li>
-                            <li><strong>Utility</strong>: Governance DAO + Sconti progetti + Staking rewards</li>
-                            <li><strong>Burn</strong>: 2% di ogni transazione bruciato → deflazionario</li>
-                        </ul>
-                    </div>
-
-                    <h4>🚩 Red Flags Tokenomics</h4>
-                    <div class="warning-box">
-                        <ul>
-                            <li>🚩 Team/Investors hanno >50% supply</li>
-                            <li>🚩 No vesting (possono vendere subito)</li>
-                            <li>🚩 Supply infinito senza burn</li>
-                            <li>🚩 Token senza utility chiara</li>
-                            <li>🚩 Distribuzione non trasparente</li>
-                        </ul>
+                <div class="task-item" onclick="toggleTask(this, 1, 1)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🔗 Esplora diversi tipi di blockchain</div>
+                        <div class="task-description">Bitcoin (PoW), Ethereum (PoS), Solana, Polygon. Confronta le differenze.</div>
                     </div>
                 </div>
-
-                <div class="lesson-card">
-                    <h3>📜 ERC Standards</h3>
-                    <p>Standard per creare token compatibili su Ethereum e blockchain EVM.</p>
-
-                    <h4>🪙 ERC-20 - Fungible Tokens</h4>
-                    <p>Standard per token fungibili (1 token = 1 token). Tutti i token ERC-20 sono interscambiabili.</p>
-
-                    <div class="code-box">
-// Funzioni obbligatorie ERC-20:
-- totalSupply(): Quanti token esistono
-- balanceOf(address): Bilancio di un address
-- transfer(to, amount): Trasferisci token
-- approve(spender, amount): Approva spesa
-- transferFrom(from, to, amount): Trasferisci per conto di
+                <div class="task-item" onclick="toggleTask(this, 1, 2)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🎓 Comprendi il consenso</div>
+                        <div class="task-description">Studia Proof of Work (PoW) e Proof of Stake (PoS). Differenze e vantaggi.</div>
                     </div>
-
-                    <p><strong>Esempi:</strong> USDT, USDC, LINK, UNI, AAVE, DAI</p>
-
-                    <h4>🎨 ERC-721 - Non-Fungible Tokens (NFT)</h4>
-                    <p>Ogni token è unico con un ID numerico. NFT classici (arte, collezioni).</p>
-
-                    <ul>
-                        <li>Ogni NFT ha metadata unico (immagine, traits, rarity)</li>
-                        <li>Non divisibili (non puoi avere 0.5 NFT)</li>
-                        <li><strong>Esempi:</strong> CryptoPunks, Bored Apes, X World NFT Collection</li>
-                    </ul>
-
-                    <h4>🎮 ERC-1155 - Multi-Token Standard</h4>
-                    <p>Mix di fungible + non-fungible nello stesso contratto. Perfetto per gaming.</p>
-
-                    <div class="highlight-box">
-                        <strong>Esempio Gaming:</strong>
-                        <ul style="margin-top: 10px;">
-                            <li>Token ID 1: Spada Leggendaria (NFT unico)</li>
-                            <li>Token ID 2: Pozione di Vita (100 copie fungibili)</li>
-                            <li>Token ID 3: Oro del gioco (1,000,000 copie)</li>
-                        </ul>
-                        <p>Tutto in un solo smart contract!</p>
-                    </div>
-
-                    <h4>💰 ERC-4626 - Tokenized Vaults</h4>
-                    <p>Standard per vault DeFi (depositi che generano yield).</p>
-
-                    <h4>🔗 Altri Standard Utili</h4>
-                    <ul>
-                        <li><strong>ERC-2981</strong>: Royalty standard per NFT</li>
-                        <li><strong>ERC-3525</strong>: Semi-Fungible Tokens</li>
-                        <li><strong>ERC-5192</strong>: Soulbound Tokens (non trasferibili)</li>
-                    </ul>
                 </div>
-
-                <div class="lesson-card">
-                    <h3>🏛️ DAO - Decentralized Autonomous Organization</h3>
-                    <p>Organizzazioni governate da smart contracts e votazioni on-chain, senza CEO o gerarchia centrale.</p>
-
-                    <h4>🗳️ Come Funziona una DAO</h4>
-                    <ol>
-                        <li>Possiedi token di governance (es: 100 UNI)</li>
-                        <li>Qualcuno propone una modifica (es: "Cambiare le fees da 0.3% a 0.25%")</li>
-                        <li>Token holder votano (1 token = 1 voto)</li>
-                        <li>Se la proposta passa (es: >50% voti), lo smart contract la esegue automaticamente</li>
-                    </ol>
-
-                    <h4>📊 Tipi di DAO</h4>
-                    <ul>
-                        <li><strong>Protocol DAO</strong>: Governa un protocollo DeFi (Uniswap, Aave, Compound)</li>
-                        <li><strong>Investment DAO</strong>: Pooled funds per investimenti crypto (The LAO)</li>
-                        <li><strong>Collector DAO</strong>: Compra NFT e arte (PleasrDAO)</li>
-                        <li><strong>Social DAO</strong>: Community (Friends With Benefits, $FWB)</li>
-                        <li><strong>Grant DAO</strong>: Finanzia progetti open-source (Gitcoin)</li>
-                    </ul>
-
-                    <h4>✅ Vantaggi DAO</h4>
-                    <ul>
-                        <li>🌍 Globale e aperta a tutti</li>
-                        <li>🔍 Trasparente (votazioni on-chain)</li>
-                        <li>⚖️ Democratica (token = voto)</li>
-                        <li>🤖 Automatizzata (smart contracts eseguono decisioni)</li>
-                    </ul>
-
-                    <h4>❌ Problemi DAO</h4>
-                    <ul>
-                        <li>🐋 Whale dominance (chi ha più token controlla)</li>
-                        <li>🐢 Decision making lento (votazioni richiedono tempo)</li>
-                        <li>⚖️ Incertezza legale (status giuridico non chiaro)</li>
-                        <li>👥 Low voter turnout (pochi partecipano)</li>
-                    </ul>
-
-                    <div class="success-box">
-                        <strong>🐙 X World DAO:</strong> I possessori di Gold NFT possono votare su:
-                        <ul style="margin-top: 10px;">
-                            <li>Quali progetti finanziare con i fondi raccolti</li>
-                            <li>Modifiche ai tier NFT e benefici</li>
-                            <li>Allocation dei BIC Token rewards</li>
-                            <li>Partnership e collaborazioni</li>
-                        </ul>
+                <div class="task-item" onclick="toggleTask(this, 1, 3)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">💻 Esplora i nodi</div>
+                        <div class="task-description">Cosa sono Full Nodes, Light Nodes e Mining Nodes.</div>
+                    </div>
+                </div>
+                <div class="task-item" onclick="toggleTask(this, 1, 4)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🔐 Studia la crittografia</div>
+                        <div class="task-description">Hash SHA-256, chiavi pubbliche/private, firma digitale.</div>
+                    </div>
+                </div>
+                <div class="task-item" onclick="toggleTask(this, 1, 5)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🌐 Rete P2P</div>
+                        <div class="task-description">Come funziona una rete peer-to-peer decentralizzata.</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ===== LIVELLO 3: AVANZATO ===== -->
-        <div class="content-section" id="level-3">
-            <div class="lesson-grid">
-                <div class="lesson-card">
-                    <h3>🌉 Layer 2 Solutions</h3>
-                    <p>Protocolli costruiti "sopra" blockchain Layer 1 (Ethereum, Bitcoin) per aumentare <strong>scalabilità</strong> e ridurre costi.</p>
+        <!-- LEVEL 2: INTERMEDIO -->
+        <div id="level2" class="content-area">
+            <div class="topic">
+                <h3>📜 Smart Contracts</h3>
+                <p>Gli <span class="highlight">smart contract</span> sono programmi auto-eseguibili scritti su blockchain. Quando si verificano determinate condizioni, il contratto si esegue automaticamente.</p>
 
-                    <h4>🎯 Perché Servono i Layer 2?</h4>
-                    <p>Ethereum fa ~15 tx/sec, Visa fa 65,000 tx/sec. Le blockchain L1 non scalano abbastanza per adozione di massa.</p>
-
-                    <div class="highlight-box">
-                        <strong>Trilemma blockchain:</strong> Non puoi avere contemporaneamente Decentralizzazione + Sicurezza + Scalabilità.
-                        <p style="margin-top: 10px;">
-                            Layer 2 risolve questo spostando le transazioni fuori dalla mainnet (off-chain) ma mantenendo la sicurezza di Ethereum (on-chain settlement).
-                        </p>
-                    </div>
-
-                    <h4>⚡ Lightning Network (Bitcoin)</h4>
-                    <p>Canali di pagamento bidirezionali. Solo apertura e chiusura del canale vanno on-chain.</p>
-
-                    <div class="code-box">
-Alice apre canale con Bob: 1 BTC
-↓
-10,000 transazioni off-chain (instant, €0 fees)
-↓
-Chiusura canale: settlement finale on-chain
-
-Risultato: 10,000 tx → 2 tx on-chain (99.98% riduzione)
-                    </div>
-
-                    <h4>🔄 Optimistic Rollups</h4>
-                    <p>"Ottimisticamente" assumono che le tx siano valide. Verificano solo se qualcuno contesta (fraud proof).</p>
-
-                    <ul>
-                        <li><strong>Optimism</strong>: L2 di Ethereum con EVM compatibility</li>
-                        <li><strong>Arbitrum</strong>: Simile a Optimism, più veloce</li>
-                        <li><strong>Base</strong>: L2 di Coinbase basato su Optimism</li>
-                    </ul>
-
-                    <div class="highlight-box">
-                        <strong>Pro:</strong>
-                        <ul style="margin-top: 10px;">
-                            <li>✅ 10-100x più veloce di Ethereum</li>
-                            <li>✅ Fees 10-50x più basse</li>
-                            <li>✅ EVM compatible (stessi smart contracts)</li>
-                        </ul>
-                        <strong style="display: block; margin-top: 10px;">Contro:</strong>
-                        <ul style="margin-top: 5px;">
-                            <li>❌ Challenge period (7 giorni per withdrawal)</li>
-                            <li>❌ Meno sicurezza di L1</li>
-                        </ul>
-                    </div>
-
-                    <h4>🔐 ZK-Rollups (Zero-Knowledge)</h4>
-                    <p>Usano prove crittografiche (zero-knowledge proofs) per validare batch di transazioni senza rivelare i dati.</p>
-
-                    <ul>
-                        <li><strong>zkSync</strong>: zkEVM (Ethereum compatibility)</li>
-                        <li><strong>StarkNet</strong>: Usa STARK proofs</li>
-                        <li><strong>Polygon zkEVM</strong>: Layer 2 di Polygon</li>
-                    </ul>
-
-                    <div class="success-box">
-                        <strong>✅ Vantaggi ZK-Rollups:</strong>
-                        <ul style="margin-top: 10px;">
-                            <li>Withdrawal instant (no challenge period)</li>
-                            <li>Più sicuri di Optimistic Rollups</li>
-                            <li>Privacy nativa (ZK = zero knowledge)</li>
-                        </ul>
-                        <p style="margin-top: 10px;"><strong>Svantaggio:</strong> Più complessi da implementare, meno EVM compatibility.</p>
-                    </div>
-
-                    <h4>📊 Confronto L2</h4>
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                        <tr style="background: #f7fafc;">
-                            <th style="padding: 10px; text-align: left; border: 1px solid #e2e8f0;"></th>
-                            <th style="padding: 10px; border: 1px solid #e2e8f0;">Optimistic</th>
-                            <th style="padding: 10px; border: 1px solid #e2e8f0;">ZK-Rollups</th>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;"><strong>Withdrawal</strong></td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">7 giorni ❌</td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">Instant ✅</td>
-                        </tr>
-                        <tr style="background: #f7fafc;">
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;"><strong>EVM Compat</strong></td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">100% ✅</td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">~95%</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;"><strong>Fees</strong></td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">€0.10-€1</td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">€0.05-€0.50</td>
-                        </tr>
-                        <tr style="background: #f7fafc;">
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;"><strong>Sicurezza</strong></td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">Fraud proofs</td>
-                            <td style="padding: 10px; border: 1px solid #e2e8f0;">Validity proofs ✅</td>
-                        </tr>
-                    </table>
-
-                    <h4>🔮 Futuro: Layer 3</h4>
-                    <p>L3 costruiti sopra L2 per casi d'uso specifici (gaming, social, NFT). Esempio: <strong>Xai (gaming L3 su Arbitrum)</strong>.</p>
+                <h4>Esempio Pratico</h4>
+                <div class="example-box">
+                    <strong>Vendita automatica:</strong> Se Paolo invia 1 ETH a questo contratto, riceve automaticamente un NFT. Nessun intermediario, tutto automatico e trasparente.
                 </div>
 
-                <div class="lesson-card">
-                    <h3>🔒 Privacy e Anonimato</h3>
-                    <p>Bitcoin e Ethereum sono <strong>pseudonimi, non anonimi</strong>. Tutte le transazioni sono pubbliche e tracciabili.</p>
+                <h4>🛠️ Linguaggi Principali</h4>
+                <ul>
+                    <li><strong>Solidity:</strong> Il più usato (Ethereum, Polygon, BSC)</li>
+                    <li><strong>Rust:</strong> Usato su Solana e Polkadot</li>
+                    <li><strong>Vyper:</strong> Alternativa più sicura a Solidity</li>
+                </ul>
+            </div>
 
-                    <h4>🕵️ Bitcoin: Pseudonimato</h4>
-                    <p>Gli indirizzi non contengono nomi reali, ma con analisi on-chain si possono tracciare identità.</p>
-
-                    <div class="warning-box">
-                        <strong>⚠️ Esempio:</strong> Se compri Bitcoin su Coinbase (KYC) e poi li mandi a un indirizzo, Coinbase sa che quell'indirizzo è tuo. Tutte le future transazioni sono tracciabili.
-                    </div>
-
-                    <h4>🛡️ Tecniche di Privacy</h4>
-
-                    <ul>
-                        <li><strong>CoinJoin</strong>: Mescola transazioni di più utenti (Bitcoin Wasabi Wallet)</li>
-                        <li><strong>Stealth Addresses</strong>: Indirizzi monouso generati per ogni pagamento</li>
-                        <li><strong>Ring Signatures</strong>: Nasconde chi ha firmato tra un gruppo (Monero)</li>
-                        <li><strong>Zero-Knowledge Proofs</strong>: Prova di possesso senza rivelare dati (Zcash)</li>
-                    </ul>
-
-                    <h4>🔐 Monero (XMR)</h4>
-                    <p>Privacy coin con anonimato nativo. Usa Ring Signatures + Stealth Addresses + RingCT.</p>
-
-                    <div class="code-box">
-Ring Signature:
-Alice firma una tx insieme a 10 altri utenti casuali
-↓
-Impossibile sapere chi dei 11 ha veramente firmato
-↓
-Privacy completa, ma la tx è verificabile
-                    </div>
-
-                    <ul>
-                        <li>✅ Mittente nascosto (Ring Signatures)</li>
-                        <li>✅ Destinatario nascosto (Stealth Addresses)</li>
-                        <li>✅ Importo nascosto (RingCT)</li>
-                    </ul>
-
-                    <h4>🛡️ Zcash (ZEC)</h4>
-                    <p>Privacy opzionale con zk-SNARKs (Zero-Knowledge Succinct Non-Interactive Argument of Knowledge).</p>
-
-                    <ul>
-                        <li><strong>Transparent addresses</strong>: Come Bitcoin (pubblico)</li>
-                        <li><strong>Shielded addresses</strong>: Privacy completa con ZK proofs</li>
-                    </ul>
-
-                    <div class="highlight-box">
-                        <strong>💡 Zero-Knowledge Proof:</strong>
-                        <p style="margin-top: 10px;">
-                            "Provo di avere 100 ZEC senza rivelare quanto ho, da dove vengono, o dove vanno"
-                        </p>
-                        <p style="margin-top: 10px;">
-                            È matematicamente impossibile falsificare, ma il verificatore non impara nessuna informazione privata.
-                        </p>
-                    </div>
-
-                    <h4>🌐 Privacy su Ethereum</h4>
-                    <ul>
-                        <li><strong>Tornado Cash</strong>: Mixer decentralizzato (bannato negli USA 2022)</li>
-                        <li><strong>Aztec Network</strong>: Privacy L2 con ZK proofs</li>
-                        <li><strong>Railgun</strong>: Privacy DeFi con smart contracts schermati</li>
-                    </ul>
-
-                    <h4>⚖️ Privacy vs Regolamentazione</h4>
-                    <div class="warning-box">
-                        <strong>⚠️ Attenzione:</strong>
-                        <ul style="margin-top: 10px;">
-                            <li>Privacy coins come Monero sono delisting da exchange centralizzati</li>
-                            <li>Tornado Cash è stato bannato dal governo USA</li>
-                            <li>La privacy è legale, ma può essere usata per attività illecite</li>
-                            <li>Sempre rispettare le leggi del proprio paese</li>
-                        </ul>
+            <div class="task-list">
+                <div class="task-item" onclick="toggleTask(this, 2, 0)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">📝 Scrivi il tuo primo Smart Contract</div>
+                        <div class="task-description">Usa Remix IDE per creare un semplice contratto "Hello World" in Solidity.</div>
                     </div>
                 </div>
-
-                <div class="lesson-card">
-                    <h3>🛡️ Attacchi e Sicurezza</h3>
-                    <p>Le blockchain sono sicure, ma non invulnerabili. Conosci i principali vettori di attacco.</p>
-
-                    <h4>⚔️ 51% Attack</h4>
-                    <p>Se un attaccante controlla >50% della potenza di mining/staking, può:</p>
-
-                    <ul>
-                        <li>Fare double-spending (spendere la stessa moneta due volte)</li>
-                        <li>Bloccare le transazioni altrui</li>
-                        <li>Riscrivere blocchi recenti</li>
-                    </ul>
-
-                    <div class="code-box">
-Attacco Double-Spending:
-
-1. Alice invia 100 BTC a Bob (tx1)
-2. Bob spedisce il prodotto ad Alice
-3. Alice mina un blocco alternativo dove i 100 BTC vanno a se stessa (tx2)
-4. Con 51% hashpower, la catena di Alice diventa la più lunga
-5. tx1 viene invalidata, Alice ha BTC + prodotto
-
-Costo attacco Bitcoin: ~€500M/ora (impossibile)
-Costo attacco blockchain piccola: ~€1000/ora (fattibile)
-                    </div>
-
-                    <h4>🔄 Reentrancy Attack</h4>
-                    <p>Attacco a smart contract dove l'attaccante "rientra" nella funzione prima che finisca.</p>
-
-                    <div class="code-box">
-// Smart contract vulnerabile:
-function withdraw(uint amount) {
-    require(balance[msg.sender] >= amount);
-    msg.sender.call{value: amount}("");  // ❌ Vulnerabile!
-    balance[msg.sender] -= amount;
-}
-
-// Attaccante chiama withdraw() in loop prima che balance venga aggiornato
-// Può prelevare più soldi di quanti ne ha!
-
-Hack DAO 2016: $60M rubati con reentrancy
-                    </div>
-
-                    <h4>🏃 Front-Running e MEV</h4>
-                    <p>MEV = Maximal Extractable Value. Bot vedono le tue tx nella mempool e le "precedono" per profitto.</p>
-
-                    <ul>
-                        <li><strong>Front-running</strong>: Bot vede la tua tx, manda la sua con gas più alto</li>
-                        <li><strong>Sandwich attack</strong>: Bot compra prima di te, tu compri (prezzo sale), bot vende</li>
-                        <li><strong>Liquidation sniping</strong>: Bot liquida posizioni DeFi prima di te</li>
-                    </ul>
-
-                    <div class="warning-box">
-                        <strong>⚠️ Difese contro MEV:</strong>
-                        <ul style="margin-top: 10px;">
-                            <li>Usa Flashbots RPC (private mempool)</li>
-                            <li>Slippage tolerance bassa</li>
-                            <li>Trade su L2 (meno MEV)</li>
-                            <li>Usa aggregatori anti-MEV (CowSwap)</li>
-                        </ul>
-                    </div>
-
-                    <h4>🎣 Phishing e Social Engineering</h4>
-                    <p>Il vettore di attacco #1 non è tecnico, ma <strong>umano</strong>.</p>
-
-                    <ul>
-                        <li><strong>Fake websites</strong>: metamask.io vs metamask.com (typosquatting)</li>
-                        <li><strong>Discord/Telegram scams</strong>: "Admin" ti DM per "aiutare"</li>
-                        <li><strong>Fake airdrops</strong>: "Claim 1000 USDT" → approvi contratto maligno</li>
-                        <li><strong>Clipboard hijacking</strong>: Malware cambia l'indirizzo copiato</li>
-                    </ul>
-
-                    <h4>🔐 Smart Contract Bugs</h4>
-                    <ul>
-                        <li><strong>Integer Overflow</strong>: uint8 = 255 + 1 = 0 (fixed in Solidity 0.8+)</li>
-                        <li><strong>Unchecked Call Return</strong>: Non verificare se call() ha successo</li>
-                        <li><strong>Access Control</strong>: Funzioni admin senza onlyOwner modifier</li>
-                        <li><strong>Oracle Manipulation</strong>: Manipolare il prezzo feed</li>
-                    </ul>
-
-                    <div class="success-box">
-                        <strong>✅ Best Practices Sicurezza:</strong>
-                        <ul style="margin-top: 10px;">
-                            <li>✓ Audit del codice da CertiK, Trail of Bits, OpenZeppelin</li>
-                            <li>✓ Bug bounty program (Immunefi)</li>
-                            <li>✓ Timelock su funzioni admin (48h delay)</li>
-                            <li>✓ Multi-sig wallet per fondi (3-of-5 firma)</li>
-                            <li>✓ Revoca permessi su revoke.cash periodicamente</li>
-                            <li>✓ Hardware wallet per holdings (Ledger, Trezor)</li>
-                        </ul>
+                <div class="task-item" onclick="toggleTask(this, 2, 1)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">💰 Studia DeFi</div>
+                        <div class="task-description">Uniswap, Aave, Compound. Comprendi AMM, Lending, Liquidity Pools.</div>
                     </div>
                 </div>
-
-                <div class="lesson-card">
-                    <h3>🔮 Futuro della Blockchain</h3>
-                    <p>Tecnologie emergenti e innovazioni che plasmeranno il futuro del Web3.</p>
-
-                    <h4>🧩 Sharding</h4>
-                    <p>Dividere la blockchain in "frammenti" (shards) che processano transazioni in parallelo.</p>
-
-                    <div class="highlight-box">
-                        <strong>Esempio:</strong>
-                        <ul style="margin-top: 10px;">
-                            <li>Shard 1: Processa tx dall'indirizzo 0x00... a 0x3F...</li>
-                            <li>Shard 2: Processa tx dall'indirizzo 0x40... a 0x7F...</li>
-                            <li>Shard 3: Processa tx dall'indirizzo 0x80... a 0xBF...</li>
-                            <li>Shard 4: Processa tx dall'indirizzo 0xC0... a 0xFF...</li>
-                        </ul>
-                        <p style="margin-top: 10px;">Risultato: 4x throughput senza sacrificare decentralizzazione!</p>
+                <div class="task-item" onclick="toggleTask(this, 2, 2)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🪙 Tokenomics</div>
+                        <div class="task-description">Supply, Utility, Governance, Burn mechanism, Staking rewards.</div>
                     </div>
-
-                    <p><strong>Ethereum 2.0</strong> implementerà sharding con 64 shard chains → 100,000+ tx/sec.</p>
-
-                    <h4>🌉 Cross-Chain (Interoperabilità)</h4>
-                    <p>Comunicazione tra blockchain diverse senza intermediari centralizzati.</p>
-
-                    <ul>
-                        <li><strong>Bridges</strong>: Trasferire asset tra chain (Ethereum ↔ Polygon)</li>
-                        <li><strong>Polkadot</strong>: Relay chain che connette parachain</li>
-                        <li><strong>Cosmos</strong>: IBC protocol per cross-chain messaging</li>
-                        <li><strong>LayerZero</strong>: Omnichain protocol (1 messaggio → N blockchain)</li>
-                    </ul>
-
-                    <h4>⚛️ Quantum Resistance</h4>
-                    <p>Computer quantistici potrebbero rompere la crittografia attuale (ECDSA) in ~20 anni.</p>
-
-                    <div class="warning-box">
-                        <strong>⚠️ Rischio Quantistico:</strong>
-                        <p style="margin-top: 10px;">
-                            Un computer quantistico potrebbe derivare la chiave privata dalla chiave pubblica.
-                            Tutte le blockchain (Bitcoin, Ethereum) sono vulnerabili.
-                        </p>
+                </div>
+                <div class="task-item" onclick="toggleTask(this, 2, 3)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🏛️ DAO</div>
+                        <div class="task-description">Decentralized Autonomous Organizations. Governance on-chain.</div>
                     </div>
-
-                    <ul>
-                        <li><strong>Algorand</strong>: Già quantum-resistant</li>
-                        <li><strong>Bitcoin</strong>: Possibile fork per adottare SPHINCS+</li>
-                        <li><strong>Ethereum</strong>: Ricerca su quantum-resistant signatures</li>
-                    </ul>
-
-                    <h4>🤖 AI + Blockchain</h4>
-                    <p>Intelligenza Artificiale decentralizzata e verificabile on-chain.</p>
-
-                    <ul>
-                        <li><strong>Ocean Protocol</strong>: Data marketplace per AI</li>
-                        <li><strong>Fetch.ai</strong>: Autonomous agents on blockchain</li>
-                        <li><strong>Bittensor</strong>: Decentralized AI network</li>
-                        <li><strong>zkML</strong>: Zero-Knowledge Machine Learning (prova di inferenza)</li>
-                    </ul>
-
-                    <h4>🌍 Real World Assets (RWA)</h4>
-                    <p>Tokenizzare asset del mondo reale (immobili, azioni, commodities).</p>
-
-                    <div class="success-box">
-                        <strong>✅ Esempi RWA:</strong>
-                        <ul style="margin-top: 10px;">
-                            <li>🏠 Immobili: Compri 0.01% di un palazzo a Milano (€100)</li>
-                            <li>💎 Oro: Token 1:1 con oro fisico in caveau (PAXG)</li>
-                            <li>📈 Azioni: Token di azioni Apple, Tesla (Mirror Protocol)</li>
-                            <li>🎨 Arte: Proprietà frazionata di opere d'arte (Masterworks)</li>
-                        </ul>
-                        <p style="margin-top: 10px;"><strong>Mercato potenziale:</strong> $16 trilioni entro 2030 (Boston Consulting Group)</p>
+                </div>
+                <div class="task-item" onclick="toggleTask(this, 2, 4)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🎨 NFT Standards</div>
+                        <div class="task-description">ERC-721 (NFT unici), ERC-1155 (Multi-token), metadata IPFS.</div>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <h4>🔥 Trend da Seguire</h4>
-                    <ul>
-                        <li><strong>Account Abstraction</strong>: Wallet senza seed phrase (social recovery)</li>
-                        <li><strong>Intent-based protocols</strong>: Dici "voglio X", protocollo trova il modo migliore</li>
-                        <li><strong>Fully On-Chain Games</strong>: Gaming 100% on-chain (Dark Forest, Loot)</li>
-                        <li><strong>Soulbound Tokens</strong>: NFT non trasferibili per identità/credenziali</li>
-                        <li><strong>Regenerative Finance</strong>: DeFi per sostenibilità ambientale</li>
-                    </ul>
+        <!-- LEVEL 3: AVANZATO -->
+        <div id="level3" class="content-area">
+            <div class="topic">
+                <h3>⚡ Layer 2 Solutions</h3>
+                <p>Le <span class="highlight">soluzioni Layer 2</span> sono protocolli costruiti sopra blockchain esistenti (Layer 1) per aumentare velocità e ridurre i costi.</p>
+
+                <h4>🚀 Principali Layer 2</h4>
+                <ul>
+                    <li><strong>Rollups:</strong> Optimism, Arbitrum (Optimistic Rollups), zkSync, StarkNet (zk-Rollups)</li>
+                    <li><strong>Sidechains:</strong> Polygon PoS</li>
+                    <li><strong>State Channels:</strong> Lightning Network (Bitcoin)</li>
+                </ul>
+
+                <h4>💡 Vantaggi</h4>
+                <p>Transazioni 100x più veloci e 100x più economiche. Mantengono la sicurezza del Layer 1.</p>
+            </div>
+
+            <div class="task-list">
+                <div class="task-item" onclick="toggleTask(this, 3, 0)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🔬 Layer 2 Scaling</div>
+                        <div class="task-description">Sperimenta con Arbitrum, Optimism, zkSync. Confronta gas fees.</div>
+                    </div>
+                </div>
+                <div class="task-item" onclick="toggleTask(this, 3, 1)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🔒 Sicurezza Avanzata</div>
+                        <div class="task-description">Audit smart contracts, common vulnerabilities (reentrancy, overflow).</div>
+                    </div>
+                </div>
+                <div class="task-item" onclick="toggleTask(this, 3, 2)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🌐 Cross-chain</div>
+                        <div class="task-description">Bridge protocols, interoperabilità tra blockchain diverse.</div>
+                    </div>
+                </div>
+                <div class="task-item" onclick="toggleTask(this, 3, 3)">
+                    <div class="task-checkbox"></div>
+                    <div class="task-content">
+                        <div class="task-title">🚀 Deploy Full DApp</div>
+                        <div class="task-description">Frontend React + Smart Contract + IPFS. Progetto completo end-to-end.</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // ===== LIVE CRYPTO TICKER =====
-        let autoRefreshInterval;
-        let countdownInterval;
-        let secondsRemaining = 30;
+        // ===== CRYPTO PRICE TICKER =====
         let previousPrices = {};
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadCryptoData();
-            startAutoRefresh();
-            loadProgress();
-        });
-
-        async function loadCryptoData() {
+        async function fetchCryptoPrices() {
             try {
-                const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=8&page=1&sparkline=false&price_change_percentage=24h');
-
-                if (!response.ok) throw new Error('Errore caricamento');
-
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,cardano,solana&vs_currencies=usd&include_24hr_change=true');
                 const data = await response.json();
-                displayBannerCrypto(data);
-                secondsRemaining = 30;
+
+                const cryptos = [
+                    { id: 'bitcoin', name: 'BTC', icon: '🟠' },
+                    { id: 'ethereum', name: 'ETH', icon: '🔷' },
+                    { id: 'binancecoin', name: 'BNB', icon: '🟡' },
+                    { id: 'cardano', name: 'ADA', icon: '🔵' },
+                    { id: 'solana', name: 'SOL', icon: '🟣' }
+                ];
+
+                const ticker = document.getElementById('cryptoTicker');
+                ticker.innerHTML = '';
+
+                cryptos.forEach(crypto => {
+                    const priceData = data[crypto.id];
+                    const price = priceData.usd;
+                    const change = priceData.usd_24h_change;
+                    const isPositive = change >= 0;
+
+                    const item = document.createElement('div');
+                    item.className = 'ticker-item';
+                    item.innerHTML = `
+                        <span class="ticker-icon">${crypto.icon}</span>
+                        <span class="ticker-name">${crypto.name}</span>
+                        <span class="ticker-price">$${price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        <span class="ticker-change ${isPositive ? 'positive' : 'negative'}">
+                            ${isPositive ? '↑' : '↓'} ${Math.abs(change).toFixed(2)}%
+                        </span>
+                    `;
+                    ticker.appendChild(item);
+
+                    previousPrices[crypto.id] = price;
+                });
             } catch (error) {
+                console.error('Error fetching prices:', error);
                 document.getElementById('cryptoTicker').innerHTML = '<span style="color: #f56565;">Errore caricamento prezzi</span>';
             }
         }
 
-        function displayBannerCrypto(cryptos) {
-            const ticker = document.getElementById('cryptoTicker');
-            ticker.innerHTML = '';
+        // Timer countdown
+        let countdown = 30;
+        function updateTimer() {
+            document.getElementById('bannerTimer').textContent = `⟳ ${countdown}s`;
+            countdown--;
 
-            cryptos.forEach(crypto => {
-                const priceChange = crypto.price_change_percentage_24h || 0;
-                const changeClass = priceChange >= 0 ? 'positive' : 'negative';
-                const changeSymbol = priceChange >= 0 ? '+' : '';
-
-                let priceAnimation = '';
-                if (previousPrices[crypto.id]) {
-                    if (crypto.current_price > previousPrices[crypto.id]) {
-                        priceAnimation = 'price-up';
-                    } else if (crypto.current_price < previousPrices[crypto.id]) {
-                        priceAnimation = 'price-down';
-                    }
-                }
-                previousPrices[crypto.id] = crypto.current_price;
-
-                const item = document.createElement('div');
-                item.className = 'ticker-item';
-                item.innerHTML = `
-                    <img src="${crypto.image}" alt="${crypto.symbol}" class="ticker-icon">
-                    <span class="ticker-name">${crypto.symbol.toUpperCase()}</span>
-                    <span class="ticker-price ${priceAnimation}">€${formatPrice(crypto.current_price)}</span>
-                    <span class="ticker-change ${changeClass}">${changeSymbol}${priceChange.toFixed(1)}%</span>
-                `;
-                ticker.appendChild(item);
-            });
-        }
-
-        function formatPrice(price) {
-            if (price >= 1) {
-                return price.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            } else if (price >= 0.01) {
-                return price.toFixed(4);
-            } else {
-                return price.toFixed(8);
+            if (countdown < 0) {
+                countdown = 30;
+                fetchCryptoPrices();
             }
         }
 
-        function startAutoRefresh() {
-            countdownInterval = setInterval(updateCountdown, 1000);
-            autoRefreshInterval = setInterval(() => {
-                loadCryptoData();
-                secondsRemaining = 30;
-            }, 30000);
-        }
-
-        function updateCountdown() {
-            document.getElementById('bannerTimer').textContent = `⟳ ${secondsRemaining}s`;
-            secondsRemaining--;
-            if (secondsRemaining < 0) secondsRemaining = 30;
-        }
+        // Start ticker
+        fetchCryptoPrices();
+        setInterval(updateTimer, 1000);
 
         // ===== LEVEL NAVIGATION =====
-        function showLevel(levelNum) {
-            // Hide all sections
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
+        function showLevel(levelIndex) {
+            // Hide all levels
+            document.querySelectorAll('.content-area').forEach(area => {
+                area.classList.remove('active');
             });
 
-            // Show selected section
-            document.getElementById(`level-${levelNum}`).classList.add('active');
+            // Show selected level
+            document.getElementById(`level${levelIndex}`).classList.add('active');
 
             // Update tab buttons
             document.querySelectorAll('.tab-button').forEach((btn, index) => {
-                btn.classList.toggle('active', index === levelNum);
+                btn.classList.toggle('active', index === levelIndex);
             });
 
-            // Scroll to top
+            // Smooth scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // ===== PROGRESS TRACKING =====
+        // ===== TASK TRACKING =====
+        const progress = {
+            0: new Set(),
+            1: new Set(),
+            2: new Set(),
+            3: new Set()
+        };
+
+        const totalTasks = {
+            0: 5,
+            1: 6,
+            2: 5,
+            3: 4
+        };
+
+        // Load progress from localStorage
         function loadProgress() {
-            const saved = localStorage.getItem('cryptoStudioProgress');
+            const saved = localStorage.getItem('crypto-studio-progress');
             if (saved) {
-                const progress = JSON.parse(saved);
-                updateProgressUI(progress);
+                const data = JSON.parse(saved);
+                Object.keys(data).forEach(level => {
+                    progress[level] = new Set(data[level]);
+                });
+                updateAllProgress();
             }
         }
 
-        function saveProgress(levelNum, completed, total) {
-            const progress = JSON.parse(localStorage.getItem('cryptoStudioProgress') || '{}');
-            progress[`level${levelNum}`] = { completed, total };
-            localStorage.setItem('cryptoStudioProgress', JSON.stringify(progress));
-            updateProgressUI(progress);
+        // Save progress to localStorage
+        function saveProgress() {
+            const data = {};
+            Object.keys(progress).forEach(level => {
+                data[level] = Array.from(progress[level]);
+            });
+            localStorage.setItem('crypto-studio-progress', JSON.stringify(data));
         }
 
-        function updateProgressUI(progress) {
-            Object.keys(progress).forEach(key => {
-                const levelNum = key.replace('level', '');
-                const { completed, total } = progress[key];
-                const percentage = (completed / total) * 100;
+        function toggleTask(element, level, taskIndex) {
+            const checkbox = element.querySelector('.task-checkbox');
+            const isChecked = checkbox.classList.contains('checked');
 
-                const card = document.querySelector(`[data-level="${levelNum}"]`);
-                if (card) {
-                    card.querySelector('.level-status').textContent = `${completed} / ${total} completati`;
-                    card.querySelector('.progress-bar').style.width = `${percentage}%`;
+            if (isChecked) {
+                checkbox.classList.remove('checked');
+                progress[level].delete(taskIndex);
+            } else {
+                checkbox.classList.add('checked');
+                progress[level].add(taskIndex);
 
-                    if (percentage === 100) {
-                        card.classList.add('completed');
-                        card.classList.remove('in-progress');
-                    } else if (percentage > 0) {
-                        card.classList.add('in-progress');
-                        card.classList.remove('completed');
-                    }
+                // Show toast notification
+                const taskTitle = element.querySelector('.task-title').textContent;
+                showToast(`Completato: ${taskTitle}`, 'success');
+
+                // Check if level is completed
+                const completed = progress[level].size;
+                const total = totalTasks[level];
+                if (completed === total) {
+                    const levelNames = ['Quick Start', 'Fondamenti', 'Intermedio', 'Avanzato'];
+                    setTimeout(() => {
+                        showToast(`🎉 Livello ${levelNames[level]} completato!`, 'success');
+                    }, 500);
                 }
+            }
+
+            updateLevelProgress(level);
+            saveProgress();
+        }
+
+        function updateLevelProgress(level) {
+            const completed = progress[level].size;
+            const total = totalTasks[level];
+            const percentage = (completed / total) * 100;
+
+            document.getElementById(`progress-${level}`).style.width = `${percentage}%`;
+
+            const card = document.querySelectorAll('.level-progress-card')[level];
+            card.querySelector('.level-status').textContent = `${completed} / ${total} completati`;
+        }
+
+        function updateAllProgress() {
+            Object.keys(progress).forEach(level => {
+                updateLevelProgress(parseInt(level));
+
+                // Update checkboxes
+                progress[level].forEach(taskIndex => {
+                    const levelElement = document.getElementById(`level${level}`);
+                    const taskItems = levelElement.querySelectorAll('.task-item');
+                    if (taskItems[taskIndex]) {
+                        taskItems[taskIndex].querySelector('.task-checkbox').classList.add('checked');
+                    }
+                });
             });
         }
 
-        // Example: Mark lesson as completed (you can add checkboxes or buttons)
-        function markLessonComplete(levelNum) {
-            const lessons = {
-                0: 5,  // Quick Start has 5 lessons
-                1: 6,  // Fondamenti has 6 lessons
-                2: 5,  // Intermedio has 5 lessons
-                3: 4   // Avanzato has 4 lessons
-            };
+        // Initialize
+        loadProgress();
 
-            const progress = JSON.parse(localStorage.getItem('cryptoStudioProgress') || '{}');
-            const current = progress[`level${levelNum}`] || { completed: 0, total: lessons[levelNum] };
+        // ===== BACKGROUND PARTICLES =====
+        function createParticles() {
+            const container = document.getElementById('bgParticles');
+            const particleCount = 50;
 
-            if (current.completed < current.total) {
-                current.completed++;
-                saveProgress(levelNum, current.completed, current.total);
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+
+                // Random positioning
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+
+                // Random animation delay and duration
+                particle.style.animationDelay = `${Math.random() * 20}s`;
+                particle.style.animationDuration = `${15 + Math.random() * 10}s`;
+
+                // Random size variation
+                const size = 2 + Math.random() * 3;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+
+                container.appendChild(particle);
             }
         }
+
+        // ===== TOAST NOTIFICATIONS =====
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+
+            if (type === 'success') {
+                toast.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
+                toast.innerHTML = `✓ ${message}`;
+            } else if (type === 'info') {
+                toast.style.background = 'linear-gradient(135deg, #4299e1, #3182ce)';
+                toast.innerHTML = `ℹ ${message}`;
+            }
+
+            document.body.appendChild(toast);
+
+            // Slide in
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+
+            // Slide out and remove
+            setTimeout(() => {
+                toast.style.transform = 'translateX(400px)';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 600);
+            }, 3000);
+        }
+
+        // Initialize particles on load
+        window.addEventListener('load', () => {
+            createParticles();
+            showToast('Benvenuto in Crypto Studio!', 'info');
+        });
     </script>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>X World Ecosystem</h4>
+                <a href="index.html">🏠 Homepage</a>
+                <a href="whitepaper.html">📄 Whitepaper</a>
+                <a href="app-prototype.html">📱 App Prototype</a>
+                <a href="nav-hub.html">🧭 Navigation Hub</a>
+            </div>
+            <div class="footer-section">
+                <h4>Risorse</h4>
+                <a href="blockchain-study/README.md" target="_blank">📚 Studio Blockchain</a>
+                <a href="blockchain-study/PIANO_SETTIMANALE.md" target="_blank">📅 Piano 12 Settimane</a>
+                <a href="blockchain-study/resources/RISORSE_COMPLETE.md" target="_blank">🔗 Risorse Complete</a>
+            </div>
+            <div class="footer-section">
+                <h4>Community</h4>
+                <a href="https://ethereum.org" target="_blank">Ethereum.org</a>
+                <a href="https://remix.ethereum.org" target="_blank">Remix IDE</a>
+                <a href="https://cryptozombies.io" target="_blank">CryptoZombies</a>
+                <a href="https://buildspace.so" target="_blank">Buildspace</a>
+            </div>
+            <div class="footer-section">
+                <h4>Info</h4>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                    Crypto Studio è parte dell'ecosistema X World Project.<br>
+                    Impara, costruisci, cresci nel Web3.
+                </p>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 15px;">
+                    © 2024 X World Project
+                </p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

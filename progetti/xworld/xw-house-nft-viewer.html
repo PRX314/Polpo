@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surf House Chiavari - 52 NFT Settimanali</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #000;
+            --bg: #fff;
+            --border: #ddd;
+            --gray: #666;
+            --available: #e8f5e9;
+            --available-border: #4caf50;
+            --sold: #ffebee;
+            --sold-border: #f44336;
+            --owned: #e3f2fd;
+            --owned-border: #2196f3;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: var(--gray);
+            text-decoration: none;
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: #f8f8f8;
+            border-color: var(--primary);
+        }
+
+        .property-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .property-icon {
+            font-size: 32px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: var(--gray);
+            margin-bottom: 16px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            padding: 16px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .stat-value.available {
+            color: #4caf50;
+        }
+
+        .stat-value.sold {
+            color: #f44336;
+        }
+
+        .stat-value.owned {
+            color: #2196f3;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--gray);
+            text-transform: uppercase;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 24px;
+            padding: 12px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 2px solid;
+        }
+
+        .legend-color.available {
+            background: var(--available);
+            border-color: var(--available-border);
+        }
+
+        .legend-color.sold {
+            background: var(--sold);
+            border-color: var(--sold-border);
+        }
+
+        .legend-color.owned {
+            background: var(--owned);
+            border-color: var(--owned-border);
+        }
+
+        /* Timeline */
+        .timeline-section {
+            margin-bottom: 30px;
+        }
+
+        .timeline-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .timeline-container {
+            overflow-x: auto;
+            padding: 20px 0;
+            margin-bottom: 16px;
+            background: #f8f8f8;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .timeline-track {
+            display: flex;
+            gap: 4px;
+            padding: 0 20px;
+            min-width: max-content;
+        }
+
+        .timeline-week {
+            width: 40px;
+            height: 60px;
+            border-radius: 6px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .timeline-week.available {
+            background: var(--available);
+            border-color: var(--available-border);
+        }
+
+        .timeline-week.sold {
+            background: var(--sold);
+            border-color: var(--sold-border);
+        }
+
+        .timeline-week.owned {
+            background: var(--owned);
+            border-color: var(--owned-border);
+        }
+
+        .timeline-week:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .timeline-week-num {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .timeline-week-label {
+            font-size: 7px;
+            text-transform: uppercase;
+            color: var(--gray);
+        }
+
+        .timeline-season-marker {
+            position: absolute;
+            bottom: -16px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
+            font-weight: 600;
+            color: var(--gray);
+        }
+
+        .nft-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+
+        .nft-card {
+            aspect-ratio: 1;
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .nft-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .nft-card.available {
+            background: var(--available);
+            border-color: var(--available-border);
+        }
+
+        .nft-card.sold {
+            background: var(--sold);
+            border-color: var(--sold-border);
+        }
+
+        .nft-card.owned {
+            background: var(--owned);
+            border-color: var(--owned-border);
+        }
+
+        .nft-week {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .nft-label {
+            font-size: 8px;
+            color: var(--gray);
+            text-transform: uppercase;
+        }
+
+        .nft-status {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 10px;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            font-size: 24px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--gray);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f0f0f0;
+            color: var(--primary);
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-week {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .modal-dates {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 8px;
+        }
+
+        .modal-season {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .modal-season.spring {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .modal-season.summer {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+
+        .modal-season.fall {
+            background: #ffccbc;
+            color: #bf360c;
+        }
+
+        .modal-season.winter {
+            background: #b3e5fc;
+            color: #01579b;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+        }
+
+        .info-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .info-section p {
+            font-size: 12px;
+            line-height: 1.5;
+            color: #555;
+        }
+
+        .price-box {
+            background: #f8f8f8;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .price-label {
+            font-size: 10px;
+            color: var(--gray);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .price-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .benefits-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .benefits-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .benefits-list li:last-child {
+            border-bottom: none;
+        }
+
+        .benefits-list li::before {
+            content: '✓';
+            color: #4caf50;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-button.buy {
+            background: #4caf50;
+            color: white;
+        }
+
+        .action-button.buy:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        .action-button.sold {
+            background: #f0f0f0;
+            color: var(--gray);
+            cursor: not-allowed;
+        }
+
+        .action-button.owned {
+            background: #2196f3;
+            color: white;
+        }
+
+        .action-button.owned:hover {
+            background: #1976d2;
+        }
+
+        @media (max-width: 768px) {
+            .nft-grid {
+                grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+                gap: 8px;
+            }
+
+            .stats-bar {
+                gap: 16px;
+            }
+
+            .legend {
+                gap: 12px;
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .nft-grid {
+                grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="xw-house.html" class="back-link">← Torna a XW House</a>
+
+            <div class="property-title">
+                <span class="property-icon">🏄</span>
+                <h1>Surf House Chiavari</h1>
+            </div>
+            <p class="subtitle">52 NFT Settimanali - Anno 2026</p>
+
+            <div class="stats-bar">
+                <div class="stat">
+                    <div class="stat-value available" id="stat-available">35</div>
+                    <div class="stat-label">Disponibili</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value sold" id="stat-sold">12</div>
+                    <div class="stat-label">Venduti</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value owned" id="stat-owned">5</div>
+                    <div class="stat-label">Tuoi NFT</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">€520k</div>
+                    <div class="stat-label">Raccolti</div>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color available"></div>
+                    <span>Disponibile</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color sold"></div>
+                    <span>Venduto</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color owned"></div>
+                    <span>Posseduto da te</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline-section">
+            <div class="timeline-label">📅 Timeline Annuale Interattiva</div>
+            <div class="timeline-container">
+                <div class="timeline-track" id="timeline-track">
+                    <!-- Timeline will be generated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div class="nft-grid" id="nft-grid">
+            <!-- NFTs will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal()">×</button>
+
+            <div class="modal-header">
+                <div class="modal-week" id="modal-week">Settimana 1</div>
+                <div class="modal-dates" id="modal-dates">1 Gen - 7 Gen 2026</div>
+                <span class="modal-season" id="modal-season">Inverno</span>
+            </div>
+
+            <div class="modal-body">
+                <div class="price-box">
+                    <div class="price-label">Prezzo NFT</div>
+                    <div class="price-value" id="modal-price">€10,000</div>
+                </div>
+
+                <div class="info-section">
+                    <h3>Cosa Include</h3>
+                    <ul class="benefits-list">
+                        <li>7 giorni di accesso esclusivo alla Surf House</li>
+                        <li>Utilizzo di 6 posti letto (max occupancy)</li>
+                        <li>Accesso a scuola surf + noleggio attrezzatura</li>
+                        <li>Revenue share annuale dai profitti totali</li>
+                        <li>Diritto di voto governance DAO</li>
+                        <li>NFT rivendibile sul marketplace</li>
+                    </ul>
+                </div>
+
+                <div class="info-section">
+                    <h3 id="modal-season-title">Periodo Invernale</h3>
+                    <p id="modal-season-desc">
+                        Periodo di bassa stagione con clima più fresco. Ideale per chi cerca tranquillità e prezzi vantaggiosi. Surf possibile ma onde meno costanti.
+                    </p>
+                </div>
+
+                <div class="info-section">
+                    <h3>Note Importanti</h3>
+                    <p style="font-size: 11px; color: #888;">
+                        • L'NFT è trasferibile e rivendibile<br>
+                        • Revenue share distribuito proporzionalmente a tutti i 52 holder<br>
+                        • Prenotazione settimana soggetta a conferma availability
+                    </p>
+                </div>
+
+                <button class="action-button buy" id="modal-action" onclick="handleAction()">
+                    Acquista NFT
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // NFT Data Structure
+        const weeks = [];
+        const currentYear = 2026;
+
+        // Seasons definition
+        const seasons = {
+            winter: { name: 'Inverno', class: 'winter', desc: 'Periodo di bassa stagione con clima più fresco. Ideale per chi cerca tranquillità e prezzi vantaggiosi. Surf possibile ma onde meno costanti.', price: 8000 },
+            spring: { name: 'Primavera', class: 'spring', desc: 'Stagione intermedia con clima mite. Onde moderate e temperatura dell\'acqua in aumento. Ottimo rapporto qualità-prezzo.', price: 12000 },
+            summer: { name: 'Estate', class: 'summer', desc: 'Alta stagione con clima caldo e mare calmo. Perfetto per famiglie e principianti. Massima richiesta, prenota in anticipo.', price: 15000 },
+            fall: { name: 'Autunno', class: 'fall', desc: 'Stagione premium per surfisti esperti. Onde migliori dell\'anno, clima ancora piacevole. Periodo molto richiesto.', price: 13000 }
+        };
+
+        // Generate week data
+        function getWeekDates(weekNum) {
+            const startDate = new Date(currentYear, 0, 1 + (weekNum - 1) * 7);
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+
+            const formatDate = (date) => {
+                const day = date.getDate();
+                const months = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+                return `${day} ${months[date.getMonth()]}`;
+            };
+
+            return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+        }
+
+        function getSeason(weekNum) {
+            if (weekNum >= 1 && weekNum <= 13) return 'winter';
+            if (weekNum >= 14 && weekNum <= 26) return 'spring';
+            if (weekNum >= 27 && weekNum <= 39) return 'summer';
+            return 'fall';
+        }
+
+        // Simulate some NFTs as sold/owned (for demo)
+        const soldWeeks = [1, 5, 8, 12, 27, 28, 29, 30, 35, 40, 45, 50];
+        const ownedWeeks = [2, 15, 28, 38, 52];
+
+        // Initialize weeks
+        for (let i = 1; i <= 52; i++) {
+            const seasonKey = getSeason(i);
+            const season = seasons[seasonKey];
+
+            weeks.push({
+                number: i,
+                dates: getWeekDates(i),
+                season: seasonKey,
+                seasonName: season.name,
+                seasonClass: season.class,
+                seasonDesc: season.desc,
+                price: season.price,
+                status: ownedWeeks.includes(i) ? 'owned' : (soldWeeks.includes(i) ? 'sold' : 'available')
+            });
+        }
+
+        // Render NFT grid
+        function renderNFTGrid() {
+            const grid = document.getElementById('nft-grid');
+            grid.innerHTML = '';
+
+            weeks.forEach(week => {
+                const card = document.createElement('div');
+                card.className = `nft-card ${week.status}`;
+                card.onclick = () => openModal(week);
+
+                const statusIcon = week.status === 'sold' ? '🔒' : (week.status === 'owned' ? '✓' : '');
+
+                card.innerHTML = `
+                    ${statusIcon ? `<div class="nft-status">${statusIcon}</div>` : ''}
+                    <div class="nft-week">${week.number}</div>
+                    <div class="nft-label">Settimana</div>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            updateStats();
+        }
+
+        // Render Timeline
+        function renderTimeline() {
+            const track = document.getElementById('timeline-track');
+            track.innerHTML = '';
+
+            const seasonMarkers = {
+                1: '❄️ Inverno',
+                14: '🌸 Primavera',
+                27: '☀️ Estate',
+                40: '🍂 Autunno'
+            };
+
+            weeks.forEach(week => {
+                const block = document.createElement('div');
+                block.className = `timeline-week ${week.status}`;
+                block.onclick = () => openModal(week);
+                block.title = `Settimana ${week.number} - ${week.dates}\n${week.seasonName} - €${week.price.toLocaleString('it-IT')}`;
+
+                block.innerHTML = `
+                    <div class="timeline-week-num">${week.number}</div>
+                    <div class="timeline-week-label">W${week.number}</div>
+                    ${seasonMarkers[week.number] ? `<div class="timeline-season-marker">${seasonMarkers[week.number]}</div>` : ''}
+                `;
+
+                track.appendChild(block);
+            });
+        }
+
+        // Update stats
+        function updateStats() {
+            const available = weeks.filter(w => w.status === 'available').length;
+            const sold = weeks.filter(w => w.status === 'sold').length;
+            const owned = weeks.filter(w => w.status === 'owned').length;
+            const raised = weeks.filter(w => w.status !== 'available').reduce((sum, w) => sum + w.price, 0);
+
+            document.getElementById('stat-available').textContent = available;
+            document.getElementById('stat-sold').textContent = sold;
+            document.getElementById('stat-owned').textContent = owned;
+        }
+
+        // Open modal
+        function openModal(week) {
+            document.getElementById('modal').classList.add('active');
+            document.getElementById('modal-week').textContent = `Settimana ${week.number}`;
+            document.getElementById('modal-dates').textContent = `${week.dates} ${currentYear}`;
+
+            const seasonSpan = document.getElementById('modal-season');
+            seasonSpan.textContent = week.seasonName;
+            seasonSpan.className = `modal-season ${week.seasonClass}`;
+
+            document.getElementById('modal-price').textContent = `€${week.price.toLocaleString('it-IT')}`;
+            document.getElementById('modal-season-title').textContent = `Periodo ${week.seasonName}`;
+            document.getElementById('modal-season-desc').textContent = week.seasonDesc;
+
+            const actionButton = document.getElementById('modal-action');
+            actionButton.className = `action-button ${week.status}`;
+
+            if (week.status === 'available') {
+                actionButton.textContent = 'Acquista NFT';
+                actionButton.onclick = () => buyNFT(week.number);
+            } else if (week.status === 'sold') {
+                actionButton.textContent = 'Non Disponibile';
+                actionButton.onclick = null;
+            } else if (week.status === 'owned') {
+                actionButton.textContent = 'Tuo NFT - Gestisci';
+                actionButton.onclick = () => manageNFT(week.number);
+            }
+
+            // Store current week for action
+            window.currentWeek = week;
+        }
+
+        // Close modal
+        function closeModal(event) {
+            if (!event || event.target.id === 'modal') {
+                document.getElementById('modal').classList.remove('active');
+            }
+        }
+
+        // Actions
+        function buyNFT(weekNumber) {
+            alert(`Funzionalità di acquisto NFT Settimana ${weekNumber}\n\nIn produzione si aprirebbe il wallet MetaMask per completare la transazione.`);
+            closeModal();
+        }
+
+        function manageNFT(weekNumber) {
+            alert(`Gestione NFT Settimana ${weekNumber}\n\nQui potresti:\n• Prenotare la settimana\n• Trasferire/Vendere l'NFT\n• Vedere la history\n• Claim revenue share`);
+            closeModal();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTimeline();
+            renderNFTGrid();
+        });
+    </script>
+</body>
+</html>
