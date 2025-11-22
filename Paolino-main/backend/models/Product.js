@@ -16,6 +16,12 @@ const productSchema = new mongoose.Schema({
     enum: ['magliette', 'felpe', 'sciarpe', 'accessori'],
     lowercase: true
   },
+  collectionType: {
+    type: String,
+    enum: ['standard', 'fijo', 'gpower'],
+    default: 'standard',
+    lowercase: true
+  },
   basePrice: {
     type: Number,
     required: true,
@@ -40,13 +46,18 @@ const productSchema = new mongoose.Schema({
     size: {
       type: String,
       required: true,
-      enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+      enum: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Unica']
     },
     color: {
       type: String,
-      required: true
+      required: false
     },
     colorCode: String,
+    printPosition: {
+      type: String,
+      enum: ['centro', 'sinistra', 'destra', 'dietro', 'manica-sx', 'manica-dx', null],
+      required: false
+    },
     stock: {
       type: Number,
       required: true,
@@ -55,8 +66,7 @@ const productSchema = new mongoose.Schema({
     },
     sku: {
       type: String,
-      required: true,
-      unique: true
+      required: false
     },
     priceModifier: {
       type: Number,

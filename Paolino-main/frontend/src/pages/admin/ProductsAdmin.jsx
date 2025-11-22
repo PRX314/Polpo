@@ -358,9 +358,10 @@ const ProductModal = ({ product, onClose, onSave }) => {
     name: product?.name || '',
     description: product?.description || '',
     category: product?.category || 'magliette',
+    collectionType: product?.collectionType || 'standard',
     basePrice: product?.basePrice || '',
     variants: product?.variants || [
-      { size: 'M', color: '', colorCode: '', stock: 0, sku: '', priceModifier: 0 }
+      { size: 'M', color: '', colorCode: '', stock: 0, sku: '', priceModifier: 0, printPosition: '' }
     ],
     tags: product?.tags?.join(', ') || '',
     weight: product?.weight || '',
@@ -370,7 +371,13 @@ const ProductModal = ({ product, onClose, onSave }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   const categories = ['magliette', 'felpe', 'sciarpe', 'accessori'];
-  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  const collections = [
+    { value: 'standard', label: 'Standard (Taglia + Colore)' },
+    { value: 'fijo', label: 'Fijo (Taglia + Posizione Stampa)' },
+    { value: 'gpower', label: 'G-Power (Taglia + Colore)' }
+  ];
+  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Unica'];
+  const printPositions = ['centro', 'sinistra', 'destra', 'dietro', 'manica-sx', 'manica-dx'];
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -394,12 +401,24 @@ const ProductModal = ({ product, onClose, onSave }) => {
   };
 
   const addVariant = () => {
+    const newVariant = {
+      size: 'M',
+      stock: 0,
+      sku: '',
+      priceModifier: 0
+    };
+
+    // Add collection-specific fields
+    if (formData.collectionType === 'fijo') {
+      newVariant.printPosition = 'centro';
+    } else {
+      newVariant.color = '';
+      newVariant.colorCode = '';
+    }
+
     setFormData(prev => ({
       ...prev,
-      variants: [
-        ...prev.variants,
-        { size: 'M', color: '', colorCode: '', stock: 0, sku: '', priceModifier: 0 }
-      ]
+      variants: [...prev.variants, newVariant]
     }));
   };
 
@@ -422,6 +441,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
       submitData.append('name', formData.name);
       submitData.append('description', formData.description);
       submitData.append('category', formData.category);
+      submitData.append('collectionType', formData.collectionType);
       submitData.append('basePrice', parseFloat(formData.basePrice));
       submitData.append('variants', JSON.stringify(formData.variants));
       submitData.append('tags', JSON.stringify(formData.tags.split(',').map(tag => tag.trim()).filter(Boolean)));
@@ -496,6 +516,30 @@ const ProductModal = ({ product, onClose, onSave }) => {
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Collection Type */}
+          <div>
+            <label className="block text-sm font-medium text-primary-700 mb-1">
+              Tipo Collezione *
+            </label>
+            <select
+              required
+              value={formData.collectionType}
+              onChange={(e) => handleInputChange('collectionType', e.target.value)}
+              className="input"
+            >
+              {collections.map(col => (
+                <option key={col.value} value={col.value}>
+                  {col.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-primary-500 mt-1">
+              {formData.collectionType === 'fijo' && '🧣 Fijo: Solo posizione stampa (nessuna selezione colore)'}
+              {formData.collectionType === 'gpower' && '⚡ G-Power: Taglia e colore standard'}
+              {formData.collectionType === 'standard' && '👕 Standard: Taglia e colore standard'}
+            </p>
           </div>
 
           <div>
@@ -582,9 +626,10 @@ const ProductModal = ({ product, onClose, onSave }) => {
                   </div>
                   
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {/* Taglia - Always visible */}
                     <div>
                       <label className="block text-xs font-medium text-primary-600 mb-1">
-                        Taglia
+                        Taglia *
                       </label>
                       <select
                         value={variant.size}
@@ -596,21 +641,47 @@ const ProductModal = ({ product, onClose, onSave }) => {
                         ))}
                       </select>
                     </div>
+
+                    {/* Colore - Only for 'standard' and 'gpower' */}
+                    {formData.collectionType !== 'fijo' && (
+                      <div>
+                        <label className="block text-xs font-medium text-primary-600 mb-1">
+                          Colore
+                        </label>
+                        <input
+                          type="text"
+                          value={variant.color || ''}
+                          onChange={(e) => handleVariantChange(index, 'color', e.target.value)}
+                          className="input text-sm"
+                          placeholder="es. Rosso"
+                        />
+                      </div>
+                    )}
+
+                    {/* Posizione Stampa - Only for 'fijo' */}
+                    {formData.collectionType === 'fijo' && (
+                      <div>
+                        <label className="block text-xs font-medium text-primary-600 mb-1">
+                          Posizione Stampa *
+                        </label>
+                        <select
+                          value={variant.printPosition || 'centro'}
+                          onChange={(e) => handleVariantChange(index, 'printPosition', e.target.value)}
+                          className="input text-sm"
+                        >
+                          {printPositions.map(pos => (
+                            <option key={pos} value={pos}>
+                              {pos.charAt(0).toUpperCase() + pos.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Stock - Always visible */}
                     <div>
                       <label className="block text-xs font-medium text-primary-600 mb-1">
-                        Colore
-                      </label>
-                      <input
-                        type="text"
-                        value={variant.color}
-                        onChange={(e) => handleVariantChange(index, 'color', e.target.value)}
-                        className="input text-sm"
-                        placeholder="es. Rosso"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-primary-600 mb-1">
-                        Stock
+                        Stock *
                       </label>
                       <input
                         type="number"
@@ -620,6 +691,8 @@ const ProductModal = ({ product, onClose, onSave }) => {
                         className="input text-sm"
                       />
                     </div>
+
+                    {/* SKU - Always visible */}
                     <div>
                       <label className="block text-xs font-medium text-primary-600 mb-1">
                         SKU
@@ -632,6 +705,8 @@ const ProductModal = ({ product, onClose, onSave }) => {
                         placeholder="AUTO"
                       />
                     </div>
+
+                    {/* Prezzo Extra - Always visible */}
                     <div>
                       <label className="block text-xs font-medium text-primary-600 mb-1">
                         Prezzo Extra (€)

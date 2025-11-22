@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo 3: Hover Effects - Card Progetti</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --accent-cyan: #48dbfb;
+            --accent-purple: #a855f7;
+            --accent-pink: #ff6b9d;
+            --accent-orange: #feca57;
+            --accent-green: #26de81;
+            --text-light: #f0f0f0;
+            --text-muted: #888;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: var(--text-light);
+            padding: 2rem;
+        }
+
+        /* Back link */
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: color 0.3s ease;
+            z-index: 100;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 3rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 5px;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Effect selector */
+        .effect-selector {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .effect-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 0.6rem 1.2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .effect-btn:hover,
+        .effect-btn.active {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            color: var(--bg-dark);
+        }
+
+        /* Projects grid */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            perspective: 1000px;
+        }
+
+        /* Base card styles */
+        .project-card {
+            position: relative;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+
+        .card-description {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .card-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.6rem;
+            background: rgba(72, 219, 251, 0.1);
+            border: 1px solid rgba(72, 219, 251, 0.3);
+            border-radius: 20px;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Glow effect on cards */
+        .card-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+            border-radius: 16px;
+        }
+
+        /* ============================================
+           EFFECT 1: 3D TILT
+           ============================================ */
+        .effect-tilt .project-card:hover {
+            box-shadow:
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 30px rgba(72, 219, 251, 0.2);
+        }
+
+        .effect-tilt .project-card:hover::before {
+            opacity: 1;
+        }
+
+        /* ============================================
+           EFFECT 2: GLASSMORPHISM
+           ============================================ */
+        .effect-glass .project-card {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .effect-glass .project-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 0 30px rgba(255, 255, 255, 0.05);
+            transform: translateY(-10px);
+        }
+
+        .effect-glass .project-card:hover .card-glow {
+            opacity: 1;
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(72, 219, 251, 0.15) 0%,
+                transparent 50%);
+        }
+
+        /* ============================================
+           EFFECT 3: BORDER GRADIENT
+           ============================================ */
+        .effect-border .project-card {
+            background: var(--bg-dark);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+        }
+
+        .effect-border .project-card::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple), var(--accent-pink));
+            border-radius: 18px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .effect-border .project-card:hover::after {
+            opacity: 1;
+            animation: borderRotate 3s linear infinite;
+        }
+
+        .effect-border .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(72, 219, 251, 0.2);
+        }
+
+        @keyframes borderRotate {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        /* ============================================
+           EFFECT 4: SPOTLIGHT
+           ============================================ */
+        .effect-spotlight .project-card {
+            overflow: hidden;
+        }
+
+        .effect-spotlight .project-card .spotlight {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .effect-spotlight .project-card:hover .spotlight {
+            opacity: 1;
+        }
+
+        .effect-spotlight .project-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ============================================
+           EFFECT 5: LIFT & SHADOW
+           ============================================ */
+        .effect-lift .project-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow:
+                0 30px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(72, 219, 251, 0.3);
+            border-color: var(--accent-cyan);
+        }
+
+        .effect-lift .project-card:hover .card-icon {
+            transform: scale(1.1);
+            transition: transform 0.4s ease;
+        }
+
+        /* Info box */
+        .info-box {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            background: var(--glass-bg);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .info-box code {
+            background: rgba(72, 219, 251, 0.15);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            color: var(--accent-cyan);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .effect-selector {
+                gap: 0.3rem;
+            }
+
+            .effect-btn {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-link">&larr; Torna ai Demos</a>
+
+    <div class="container">
+        <header>
+            <h1>HOVER EFFECTS</h1>
+            <p class="subtitle">Seleziona un effetto e passa il mouse sulle card</p>
+        </header>
+
+        <div class="effect-selector">
+            <button class="effect-btn active" data-effect="tilt">3D Tilt</button>
+            <button class="effect-btn" data-effect="glass">Glassmorphism</button>
+            <button class="effect-btn" data-effect="border">Gradient Border</button>
+            <button class="effect-btn" data-effect="spotlight">Spotlight</button>
+            <button class="effect-btn" data-effect="lift">Lift & Shadow</button>
+        </div>
+
+        <div class="projects-grid effect-tilt" id="projectsGrid">
+            <!-- Card 1 -->
+            <div class="project-card" data-color="cyan">
+                <div class="card-glow"></div>
+                <div class="spotlight"></div>
+                <span class="card-icon">🎮</span>
+                <h3 class="card-title">Mini Giochi</h3>
+                <p class="card-description">Collezione di giochi interattivi creati con JavaScript vanilla e Canvas API.</p>
+                <div class="card-tags">
+                    <span class="tag">JavaScript</span>
+                    <span class="tag">Canvas</span>
+                    <span class="tag">Games</span>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="project-card" data-color="purple">
+                <div class="card-glow"></div>
+                <div class="spotlight"></div>
+                <span class="card-icon">🐙</span>
+                <h3 class="card-title">X World Project</h3>
+                <p class="card-description">Ecosistema Web3 con NFT crowdfunding, tokenomics e governance DAO.</p>
+                <div class="card-tags">
+                    <span class="tag">Web3</span>
+                    <span class="tag">Solidity</span>
+                    <span class="tag">NFT</span>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="project-card" data-color="pink">
+                <div class="card-glow"></div>
+                <div class="spotlight"></div>
+                <span class="card-icon">👕</span>
+                <h3 class="card-title">E-Commerce</h3>
+                <p class="card-description">Piattaforma MERN completa per vendita online con Stripe e admin panel.</p>
+                <div class="card-tags">
+                    <span class="tag">React</span>
+                    <span class="tag">Node.js</span>
+                    <span class="tag">MongoDB</span>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="project-card" data-color="orange">
+                <div class="card-glow"></div>
+                <div class="spotlight"></div>
+                <span class="card-icon">🏆</span>
+                <h3 class="card-title">Olimpiadi Goliardiche</h3>
+                <p class="card-description">Sistema di gestione eventi con classifica real-time e Google Sheets.</p>
+                <div class="card-tags">
+                    <span class="tag">Vanilla JS</span>
+                    <span class="tag">PWA</span>
+                    <span class="tag">API</span>
+                </div>
+            </div>
+
+            <!-- Card 5 -->
+            <div class="project-card" data-color="green">
+                <div class="card-glow"></div>
+                <div class="spotlight"></div>
+                <span class="card-icon">📊</span>
+                <h3 class="card-title">Gestionale-X</h3>
+                <p class="card-description">App React per project management con Firebase real-time database.</p>
+                <div class="card-tags">
+                    <span class="tag">React</span>
+                    <span class="tag">Firebase</span>
+                    <span class="tag">Netlify</span>
+                </div>
+            </div>
+
+            <!-- Card 6 -->
+            <div class="project-card" data-color="cyan">
+                <div class="card-glow"></div>
+                <div class="spotlight"></div>
+                <span class="card-icon">📄</span>
+                <h3 class="card-title">CV Interattivo</h3>
+                <p class="card-description">Curriculum vitae con modelli 3D, animazioni e skills visualizzate.</p>
+                <div class="card-tags">
+                    <span class="tag">Three.js</span>
+                    <span class="tag">CSS3</span>
+                    <span class="tag">Animation</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>Tecniche utilizzate:</strong><br>
+            <code>transform: perspective()</code> per 3D tilt &bull;
+            <code>backdrop-filter: blur()</code> per glassmorphism &bull;
+            <code>CSS gradients</code> per border animati &bull;
+            <code>radial-gradient</code> per spotlight effect
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // HOVER EFFECTS CONTROLLER
+        // ============================================================
+
+        const grid = document.getElementById('projectsGrid');
+        const cards = document.querySelectorAll('.project-card');
+
+        // Effect selector
+        document.querySelectorAll('.effect-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const effect = btn.dataset.effect;
+                grid.className = 'projects-grid effect-' + effect;
+            });
+        });
+
+        // 3D Tilt effect
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                if (!grid.classList.contains('effect-tilt')) return;
+
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = '';
+            });
+
+            // Glassmorphism glow follow
+            card.addEventListener('mousemove', (e) => {
+                if (!grid.classList.contains('effect-glass')) return;
+
+                const rect = card.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+                card.style.setProperty('--mouse-x', x + '%');
+                card.style.setProperty('--mouse-y', y + '%');
+            });
+
+            // Spotlight follow
+            card.addEventListener('mousemove', (e) => {
+                if (!grid.classList.contains('effect-spotlight')) return;
+
+                const spotlight = card.querySelector('.spotlight');
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                spotlight.style.left = x + 'px';
+                spotlight.style.top = y + 'px';
+            });
+        });
+
+        console.log('🐙 Demo 3: Hover Effects - 5 effetti diversi per le card progetti!');
+    </script>
+</body>
+</html>

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Interattivo - Paolo Repetto</title>
+    <link rel="icon" type="image/webp" href="../immagini-generali/logo-polpo.webp">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --accent-cyan: #48dbfb;
+            --accent-purple: #a855f7;
+            --accent-pink: #ff6b9d;
+            --accent-orange: #feca57;
+            --text-light: #f0f0f0;
+            --text-muted: #888;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        /* Particle canvas background */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        /* Content */
+        .content {
+            position: relative;
+            z-index: 10;
+            padding: 2rem;
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-block;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            margin-bottom: 2rem;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        /* Animated SVG Logo */
+        .logo-container {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 1.5rem;
+            cursor: pointer;
+        }
+
+        .logo-container:hover .polpo-svg {
+            filter: drop-shadow(0 0 20px var(--accent-cyan));
+        }
+
+        .polpo-path {
+            fill: none;
+            stroke: url(#gradientSmall);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 500;
+            stroke-dashoffset: 500;
+            animation: drawLogo 2s ease forwards;
+        }
+
+        @keyframes drawLogo {
+            to { stroke-dashoffset: 0; }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 8px;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            letter-spacing: 3px;
+        }
+
+        /* Demos section */
+        .demos-section {
+            max-width: 1000px;
+            margin: 0 auto 4rem;
+        }
+
+        .section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .demos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Demo card */
+        .demo-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-decoration: none;
+            color: var(--text-light);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(72, 219, 251, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .demo-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .demo-number {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0.3;
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+        }
+
+        .demo-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .demo-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-description {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Featured section */
+        .featured-section {
+            max-width: 800px;
+            margin: 0 auto 4rem;
+            text-align: center;
+        }
+
+        .featured-card {
+            background: linear-gradient(135deg, rgba(72, 219, 251, 0.1), rgba(168, 85, 247, 0.1));
+            border: 1px solid rgba(72, 219, 251, 0.3);
+            border-radius: 20px;
+            padding: 3rem;
+            text-decoration: none;
+            color: var(--text-light);
+            display: block;
+            transition: all 0.4s ease;
+        }
+
+        .featured-card:hover {
+            transform: scale(1.02);
+            box-shadow:
+                0 0 40px rgba(72, 219, 251, 0.2),
+                0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: var(--accent-cyan);
+        }
+
+        .featured-badge {
+            display: inline-block;
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+        }
+
+        .featured-title {
+            font-size: 1.8rem;
+            font-weight: 300;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+        }
+
+        .featured-description {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+                letter-spacing: 4px;
+            }
+
+            .demos-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .featured-card {
+                padding: 2rem;
+            }
+
+            .featured-title {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bgCanvas"></canvas>
+
+    <div class="content">
+        <a href="../index.html" class="back-link">&larr; Torna al Portfolio Hub</a>
+
+        <header>
+            <div class="logo-container">
+                <svg class="polpo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="gradientSmall" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#48dbfb"/>
+                            <stop offset="50%" style="stop-color:#a855f7"/>
+                            <stop offset="100%" style="stop-color:#ff6b9d"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Mantello/Testa -->
+                    <path class="polpo-path" d="M58 58 Q58 20 100 20 Q142 20 142 58 Q142 90 100 95 Q58 90 58 58"/>
+                    <!-- 8 Tentacoli -->
+                    <path class="polpo-path" d="M62 88 Q40 105 28 130 Q20 150 25 165 Q30 175 38 168"/>
+                    <path class="polpo-path" d="M70 92 Q55 115 48 145 Q42 170 50 180 Q60 185 65 172"/>
+                    <path class="polpo-path" d="M82 95 Q72 125 75 155 Q78 178 88 182 Q100 180 95 165"/>
+                    <path class="polpo-path" d="M95 96 Q92 130 98 160 Q102 180 112 178 Q120 172 115 158"/>
+                    <path class="polpo-path" d="M105 96 Q110 130 115 158 Q120 178 130 175 Q138 168 132 155"/>
+                    <path class="polpo-path" d="M118 95 Q130 125 138 155 Q145 175 155 170 Q162 160 155 148"/>
+                    <path class="polpo-path" d="M130 92 Q148 115 160 142 Q170 165 178 158 Q182 145 172 132"/>
+                    <path class="polpo-path" d="M138 88 Q162 102 175 125 Q185 145 178 155 Q168 158 165 145"/>
+                    <!-- Occhi -->
+                    <ellipse class="polpo-path" cx="80" cy="55" rx="10" ry="12" style="stroke-dasharray: 80;"/>
+                    <ellipse class="polpo-path" cx="120" cy="55" rx="10" ry="12" style="stroke-dasharray: 80;"/>
+                </svg>
+            </div>
+            <h1>PAOLO REPETTO</h1>
+            <p class="subtitle">Portfolio Interattivo</p>
+        </header>
+
+        <!-- Demos Section -->
+        <section class="demos-section">
+            <h2 class="section-title">Componenti Modulari</h2>
+            <div class="demos-grid">
+                <a href="demos/01-svg-logo/index.html" class="demo-card">
+                    <span class="demo-number">01</span>
+                    <span class="demo-icon">✨</span>
+                    <h3 class="demo-title">SVG Logo Animato</h3>
+                    <p class="demo-description">Logo polpo che si disegna da solo con stroke animation. Occhi che seguono il mouse.</p>
+                </a>
+
+                <a href="demos/02-background/index.html" class="demo-card">
+                    <span class="demo-number">02</span>
+                    <span class="demo-icon">🌌</span>
+                    <h3 class="demo-title">Background Dinamico</h3>
+                    <p class="demo-description">Particelle canvas interattive. 4 modalità: follow, repel, connect, wave.</p>
+                </a>
+
+                <a href="demos/03-hover-effects/index.html" class="demo-card">
+                    <span class="demo-number">03</span>
+                    <span class="demo-icon">🎭</span>
+                    <h3 class="demo-title">Hover Effects</h3>
+                    <p class="demo-description">5 effetti per card progetti: 3D tilt, glassmorphism, gradient border, spotlight, lift.</p>
+                </a>
+            </div>
+        </section>
+
+        <!-- Featured Section -->
+        <section class="featured-section">
+            <a href="full/index.html" class="featured-card">
+                <span class="featured-badge">Coming Soon</span>
+                <h2 class="featured-title">Mix Completo</h2>
+                <p class="featured-description">Tutti i componenti combinati in un portfolio interattivo completo. Logo animato + particelle + hover effects + transizioni fluide.</p>
+            </a>
+        </section>
+
+        <footer>
+            <p>&copy; 2025 Paolo Repetto &bull; <a href="../index.html">Portfolio Hub</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // Simple particle background (lighter version)
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        const particles = [];
+        const particleCount = 40;
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                size: Math.random() * 2 + 1,
+                alpha: Math.random() * 0.5 + 0.2
+            });
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(10, 10, 15, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(72, 219, 251, ${p.alpha})`;
+                ctx.fill();
+            });
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        console.log('🐙 Portfolio Interattivo - Hub dei Demo!');
+    </script>
+</body>
+</html>

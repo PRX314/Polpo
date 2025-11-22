@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paolo Repetto - Portfolio Interattivo Completo</title>
+    <link rel="icon" type="image/webp" href="../../immagini-generali/logo-polpo.webp">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --accent-cyan: #48dbfb;
+            --accent-purple: #a855f7;
+            --accent-pink: #ff6b9d;
+            --accent-orange: #feca57;
+            --accent-green: #26de81;
+            --text-light: #f0f0f0;
+            --text-muted: #888;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        /* Particle Background */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Content Layer */
+        .content {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .nav-logo {
+            font-size: 1.2rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Animated Logo */
+        .logo-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin-bottom: 2rem;
+            cursor: pointer;
+        }
+
+        .glow-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 230px;
+            height: 230px;
+            transform: translate(-50%, -50%) scale(0.9);
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, var(--accent-cyan), var(--accent-purple), var(--accent-pink), var(--accent-orange), var(--accent-cyan));
+            opacity: 0;
+            transition: all 0.5s ease;
+            animation: rotate 10s linear infinite;
+            filter: blur(25px);
+        }
+
+        .logo-container:hover .glow-ring {
+            opacity: 0.6;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        @keyframes rotate {
+            to { transform: translate(-50%, -50%) scale(0.9) rotate(360deg); }
+        }
+
+        .polpo-svg {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            transition: filter 0.5s ease;
+        }
+
+        .logo-container:hover .polpo-svg {
+            filter: drop-shadow(0 0 20px var(--accent-cyan));
+        }
+
+        .polpo-path {
+            fill: none;
+            stroke: url(#gradient);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: draw 2.5s ease forwards;
+        }
+
+        .body-path { animation-delay: 0s; }
+        .tentacle-1 { animation-delay: 0.15s; }
+        .tentacle-2 { animation-delay: 0.3s; }
+        .tentacle-3 { animation-delay: 0.45s; }
+        .tentacle-4 { animation-delay: 0.6s; }
+        .tentacle-5 { animation-delay: 0.75s; }
+        .tentacle-6 { animation-delay: 0.9s; }
+        .tentacle-7 { animation-delay: 1.05s; }
+        .tentacle-8 { animation-delay: 1.2s; }
+        .eye-path { animation-delay: 1.4s; stroke-dasharray: 150; }
+
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .polpo-fill {
+            fill: rgba(72, 219, 251, 0.08);
+            opacity: 0;
+            animation: fillIn 0.8s ease 1.5s forwards;
+        }
+
+        @keyframes fillIn {
+            to { opacity: 1; }
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 300;
+            letter-spacing: 10px;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0;
+            animation: fadeUp 1s ease 2s forwards;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            letter-spacing: 5px;
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeUp 1s ease 2.3s forwards;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 1rem 2.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-decoration: none;
+            transition: all 0.4s ease;
+            opacity: 0;
+            animation: fadeUp 1s ease 2.6s forwards;
+        }
+
+        .cta-btn:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            box-shadow: 0 0 30px rgba(72, 219, 251, 0.4);
+        }
+
+        /* Scroll indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            animation: fadeUp 1s ease 3s forwards, bounce 2s ease infinite 3.5s;
+        }
+
+        .scroll-indicator span {
+            display: block;
+            width: 20px;
+            height: 30px;
+            border: 2px solid var(--text-muted);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .scroll-indicator span::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            width: 4px;
+            height: 8px;
+            background: var(--accent-cyan);
+            border-radius: 2px;
+            transform: translateX(-50%);
+            animation: scrollDot 2s ease infinite;
+        }
+
+        @keyframes scrollDot {
+            0%, 100% { opacity: 1; top: 6px; }
+            50% { opacity: 0.3; top: 14px; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        /* Projects Section */
+        .projects-section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            perspective: 1000px;
+        }
+
+        /* Project Cards with 3D Tilt */
+        .project-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            text-decoration: none;
+            color: var(--text-light);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(72, 219, 251, 0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .project-card:hover::before {
+            opacity: 1;
+        }
+
+        .project-card:hover {
+            box-shadow:
+                0 25px 50px rgba(0, 0, 0, 0.4),
+                0 0 30px rgba(72, 219, 251, 0.15);
+            border-color: rgba(72, 219, 251, 0.3);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin-bottom: 0.8rem;
+        }
+
+        .card-description {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 0.65rem;
+            padding: 0.4rem 0.8rem;
+            background: rgba(72, 219, 251, 0.1);
+            border: 1px solid rgba(72, 219, 251, 0.2);
+            border-radius: 20px;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-cyan);
+        }
+
+        .copyright {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            h1 {
+                font-size: 2rem;
+                letter-spacing: 5px;
+            }
+
+            .subtitle {
+                font-size: 0.8rem;
+                letter-spacing: 3px;
+            }
+
+            .logo-container {
+                width: 180px;
+                height: 180px;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="content">
+        <!-- Navigation -->
+        <nav>
+            <a href="../../index.html" class="nav-logo">POLPO</a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#progetti">Progetti</a></li>
+                <li><a href="../../index.html">Portfolio Hub</a></li>
+            </ul>
+        </nav>
+
+        <!-- Hero Section -->
+        <section id="home" class="hero">
+            <div class="logo-container">
+                <div class="glow-ring"></div>
+                <svg class="polpo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#48dbfb"/>
+                            <stop offset="50%" style="stop-color:#a855f7"/>
+                            <stop offset="100%" style="stop-color:#ff6b9d"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Mantello/Testa - forma più tondeggiante da polpo -->
+                    <ellipse class="polpo-fill" cx="100" cy="58" rx="42" ry="38"/>
+                    <path class="polpo-path body-path" d="M58 58 Q58 20 100 20 Q142 20 142 58 Q142 90 100 95 Q58 90 58 58"/>
+
+                    <!-- 8 Tentacoli con curve organiche e ricci alle estremità -->
+                    <!-- Tentacolo 1 - estrema sinistra -->
+                    <path class="polpo-path tentacle-1" d="M62 88 Q40 105 28 130 Q20 150 25 165 Q30 175 38 168 Q42 158 38 145"/>
+                    <!-- Tentacolo 2 -->
+                    <path class="polpo-path tentacle-2" d="M70 92 Q55 115 48 145 Q42 170 50 180 Q60 185 65 172 Q68 158 62 145"/>
+                    <!-- Tentacolo 3 -->
+                    <path class="polpo-path tentacle-3" d="M82 95 Q72 125 75 155 Q78 178 88 182 Q100 180 95 165 Q90 150 88 140"/>
+                    <!-- Tentacolo 4 - centro sinistra -->
+                    <path class="polpo-path tentacle-4" d="M95 96 Q92 130 98 160 Q102 180 112 178 Q120 172 115 158 Q108 145 105 135"/>
+                    <!-- Tentacolo 5 - centro destra -->
+                    <path class="polpo-path tentacle-5" d="M105 96 Q110 130 115 158 Q120 178 130 175 Q138 168 132 155 Q125 142 120 132"/>
+                    <!-- Tentacolo 6 -->
+                    <path class="polpo-path tentacle-6" d="M118 95 Q130 125 138 155 Q145 175 155 170 Q162 160 155 148 Q145 135 140 125"/>
+                    <!-- Tentacolo 7 -->
+                    <path class="polpo-path tentacle-7" d="M130 92 Q148 115 160 142 Q170 165 178 158 Q182 145 172 132 Q160 120 155 112"/>
+                    <!-- Tentacolo 8 - estrema destra -->
+                    <path class="polpo-path tentacle-8" d="M138 88 Q162 102 175 125 Q185 145 178 155 Q168 158 165 145 Q162 130 158 120"/>
+
+                    <!-- Occhi grandi espressivi -->
+                    <ellipse class="polpo-path eye-path" cx="80" cy="55" rx="12" ry="14"/>
+                    <ellipse class="polpo-path eye-path" cx="120" cy="55" rx="12" ry="14"/>
+
+                    <!-- Pupille -->
+                    <circle id="pupilLeft" cx="82" cy="58" r="5" fill="var(--accent-cyan)" opacity="0">
+                        <animate attributeName="opacity" from="0" to="1" begin="1.5s" dur="0.3s" fill="freeze"/>
+                    </circle>
+                    <circle id="pupilRight" cx="122" cy="58" r="5" fill="var(--accent-cyan)" opacity="0">
+                        <animate attributeName="opacity" from="0" to="1" begin="1.6s" dur="0.3s" fill="freeze"/>
+                    </circle>
+                </svg>
+            </div>
+
+            <h1>PAOLO REPETTO</h1>
+            <p class="subtitle">Full-Stack Developer & Creative Innovator</p>
+            <a href="#progetti" class="cta-btn">Esplora Progetti</a>
+
+            <div class="scroll-indicator">
+                <span></span>
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="progetti" class="projects-section">
+            <div class="section-header">
+                <h2 class="section-title">PROGETTI</h2>
+                <p class="section-subtitle">Passa il mouse per l'effetto 3D tilt</p>
+            </div>
+
+            <div class="projects-grid">
+                <a href="../../minigiochi/index.html" class="project-card">
+                    <span class="card-icon">🎮</span>
+                    <h3 class="card-title">Mini Giochi</h3>
+                    <p class="card-description">Collezione di giochi interattivi creati con JavaScript vanilla e Canvas API. Pixxa Generator, DVD Screensaver, e altri.</p>
+                    <div class="card-tags">
+                        <span class="tag">JavaScript</span>
+                        <span class="tag">Canvas</span>
+                        <span class="tag">Games</span>
+                    </div>
+                </a>
+
+                <a href="../../progetti/xworld/nav-hub.html" class="project-card">
+                    <span class="card-icon">🐙</span>
+                    <h3 class="card-title">X World Project</h3>
+                    <p class="card-description">Ecosistema Web3 con NFT crowdfunding, tokenomics e governance DAO. 9 applicazioni interattive.</p>
+                    <div class="card-tags">
+                        <span class="tag">Web3</span>
+                        <span class="tag">Solidity</span>
+                        <span class="tag">NFT</span>
+                    </div>
+                </a>
+
+                <a href="https://prx314.github.io/OG-2025/" class="project-card">
+                    <span class="card-icon">🏆</span>
+                    <h3 class="card-title">Olimpiadi Goliardiche</h3>
+                    <p class="card-description">Sistema di gestione eventi con classifica real-time e integrazione Google Sheets. 14 templi, 20 squadre.</p>
+                    <div class="card-tags">
+                        <span class="tag">Vanilla JS</span>
+                        <span class="tag">PWA</span>
+                        <span class="tag">Google API</span>
+                    </div>
+                </a>
+
+                <a href="https://gestionalepolpo.netlify.app/" class="project-card">
+                    <span class="card-icon">📊</span>
+                    <h3 class="card-title">Gestionale-X</h3>
+                    <p class="card-description">App React per project management con Firebase real-time database. Note e progetti sincronizzati via tag.</p>
+                    <div class="card-tags">
+                        <span class="tag">React</span>
+                        <span class="tag">Firebase</span>
+                        <span class="tag">Netlify</span>
+                    </div>
+                </a>
+
+                <a href="../../cv.html" class="project-card">
+                    <span class="card-icon">📄</span>
+                    <h3 class="card-title">CV Interattivo</h3>
+                    <p class="card-description">Curriculum vitae con modelli 3D, animazioni e skills visualizzate dinamicamente.</p>
+                    <div class="card-tags">
+                        <span class="tag">Three.js</span>
+                        <span class="tag">CSS3</span>
+                        <span class="tag">Animation</span>
+                    </div>
+                </a>
+
+                <a href="../../Sito Magliette/index.html" class="project-card">
+                    <span class="card-icon">👕</span>
+                    <h3 class="card-title">Brand Store</h3>
+                    <p class="card-description">Showcase di magliette con design unici e personalizzabili. Demo e-commerce front-end.</p>
+                    <div class="card-tags">
+                        <span class="tag">HTML5</span>
+                        <span class="tag">CSS3</span>
+                        <span class="tag">Design</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div class="footer-links">
+                <a href="../../index.html">Portfolio Hub</a>
+                <a href="../index.html">Demo Components</a>
+                <a href="#home">Torna Su</a>
+            </div>
+            <p class="copyright">&copy; 2025 Paolo Repetto. Portfolio Interattivo.</p>
+        </footer>
+    </div>
+
+    <script>
+        // ============================================================
+        // PARTICLE BACKGROUND
+        // ============================================================
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let mouse = { x: null, y: null };
+        const particles = [];
+        const particleCount = 60;
+        const connectDistance = 150;
+        const mouseRadius = 120;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 1.5;
+                this.size = Math.random() * 2 + 1;
+                this.alpha = Math.random() * 0.5 + 0.3;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+                // Mouse attraction
+                if (mouse.x && mouse.y) {
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < mouseRadius) {
+                        const force = (mouseRadius - dist) / mouseRadius;
+                        this.x += dx * force * 0.02;
+                        this.y += dy * force * 0.02;
+                    }
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(72, 219, 251, ${this.alpha})`;
+                ctx.fill();
+            }
+        }
+
+        // Initialize particles
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        // Draw connections
+        function drawConnections() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < connectDistance) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(72, 219, 251, ${(1 - dist / connectDistance) * 0.2})`;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(10, 10, 15, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            drawConnections();
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Mouse tracking
+        document.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        // ============================================================
+        // 3D TILT EFFECT FOR CARDS
+        // ============================================================
+        const cards = document.querySelectorAll('.project-card');
+
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = (y - centerY) / 15;
+                const rotateY = (centerX - x) / 15;
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+
+                // Update glow position
+                const mouseX = (x / rect.width) * 100;
+                const mouseY = (y / rect.height) * 100;
+                card.style.setProperty('--mouse-x', mouseX + '%');
+                card.style.setProperty('--mouse-y', mouseY + '%');
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = '';
+            });
+        });
+
+        // ============================================================
+        // EYES FOLLOW MOUSE
+        // ============================================================
+        const logoContainer = document.querySelector('.logo-container');
+
+        document.addEventListener('mousemove', (e) => {
+            const rect = logoContainer.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const deltaX = (e.clientX - centerX) / 40;
+            const deltaY = (e.clientY - centerY) / 40;
+
+            const maxMove = 5;
+            const moveX = Math.max(-maxMove, Math.min(maxMove, deltaX));
+            const moveY = Math.max(-maxMove, Math.min(maxMove, deltaY));
+
+            document.getElementById('pupilLeft').setAttribute('cx', 82 + moveX);
+            document.getElementById('pupilLeft').setAttribute('cy', 58 + moveY);
+            document.getElementById('pupilRight').setAttribute('cx', 122 + moveX);
+            document.getElementById('pupilRight').setAttribute('cy', 58 + moveY);
+        });
+
+        console.log('🐙 Portfolio Interattivo Completo - Mix di tutti gli effetti!');
+    </script>
+</body>
+</html>

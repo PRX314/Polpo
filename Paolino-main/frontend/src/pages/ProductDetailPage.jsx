@@ -298,7 +298,7 @@ const ProductDetailPage = () => {
                   }`}
                 >
                   <img
-                    src={`${API_SERVER_URL}${image.url}`}
+                    src={image.url}
                     alt={`${product.name} ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
@@ -357,7 +357,7 @@ const ProductDetailPage = () => {
                   const sizeVariants = product.variants.filter(v => v.size === size);
                   const hasStock = sizeVariants.some(v => v.stock > 0);
                   const isSelected = selectedVariant?.size === size;
-                  
+
                   return (
                     <button
                       key={size}
@@ -383,8 +383,8 @@ const ProductDetailPage = () => {
               </div>
             </div>
 
-            {/* Color Selection */}
-            {selectedVariant?.size && (
+            {/* Color Selection - Only for 'standard' and 'gpower' collections */}
+            {selectedVariant?.size && product.collectionType !== 'fijo' && (
               <div>
                 <h3 className="font-semibold text-primary-900 mb-3">
                   Colore: {selectedVariant?.color}
@@ -406,6 +406,36 @@ const ProductDetailPage = () => {
                         }`}
                       >
                         {variant.color}
+                        {variant.stock === 0 && ' (Esaurito)'}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Print Position Selection - Only for 'fijo' collection */}
+            {selectedVariant?.size && product.collectionType === 'fijo' && (
+              <div>
+                <h3 className="font-semibold text-primary-900 mb-3">
+                  Posizione Stampa: {selectedVariant?.printPosition ? selectedVariant.printPosition.charAt(0).toUpperCase() + selectedVariant.printPosition.slice(1) : 'Centro'}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.variants
+                    .filter(v => v.size === selectedVariant.size)
+                    .map((variant) => (
+                      <button
+                        key={variant._id}
+                        onClick={() => setSelectedVariant(variant)}
+                        disabled={variant.stock === 0}
+                        className={`px-4 py-2 rounded-lg border font-medium transition-colors capitalize ${
+                          selectedVariant?._id === variant._id
+                            ? 'border-primary-600 bg-primary-600 text-white'
+                            : variant.stock > 0
+                            ? 'border-primary-300 text-primary-700 hover:border-primary-400'
+                            : 'border-primary-200 text-primary-400 cursor-not-allowed line-through'
+                        }`}
+                      >
+                        {variant.printPosition || 'Centro'}
                         {variant.stock === 0 && ' (Esaurito)'}
                       </button>
                     ))}
@@ -595,9 +625,16 @@ const ProductDetailPage = () => {
                     <p className="text-primary-600">
                       Taglie disponibili: {[...new Set(product.variants.map(v => v.size))].join(', ')}
                     </p>
-                    <p className="text-primary-600">
-                      Colori disponibili: {[...new Set(product.variants.map(v => v.color))].join(', ')}
-                    </p>
+                    {product.collectionType !== 'fijo' && (
+                      <p className="text-primary-600">
+                        Colori disponibili: {[...new Set(product.variants.map(v => v.color).filter(Boolean))].join(', ')}
+                      </p>
+                    )}
+                    {product.collectionType === 'fijo' && (
+                      <p className="text-primary-600">
+                        Posizioni stampa: {[...new Set(product.variants.map(v => v.printPosition).filter(Boolean))].join(', ')}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XW House - Real Estate Tokenizzato</title>
+    <title>XW House - Membership Club Esclusivo</title>
     <style>
         * {
             margin: 0;
@@ -128,40 +128,65 @@
             line-height: 1.5;
         }
 
-        .flow-steps {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
+        .legal-box {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
         }
 
-        .flow-step {
-            display: flex;
-            align-items: center;
+        .legal-box h3 {
+            color: #2e7d32;
+            margin-top: 0;
+            font-size: 16px;
+        }
+
+        .legal-box p {
+            color: #1b5e20;
+            font-size: 13px;
+        }
+
+        .legal-box ul {
+            margin-bottom: 0;
+        }
+
+        .legal-box li {
+            color: #1b5e20;
+        }
+
+        .membership-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+        }
+
+        .membership-card h3 {
+            color: white;
+            font-size: 18px;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        .membership-benefits {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 12px;
+        }
+
+        .benefit-item {
+            background: rgba(255,255,255,0.15);
             padding: 12px;
-            border: 1px solid var(--border);
             border-radius: 8px;
-            background: var(--bg);
-        }
-
-        .flow-number {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: var(--bg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-
-        .flow-text {
             font-size: 12px;
-            line-height: 1.4;
+        }
+
+        .benefit-item strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 4px;
         }
 
         .property-grid {
@@ -221,29 +246,37 @@
         }
 
         .property-features li::before {
-            content: '•';
+            content: '✓';
             margin-right: 6px;
             color: #48bb78;
             font-weight: 700;
         }
 
-        .highlight-box {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-        }
-
-        .highlight-box h3 {
-            color: white;
-            font-size: 16px;
-            margin-top: 0;
-        }
-
-        .highlight-box p {
-            color: rgba(255,255,255,0.9);
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
             font-size: 12px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: #f8f8f8;
+            font-weight: 600;
+        }
+
+        .comparison-table .no {
+            color: #f44336;
+        }
+
+        .comparison-table .yes {
+            color: #4caf50;
         }
 
         .example-box {
@@ -302,6 +335,24 @@
             line-height: 1.5;
         }
 
+        .not-allowed-box {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .not-allowed-box h3 {
+            color: #c62828;
+            margin-top: 0;
+        }
+
+        .not-allowed-box p, .not-allowed-box li {
+            color: #b71c1c;
+            font-size: 12px;
+        }
+
         .view-nfts-btn {
             display: inline-block;
             margin-top: 20px;
@@ -321,20 +372,8 @@
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
-        .benefits-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .benefit-column h3 {
-            font-size: 14px;
-            margin-bottom: 12px;
-        }
-
         @media (max-width: 600px) {
-            .benefits-grid {
+            .membership-benefits {
                 grid-template-columns: 1fr;
             }
 
@@ -365,177 +404,216 @@
 <body>
     <div class="container">
         <div class="header">
-            <a href="app-prototype.html" class="back-link">← Torna all'App</a>
+            <a href="nav-hub.html" class="back-link">← Torna al Nav Hub</a>
             <div class="icon">🏠</div>
             <h1>XW HOUSE</h1>
-            <p class="subtitle">Real Estate Tokenizzato</p>
+            <p class="subtitle">Membership Club Esclusivo</p>
         </div>
 
         <div class="intro">
-            <p><strong>XW House</strong> reinventa l'investimento immobiliare attraverso la blockchain: invece di acquistare interi immobili, la community investe in <strong>quote tokenizzate tramite NFT</strong>, partecipando ai guadagni generati dalle proprietà.</p>
-            <p>Gli NFT non sono semplici immagini, ma <strong>certificati di proprietà digitale</strong> registrati on-chain che garantiscono revenue share automatica e diritto di voto sulla gestione.</p>
+            <p><strong>XW House</strong> è un <strong>club esclusivo di membership</strong> che offre ai suoi membri accesso privilegiato a strutture uniche: surf house, case vacanza tematiche, esperienze immersive.</p>
+            <p>L'NFT è la tua <strong>tessera del club</strong>: non rappresenta una quota di proprietà, ma un <strong>pass di accesso</strong> con vantaggi esclusivi riservati ai membri fondatori.</p>
         </div>
 
-        <div class="section">
-            <h2>Il Ciclo Virtuoso</h2>
-            <p>Ogni progetto X World House segue un modello trasparente e sostenibile:</p>
+        <div class="legal-box">
+            <h3>✅ Cosa È l'NFT XW House</h3>
+            <ul>
+                <li><strong>Tessera membership digitale</strong> - Accesso al club verificato su blockchain</li>
+                <li><strong>Pass di utilizzo</strong> - Notti gratuite incluse ogni anno</li>
+                <li><strong>Status di founder</strong> - Priorità su prenotazioni e eventi</li>
+                <li><strong>Benefit esclusivi</strong> - Sconti, accesso anticipato, community privata</li>
+                <li><strong>Collezionabile</strong> - NFT limitato, trasferibile sul mercato secondario</li>
+            </ul>
+        </div>
 
-            <div class="flow-steps">
-                <div class="flow-step">
-                    <div class="flow-number">1</div>
-                    <div class="flow-text"><strong>Acquisto</strong> - La DAO raccoglie fondi tramite vendita NFT e acquista un immobile strategico</div>
+        <div class="not-allowed-box">
+            <h3>❌ Cosa NON È l'NFT XW House</h3>
+            <ul>
+                <li><strong>NON è una quota di proprietà immobiliare</strong></li>
+                <li><strong>NON è un investimento finanziario</strong></li>
+                <li><strong>NON garantisce rendimenti o profitti</strong></li>
+                <li><strong>NON dà diritto a dividendi o revenue share</strong></li>
+                <li><strong>NON è un titolo regolamentato (security)</strong></li>
+            </ul>
+            <p style="margin-top: 12px;"><em>L'NFT è un prodotto digitale che dà accesso a servizi. Il suo valore sul mercato secondario può variare e non è garantito.</em></p>
+        </div>
+
+        <div class="membership-card">
+            <h3>🎫 Membership Founder - Cosa Ottieni</h3>
+            <div class="membership-benefits">
+                <div class="benefit-item">
+                    <strong>🏠 7 Notti/Anno</strong>
+                    Accesso garantito alla struttura per una settimana all'anno (valore €1.000+)
                 </div>
-                <div class="flow-step">
-                    <div class="flow-number">2</div>
-                    <div class="flow-text"><strong>Ristrutturazione</strong> - L'immobile viene ristrutturato e preparato secondo le esigenze della community</div>
+                <div class="benefit-item">
+                    <strong>🎯 Priorità Booking</strong>
+                    Prenoti prima di tutti, scegli le date migliori
                 </div>
-                <div class="flow-step">
-                    <div class="flow-number">3</div>
-                    <div class="flow-text"><strong>Creazione Esperienza</strong> - Trasformazione in casa vacanza, surf house, co-working o altro</div>
+                <div class="benefit-item">
+                    <strong>💰 Sconto 40%</strong>
+                    Su tutte le notti extra oltre le 7 incluse
                 </div>
-                <div class="flow-step">
-                    <div class="flow-number">4</div>
-                    <div class="flow-text"><strong>Generazione Reddito</strong> - Affitti, prenotazioni, eventi, corsi generano entrate costanti</div>
+                <div class="benefit-item">
+                    <strong>🎪 Eventi Esclusivi</strong>
+                    Inviti a surf day, degustazioni, meetup community
                 </div>
-                <div class="flow-step">
-                    <div class="flow-number">5</div>
-                    <div class="flow-text"><strong>Distribuzione Automatica</strong> - Smart contract distribuisce i guadagni agli NFT holder proporzionalmente</div>
+                <div class="benefit-item">
+                    <strong>🗳️ Voto Consultivo</strong>
+                    Partecipi alle decisioni su nuove strutture e servizi
                 </div>
-                <div class="flow-step">
-                    <div class="flow-number">6</div>
-                    <div class="flow-text"><strong>Reinvestimento</strong> - Parte dei profitti viene reinvestita in nuove proprietà o miglioramenti</div>
+                <div class="benefit-item">
+                    <strong>🤝 Network Founder</strong>
+                    Community privata, networking con altri membri
+                </div>
+                <div class="benefit-item">
+                    <strong>🏷️ Sconti Partner</strong>
+                    Convenzioni con attività locali (ristoranti, noleggi, corsi)
+                </div>
+                <div class="benefit-item">
+                    <strong>🔄 NFT Trasferibile</strong>
+                    Puoi vendere la membership sul mercato secondario
                 </div>
             </div>
         </div>
 
         <div class="section">
-            <h2>Strutture Flessibili</h2>
-            <p>X World House non si limita alla ristrutturazione di edifici tradizionali. Il modello include anche <strong>soluzioni modulari e alternative</strong>:</p>
+            <h2>Come Funziona il Club</h2>
 
-            <ul>
-                <li><strong>🏠 Ristrutturazioni</strong> - Case esistenti da riqualificare in location strategiche</li>
-                <li><strong>🏕️ Bungalow</strong> - Strutture prefabbricate eco-sostenibili in aree naturali</li>
-                <li><strong>📦 Container</strong> - Container marittimi convertiti in spazi abitativi moderni</li>
-                <li><strong>🏗️ Modulari</strong> - Costruzioni modulari personalizzabili e scalabili</li>
-            </ul>
+            <h3>1. Acquisto Membership</h3>
+            <p>Acquisti l'NFT XW House (prezzo fisso, supply limitata). L'NFT è la tua tessera digitale che certifica lo status di membro founder.</p>
 
-            <p style="margin-top: 16px;">Questa flessibilità permette di <strong>minimizzare i costi di investimento</strong> e adattarsi rapidamente a diverse location e target di mercato.</p>
+            <h3>2. Prenotazione</h3>
+            <p>Ogni anno hai diritto a 7 notti gratuite. Prenoti tramite piattaforma dedicata con priorità rispetto agli ospiti esterni.</p>
+
+            <h3>3. Esperienza</h3>
+            <p>Goditi la struttura con tutti i servizi inclusi. Partecipa agli eventi esclusivi per membri.</p>
+
+            <h3>4. Community</h3>
+            <p>Fai parte della community founder. Vota su nuove location, servizi, miglioramenti. Il tuo feedback conta.</p>
+
+            <h3>5. Mercato Secondario</h3>
+            <p>Se non usi più la membership, puoi venderla. Il prezzo lo decide il mercato (può salire o scendere).</p>
         </div>
 
         <div class="section">
-            <h2>Tipologie di Proprietà</h2>
-            <p>Ogni proprietà X World House può essere <strong>customizzata per specifiche community</strong>, dalle esperienze tematiche targetizzate ai concept generici:</p>
+            <h2>Tipologie di Strutture</h2>
+            <p>XW House sviluppa strutture tematiche per community di appassionati:</p>
 
             <div class="property-grid">
                 <div class="property-card">
                     <div class="property-header">
-                        <span class="property-icon">🏎️</span>
-                        <span class="property-name">Auto d'Epoca</span>
+                        <span class="property-icon">🏄</span>
+                        <span class="property-name">Surf House</span>
                     </div>
-                    <p class="property-desc">Alloggio + garage con collezione auto classiche da testare</p>
+                    <p class="property-desc">Casa vicino al mare con accesso a scuola surf e attrezzatura</p>
                     <ul class="property-features">
-                        <li>Target: collezionisti, appassionati auto storiche</li>
-                        <li>Location: Costa Ligure, Toscana, Langhe</li>
-                        <li>Esperienza: test drive settimanale auto diverse</li>
-                        <li>Revenue: affitti premium, eventi automotive</li>
-                    </ul>
-                </div>
-
-                <div class="property-card">
-                    <div class="property-header">
-                        <span class="property-icon">🍷🍺🫒</span>
-                        <span class="property-name">Produzione Alimentare</span>
-                    </div>
-                    <p class="property-desc">Vino, birra o olio - esperienze immersive di produzione artigianale</p>
-                    <ul class="property-features">
-                        <li>Vino: vigna + cantina (Toscana, Piemonte)</li>
-                        <li>Birra: microbirrificio artigianale (zone rurali)</li>
-                        <li>Olio: oliveto + frantoio DOP (Liguria, Umbria)</li>
-                        <li>Revenue: affitti + vendita prodotti + degustazioni</li>
+                        <li>Alloggio + lezioni surf incluse</li>
+                        <li>Noleggio tavole e mute</li>
+                        <li>Community di surfisti</li>
+                        <li>Eventi e surf trip</li>
                     </ul>
                 </div>
 
                 <div class="property-card">
                     <div class="property-header">
                         <span class="property-icon">🏖️</span>
-                        <span class="property-name">Case Vacanza</span>
+                        <span class="property-name">Casa Vacanza</span>
                     </div>
-                    <p class="property-desc">Proprietà in location turistiche gestite per affitti brevi</p>
+                    <p class="property-desc">Location turistiche premium per relax e avventura</p>
                     <ul class="property-features">
-                        <li>Target: turisti, famiglie, gruppi</li>
-                        <li>Revenue: affitti settimanali/mensili</li>
-                        <li>Gestione: piattaforme booking online</li>
+                        <li>Località mare, montagna, città d'arte</li>
+                        <li>Servizi premium inclusi</li>
+                        <li>Guide ed esperienze locali</li>
+                        <li>Concierge dedicato</li>
                     </ul>
                 </div>
 
                 <div class="property-card">
                     <div class="property-header">
-                        <span class="property-icon">🏄</span>
-                        <span class="property-name">Surf House</span>
+                        <span class="property-icon">🍷</span>
+                        <span class="property-name">Wine Experience</span>
                     </div>
-                    <p class="property-desc">Spazi vicino al mare con focus su sport acquatici</p>
+                    <p class="property-desc">Soggiorno in zona vinicola con degustazioni</p>
                     <ul class="property-features">
-                        <li>Alloggio + scuola surf + noleggio</li>
-                        <li>Target: surfisti, comunità sportive</li>
-                        <li>Revenue: corsi, affitti, eventi</li>
+                        <li>Alloggio in cantina/agriturismo</li>
+                        <li>Degustazioni incluse</li>
+                        <li>Tour vigneti</li>
+                        <li>Corsi di sommelier base</li>
                     </ul>
                 </div>
 
                 <div class="property-card">
                     <div class="property-header">
                         <span class="property-icon">💼</span>
-                        <span class="property-name">Co-working & Lab</span>
+                        <span class="property-name">Co-working Retreat</span>
                     </div>
-                    <p class="property-desc">Spazi di lavoro condiviso con laboratori per makers</p>
+                    <p class="property-desc">Spazi di lavoro + alloggio per nomadi digitali</p>
                     <ul class="property-features">
-                        <li>Postazioni, sale riunioni, attrezzature</li>
-                        <li>Target: freelancer, startup, tech</li>
-                        <li>Revenue: abbonamenti mensili, eventi</li>
-                    </ul>
-                </div>
-
-                <div class="property-card">
-                    <div class="property-header">
-                        <span class="property-icon">🎮</span>
-                        <span class="property-name">X World Hub</span>
-                    </div>
-                    <p class="property-desc">Centri fisici per la community X World</p>
-                    <ul class="property-features">
-                        <li>Eventi, meetup, gaming Hunter</li>
-                        <li>Formazione blockchain e Web3</li>
-                        <li>Revenue: membership, corsi, eventi</li>
+                        <li>Postazione lavoro attrezzata</li>
+                        <li>WiFi veloce garantito</li>
+                        <li>Networking eventi</li>
+                        <li>Ambiente stimolante</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <div class="highlight-box">
-            <h3>🎯 Il Potere del Targeting</h3>
-            <p>X World House crea <strong>esperienze su misura per community di appassionati specifici</strong>. Invece di competere nel mercato generico delle case vacanza, ci rivolgiamo a nicchie ad alto valore:</p>
-            <ul style="margin: 12px 0 0 20px;">
-                <li style="color: rgba(255,255,255,0.9);"><strong>Premium pricing</strong> - Appassionati pagano di più per esperienze autentiche</li>
-                <li style="color: rgba(255,255,255,0.9);"><strong>Fidelizzazione</strong> - Community ritorna ogni anno, passa parola</li>
-                <li style="color: rgba(255,255,255,0.9);"><strong>Brand forte</strong> - Ogni proprietà diventa punto di riferimento per la nicchia</li>
-                <li style="color: rgba(255,255,255,0.9);"><strong>Revenue multiple</strong> - Affitto + vendita prodotti + eventi + corsi</li>
-            </ul>
-        </div>
+        <div class="section">
+            <h2>Confronto: Membership vs Investimento</h2>
 
-        <div class="highlight-box" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">
-            <h3>💎 NFT = Certificati di Proprietà</h3>
-            <p>Gli NFT X World House non sono semplici JPEG, ma asset on-chain che garantiscono:</p>
-            <ul style="margin: 12px 0 0 20px;">
-                <li style="color: rgba(255,255,255,0.9);"><strong>Trasparenza totale</strong> - Ogni transazione verificabile su blockchain</li>
-                <li style="color: rgba(255,255,255,0.9);"><strong>Revenue share automatica</strong> - Smart contract distribuisce guadagni senza intermediari</li>
-                <li style="color: rgba(255,255,255,0.9);"><strong>Governance</strong> - Holder votano su acquisizioni, ristrutturazioni, gestione</li>
-                <li style="color: rgba(255,255,255,0.9);"><strong>Liquidità</strong> - NFT vendibili sul mercato secondario</li>
-            </ul>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Caratteristica</th>
+                        <th>XW House (Membership)</th>
+                        <th>Real Estate Tokenizzato</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Cosa compri</td>
+                        <td>Accesso a servizi</td>
+                        <td>Quota di proprietà</td>
+                    </tr>
+                    <tr>
+                        <td>Rendimenti garantiti</td>
+                        <td class="no">❌ No</td>
+                        <td class="no">❌ No (ma promessi)</td>
+                    </tr>
+                    <tr>
+                        <td>Dividendi/Revenue share</td>
+                        <td class="no">❌ No</td>
+                        <td class="yes">✓ Sì (problematico in IT)</td>
+                    </tr>
+                    <tr>
+                        <td>Benefit tangibili</td>
+                        <td class="yes">✓ 7 notti + sconti</td>
+                        <td class="no">❌ Solo rendimento</td>
+                    </tr>
+                    <tr>
+                        <td>Regolamentazione Italia</td>
+                        <td class="yes">✓ Utility token (ok)</td>
+                        <td class="no">❌ Security (problemi)</td>
+                    </tr>
+                    <tr>
+                        <td>Rischio legale</td>
+                        <td class="yes">✓ Basso</td>
+                        <td class="no">❌ Alto</td>
+                    </tr>
+                    <tr>
+                        <td>Liquidità</td>
+                        <td class="yes">✓ Mercato NFT</td>
+                        <td class="yes">✓ Mercato NFT</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
         <div class="section">
-            <h2>Esempio Concreto: Surf House Chiavari</h2>
+            <h2>Esempio: Surf House Chiavari</h2>
 
             <div class="example-box">
-                <h3>🏄 Primo Progetto Pianificato (Ipotetico)</h3>
+                <h3>🏄 Prima Struttura Pianificata</h3>
                 <p><strong>Location:</strong> Chiavari, Liguria - città sul mare con comunità surf attiva</p>
 
                 <div class="stats-grid">
@@ -548,173 +626,89 @@
                         <div class="stat-label">Posti Letto</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">€300k</div>
-                        <div class="stat-label">Investimento</div>
+                        <div class="stat-value">200</div>
+                        <div class="stat-label">NFT Membership</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">300</div>
-                        <div class="stat-label">NFT Emessi</div>
+                        <div class="stat-value">0.5 ETH</div>
+                        <div class="stat-label">Prezzo NFT</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">€3k/m</div>
-                        <div class="stat-label">Revenue Attesa</div>
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">Notti/Anno</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">10-12%</div>
-                        <div class="stat-label">ROI Annuo</div>
+                        <div class="stat-value">40%</div>
+                        <div class="stat-label">Sconto Extra</div>
                     </div>
                 </div>
 
-                <h3 style="margin-top: 20px;">Come Funzionerebbe</h3>
+                <h3 style="margin-top: 20px;">Cosa Include la Membership</h3>
                 <ul>
-                    <li><strong>Fundraising:</strong> 300 NFT × 1 ETH = ~€300k (prezzo ETH variabile)</li>
-                    <li><strong>Revenue Sources:</strong> Affitti brevi, corsi surf, noleggio attrezzatura, eventi</li>
-                    <li><strong>Distribuzione:</strong> Profitti distribuiti mensilmente agli holder via smart contract</li>
-                    <li><strong>Governance:</strong> Holder votano su pricing, gestione, espansioni future</li>
+                    <li><strong>7 notti/anno</strong> nella Surf House (valore mercato ~€1.000)</li>
+                    <li><strong>Sconto 40%</strong> su notti aggiuntive</li>
+                    <li><strong>Lezioni surf</strong> incluse durante il soggiorno</li>
+                    <li><strong>Noleggio attrezzatura</strong> gratuito per membri</li>
+                    <li><strong>Accesso eventi</strong> surf day, barbecue, meetup</li>
+                    <li><strong>Priorità prenotazione</strong> sulle date estive</li>
+                </ul>
+
+                <h3 style="margin-top: 20px;">Utilizzo dei Fondi Raccolti</h3>
+                <ul>
+                    <li><strong>Affitto/acquisto struttura</strong> in location strategica</li>
+                    <li><strong>Ristrutturazione</strong> e allestimento surf-themed</li>
+                    <li><strong>Attrezzatura</strong> tavole, mute, accessori</li>
+                    <li><strong>Partnership</strong> con scuole surf locali</li>
+                    <li><strong>Marketing</strong> e gestione community</li>
                 </ul>
 
                 <div style="text-align: center;">
                     <a href="xw-house-nft-viewer.html" class="view-nfts-btn">
-                        📅 Visualizza 52 NFT Settimanali →
+                        📅 Visualizza Calendario Membership →
                     </a>
                 </div>
 
                 <div class="warning-box">
-                    <p><strong>⚠️ NOTA IMPORTANTE:</strong> Questo progetto non è ancora in fase attiva. Richiede raccolta fondi significativa, analisi legale complessa e strutturazione DAO. Verrà considerato solo dopo il successo iniziale dei progetti POLPOPOLI.</p>
+                    <p><strong>⚠️ NOTA:</strong> Questo progetto è in fase di pianificazione. La membership NON garantisce rendimenti finanziari. Il valore dell'NFT sul mercato secondario può variare. I fondi raccolti servono a creare e gestire la struttura, non a generare profitti per i membri.</p>
                 </div>
             </div>
         </div>
 
         <div class="section">
-            <h2>Esempio: Vintage Car Experience</h2>
+            <h2>FAQ - Domande Frequenti</h2>
 
-            <div class="example-box" style="background: #fff5e6; border-color: #ffcc80;">
-                <h3 style="color: #d84315;">🏎️ Auto d'Epoca sulla Costa Ligure (Concept)</h3>
-                <p><strong>Concept:</strong> Villa + garage con 5 auto classiche italiane degli anni '60-'80 che gli ospiti possono guidare liberamente lungo la costa</p>
+            <h3>L'NFT aumenterà di valore?</h3>
+            <p><strong>Non possiamo prometterlo.</strong> Il prezzo sul mercato secondario dipende dalla domanda. Se il club ha successo e i posti sono limitati, potrebbe esserci domanda. Ma non è garantito.</p>
 
-                <div class="stats-grid">
-                    <div class="stat-item" style="border-color: #ffcc80;">
-                        <div class="stat-value" style="color: #d84315;">200mq</div>
-                        <div class="stat-label">Villa + Garage</div>
-                    </div>
-                    <div class="stat-item" style="border-color: #ffcc80;">
-                        <div class="stat-value" style="color: #d84315;">5</div>
-                        <div class="stat-label">Auto Classiche</div>
-                    </div>
-                    <div class="stat-item" style="border-color: #ffcc80;">
-                        <div class="stat-value" style="color: #d84315;">€400k</div>
-                        <div class="stat-label">Investimento</div>
-                    </div>
-                    <div class="stat-item" style="border-color: #ffcc80;">
-                        <div class="stat-value" style="color: #d84315;">€2k/gg</div>
-                        <div class="stat-label">Affitto Giornaliero</div>
-                    </div>
-                    <div class="stat-item" style="border-color: #ffcc80;">
-                        <div class="stat-value" style="color: #d84315;">15-20%</div>
-                        <div class="stat-label">ROI Annuo</div>
-                    </div>
-                    <div class="stat-item" style="border-color: #ffcc80;">
-                        <div class="stat-value" style="color: #d84315;">Premium</div>
-                        <div class="stat-label">Target Market</div>
-                    </div>
-                </div>
+            <h3>Posso guadagnare con questo NFT?</h3>
+            <p><strong>Non è pensato per questo.</strong> L'NFT ti dà accesso a servizi (notti, sconti, eventi). Non distribuiamo profitti o dividendi. Il "guadagno" è nel valore dei benefit che ricevi.</p>
 
-                <h3 style="margin-top: 20px; color: #d84315;">Auto Fleet Esempio</h3>
-                <ul>
-                    <li><strong>Alfa Romeo Spider 1969</strong> - Iconica roadster italiana, perfetta per la costa</li>
-                    <li><strong>Fiat 500 Abarth 1970</strong> - Piccola ma potente, per vie strette liguri</li>
-                    <li><strong>Lancia Fulvia Coupé 1974</strong> - Eleganza rally anni '70</li>
-                    <li><strong>Ferrari 308 GTS 1980</strong> - Dream car per gli appassionati</li>
-                    <li><strong>Porsche 911 Targa 1985</strong> - Classico tedesco per contrasto</li>
-                </ul>
+            <h3>Cosa succede ai soldi che pagate?</h3>
+            <p>I fondi raccolti vengono utilizzati per: affittare/acquistare la struttura, ristrutturarla, comprare attrezzature, gestire le operazioni. La SRL proprietaria gestisce tutto in modo trasparente.</p>
 
-                <h3 style="margin-top: 20px; color: #d84315;">Esperienza</h3>
-                <ul>
-                    <li><strong>Check-in:</strong> Presentazione auto, storia, consigli percorsi panoramici</li>
-                    <li><strong>Durante soggiorno:</strong> Ogni giorno un'auto diversa, itinerari consigliati coast-to-coast</li>
-                    <li><strong>Extra:</strong> Eventi automotive, raduni, tour organizzati weekend</li>
-                    <li><strong>Revenue multiple:</strong> Affitto premium + merchandising + partnership assicurazioni + eventi</li>
-                </ul>
+            <h3>Posso rivendere l'NFT?</h3>
+            <p><strong>Sì.</strong> L'NFT è trasferibile su marketplace come OpenSea. Il prezzo lo decidi tu, ma dipende da quanto qualcuno è disposto a pagare.</p>
 
-                <p style="font-style: italic; color: #888; margin-top: 1rem;">
-                    <strong>Target:</strong> Collezionisti, appassionati auto storiche, aziende per team building automotive, influencer automotive per contenuti.
-                </p>
-            </div>
+            <h3>E se il progetto fallisce?</h3>
+            <p>Come ogni startup, c'è un rischio. Se la struttura non funziona, i benefit potrebbero ridursi o cessare. L'NFT rimarrebbe ma senza i servizi associati. È un rischio da considerare.</p>
+
+            <h3>È legale in Italia?</h3>
+            <p><strong>Sì.</strong> L'NFT come membership/utility token è legale. NON promettiamo rendimenti finanziari, quindi non è classificato come security (che richiederebbe autorizzazioni CONSOB).</p>
         </div>
 
         <div class="section">
-            <h2>Chiavari Hub - Visione Futura</h2>
-            <p>Oltre alla Surf House, Chiavari potrebbe ospitare il primo <strong>X World Hub</strong>: uno spazio fisico permanente per la community dove:</p>
-
-            <ul>
-                <li>📚 <strong>Formazione</strong> - Corsi su blockchain, smart contracts, Web3 e NFT</li>
-                <li>🤝 <strong>Networking</strong> - Eventi, meetup, collaborazioni con community locali</li>
-                <li>🎮 <strong>Gaming</strong> - Competizioni e attività legate a X World Hunter</li>
-                <li>💼 <strong>Co-working</strong> - Spazio di lavoro per la community e progetti collaborativi</li>
-                <li>🌊 <strong>Local Bridge</strong> - Connessione tra tradizione ligure e innovazione tech</li>
-            </ul>
-
-            <p style="font-style: italic; color: #888; margin-top: 1rem;">
-                Questo è un obiettivo a lungo termine, subordinato al successo delle prime fasi del progetto.
-            </p>
-        </div>
-
-        <div class="section">
-            <h2>Vantaggi del Modello</h2>
-
-            <div class="benefits-grid">
-                <div class="benefit-column">
-                    <h3>Per la Community</h3>
-                    <ul>
-                        <li><strong>Accesso democratico</strong> - Investire in immobili premium da piccole quote NFT</li>
-                        <li><strong>Revenue passivo</strong> - Guadagni distribuiti automaticamente ogni mese</li>
-                        <li><strong>Governance diretta</strong> - Voto su acquisti, esperienze, target</li>
-                        <li><strong>Esperienza personale</strong> - Sconti per holder su affitti e prodotti</li>
-                        <li><strong>Liquidità</strong> - NFT rivendibili sul mercato secondario</li>
-                        <li><strong>Trasparenza</strong> - Tutte le transazioni pubbliche on-chain</li>
-                    </ul>
-                </div>
-
-                <div class="benefit-column">
-                    <h3>Strategia Competitiva</h3>
-                    <ul>
-                        <li><strong>Targeting nicchie</strong> - No competizione generica, focus appassionati</li>
-                        <li><strong>Premium pricing</strong> - Esperienze uniche giustificano costi più alti</li>
-                        <li><strong>Revenue multiple</strong> - Affitto + vendita prodotti + eventi</li>
-                        <li><strong>Costi flessibili</strong> - Container e bungalow riducono investimenti</li>
-                        <li><strong>Scalabilità</strong> - Modello replicabile per infinite nicchie</li>
-                        <li><strong>Brand forte</strong> - Ogni proprietà diventa riferimento settore</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>Smart Contracts & Sicurezza</h2>
-            <p>Gli investimenti immobiliari richiedono <strong>massima sicurezza</strong>. X World House utilizza <strong>Ethereum Mainnet</strong>:</p>
-
-            <ul>
-                <li><strong>Sicurezza provata</strong> - Network più testato e sicuro per smart contract finanziari</li>
-                <li><strong>Immutabilità</strong> - Certificati di proprietà permanenti e non modificabili</li>
-                <li><strong>Standard consolidati</strong> - ERC-721 per NFT proprietà, ERC-20 per revenue token</li>
-                <li><strong>Audit professionali</strong> - Smart contract verificati da security firm specializzate</li>
-                <li><strong>Multi-signature wallets</strong> - Fondi DAO protetti da firma multipla</li>
-            </ul>
-        </div>
-
-        <div class="section">
-            <h2>Roadmap House</h2>
+            <h2>Roadmap</h2>
             <ol>
-                <li><strong>Q3 2025</strong> - Analisi legale e strutturazione DAO per gestione immobiliare tokenizzata</li>
-                <li><strong>Q4 2025</strong> - Ricerca e valutazione prima proprietà (possibile Surf House Chiavari)</li>
-                <li><strong>Q1 2026</strong> - Fundraising tramite NFT emission, audit smart contract</li>
-                <li><strong>Q2 2026</strong> - Acquisto e ristrutturazione prima proprietà</li>
-                <li><strong>Q3 2026</strong> - Lancio operativo, inizio distribuzione revenue agli holder</li>
-                <li><strong>2027+</strong> - Espansione portfolio, apertura Chiavari Hub, nuove città</li>
+                <li><strong>Q3 2025</strong> - Definizione struttura legale (SRL), contratti membership</li>
+                <li><strong>Q4 2025</strong> - Scouting location, negoziazione prima struttura</li>
+                <li><strong>Q1 2026</strong> - Lancio NFT membership, raccolta fondi</li>
+                <li><strong>Q2 2026</strong> - Allestimento struttura, partnership locali</li>
+                <li><strong>Estate 2026</strong> - Apertura Surf House Chiavari ai membri</li>
+                <li><strong>2027+</strong> - Espansione a nuove location (se successo)</li>
             </ol>
 
             <p style="font-style: italic; color: #888; margin-top: 1rem;">
-                <strong>Nota:</strong> La roadmap è subordinata al successo dei progetti POLPOPOLI e alla disponibilità di capitale necessario.
+                <strong>Nota:</strong> La roadmap è indicativa e subordinata al successo della raccolta fondi e alla fattibilità operativa.
             </p>
         </div>
 

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo 1: SVG Logo Animato - Polpo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-gradient: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+            --accent-cyan: #48dbfb;
+            --accent-purple: #a855f7;
+            --accent-pink: #ff6b9d;
+            --accent-orange: #feca57;
+            --text-light: #f0f0f0;
+            --text-muted: #888;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 3px;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease 2.5s forwards;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease 2.8s forwards;
+        }
+
+        /* SVG Logo Container */
+        .logo-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 2rem;
+            cursor: pointer;
+        }
+
+        .logo-container:hover .polpo-svg {
+            filter: drop-shadow(0 0 30px var(--accent-cyan)) drop-shadow(0 0 60px var(--accent-purple));
+        }
+
+        .logo-container:hover .glow-ring {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* Glow Ring */
+        .glow-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 280px;
+            height: 280px;
+            transform: translate(-50%, -50%) scale(0.9);
+            border-radius: 50%;
+            background: conic-gradient(
+                from 0deg,
+                var(--accent-cyan),
+                var(--accent-purple),
+                var(--accent-pink),
+                var(--accent-orange),
+                var(--accent-cyan)
+            );
+            opacity: 0;
+            transition: all 0.5s ease;
+            animation: rotate 8s linear infinite;
+            filter: blur(20px);
+        }
+
+        @keyframes rotate {
+            from { transform: translate(-50%, -50%) scale(0.9) rotate(0deg); }
+            to { transform: translate(-50%, -50%) scale(0.9) rotate(360deg); }
+        }
+
+        /* SVG Polpo */
+        .polpo-svg {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            transition: filter 0.5s ease;
+        }
+
+        /* Animazione stroke-dasharray per effetto "disegno" */
+        .polpo-path {
+            fill: none;
+            stroke: url(#gradient);
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: draw 2s ease forwards;
+        }
+
+        /* Ritardo per ogni tentacolo */
+        .tentacle-1 { animation-delay: 0s; }
+        .tentacle-2 { animation-delay: 0.15s; }
+        .tentacle-3 { animation-delay: 0.3s; }
+        .tentacle-4 { animation-delay: 0.45s; }
+        .tentacle-5 { animation-delay: 0.6s; }
+        .tentacle-6 { animation-delay: 0.75s; }
+        .tentacle-7 { animation-delay: 0.9s; }
+        .tentacle-8 { animation-delay: 1.05s; }
+        .body-path { animation-delay: 1.2s; }
+        .eye-left { animation-delay: 1.5s; stroke-dasharray: 150; }
+        .eye-right { animation-delay: 1.6s; stroke-dasharray: 150; }
+
+        @keyframes draw {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* Fill animation dopo il disegno */
+        .polpo-fill {
+            fill: rgba(72, 219, 251, 0.1);
+            opacity: 0;
+            animation: fillIn 0.8s ease 2s forwards;
+        }
+
+        @keyframes fillIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Controlli */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeInUp 1s ease 3s forwards;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 0.8rem 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .btn:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px var(--accent-cyan);
+        }
+
+        .btn-purple {
+            border-color: var(--accent-purple);
+            color: var(--accent-purple);
+        }
+
+        .btn-purple:hover {
+            background: var(--accent-purple);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px var(--accent-purple);
+        }
+
+        /* Info box */
+        .info-box {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            max-width: 400px;
+            opacity: 0;
+            animation: fadeInUp 1s ease 3.2s forwards;
+        }
+
+        .info-box code {
+            background: rgba(72, 219, 251, 0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            color: var(--accent-cyan);
+        }
+
+        /* Back link */
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .logo-container {
+                width: 200px;
+                height: 200px;
+            }
+
+            .glow-ring {
+                width: 180px;
+                height: 180px;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-link">&larr; Torna ai Demos</a>
+
+    <div class="container">
+        <div class="logo-container" id="logoContainer">
+            <div class="glow-ring"></div>
+            <svg class="polpo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <!-- Gradient per il logo -->
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#48dbfb"/>
+                        <stop offset="50%" style="stop-color:#a855f7"/>
+                        <stop offset="100%" style="stop-color:#ff6b9d"/>
+                    </linearGradient>
+
+                    <!-- Gradient per il fill -->
+                    <radialGradient id="fillGradient" cx="50%" cy="30%" r="70%">
+                        <stop offset="0%" style="stop-color:rgba(72, 219, 251, 0.15)"/>
+                        <stop offset="100%" style="stop-color:rgba(168, 85, 247, 0.05)"/>
+                    </radialGradient>
+                </defs>
+
+                <!-- Mantello/Testa - forma più tondeggiante da polpo -->
+                <ellipse class="polpo-fill" cx="100" cy="58" rx="42" ry="38"/>
+
+                <!-- Corpo del polpo -->
+                <path class="polpo-path body-path" d="M58 58 Q58 20 100 20 Q142 20 142 58 Q142 90 100 95 Q58 90 58 58"/>
+
+                <!-- 8 Tentacoli con curve organiche e ricci alle estremità -->
+                <path class="polpo-path tentacle-1" d="M62 88 Q40 105 28 130 Q20 150 25 165 Q30 175 38 168 Q42 158 38 145"/>
+                <path class="polpo-path tentacle-2" d="M70 92 Q55 115 48 145 Q42 170 50 180 Q60 185 65 172 Q68 158 62 145"/>
+                <path class="polpo-path tentacle-3" d="M82 95 Q72 125 75 155 Q78 178 88 182 Q100 180 95 165 Q90 150 88 140"/>
+                <path class="polpo-path tentacle-4" d="M95 96 Q92 130 98 160 Q102 180 112 178 Q120 172 115 158 Q108 145 105 135"/>
+                <path class="polpo-path tentacle-5" d="M105 96 Q110 130 115 158 Q120 178 130 175 Q138 168 132 155 Q125 142 120 132"/>
+                <path class="polpo-path tentacle-6" d="M118 95 Q130 125 138 155 Q145 175 155 170 Q162 160 155 148 Q145 135 140 125"/>
+                <path class="polpo-path tentacle-7" d="M130 92 Q148 115 160 142 Q170 165 178 158 Q182 145 172 132 Q160 120 155 112"/>
+                <path class="polpo-path tentacle-8" d="M138 88 Q162 102 175 125 Q185 145 178 155 Q168 158 165 145 Q162 130 158 120"/>
+
+                <!-- Occhi grandi espressivi -->
+                <ellipse class="polpo-path eye-left" cx="80" cy="55" rx="12" ry="14"/>
+                <ellipse class="polpo-path eye-right" cx="120" cy="55" rx="12" ry="14"/>
+
+                <!-- Pupille (appaiono dopo) -->
+                <circle cx="82" cy="58" r="5" fill="var(--accent-cyan)" opacity="0">
+                    <animate attributeName="opacity" from="0" to="1" begin="1.8s" dur="0.3s" fill="freeze"/>
+                </circle>
+                <circle cx="122" cy="58" r="5" fill="var(--accent-cyan)" opacity="0">
+                    <animate attributeName="opacity" from="0" to="1" begin="1.9s" dur="0.3s" fill="freeze"/>
+                </circle>
+            </svg>
+        </div>
+
+        <h1>PAOLO REPETTO</h1>
+        <p class="subtitle">Full-Stack Developer & Creative Innovator</p>
+
+        <div class="controls">
+            <button class="btn" onclick="replayAnimation()">Replay Animation</button>
+            <button class="btn btn-purple" onclick="toggleGlow()">Toggle Glow</button>
+        </div>
+
+        <div class="info-box">
+            <strong>Tecnica:</strong> Animazione SVG con <code>stroke-dasharray</code> e <code>stroke-dashoffset</code>.
+            Ogni tentacolo ha un delay diverso per creare l'effetto di disegno sequenziale.
+            Hover per attivare il glow ring.
+        </div>
+    </div>
+
+    <script>
+        // Replay dell'animazione
+        function replayAnimation() {
+            const paths = document.querySelectorAll('.polpo-path');
+            const fill = document.querySelector('.polpo-fill');
+            const pupils = document.querySelectorAll('circle[fill="var(--accent-cyan)"]');
+
+            // Reset animations
+            paths.forEach(path => {
+                path.style.animation = 'none';
+                path.offsetHeight; // Trigger reflow
+            });
+
+            fill.style.animation = 'none';
+            fill.offsetHeight;
+
+            pupils.forEach(pupil => {
+                pupil.style.opacity = '0';
+            });
+
+            // Restart animations
+            setTimeout(() => {
+                paths.forEach(path => {
+                    path.style.animation = '';
+                });
+                fill.style.animation = '';
+
+                // Pupils fade in
+                setTimeout(() => {
+                    pupils.forEach((pupil, i) => {
+                        setTimeout(() => {
+                            pupil.style.transition = 'opacity 0.3s ease';
+                            pupil.style.opacity = '1';
+                        }, i * 100);
+                    });
+                }, 1800);
+            }, 50);
+        }
+
+        // Toggle glow effect
+        let glowEnabled = true;
+        function toggleGlow() {
+            const ring = document.querySelector('.glow-ring');
+            glowEnabled = !glowEnabled;
+
+            if (glowEnabled) {
+                ring.style.display = 'block';
+            } else {
+                ring.style.display = 'none';
+            }
+        }
+
+        // Movimento occhi che seguono il mouse
+        document.addEventListener('mousemove', (e) => {
+            const container = document.getElementById('logoContainer');
+            const rect = container.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const deltaX = (e.clientX - centerX) / 40;
+            const deltaY = (e.clientY - centerY) / 40;
+
+            // Limita il movimento
+            const maxMove = 5;
+            const moveX = Math.max(-maxMove, Math.min(maxMove, deltaX));
+            const moveY = Math.max(-maxMove, Math.min(maxMove, deltaY));
+
+            const pupils = document.querySelectorAll('circle[fill="var(--accent-cyan)"]');
+            pupils.forEach((pupil, i) => {
+                const baseX = i === 0 ? 82 : 122;
+                const baseY = 58;
+                pupil.setAttribute('cx', baseX + moveX);
+                pupil.setAttribute('cy', baseY + moveY);
+            });
+        });
+
+        console.log('🐙 Demo 1: SVG Logo Animato - Polpo che si disegna!');
+    </script>
+</body>
+</html>

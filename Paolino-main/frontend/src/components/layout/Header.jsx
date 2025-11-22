@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X, Search, LogOut, Settings, Heart } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, Search, LogOut, Settings, Bookmark } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import ThemeSwitcher from '../ui/ThemeSwitcher';
@@ -36,9 +36,9 @@ const Header = () => {
               Prodotti
             </Link>
             {isAuthenticated && (
-              <Link to="/wishlist" className="text-white/90 hover:text-white flex items-center space-x-1 transition-all duration-300 hover:scale-105">
-                <Heart size={16} />
-                <span>I miei preferiti</span>
+              <Link to="/wishlist" className="text-white/40 hover:text-white transition-all duration-200 flex items-center gap-1 text-xs uppercase tracking-wider font-light">
+                <Bookmark size={13} strokeWidth={1} />
+                <span>Salvati</span>
               </Link>
             )}
             <Link to="/products?category=magliette" className="text-white/90 hover:text-white transition-all duration-300 hover:scale-105">
@@ -169,11 +169,11 @@ const Header = () => {
               {isAuthenticated && (
                 <Link
                   to="/wishlist"
-                  className="flex items-center px-4 py-3 text-white/90 hover:text-white hover:bg-white/10 rounded-[10px] font-medium transition-all duration-300"
+                  className="flex items-center px-4 py-2.5 text-white/40 hover:text-white hover:bg-white/5 rounded-lg font-light transition-all duration-200 text-xs uppercase tracking-wide"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <Heart size={18} className="mr-3" />
-                  I miei preferiti
+                  <Bookmark size={14} strokeWidth={1} className="mr-2.5" />
+                  Salvati
                 </Link>
               )}
               <Link

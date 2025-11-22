@@ -1,5 +1,5 @@
 # Environment variables (CRITICAL - Contains secrets)
-.env
+# .env - NOW TRACKED (WARNING: Contains secrets!)
 .env.local
 .env.production
 .env.*.local

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Surf House Chiavari - 52 NFT Settimanali</title>
+    <title>Surf House Chiavari - Membership Pass Settimanali</title>
     <style>
         * {
             margin: 0;
@@ -562,7 +562,7 @@
                 <span class="property-icon">🏄</span>
                 <h1>Surf House Chiavari</h1>
             </div>
-            <p class="subtitle">52 NFT Settimanali - Anno 2026</p>
+            <p class="subtitle">Membership Pass Settimanali - Anno 2026</p>
 
             <div class="stats-bar">
                 <div class="stat">
@@ -578,8 +578,8 @@
                     <div class="stat-label">Tuoi NFT</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value">€520k</div>
-                    <div class="stat-label">Raccolti</div>
+                    <div class="stat-value">17</div>
+                    <div class="stat-label">Membri Attivi</div>
                 </div>
             </div>
 
@@ -627,19 +627,19 @@
 
             <div class="modal-body">
                 <div class="price-box">
-                    <div class="price-label">Prezzo NFT</div>
+                    <div class="price-label">Prezzo Membership Pass</div>
                     <div class="price-value" id="modal-price">€10,000</div>
                 </div>
 
                 <div class="info-section">
-                    <h3>Cosa Include</h3>
+                    <h3>Cosa Include la Membership</h3>
                     <ul class="benefits-list">
                         <li>7 giorni di accesso esclusivo alla Surf House</li>
                         <li>Utilizzo di 6 posti letto (max occupancy)</li>
-                        <li>Accesso a scuola surf + noleggio attrezzatura</li>
-                        <li>Revenue share annuale dai profitti totali</li>
-                        <li>Diritto di voto governance DAO</li>
-                        <li>NFT rivendibile sul marketplace</li>
+                        <li>Lezioni surf + noleggio attrezzatura inclusi</li>
+                        <li>Sconto 40% su notti extra</li>
+                        <li>Accesso eventi esclusivi per membri</li>
+                        <li>NFT trasferibile sul marketplace</li>
                     </ul>
                 </div>
 
@@ -653,9 +653,10 @@
                 <div class="info-section">
                     <h3>Note Importanti</h3>
                     <p style="font-size: 11px; color: #888;">
-                        • L'NFT è trasferibile e rivendibile<br>
-                        • Revenue share distribuito proporzionalmente a tutti i 52 holder<br>
-                        • Prenotazione settimana soggetta a conferma availability
+                        • L'NFT membership è trasferibile e rivendibile<br>
+                        • NON è un investimento, non garantisce rendimenti<br>
+                        • Prenotazione settimana soggetta a disponibilità<br>
+                        • Il valore sul mercato secondario può variare
                     </p>
                 </div>
 
@@ -804,13 +805,13 @@
             actionButton.className = `action-button ${week.status}`;
 
             if (week.status === 'available') {
-                actionButton.textContent = 'Acquista NFT';
+                actionButton.textContent = 'Acquista Membership';
                 actionButton.onclick = () => buyNFT(week.number);
             } else if (week.status === 'sold') {
                 actionButton.textContent = 'Non Disponibile';
                 actionButton.onclick = null;
             } else if (week.status === 'owned') {
-                actionButton.textContent = 'Tuo NFT - Gestisci';
+                actionButton.textContent = 'Tua Membership - Prenota';
                 actionButton.onclick = () => manageNFT(week.number);
             }
 
@@ -827,12 +828,12 @@
 
         // Actions
         function buyNFT(weekNumber) {
-            alert(`Funzionalità di acquisto NFT Settimana ${weekNumber}\n\nIn produzione si aprirebbe il wallet MetaMask per completare la transazione.`);
+            alert(`Acquisto Membership Settimana ${weekNumber}\n\nIn produzione si aprirebbe il wallet MetaMask per completare la transazione.\n\nRicorda: questo è un pass di accesso, NON un investimento.`);
             closeModal();
         }
 
         function manageNFT(weekNumber) {
-            alert(`Gestione NFT Settimana ${weekNumber}\n\nQui potresti:\n• Prenotare la settimana\n• Trasferire/Vendere l'NFT\n• Vedere la history\n• Claim revenue share`);
+            alert(`Gestione Membership Settimana ${weekNumber}\n\nQui potresti:\n• Prenotare la tua settimana\n• Trasferire/Vendere la membership\n• Vedere lo storico prenotazioni\n• Contattare il concierge`);
             closeModal();
         }
 

@@ -18,8 +18,8 @@ const ProductShowcasePage = () => {
       id: 'fijo-de-n-amore',
       slug: 'fijo-de-n-amore',
       name: "Fijo de'n Amore",
-      subtitle: "AMORE • PASSIONE • ELEGANZA • ROMANTICISMO",
-      icon: '❤️'
+      subtitle: "AMORE • POWER • URBAN • STREET STYLE",
+      icon: '⚡'
     },
     {
       id: 'g-power',
@@ -181,17 +181,17 @@ const ProductShowcasePage = () => {
       {/* Collection Banner - Animato quando si cambia collezione */}
       <CollectionBanner />
 
-      {/* Banner Trigger Button - Piccolo bottone fisso */}
+      {/* Banner Trigger Button - Minimal */}
       <button
         onClick={() => changeDetailedTheme(currentDetailedTheme.slug, true)}
-        className="fixed top-4 right-4 z-50 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-xl"
+        className="fixed top-4 right-4 z-50 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 hover:opacity-80 backdrop-blur-sm border border-white/20"
         style={{
-          background: currentDetailedTheme.gradients.primary,
+          background: 'rgba(255, 255, 255, 0.15)',
           color: 'white'
         }}
         title="Mostra banner collezione"
       >
-        <span className="text-xl animate-pulse">{selectedCollection.icon}</span>
+        <span className="text-sm opacity-70">{selectedCollection.icon}</span>
       </button>
 
       {/* Collection Header */}
@@ -202,10 +202,11 @@ const ProductShowcasePage = () => {
         <div className="max-w-[1200px] mx-auto px-[20px] relative z-10">
           {/* Collection Title */}
           <h1
-            className="text-xl md:text-2xl font-black mb-2 tracking-wide"
+            className="text-lg md:text-xl font-light mb-2 tracking-[0.3em] uppercase"
             style={{
-              fontFamily: currentDetailedTheme.fonts.heading,
-              color: currentDetailedTheme.colors.text.light
+              fontFamily: "'Helvetica Neue', sans-serif",
+              color: currentDetailedTheme.colors.text.light,
+              opacity: 0.95
             }}
           >
             {selectedCollection.name}
@@ -213,11 +214,11 @@ const ProductShowcasePage = () => {
 
           {/* Collection Subtitle */}
           <p
-            className="text-sm md:text-base font-medium tracking-widest uppercase"
+            className="text-xs md:text-sm font-light tracking-[0.25em] uppercase"
             style={{
-              fontFamily: currentDetailedTheme.fonts.body,
+              fontFamily: "'Helvetica Neue', sans-serif",
               color: currentDetailedTheme.colors.text.light,
-              opacity: 0.9
+              opacity: 0.6
             }}
           >
             {selectedCollection.subtitle}

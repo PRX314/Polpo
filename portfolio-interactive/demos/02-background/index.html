@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo 2: Background Dinamico - Particelle</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --accent-cyan: #48dbfb;
+            --accent-purple: #a855f7;
+            --accent-pink: #ff6b9d;
+            --accent-orange: #feca57;
+            --text-light: #f0f0f0;
+            --text-muted: #888;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            color: var(--text-light);
+            overflow: hidden;
+        }
+
+        /* Canvas per le particelle */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Contenuto sopra il canvas */
+        .content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: 8px;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            letter-spacing: 3px;
+        }
+
+        /* Controlli */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-light);
+            padding: 0.8rem 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .btn.active {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            color: var(--bg-dark);
+        }
+
+        /* Sliders */
+        .sliders {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .slider-group label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .slider-group input[type="range"] {
+            width: 120px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .slider-group input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        /* Info box */
+        .info-box {
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            max-width: 500px;
+            line-height: 1.6;
+        }
+
+        .info-box code {
+            background: rgba(72, 219, 251, 0.15);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            color: var(--accent-cyan);
+        }
+
+        /* Back link */
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: color 0.3s ease;
+            z-index: 100;
+        }
+
+        .back-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* Stats */
+        .stats {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-align: right;
+            z-index: 100;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+                letter-spacing: 4px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .sliders {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+
+    <a href="../../index.html" class="back-link">&larr; Torna ai Demos</a>
+
+    <div class="content">
+        <h1>POLPO</h1>
+        <p class="subtitle">Muovi il mouse per interagire</p>
+
+        <div class="controls">
+            <button class="btn active" data-mode="follow">Follow Mouse</button>
+            <button class="btn" data-mode="repel">Repel Mouse</button>
+            <button class="btn" data-mode="connect">Connect Lines</button>
+            <button class="btn" data-mode="wave">Wave Effect</button>
+        </div>
+
+        <div class="sliders">
+            <div class="slider-group">
+                <label>Particelle</label>
+                <input type="range" id="particleCount" min="30" max="200" value="80">
+            </div>
+            <div class="slider-group">
+                <label>Velocita</label>
+                <input type="range" id="speed" min="1" max="10" value="3">
+            </div>
+            <div class="slider-group">
+                <label>Dimensione</label>
+                <input type="range" id="size" min="1" max="8" value="3">
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>Tecnica:</strong> Canvas 2D con <code>requestAnimationFrame</code>.
+            Le particelle reagiscono al mouse e si connettono quando vicine.
+            Ottimizzato per performance con spatial partitioning semplificato.
+        </div>
+    </div>
+
+    <div class="stats">
+        <div>FPS: <span id="fps">60</span></div>
+        <div>Particles: <span id="particleStats">80</span></div>
+    </div>
+
+    <script>
+        // ============================================================
+        // PARTICLE SYSTEM
+        // ============================================================
+
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Configurazione
+        let config = {
+            particleCount: 80,
+            speed: 3,
+            size: 3,
+            mode: 'follow', // follow, repel, connect, wave
+            mouseRadius: 200,      // Raggio di interazione più ampio
+            connectDistance: 150   // Distanza connessione aumentata
+        };
+
+        // Colori
+        const colors = [
+            'rgba(72, 219, 251, 0.8)',   // cyan
+            'rgba(168, 85, 247, 0.8)',   // purple
+            'rgba(255, 107, 157, 0.8)',  // pink
+            'rgba(254, 202, 87, 0.8)'    // orange
+        ];
+
+        // Mouse position
+        let mouse = {
+            x: null,
+            y: null
+        };
+
+        // Particles array
+        let particles = [];
+
+        // FPS counter
+        let fps = 0;
+        let lastTime = performance.now();
+        let frameCount = 0;
+
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initParticles();
+        }
+
+        // Particle class
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.baseX = this.x;
+                this.baseY = this.y;
+                this.vx = (Math.random() - 0.5) * config.speed;
+                this.vy = (Math.random() - 0.5) * config.speed;
+                this.size = Math.random() * config.size + 1;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.alpha = Math.random() * 0.5 + 0.5;
+                this.phase = Math.random() * Math.PI * 2; // Per wave effect
+            }
+
+            update() {
+                // Base movement
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Bounce off edges
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+                // Mouse interaction
+                if (mouse.x !== null && mouse.y !== null) {
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < config.mouseRadius) {
+                        const force = (config.mouseRadius - distance) / config.mouseRadius;
+
+                        switch (config.mode) {
+                            case 'follow':
+                                // Attrazione verso il mouse
+                                this.x += dx * force * 0.08;
+                                this.y += dy * force * 0.08;
+                                break;
+
+                            case 'repel':
+                                // Repulsione dal mouse
+                                this.x -= dx * force * 0.12;
+                                this.y -= dy * force * 0.12;
+                                break;
+
+                            case 'wave':
+                                // Movimento ondulatorio
+                                const time = performance.now() * 0.003;
+                                this.x += Math.sin(time + this.phase) * force * 4;
+                                this.y += Math.cos(time + this.phase) * force * 4;
+                                break;
+
+                            case 'connect':
+                                // In connect mode, leggera attrazione
+                                this.x += dx * force * 0.02;
+                                this.y += dy * force * 0.02;
+                                break;
+                        }
+                    }
+                }
+
+                // Keep in bounds
+                this.x = Math.max(0, Math.min(canvas.width, this.x));
+                this.y = Math.max(0, Math.min(canvas.height, this.y));
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.alpha;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // Initialize particles
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < config.particleCount; i++) {
+                particles.push(new Particle());
+            }
+            document.getElementById('particleStats').textContent = config.particleCount;
+        }
+
+        // Draw connections between particles
+        function drawConnections() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < config.connectDistance) {
+                        const alpha = 1 - (distance / config.connectDistance);
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(72, 219, 251, ${alpha * 0.3})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            // Clear canvas
+            ctx.fillStyle = 'rgba(10, 10, 15, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw particles
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            // Draw connections if mode is 'connect'
+            if (config.mode === 'connect') {
+                drawConnections();
+            }
+
+            // FPS counter
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - lastTime >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastTime = currentTime;
+                document.getElementById('fps').textContent = fps;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Event listeners
+        window.addEventListener('resize', resizeCanvas);
+
+        // Mouse events on document (not canvas) because .content covers canvas
+        document.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        document.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        // Touch support
+        document.addEventListener('touchmove', (e) => {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        // Mode buttons
+        document.querySelectorAll('.btn[data-mode]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.btn[data-mode]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                config.mode = btn.dataset.mode;
+            });
+        });
+
+        // Sliders
+        document.getElementById('particleCount').addEventListener('input', (e) => {
+            config.particleCount = parseInt(e.target.value);
+            initParticles();
+        });
+
+        document.getElementById('speed').addEventListener('input', (e) => {
+            config.speed = parseInt(e.target.value);
+            particles.forEach(p => {
+                p.vx = (Math.random() - 0.5) * config.speed;
+                p.vy = (Math.random() - 0.5) * config.speed;
+            });
+        });
+
+        document.getElementById('size').addEventListener('input', (e) => {
+            config.size = parseInt(e.target.value);
+            particles.forEach(p => {
+                p.size = Math.random() * config.size + 1;
+            });
+        });
+
+        // Init
+        resizeCanvas();
+        animate();
+
+        console.log('🐙 Demo 2: Background Dinamico - Particelle interattive!');
+    </script>
+</body>
+</html>

@@ -6,24 +6,24 @@ export const fijoTheme = {
   name: 'Fijo de\'n Amore',
   slug: 'fijo-de-n-amore',
 
-  // Color palette - RED/CORAL passionate & modern
+  // Color palette - FIJO MAGLIA G.POWER (Black + Coral/Pink)
   colors: {
-    primary: '#FF3366',        // Bright coral red (more vibrant!)
-    secondary: '#FFF5F7',      // Soft pink cream
-    accent: '#FF6B9D',         // Hot pink accent
+    primary: '#FF3B4F',        // Rosso corallo (pantaloni)
+    secondary: '#1A1A1A',      // Nero maglia
+    accent: '#FF69B4',         // Rosa neon (spada)
     text: {
-      primary: '#2D1B2E',      // Deep purple-black (più caldo)
-      secondary: '#6B4E71',    // Muted purple (più romantico)
-      light: '#F8D7DA',        // Soft pink (più delicato)
+      primary: '#1A1A1A',      // Nero profondo
+      secondary: '#4A4A4A',    // Grigio edifici
+      light: '#FFE5E8',        // Rosa tenue
     },
     background: {
-      main: '#FFFBFC',         // Warm white
-      secondary: '#FFF0F3',    // Light pink
-      card: '#FFFFFF',         // Pure white cards
-      overlay: 'rgba(255, 51, 102, 0.12)', // Coral overlay
+      main: '#FAFAFA',         // Off-white neutro
+      secondary: '#FFF0F3',    // Rosa pallido
+      card: '#FFFFFF',         // Pure white
+      overlay: 'rgba(255, 59, 79, 0.08)', // Coral overlay
     },
-    border: '#FFD6E0',         // Soft coral border
-    shadow: 'rgba(255, 51, 102, 0.2)', // Coral shadow
+    border: '#FFD6E0',         // Rosa pastello
+    shadow: 'rgba(26, 26, 26, 0.15)', // Black shadow
   },
 
   // Typography - INNOVATIVA
@@ -74,82 +74,82 @@ export const fijoTheme = {
     },
   },
 
-  // Shadows - Soft, romantic
+  // Shadows - Black/Coral
   shadows: {
-    sm: '0 2px 8px rgba(230, 57, 70, 0.1)',
-    md: '0 4px 16px rgba(230, 57, 70, 0.15)',
-    lg: '0 8px 32px rgba(230, 57, 70, 0.2)',
-    hover: '0 12px 40px rgba(230, 57, 70, 0.25)',
+    sm: '0 2px 8px rgba(26, 26, 26, 0.08)',
+    md: '0 4px 16px rgba(26, 26, 26, 0.12)',
+    lg: '0 8px 32px rgba(26, 26, 26, 0.15)',
+    hover: '0 12px 40px rgba(255, 59, 79, 0.25)',
   },
 
-  // Gradients - VIBRANTI
+  // Gradients - G.POWER BLACK/CORAL/PINK
   gradients: {
-    primary: 'linear-gradient(135deg, #FF3366 0%, #FF6B9D 100%)',
+    primary: 'linear-gradient(135deg, #1A1A1A 0%, #FF3B4F 100%)',
     secondary: 'linear-gradient(135deg, #FFF0F3 0%, #FFFFFF 100%)',
-    overlay: 'linear-gradient(180deg, rgba(255, 51, 102, 0) 0%, rgba(255, 51, 102, 0.12) 100%)',
-    hero: 'linear-gradient(135deg, #FF3366 0%, #FF6B9D 50%, #FFD6E0 100%)',
+    overlay: 'linear-gradient(180deg, rgba(255, 59, 79, 0) 0%, rgba(255, 59, 79, 0.05) 100%)',
+    hero: 'linear-gradient(135deg, #1A1A1A 0%, #FF3B4F 50%, #FF69B4 100%)',
   },
 
   // Banner configuration
   banner: {
     title: "Fijo de'n Amore",
     subtitle: "IRONIA • AMORE • FERTILITÀ • MINIMALISMO PROVOCATORIO",
-    icon: '♥',
+    icon: '⚡',
     keywords: [
       'Amore',
-      'Passione',
-      'Cuore',
-      'Romantico',
-      'Elegante',
-      'Delicato',
+      'Power',
+      'Urban',
+      'Street',
+      'Energico',
+      'Bold',
       'Fertilità',
       'Ironia',
     ],
-    animation: 'fade-slide-up',  // Gentle entrance
-    duration: 4000,              // 4 seconds come nel prototipo
-    backgroundColor: 'linear-gradient(135deg, #E4002B 0%, #FF1744 50%, #E91E63 100%)',
+    animation: 'fade-slide-up',
+    duration: 4000,
+    backgroundColor: 'linear-gradient(135deg, #1A1A1A 0%, #FF3B4F 50%, #FF69B4 100%)',
     textColor: '#FFFFFF',
   },
 
   // Button styles
   button: {
     primary: {
-      background: '#E63946',
+      background: '#FF3B4F',
       color: '#FFFFFF',
-      hoverBackground: '#FF6B9D',
+      hoverBackground: '#FF69B4',
       hoverTransform: 'translateY(-2px)',
     },
     secondary: {
-      background: '#F1FAEE',
-      color: '#E63946',
+      background: '#FFF0F3',
+      color: '#1A1A1A',
       hoverBackground: '#FFFFFF',
-      border: '2px solid #E63946',
+      border: '2px solid #FF3B4F',
     },
   },
 
   // Card styles
   card: {
     background: '#FFFFFF',
-    border: '1px solid #FFE5E8',
+    border: '1px solid #FFD6E0',
     borderRadius: '16px',
     padding: '1.5rem',
-    hoverShadow: '0 12px 40px rgba(230, 57, 70, 0.25)',
+    hoverShadow: '0 12px 40px rgba(255, 59, 79, 0.25)',
     hoverTransform: 'translateY(-4px)',
   },
 
   // Product card specific
   productCard: {
-    imageOverlay: 'rgba(230, 57, 70, 0.05)',
-    priceColor: '#E63946',
-    badgeBackground: '#FF6B9D',
+    imageOverlay: 'rgba(255, 59, 79, 0.03)',
+    priceColor: '#FF3B4F',
+    badgeBackground: '#1A1A1A',
     badgeColor: '#FFFFFF',
   },
 
   // Mood & Atmosphere
   mood: {
-    description: 'Romantic, elegant, minimalist',
-    emotion: 'Love, passion, tenderness',
-    target: 'Romantic souls, couples, gift seekers',
+    description: 'Urban, street, bold',
+    emotion: 'Power, energy, passion',
+    target: 'Street style lovers, bold spirits, urban warriors',
   },
 
   // Layout configuration

@@ -4,6 +4,8 @@ const validateRequest = (schema) => {
   return (req, res, next) => {
     const { error } = schema.validate(req.body);
     if (error) {
+      console.error('❌ Validation error:', error.details.map(detail => detail.message));
+      console.error('📦 Request body:', JSON.stringify(req.body, null, 2));
       return res.status(400).json({
         message: 'Validation error',
         details: error.details.map(detail => detail.message)
@@ -40,10 +42,10 @@ const productSchema = Joi.object({
   variants: Joi.array().items(
     Joi.object({
       size: Joi.string().valid('XS', 'S', 'M', 'L', 'XL', 'XXL').required(),
-      color: Joi.string().required(),
+      color: Joi.string().allow('').required(),
       colorCode: Joi.string().allow('', null).optional(),
       stock: Joi.number().min(0).required(),
-      sku: Joi.string().required(),
+      sku: Joi.string().allow('').required(),
       priceModifier: Joi.number().default(0)
     })
   ).min(1).required(),

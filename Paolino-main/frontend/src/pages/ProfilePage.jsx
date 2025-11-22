@@ -691,7 +691,7 @@ const ProfilePage = () => {
                       <div className="w-12 h-12 bg-primary-100 rounded overflow-hidden flex-shrink-0">
                         {item.product?.images?.[0] ? (
                           <img
-                            src={`${API_SERVER_URL}${item.product.images[0].url}`}
+                            src={item.product.images[0].url}
                             alt={item.product.name}
                             className="w-full h-full object-cover"
                           />
