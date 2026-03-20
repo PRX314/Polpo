@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { auth } from './firebase'
 import {
   subscribeToProjects,
@@ -16,16 +16,21 @@ import AddProjectForm from './components/AddProjectForm'
 import AddNoteForm from './components/AddNoteForm'
 import ProjectCard from './components/ProjectCard'
 import NoteCard from './components/NoteCard'
+import AiChat from './components/AiChat'
 import StatusBadge from './components/ui/StatusBadge'
+import ThemeSlider from './components/ThemeSlider'
+import ThemeSettings from './components/ThemeSettings'
+import { useTheme } from './ThemeContext'
 import './styles.css'
 
 function App() {
+  const { showThemeSettings } = useTheme()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [projects, setProjects] = useState([])
   const [notes, setNotes] = useState([])
   const [selectedProject, setSelectedProject] = useState(null)
-  const [view, setView] = useState('home') // 'home', 'projects', 'notes', 'project-detail'
+  const [view, setView] = useState('home') // 'home', 'projects', 'notes', 'project-detail', 'ai-chat'
   const [showAddProjectForm, setShowAddProjectForm] = useState(false)
   const [showAddNoteForm, setShowAddNoteForm] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
@@ -38,6 +43,7 @@ function App() {
   const [filterPriority, setFilterPriority] = useState('all')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showChangePassword, setShowChangePassword] = useState(false)
 
   // Auto-dismiss toast messages
   useEffect(() => {
@@ -148,6 +154,24 @@ function App() {
       setView('projects')
     } catch (error) {
       console.error('Logout error:', error)
+    }
+  }
+
+  const handleChangePassword = async (currentPw, newPw) => {
+    try {
+      const credential = EmailAuthProvider.credential(user.email, currentPw)
+      await reauthenticateWithCredential(auth.currentUser, credential)
+      await updatePassword(auth.currentUser, newPw)
+      setSuccess('Password cambiata con successo!')
+      setShowChangePassword(false)
+    } catch (err) {
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        throw new Error('Password attuale errata')
+      } else if (err.code === 'auth/weak-password') {
+        throw new Error('La nuova password deve avere almeno 6 caratteri')
+      } else {
+        throw new Error('Errore nel cambio password. Riprova.')
+      }
     }
   }
 
@@ -435,13 +459,24 @@ function App() {
               >
                 📝 Note & Idee
               </button>
+              <button
+                onClick={() => setView('ai-chat')}
+                className={`nav-button ${view === 'ai-chat' ? 'active' : ''}`}
+              >
+                🐙 Polpo AI
+              </button>
             </nav>
+
+            <ThemeSlider />
 
             <div className="user-info">
               <div className="user-avatar">
                 {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
               </div>
               <span>{user.displayName || user.email}</span>
+              <button onClick={() => setShowChangePassword(true)} className="logout-button" title="Cambia password">
+                🔒
+              </button>
               <button onClick={handleLogout} className="logout-button">
                 Esci
               </button>
@@ -608,6 +643,8 @@ function App() {
           </div>
         )}
 
+        {view === 'ai-chat' && <AiChat />}
+
         {view === 'project-detail' && <ProjectDetailView />}
       </main>
 
@@ -704,6 +741,128 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <ChangePasswordModal
+          onClose={() => setShowChangePassword(false)}
+          onSubmit={handleChangePassword}
+        />
+      )}
+
+      {/* Theme Settings Modal */}
+      {showThemeSettings && <ThemeSettings />}
+    </div>
+  )
+}
+
+function ChangePasswordModal({ onClose, onSubmit }) {
+  const [currentPw, setCurrentPw] = useState('')
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+
+    if (newPw.length < 6) {
+      setError('La nuova password deve avere almeno 6 caratteri')
+      return
+    }
+    if (newPw !== confirmPw) {
+      setError('Le password non coincidono')
+      return
+    }
+    if (currentPw === newPw) {
+      setError('La nuova password deve essere diversa dalla attuale')
+      return
+    }
+
+    setLoading(true)
+    try {
+      await onSubmit(currentPw, newPw)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="form-modal" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="form-modal-content">
+        <div className="form-header">
+          <h2>🔒 Cambia Password</h2>
+          <button onClick={onClose} className="close-button">×</button>
+        </div>
+        <form onSubmit={handleSubmit} className="form">
+          <div className="form-group">
+            <label>Password attuale</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showCurrent ? 'text' : 'password'}
+                value={currentPw}
+                onChange={(e) => setCurrentPw(e.target.value)}
+                placeholder="Inserisci password attuale"
+                required
+                style={{ paddingRight: '2.5rem', width: '100%' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrent(!showCurrent)}
+                style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem', opacity: 0.6 }}
+              >
+                {showCurrent ? '🙈' : '👁️'}
+              </button>
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Nuova password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showNew ? 'text' : 'password'}
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                placeholder="Minimo 6 caratteri"
+                required
+                minLength={6}
+                style={{ paddingRight: '2.5rem', width: '100%' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew(!showNew)}
+                style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem', opacity: 0.6 }}
+              >
+                {showNew ? '🙈' : '👁️'}
+              </button>
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Conferma nuova password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showNew ? 'text' : 'password'}
+                value={confirmPw}
+                onChange={(e) => setConfirmPw(e.target.value)}
+                placeholder="Ripeti la nuova password"
+                required
+                style={{ paddingRight: '2.5rem', width: '100%' }}
+              />
+            </div>
+          </div>
+          {error && <div className="error-message">{error}</div>}
+          <div className="form-actions">
+            <button type="button" onClick={onClose} className="btn-secondary">Annulla</button>
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Cambiando...' : 'Cambia Password'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

@@ -15,6 +15,7 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
   const notesByType = {
     note: notes.filter(n => n.type === 'note').length,
     idea: notes.filter(n => n.type === 'idea').length,
+    info: notes.filter(n => n.type === 'info').length,
     monologo: notes.filter(n => n.type === 'monologo').length,
     musica: notes.filter(n => n.type === 'musica').length
   };
@@ -178,6 +179,11 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
               <div className="note-type-count">{notesByType.idea}</div>
               <div className="note-type-label">Idee</div>
             </div>
+            <div className="note-type-card" style={{ background: 'linear-gradient(135deg, #20c997, #0ca678)' }}>
+              <div className="note-type-icon">📌</div>
+              <div className="note-type-count">{notesByType.info}</div>
+              <div className="note-type-label">Info Salvate</div>
+            </div>
             <div className="note-type-card" style={{ background: 'linear-gradient(135deg, #ff9ff3, #ee5a6f)' }}>
               <div className="note-type-icon">🎭</div>
               <div className="note-type-count">{notesByType.monologo}</div>
@@ -199,6 +205,7 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
                   <div key={note.id} className="recent-item" onClick={() => onNavigate('notes')}>
                     <div className="recent-icon">
                       {note.type === 'idea' ? '💡' :
+                       note.type === 'info' ? '📌' :
                        note.type === 'monologo' ? '🎭' :
                        note.type === 'musica' ? '🎵' : '📝'}
                     </div>
@@ -207,6 +214,7 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
                       <div className="recent-meta">
                         <span className={`badge badge-type-${note.type}`}>
                           {note.type === 'idea' ? '💡 Idea' :
+                           note.type === 'info' ? '📌 Info' :
                            note.type === 'monologo' ? '🎭 Monologo' :
                            note.type === 'musica' ? '🎵 Musica' :
                            '📝 Nota'}

@@ -5,4 +5,12 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/', // Per Netlify deployment dalla root
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5032',
+        changeOrigin: true,
+      }
+    }
+  }
 })
