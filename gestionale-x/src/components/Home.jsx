@@ -1,4 +1,23 @@
-const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
+import { useState, useCallback } from 'react'
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
+
+const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote, onAiMessage }) => {
+  const [aiInput, setAiInput] = useState('')
+
+  const onVoiceResult = useCallback((text) => {
+    setAiInput(prev => prev + (prev ? ' ' : '') + text)
+  }, [])
+  const { isListening, isSupported, toggle: toggleVoice } = useSpeechRecognition({ onResult: onVoiceResult })
+
+  const handleAiSubmit = () => {
+    if (!aiInput.trim()) return
+    if (onAiMessage) {
+      onAiMessage(aiInput.trim())
+    } else {
+      onNavigate('ai-chat')
+    }
+    setAiInput('')
+  }
   const totalProjects = projects.length;
   const totalNotes = notes.length;
 
@@ -72,38 +91,62 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
 
   return (
     <div className="home-container">
-      {/* Hero Section */}
-      <div className="home-hero">
-        <h1 className="title-main">🐙 GESTIONALE POLPO</h1>
-        <p className="home-subtitle">Il tuo hub creativo per progetti e idee</p>
+      {/* AI Chat Box - primo elemento */}
+      <div className="home-ai-box">
+        <div className="home-ai-header">
+          <span>🐙 Chiedi a Polpo AI</span>
+        </div>
+        <div className="home-ai-input-row">
+          <input
+            type="text"
+            value={aiInput}
+            onChange={(e) => setAiInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAiSubmit()}
+            placeholder={isListening ? '🎤 Sto ascoltando...' : 'Scrivi qualcosa o parla...'}
+            className={`home-ai-input ${isListening ? 'voice-active' : ''}`}
+          />
+          {isSupported && (
+            <button
+              className={`home-ai-voice-btn ${isListening ? 'listening' : ''}`}
+              onClick={toggleVoice}
+              title={isListening ? 'Stop' : 'Parla'}
+            >
+              {isListening ? '⏹️' : '🎤'}
+            </button>
+          )}
+          <button
+            className="home-ai-send-btn"
+            onClick={handleAiSubmit}
+            disabled={!aiInput.trim()}
+          >
+            ➤
+          </button>
+        </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats + Progress compatti */}
       <div className="stats-grid">
-        <div className="stat-card stat-projects">
+        <div className="stat-card stat-projects" onClick={() => onNavigate('projects')}>
           <div className="stat-icon">📁</div>
           <div className="stat-content">
             <div className="stat-number">{totalProjects}</div>
-            <div className="stat-label">Progetti Totali</div>
+            <div className="stat-label">Progetti</div>
           </div>
         </div>
-
-        <div className="stat-card stat-notes">
+        <div className="stat-card stat-notes" onClick={() => onNavigate('notes')}>
           <div className="stat-icon">📝</div>
           <div className="stat-content">
             <div className="stat-number">{totalNotes}</div>
-            <div className="stat-label">Note & Idee</div>
+            <div className="stat-label">Note</div>
           </div>
         </div>
-
         <div className="stat-card stat-todos">
           <div className="stat-icon">✅</div>
           <div className="stat-content">
             <div className="stat-number">{completedTodos}/{totalTodos}</div>
-            <div className="stat-label">Todos Completati</div>
+            <div className="stat-label">Task</div>
           </div>
         </div>
-
         <div className="stat-card stat-progress">
           <div className="stat-icon">🚀</div>
           <div className="stat-content">
@@ -117,43 +160,41 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
       {totalTodos > 0 && (
         <div className="global-progress-section">
           <div className="global-progress-header">
-            <span className="section-title">📈 Progresso Globale</span>
+            <span className="section-title">📈 Progresso</span>
             <span className="global-progress-pct">{globalProgress}%</span>
           </div>
           <div className="global-progress-bar">
             <div className="global-progress-fill" style={{ width: `${globalProgress}%` }}></div>
           </div>
-          <div className="global-progress-label">{completedTodos} di {totalTodos} task completati</div>
         </div>
       )}
 
-      {/* Quick Actions */}
+      {/* Quick Actions - compatte */}
       <div className="quick-actions-section">
-        <h2 className="section-title">⚡ Azioni Rapide</h2>
         <div className="quick-actions-grid">
           <button className="quick-action-btn qa-project" onClick={onAddProject}>
             <span className="qa-icon">📁</span>
-            <span className="qa-label">Nuovo Progetto</span>
+            <span className="qa-label">Progetto</span>
           </button>
           <button className="quick-action-btn qa-note" onClick={() => onAddNote('note')}>
             <span className="qa-icon">📝</span>
-            <span className="qa-label">Nuova Nota</span>
+            <span className="qa-label">Nota</span>
           </button>
           <button className="quick-action-btn qa-idea" onClick={() => onAddNote('idea')}>
             <span className="qa-icon">💡</span>
-            <span className="qa-label">Nuova Idea</span>
+            <span className="qa-label">Idea</span>
           </button>
           <button className="quick-action-btn qa-monologo" onClick={() => onAddNote('monologo')}>
             <span className="qa-icon">🎭</span>
-            <span className="qa-label">Nuovo Monologo</span>
+            <span className="qa-label">Monologo</span>
           </button>
           <button className="quick-action-btn qa-musica" onClick={() => onAddNote('musica')}>
             <span className="qa-icon">🎵</span>
-            <span className="qa-label">Nuova Musica</span>
+            <span className="qa-label">Musica</span>
           </button>
-          <button className="quick-action-btn qa-all-projects" onClick={() => onNavigate('projects')}>
-            <span className="qa-icon">🗂️</span>
-            <span className="qa-label">Tutti i Progetti</span>
+          <button className="quick-action-btn qa-all-projects" onClick={() => onNavigate('ai-chat')}>
+            <span className="qa-icon">🐙</span>
+            <span className="qa-label">AI Chat</span>
           </button>
         </div>
       </div>

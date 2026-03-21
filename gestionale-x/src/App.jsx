@@ -640,6 +640,7 @@ function App() {
               setEditingNote({ type });
               setShowAddNoteForm(true);
             }}
+            onAiMessage={() => setView('ai-chat')}
           />
         )}
 
