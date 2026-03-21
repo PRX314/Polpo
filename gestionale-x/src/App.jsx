@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { auth } from './firebase'
 import {
   subscribeToProjects,
   subscribeToNotes,
   initializeSampleData,
+  addNote,
+  addProject,
   updateProject,
   updateNote,
   deleteProject,
@@ -18,6 +20,9 @@ import ProjectCard from './components/ProjectCard'
 import NoteCard from './components/NoteCard'
 import AiChat from './components/AiChat'
 import StatusBadge from './components/ui/StatusBadge'
+import Calendar from './components/Calendar'
+import { exportProjectsCSV, exportNotesCSV, exportAllProjectsPDF } from './services/exportService'
+import { setupPushNotifications, startDeadlineChecker, stopDeadlineChecker } from './services/notificationService'
 import ThemeSlider from './components/ThemeSlider'
 import ThemeSettings from './components/ThemeSettings'
 import { useTheme } from './ThemeContext'
@@ -30,7 +35,7 @@ function App() {
   const [projects, setProjects] = useState([])
   const [notes, setNotes] = useState([])
   const [selectedProject, setSelectedProject] = useState(null)
-  const [view, setView] = useState('home') // 'home', 'projects', 'notes', 'project-detail', 'ai-chat'
+  const [view, setView] = useState('home') // 'home', 'projects', 'notes', 'project-detail', 'ai-chat', 'calendar'
   const [showAddProjectForm, setShowAddProjectForm] = useState(false)
   const [showAddNoteForm, setShowAddNoteForm] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
@@ -41,9 +46,19 @@ function App() {
   const [searchNotes, setSearchNotes] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterPriority, setFilterPriority] = useState('all')
+  const [showArchived, setShowArchived] = useState(false)
+  const [sortProjects, setSortProjects] = useState('date') // date, name, progress
+  const [sortNotes, setSortNotes] = useState('date') // date, name, priority
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showChangePassword, setShowChangePassword] = useState(false)
+  const [globalSearch, setGlobalSearch] = useState('')
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const [activeTag, setActiveTag] = useState(null)
+  const [viewMode, setViewMode] = useState('grid') // grid, list
+  const [showQuickCapture, setShowQuickCapture] = useState(false)
+  const [quickCaptureText, setQuickCaptureText] = useState('')
+  const [quickCaptureType, setQuickCaptureType] = useState('note')
 
   // Auto-dismiss toast messages
   useEffect(() => {
@@ -85,6 +100,24 @@ function App() {
     }
   }, [user])
 
+  // Setup push notifications when user logs in
+  useEffect(() => {
+    if (user) {
+      setupPushNotifications()
+    }
+  }, [user])
+
+  // Start deadline checker when projects change
+  const projectsRef = useRef(projects)
+  projectsRef.current = projects
+
+  useEffect(() => {
+    if (user && projects.length > 0) {
+      startDeadlineChecker(() => projectsRef.current)
+      return () => stopDeadlineChecker()
+    }
+  }, [user, projects.length])
+
   // Subscribe to Firebase data when user is authenticated
   useEffect(() => {
     if (!user) return
@@ -116,34 +149,83 @@ function App() {
     }
   }, [user])
 
-  // Filtra note associate al progetto selezionato
+  // Filtra note associate al progetto (link diretto + tag condivisi)
   const getProjectNotes = (project) => {
     return notes.filter(note =>
-      note.projectTags && note.projectTags.some(tag => project.tags && project.tags.includes(tag))
+      note.projectId === project.id ||
+      (note.projectTags && note.projectTags.some(tag => project.tags && project.tags.includes(tag)))
     )
   }
 
-  // Filter projects based on search and status
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchProjects.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchProjects.toLowerCase()) ||
-                         project.tags?.some(tag => tag.toLowerCase().includes(searchProjects.toLowerCase()))
+  // All tags with counts (from projects + notes)
+  const allTags = (() => {
+    const tagMap = {}
+    projects.forEach(p => (p.tags || []).forEach(t => { tagMap[t] = (tagMap[t] || 0) + 1 }))
+    notes.forEach(n => (n.projectTags || []).forEach(t => { tagMap[t] = (tagMap[t] || 0) + 1 }))
+    return Object.entries(tagMap).sort((a, b) => b[1] - a[1])
+  })()
 
-    const matchesStatus = filterStatus === 'all' || project.status === filterStatus
+  // Global search results
+  const globalSearchResults = globalSearch.length >= 2 ? {
+    projects: projects.filter(p =>
+      p.name.toLowerCase().includes(globalSearch.toLowerCase()) ||
+      p.description?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+      p.tags?.some(t => t.toLowerCase().includes(globalSearch.toLowerCase()))
+    ),
+    notes: notes.filter(n =>
+      n.title.toLowerCase().includes(globalSearch.toLowerCase()) ||
+      n.content?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+      n.projectTags?.some(t => t.toLowerCase().includes(globalSearch.toLowerCase()))
+    )
+  } : { projects: [], notes: [] }
 
-    return matchesSearch && matchesStatus
-  })
+  const totalSearchResults = globalSearchResults.projects.length + globalSearchResults.notes.length
 
-  // Filter notes based on search and priority
-  const filteredNotes = notes.filter(note => {
-    const matchesSearch = note.title.toLowerCase().includes(searchNotes.toLowerCase()) ||
-                         note.content.toLowerCase().includes(searchNotes.toLowerCase()) ||
-                         note.projectTags?.some(tag => tag.toLowerCase().includes(searchNotes.toLowerCase()))
+  // Filter projects based on search, status, archive
+  const filteredProjects = projects
+    .filter(project => {
+      const matchesSearch = project.name?.toLowerCase().includes(searchProjects.toLowerCase()) ||
+                           project.description?.toLowerCase().includes(searchProjects.toLowerCase()) ||
+                           project.tags?.some(tag => tag.toLowerCase().includes(searchProjects.toLowerCase()))
+      const matchesStatus = filterStatus === 'all' || project.status === filterStatus
+      const matchesArchive = showArchived ? project.archived : !project.archived
+      const matchesTag = !activeTag || project.tags?.includes(activeTag)
+      return matchesSearch && matchesStatus && matchesArchive && matchesTag
+    })
+    .sort((a, b) => {
+      // Pinned first
+      if (a.pinned && !b.pinned) return -1
+      if (!a.pinned && b.pinned) return 1
+      // Then by selected sort
+      if (sortProjects === 'name') return (a.name || '').localeCompare(b.name || '')
+      if (sortProjects === 'progress') {
+        const progA = a.todos?.length ? a.todos.filter(t => t.completed).length / a.todos.length : 0
+        const progB = b.todos?.length ? b.todos.filter(t => t.completed).length / b.todos.length : 0
+        return progB - progA
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt) // date default
+    })
 
-    const matchesPriority = filterPriority === 'all' || note.priority === filterPriority
-
-    return matchesSearch && matchesPriority
-  })
+  // Filter notes based on search, priority, with sort + pin
+  const filteredNotes = notes
+    .filter(note => {
+      const matchesSearch = note.title?.toLowerCase().includes(searchNotes.toLowerCase()) ||
+                           note.content?.toLowerCase().includes(searchNotes.toLowerCase()) ||
+                           note.projectTags?.some(tag => tag.toLowerCase().includes(searchNotes.toLowerCase()))
+      const matchesPriority = filterPriority === 'all' || note.priority === filterPriority
+      const matchesTag = !activeTag || note.projectTags?.includes(activeTag)
+      return matchesSearch && matchesPriority && matchesTag
+    })
+    .sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1
+      if (!a.pinned && b.pinned) return 1
+      if (sortNotes === 'name') return (a.title || '').localeCompare(b.title || '')
+      if (sortNotes === 'priority') {
+        const prio = { high: 3, medium: 2, low: 1 }
+        return (prio[b.priority] || 0) - (prio[a.priority] || 0)
+      }
+      return new Date(b.createdAt) - new Date(a.createdAt)
+    })
 
   const handleLogout = async () => {
     try {
@@ -173,6 +255,50 @@ function App() {
         throw new Error('Errore nel cambio password. Riprova.')
       }
     }
+  }
+
+  // Handle pin toggle
+  const handleTogglePinProject = async (project) => {
+    try {
+      await updateProject(project.id, { pinned: !project.pinned })
+    } catch (err) {
+      setError('Errore nel fissare il progetto')
+    }
+  }
+
+  const handleTogglePinNote = async (note) => {
+    try {
+      await updateNote(note.id, { pinned: !note.pinned })
+    } catch (err) {
+      setError('Errore nel fissare la nota')
+    }
+  }
+
+  // Handle archive
+  const handleArchiveProject = async (project) => {
+    try {
+      await updateProject(project.id, { archived: !project.archived })
+      setSuccess(project.archived ? 'Progetto ripristinato!' : 'Progetto archiviato!')
+    } catch (err) {
+      setError('Errore nell\'archiviazione')
+    }
+  }
+
+  // Handle duplicate
+  const handleDuplicateProject = async (project) => {
+    try {
+      const { id, createdAt, updatedAt, ...data } = project
+      await addProject({ ...data, name: `${data.name} (copia)`, pinned: false, archived: false })
+      setSuccess('Progetto duplicato!')
+    } catch { setError('Errore nella duplicazione') }
+  }
+
+  const handleDuplicateNote = async (note) => {
+    try {
+      const { id, createdAt, updatedAt, ...data } = note
+      await addNote({ ...data, title: `${data.title} (copia)`, pinned: false })
+      setSuccess('Nota duplicata!')
+    } catch { setError('Errore nella duplicazione') }
   }
 
   // Handle project selection
@@ -329,56 +455,14 @@ function App() {
           </div>
         )}
 
-        {/* Todo List Section */}
+        {/* Todo List Section - Interactive */}
         {selectedProject.todos && selectedProject.todos.length > 0 && (
-          <div className="project-card mb-6">
-            <h3 className="title-section mb-4">
-              ✅ Cose da Fare ({selectedProject.todos.filter(t => !t.completed).length}/{selectedProject.todos.length})
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {selectedProject.todos.map((todo, index) => (
-                <div key={index} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.75rem',
-                  background: todo.completed
-                    ? 'linear-gradient(135deg, #d1fae5, #ecfdf5)'
-                    : 'linear-gradient(135deg, #f8f9fa, #ffffff)',
-                  borderRadius: '8px',
-                  border: todo.completed ? '2px solid #20c997' : '1px solid #e9ecef',
-                  transition: 'all 0.3s ease'
-                }}>
-                  <div style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: todo.completed
-                      ? 'linear-gradient(135deg, #20c997, #28a745)'
-                      : '#fff',
-                    border: todo.completed ? 'none' : '2px solid #ddd',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.9em',
-                    color: 'white',
-                    flexShrink: 0
-                  }}>
-                    {todo.completed && '✓'}
-                  </div>
-                  <div style={{
-                    flex: 1,
-                    fontSize: '0.9em',
-                    textDecoration: todo.completed ? 'line-through' : 'none',
-                    color: todo.completed ? '#999' : '#333',
-                    fontWeight: todo.completed ? '400' : '500'
-                  }}>
-                    {todo.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <TodoListInteractive
+            project={selectedProject}
+            onUpdate={async (newTodos) => {
+              await updateProject(selectedProject.id, { todos: newTodos })
+            }}
+          />
         )}
 
         <div className="project-card">
@@ -440,7 +524,7 @@ function App() {
                 }}
                 className={`nav-button ${view === 'home' ? 'active' : ''}`}
               >
-                🏠 Home
+                🏠 <span className="nav-label">Home</span>
               </button>
               <button
                 onClick={() => {
@@ -451,21 +535,90 @@ function App() {
                   view === 'projects' || view === 'project-detail' ? 'active' : ''
                 }`}
               >
-                📁 Progetti
+                📁 <span className="nav-label">Progetti</span>
               </button>
               <button
                 onClick={() => setView('notes')}
                 className={`nav-button ${view === 'notes' ? 'active' : ''}`}
               >
-                📝 Note & Idee
+                📝 <span className="nav-label">Note & Idee</span>
+              </button>
+              <button
+                onClick={() => setView('calendar')}
+                className={`nav-button ${view === 'calendar' ? 'active' : ''}`}
+              >
+                📅 <span className="nav-label">Calendario</span>
               </button>
               <button
                 onClick={() => setView('ai-chat')}
                 className={`nav-button ${view === 'ai-chat' ? 'active' : ''}`}
               >
-                🐙 Polpo AI
+                🐙 <span className="nav-label">Polpo AI</span>
               </button>
             </nav>
+
+            {/* Global Search */}
+            <div className="global-search-wrapper">
+              <input
+                type="text"
+                placeholder="🔍 Cerca ovunque..."
+                value={globalSearch}
+                onChange={(e) => {
+                  setGlobalSearch(e.target.value)
+                  setShowSearchResults(e.target.value.length >= 2)
+                }}
+                onFocus={() => globalSearch.length >= 2 && setShowSearchResults(true)}
+                className="global-search-input"
+              />
+              {showSearchResults && globalSearch.length >= 2 && (
+                <>
+                  <div className="search-overlay" onClick={() => setShowSearchResults(false)}></div>
+                  <div className="global-search-dropdown">
+                    {totalSearchResults === 0 ? (
+                      <div className="search-no-results">Nessun risultato per "{globalSearch}"</div>
+                    ) : (
+                      <>
+                        {globalSearchResults.projects.length > 0 && (
+                          <div className="search-group">
+                            <div className="search-group-title">📁 Progetti ({globalSearchResults.projects.length})</div>
+                            {globalSearchResults.projects.slice(0, 5).map(p => (
+                              <div key={p.id} className="search-result-item" onClick={() => {
+                                setSelectedProject(p)
+                                setView('project-detail')
+                                setShowSearchResults(false)
+                                setGlobalSearch('')
+                              }}>
+                                <span className="search-result-name">{p.name}</span>
+                                {p.tags?.slice(0, 3).map(t => (
+                                  <span key={t} className="search-result-tag">#{t}</span>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {globalSearchResults.notes.length > 0 && (
+                          <div className="search-group">
+                            <div className="search-group-title">📝 Note ({globalSearchResults.notes.length})</div>
+                            {globalSearchResults.notes.slice(0, 5).map(n => (
+                              <div key={n.id} className="search-result-item" onClick={() => {
+                                setView('notes')
+                                setShowSearchResults(false)
+                                setGlobalSearch('')
+                              }}>
+                                <span className="search-result-name">{n.title}</span>
+                                <span className={`badge badge-type-${n.type}`} style={{ fontSize: '0.65rem' }}>
+                                  {n.type}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
 
             <ThemeSlider />
 
@@ -515,9 +668,17 @@ function App() {
           <div>
             <div className="flex-between mb-6">
               <h2 className="title-section">I Miei Progetti</h2>
-              <div className="flex gap-4 items-center">
+              <div className="flex gap-4 items-center flex-wrap">
                 <div className="text-meta">
-                  {filteredProjects.length} di {projects.length} progetti
+                  {filteredProjects.length} di {projects.filter(p => !p.archived).length} progetti
+                </div>
+                <div className="export-btns">
+                  <button onClick={() => exportProjectsCSV(projects.filter(p => !p.archived), notes)} className="btn-export" title="Esporta CSV">
+                    📊 CSV
+                  </button>
+                  <button onClick={() => exportAllProjectsPDF(projects.filter(p => !p.archived), notes)} className="btn-export" title="Esporta PDF">
+                    📄 PDF
+                  </button>
                 </div>
                 <button
                   onClick={() => setShowAddProjectForm(true)}
@@ -528,7 +689,28 @@ function App() {
               </div>
             </div>
 
-            {/* Search and Filters */}
+            {/* Tag Cloud */}
+            {allTags.length > 0 && (
+              <div className="tag-cloud mb-4">
+                <button
+                  className={`tag-cloud-item ${!activeTag ? 'active' : ''}`}
+                  onClick={() => setActiveTag(null)}
+                >
+                  Tutti
+                </button>
+                {allTags.slice(0, 15).map(([tag, count]) => (
+                  <button
+                    key={tag}
+                    className={`tag-cloud-item ${activeTag === tag ? 'active' : ''}`}
+                    onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                  >
+                    #{tag} <span className="tag-cloud-count">{count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Search, Filters, Sort */}
             <div className="filters-container mb-6">
               <div className="flex gap-4 flex-wrap">
                 <div className="search-input">
@@ -553,19 +735,53 @@ function App() {
                     <option value="paused">In Pausa</option>
                   </select>
                 </div>
+                <div className="filter-select">
+                  <select
+                    value={sortProjects}
+                    onChange={(e) => setSortProjects(e.target.value)}
+                    className="filter-field"
+                  >
+                    <option value="date">Ordina: Data</option>
+                    <option value="name">Ordina: Nome</option>
+                    <option value="progress">Ordina: Progresso</option>
+                  </select>
+                </div>
+                <button
+                  onClick={() => setShowArchived(!showArchived)}
+                  className={`btn-secondary ${showArchived ? 'active' : ''}`}
+                  style={{ fontSize: '0.8rem' }}
+                >
+                  {showArchived ? '📦 Archiviati' : '📂 Attivi'}
+                </button>
+                <div className="view-toggle">
+                  <button
+                    className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                    onClick={() => setViewMode('grid')}
+                    title="Vista griglia"
+                  >⊞</button>
+                  <button
+                    className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                    onClick={() => setViewMode('list')}
+                    title="Vista lista"
+                  >☰</button>
+                </div>
               </div>
             </div>
 
             {filteredProjects.length > 0 ? (
-              <div className="grid-projects">
+              <div className={viewMode === 'list' ? 'list-projects' : 'grid-projects'}>
                 {filteredProjects.map(project => (
                   <ProjectCard
                     key={project.id}
                     project={project}
+                    compact={viewMode === 'list'}
                     onSelect={handleProjectSelect}
                     getProjectNotes={getProjectNotes}
                     onEdit={handleEditProject}
                     onDelete={handleDelete}
+                    onTogglePin={handleTogglePinProject}
+                    onArchive={handleArchiveProject}
+                    onDuplicate={handleDuplicateProject}
                   />
                 ))}
               </div>
@@ -582,10 +798,13 @@ function App() {
           <div>
             <div className="flex-between mb-6">
               <h2 className="title-section">Note e Idee</h2>
-              <div className="flex gap-4 items-center">
+              <div className="flex gap-4 items-center flex-wrap">
                 <div className="text-meta">
                   {filteredNotes.length} di {notes.length} elementi
                 </div>
+                <button onClick={() => exportNotesCSV(notes, projects)} className="btn-export" title="Esporta CSV">
+                  📊 CSV
+                </button>
                 <button
                   onClick={() => setShowAddNoteForm(true)}
                   className="btn-primary"
@@ -595,7 +814,7 @@ function App() {
               </div>
             </div>
 
-            {/* Search and Filters */}
+            {/* Search, Filters, Sort */}
             <div className="filters-container mb-6">
               <div className="flex gap-4 flex-wrap">
                 <div className="search-input">
@@ -613,10 +832,21 @@ function App() {
                     onChange={(e) => setFilterPriority(e.target.value)}
                     className="filter-field"
                   >
-                    <option value="all">Tutte le priorità</option>
+                    <option value="all">Tutte le priorita</option>
                     <option value="high">Alta</option>
                     <option value="medium">Media</option>
                     <option value="low">Bassa</option>
+                  </select>
+                </div>
+                <div className="filter-select">
+                  <select
+                    value={sortNotes}
+                    onChange={(e) => setSortNotes(e.target.value)}
+                    className="filter-field"
+                  >
+                    <option value="date">Ordina: Data</option>
+                    <option value="name">Ordina: Nome</option>
+                    <option value="priority">Ordina: Priorita</option>
                   </select>
                 </div>
               </div>
@@ -626,12 +856,14 @@ function App() {
               <div className="grid-notes">
                 {filteredNotes.map(note => (
                   <NoteCard
-                  key={note.id}
-                  note={note}
-                  projects={projects}
-                  onEdit={handleEditNote}
-                  onDelete={handleDelete}
-                />
+                    key={note.id}
+                    note={note}
+                    projects={projects}
+                    onEdit={handleEditNote}
+                    onDelete={handleDelete}
+                    onTogglePin={handleTogglePinNote}
+                    onDuplicate={handleDuplicateNote}
+                  />
                 ))}
               </div>
             ) : (
@@ -641,6 +873,16 @@ function App() {
               </div>
             )}
           </div>
+        )}
+
+        {view === 'calendar' && (
+          <Calendar
+            projects={projects}
+            onProjectSelect={(project) => {
+              setSelectedProject(project)
+              setView('project-detail')
+            }}
+          />
         )}
 
         {view === 'ai-chat' && <AiChat />}
@@ -678,11 +920,11 @@ function App() {
 
       {showAddNoteForm && (
         <AddNoteForm
+          projects={projects}
           onClose={() => setShowAddNoteForm(false)}
           onSuccess={() => {
             setShowAddNoteForm(false)
             setSuccess('Nota/Idea creata con successo!')
-            // Notes will auto-update via real-time listener
           }}
           onError={(error) => setError(error)}
         />
@@ -704,6 +946,7 @@ function App() {
       {editingNote && (
         <AddNoteForm
           note={editingNote}
+          projects={projects}
           onClose={() => setEditingNote(null)}
           onSuccess={() => {
             setEditingNote(null)
@@ -752,6 +995,190 @@ function App() {
 
       {/* Theme Settings Modal */}
       {showThemeSettings && <ThemeSettings />}
+
+      {/* Quick Capture FAB */}
+      {!showQuickCapture && (
+        <button
+          className="quick-capture-fab"
+          onClick={() => setShowQuickCapture(true)}
+          title="Cattura rapida"
+        >
+          ✏️
+        </button>
+      )}
+
+      {showQuickCapture && (
+        <div className="quick-capture-panel">
+          <div className="quick-capture-header">
+            <span>Cattura Rapida</span>
+            <button onClick={() => { setShowQuickCapture(false); setQuickCaptureText('') }} className="close-button">×</button>
+          </div>
+          <div className="quick-capture-body">
+            <div className="quick-capture-types">
+              {[['note', '📝'], ['idea', '💡'], ['monologo', '🎭'], ['musica', '🎵']].map(([type, icon]) => (
+                <button
+                  key={type}
+                  className={`quick-capture-type ${quickCaptureType === type ? 'active' : ''}`}
+                  onClick={() => setQuickCaptureType(type)}
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={quickCaptureText}
+              onChange={(e) => setQuickCaptureText(e.target.value)}
+              placeholder="Scrivi qui... (titolo automatico dalla prima riga)"
+              rows={3}
+              className="quick-capture-input"
+              autoFocus
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                  if (!quickCaptureText.trim()) return
+                  const lines = quickCaptureText.trim().split('\n')
+                  const title = lines[0].slice(0, 60)
+                  const content = lines.length > 1 ? lines.slice(1).join('\n') : lines[0]
+                  try {
+                    await addNote({ title, content, type: quickCaptureType, priority: 'medium', projectTags: [] })
+                    setQuickCaptureText('')
+                    setShowQuickCapture(false)
+                    setSuccess('Nota salvata!')
+                  } catch { setError('Errore nel salvataggio') }
+                }
+              }}
+            />
+            <div className="quick-capture-footer">
+              <span className="quick-capture-hint">Ctrl+Enter per salvare</span>
+              <button
+                className="btn-primary"
+                disabled={!quickCaptureText.trim()}
+                onClick={async () => {
+                  if (!quickCaptureText.trim()) return
+                  const lines = quickCaptureText.trim().split('\n')
+                  const title = lines[0].slice(0, 60)
+                  const content = lines.length > 1 ? lines.slice(1).join('\n') : lines[0]
+                  try {
+                    await addNote({ title, content, type: quickCaptureType, priority: 'medium', projectTags: [] })
+                    setQuickCaptureText('')
+                    setShowQuickCapture(false)
+                    setSuccess('Nota salvata!')
+                  } catch { setError('Errore nel salvataggio') }
+                }}
+              >
+                Salva
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TodoListInteractive({ project, onUpdate }) {
+  const [todos, setTodos] = useState(project.todos || [])
+  const [dragIndex, setDragIndex] = useState(null)
+  const [newTodoText, setNewTodoText] = useState('')
+
+  useEffect(() => {
+    setTodos(project.todos || [])
+  }, [project.todos])
+
+  const handleToggle = async (index) => {
+    const updated = [...todos]
+    updated[index] = { ...updated[index], completed: !updated[index].completed }
+    setTodos(updated)
+    await onUpdate(updated)
+  }
+
+  const handleDragStart = (index) => {
+    setDragIndex(index)
+  }
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+    if (dragIndex === null || dragIndex === index) return
+    const updated = [...todos]
+    const [moved] = updated.splice(dragIndex, 1)
+    updated.splice(index, 0, moved)
+    setTodos(updated)
+    setDragIndex(index)
+  }
+
+  const handleDragEnd = async () => {
+    setDragIndex(null)
+    await onUpdate(todos)
+  }
+
+  const handleAddTodo = async () => {
+    if (!newTodoText.trim()) return
+    const updated = [...todos, { text: newTodoText.trim(), completed: false }]
+    setTodos(updated)
+    setNewTodoText('')
+    await onUpdate(updated)
+  }
+
+  const handleDeleteTodo = async (index) => {
+    const updated = todos.filter((_, i) => i !== index)
+    setTodos(updated)
+    await onUpdate(updated)
+  }
+
+  const done = todos.filter(t => t.completed).length
+  const progress = todos.length > 0 ? Math.round((done / todos.length) * 100) : 0
+
+  return (
+    <div className="project-card mb-6">
+      <div className="todo-header">
+        <h3 className="title-section mb-2">
+          ✅ Cose da Fare ({todos.length - done}/{todos.length})
+        </h3>
+        <span className="todo-progress-pct">{progress}%</span>
+      </div>
+      <div className="todo-progress-bar mb-4">
+        <div className="todo-progress-fill" style={{
+          width: `${progress}%`,
+          background: progress === 100 ? 'linear-gradient(90deg, #20c997, #28a745)' : 'linear-gradient(90deg, #48dbfb, #54a0ff)'
+        }}></div>
+      </div>
+      <div className="todo-list">
+        {todos.map((todo, index) => (
+          <div
+            key={index}
+            className={`todo-item ${todo.completed ? 'todo-done' : ''} ${dragIndex === index ? 'todo-dragging' : ''}`}
+            draggable
+            onDragStart={() => handleDragStart(index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="todo-drag-handle" title="Trascina per riordinare">⠿</div>
+            <div
+              className={`todo-checkbox ${todo.completed ? 'checked' : ''}`}
+              onClick={() => handleToggle(index)}
+            >
+              {todo.completed && '✓'}
+            </div>
+            <div
+              className={`todo-text ${todo.completed ? 'completed' : ''}`}
+              onClick={() => handleToggle(index)}
+            >
+              {todo.text}
+            </div>
+            <button className="todo-delete" onClick={() => handleDeleteTodo(index)} title="Elimina">×</button>
+          </div>
+        ))}
+      </div>
+      <div className="todo-add-row">
+        <input
+          type="text"
+          value={newTodoText}
+          onChange={(e) => setNewTodoText(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleAddTodo()}
+          placeholder="Aggiungi un nuovo task..."
+          className="todo-add-input"
+        />
+        <button onClick={handleAddTodo} className="btn-primary" disabled={!newTodoText.trim()}>+</button>
+      </div>
     </div>
   )
 }

@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { addNote, updateNote } from '../firebaseService';
 
-const AddNoteForm = ({ onClose, onSuccess, onError, note }) => {
+const AddNoteForm = ({ onClose, onSuccess, onError, note, projects = [] }) => {
   const isEdit = !!note;
   const [formData, setFormData] = useState({
     title: note?.title || '',
     content: note?.content || '',
     type: note?.type || 'note',
     priority: note?.priority || 'medium',
+    projectId: note?.projectId || '',
+    color: note?.color || '',
     projectTags: note?.projectTags?.join(', ') || '',
     links: note?.links || []
   });
@@ -31,6 +33,8 @@ const AddNoteForm = ({ onClose, onSuccess, onError, note }) => {
         content: formData.content,
         type: formData.type,
         priority: formData.priority,
+        projectId: formData.projectId || null,
+        color: formData.color || null,
         projectTags: tagsArray,
         links: formData.links
       };
@@ -157,6 +161,40 @@ const AddNoteForm = ({ onClose, onSuccess, onError, note }) => {
               <option value="medium">Media</option>
               <option value="high">Alta</option>
             </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="projectId">📁 Progetto associato</label>
+            <select
+              id="projectId"
+              name="projectId"
+              value={formData.projectId}
+              onChange={handleChange}
+            >
+              <option value="">Nessun progetto</option>
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <small className="form-help">
+              Collega direttamente questa nota a un progetto
+            </small>
+          </div>
+
+          <div className="form-group">
+            <label>🎨 Colore</label>
+            <div className="color-picker-row">
+              {['', '#ff6b6b', '#feca57', '#48dbfb', '#20c997', '#ff9ff3', '#54a0ff', '#fd7e14', '#6c757d'].map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`color-dot ${formData.color === c ? 'active' : ''}`}
+                  style={{ background: c || 'var(--bg-card-hover, #f0f0f0)', border: !c ? '2px dashed var(--border-main, #ccc)' : 'none' }}
+                  onClick={() => setFormData({ ...formData, color: c })}
+                  title={c ? c : 'Nessun colore'}
+                />
+              ))}
+            </div>
           </div>
 
           <div className="form-group">

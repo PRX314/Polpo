@@ -8,6 +8,7 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project }) => {
     description: project?.description || '',
     status: project?.status || 'pending',
     tags: project?.tags?.join(', ') || '',
+    deadline: project?.deadline || '',
     links: project?.links || [],
     roadmap: project?.roadmap || '',
     obiettivi: project?.obiettivi || '',
@@ -17,6 +18,7 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project }) => {
   const [error, setError] = useState('');
   const [newLink, setNewLink] = useState({ title: '', url: '' });
   const [newTodo, setNewTodo] = useState('');
+  const [newTodoDeadline, setNewTodoDeadline] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,6 +36,7 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project }) => {
         description: formData.description,
         status: formData.status,
         tags: tagsArray,
+        deadline: formData.deadline || null,
         links: formData.links,
         roadmap: formData.roadmap,
         obiettivi: formData.obiettivi,
@@ -90,11 +93,14 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project }) => {
 
   const handleAddTodo = () => {
     if (newTodo.trim()) {
+      const todo = { text: newTodo.trim(), completed: false };
+      if (newTodoDeadline) todo.deadline = newTodoDeadline;
       setFormData({
         ...formData,
-        todos: [...formData.todos, { text: newTodo.trim(), completed: false }]
+        todos: [...formData.todos, todo]
       });
       setNewTodo('');
+      setNewTodoDeadline('');
     }
   };
 
@@ -173,6 +179,20 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project }) => {
               onChange={handleChange}
               placeholder="es: react, design, e-commerce"
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="deadline">📅 Scadenza</label>
+            <input
+              type="date"
+              id="deadline"
+              name="deadline"
+              value={formData.deadline}
+              onChange={handleChange}
+            />
+            <small className="form-help">
+              Data di scadenza del progetto (opzionale)
+            </small>
           </div>
 
           <div className="form-group">
@@ -320,14 +340,21 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project }) => {
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <input
                   type="text"
                   value={newTodo}
                   onChange={(e) => setNewTodo(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTodo())}
                   placeholder="Aggiungi una cosa da fare..."
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, minWidth: '150px' }}
+                />
+                <input
+                  type="date"
+                  value={newTodoDeadline}
+                  onChange={(e) => setNewTodoDeadline(e.target.value)}
+                  style={{ width: 'auto' }}
+                  title="Scadenza (opzionale)"
                 />
                 <button
                   type="button"

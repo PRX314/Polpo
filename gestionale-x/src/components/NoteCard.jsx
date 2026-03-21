@@ -1,12 +1,27 @@
+import { useMemo } from 'react'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import PriorityBadge from './ui/PriorityBadge'
 
-const NoteCard = ({ note, projects, onEdit, onDelete }) => {
+// Configure marked for safe, inline rendering
+marked.setOptions({
+  breaks: true,
+  gfm: true
+})
+
+const NoteCard = ({ note, projects, onEdit, onDelete, onTogglePin, onDuplicate }) => {
   const matchingProjects = projects.filter(project =>
     note.projectTags && project.tags && note.projectTags.some(tag => project.tags.includes(tag))
   )
 
+  const renderedContent = useMemo(() => {
+    if (!note.content) return ''
+    return DOMPurify.sanitize(marked.parse(note.content))
+  }, [note.content])
+
   return (
-    <div className="note-card">
+    <div className="note-card" style={note.color ? { borderLeftColor: note.color } : {}}>
+      {note.pinned && <div className="pin-badge">📌</div>}
       <div className="flex-start mb-3">
         <div className="flex gap-2">
           <span className={`badge badge-type-${note.type}`}>
@@ -26,7 +41,7 @@ const NoteCard = ({ note, projects, onEdit, onDelete }) => {
       </div>
 
       <h4 className="title-note">{note.title}</h4>
-      <p className="text-content">{note.content}</p>
+      <div className="note-markdown-content" dangerouslySetInnerHTML={{ __html: renderedContent }} />
 
       {note.projectTags && note.projectTags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-3">
@@ -82,7 +97,12 @@ const NoteCard = ({ note, projects, onEdit, onDelete }) => {
 
       <div className="text-meta">
         <div>Creato: {new Date(note.createdAt).toLocaleDateString('it-IT')}</div>
-        {matchingProjects.length > 0 && (
+        {note.projectId && (
+          <div className="mt-1">
+            📁 {projects.find(p => p.id === note.projectId)?.name || 'Progetto'}
+          </div>
+        )}
+        {matchingProjects.length > 0 && !note.projectId && (
           <div className="mt-1">
             Progetti correlati: {matchingProjects.map(p => p.name).join(', ')}
           </div>
@@ -91,6 +111,18 @@ const NoteCard = ({ note, projects, onEdit, onDelete }) => {
 
       {/* Action buttons */}
       <div className="card-actions">
+        <button
+          onClick={() => onTogglePin(note)}
+          className={`btn-icon ${note.pinned ? 'btn-pinned' : ''}`}
+          title={note.pinned ? 'Rimuovi pin' : 'Fissa in alto'}
+        >
+          📌
+        </button>
+        {onDuplicate && (
+          <button onClick={() => onDuplicate(note)} className="btn-icon" title="Duplica">
+            📋
+          </button>
+        )}
         <button
           onClick={() => onEdit(note)}
           className="btn-icon btn-edit"

@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import Groq from 'groq-sdk'
 import admin from 'firebase-admin'
+import webpush from 'web-push'
 
 dotenv.config()
 
@@ -781,12 +782,163 @@ app.post('/api/chat/title', verifyUser, async (req, res) => {
 })
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'Polpo AI', version: '2.0.0', uptime: Math.floor(process.uptime()) })
+  res.json({ status: 'ok', service: 'Polpo AI', version: '2.1.0', uptime: Math.floor(process.uptime()) })
 })
+
+// ============================================================================
+// WEB PUSH NOTIFICATIONS
+// ============================================================================
+
+const VAPID_PUBLIC = 'BEluLj80kUivOmje8jrT0rgeuJHICXPhhxF-lfFM0Yna8ZMvy8__r8BKt4G8CnM4r4KObZaYh6oXMyiB1pjSJEQ'
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || ''
+
+if (VAPID_PRIVATE) {
+  webpush.setVapidDetails('mailto:paoloandrearepetto@gmail.com', VAPID_PUBLIC, VAPID_PRIVATE)
+  console.log('🔔 Web Push configurato')
+} else {
+  console.warn('⚠️ VAPID_PRIVATE_KEY non impostata - notifiche push disabilitate')
+}
+
+// Save push subscription for a user
+app.post('/api/push/subscribe', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization
+    if (!authHeader) return res.status(401).json({ error: 'Non autenticato' })
+
+    const token = authHeader.split('Bearer ')[1]
+    const decoded = await admin.auth().verifyIdToken(token)
+    const userId = decoded.uid
+    const { subscription } = req.body
+
+    if (!subscription || !subscription.endpoint) {
+      return res.status(400).json({ error: 'Subscription non valida' })
+    }
+
+    // Save to Firestore (overwrite per user)
+    await adminDb.collection('push_subscriptions').doc(userId).set({
+      userId,
+      subscription,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    })
+
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Errore salvataggio subscription:', err)
+    res.status(500).json({ error: 'Errore server' })
+  }
+})
+
+// Unsubscribe
+app.post('/api/push/unsubscribe', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization
+    if (!authHeader) return res.status(401).json({ error: 'Non autenticato' })
+
+    const token = authHeader.split('Bearer ')[1]
+    const decoded = await admin.auth().verifyIdToken(token)
+
+    await adminDb.collection('push_subscriptions').doc(decoded.uid).delete()
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Errore unsubscribe:', err)
+    res.status(500).json({ error: 'Errore server' })
+  }
+})
+
+// Get VAPID public key
+app.get('/api/push/vapid-key', (req, res) => {
+  res.json({ publicKey: VAPID_PUBLIC })
+})
+
+// Cron: check deadlines every hour and send push notifications
+async function checkAndNotifyDeadlines() {
+  if (!VAPID_PRIVATE) return
+
+  try {
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const threeDays = new Date(now)
+    threeDays.setDate(threeDays.getDate() + 3)
+
+    const formatDate = (d) => d.toISOString().split('T')[0]
+    const todayStr = formatDate(now)
+    const tomorrowStr = formatDate(tomorrow)
+    const threeDaysStr = formatDate(threeDays)
+
+    // Get all subscriptions
+    const subsSnapshot = await adminDb.collection('push_subscriptions').get()
+    if (subsSnapshot.empty) return
+
+    for (const subDoc of subsSnapshot.docs) {
+      const { userId, subscription } = subDoc.data()
+
+      // Get user's projects
+      const projectsSnapshot = await adminDb.collection('projects')
+        .where('userId', '==', userId)
+        .get()
+
+      const notifications = []
+
+      projectsSnapshot.forEach(doc => {
+        const project = doc.data()
+
+        // Check project deadline
+        if (project.deadline) {
+          if (project.deadline === todayStr) {
+            notifications.push({ title: '⚠️ Scadenza oggi!', body: `"${project.name}" scade oggi` })
+          } else if (project.deadline === tomorrowStr) {
+            notifications.push({ title: '📅 Scadenza domani', body: `"${project.name}" scade domani` })
+          } else if (project.deadline === threeDaysStr) {
+            notifications.push({ title: '📅 Tra 3 giorni', body: `"${project.name}" scade tra 3 giorni` })
+          }
+        }
+
+        // Check todo deadlines
+        ;(project.todos || []).forEach(todo => {
+          if (todo.deadline && !todo.completed) {
+            if (todo.deadline === todayStr) {
+              notifications.push({ title: '✅ Task oggi!', body: `"${todo.text}" (${project.name})` })
+            } else if (todo.deadline === tomorrowStr) {
+              notifications.push({ title: '✅ Task domani', body: `"${todo.text}" (${project.name})` })
+            }
+          }
+        })
+      })
+
+      // Send notifications
+      for (const notif of notifications) {
+        try {
+          await webpush.sendNotification(subscription, JSON.stringify({
+            title: notif.title,
+            body: notif.body,
+            icon: '/vite.svg',
+            badge: '/vite.svg'
+          }))
+        } catch (pushErr) {
+          if (pushErr.statusCode === 410 || pushErr.statusCode === 404) {
+            // Subscription expired, remove it
+            await adminDb.collection('push_subscriptions').doc(userId).delete()
+          }
+          console.error('Push error:', pushErr.statusCode || pushErr.message)
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Errore check deadlines:', err)
+  }
+}
+
+// Run deadline check every hour
+setInterval(checkAndNotifyDeadlines, 60 * 60 * 1000)
+// And once at startup (after 30s to let things initialize)
+setTimeout(checkAndNotifyDeadlines, 30000)
 
 const PORT = process.env.PORT || 5032
 app.listen(PORT, () => {
-  console.log(`🐙 Polpo AI v2.0 avviato su porta ${PORT}`)
+  console.log(`🐙 Polpo AI v2.1 avviato su porta ${PORT}`)
   console.log(`   Tools disponibili: ${TOOLS.map(t => t.function.name).join(', ')}`)
   console.log(`   Health check: http://localhost:${PORT}/api/health`)
+  console.log(`   Push notifications: ${VAPID_PRIVATE ? '✅ attive' : '❌ disabilitate (manca VAPID_PRIVATE_KEY)'}`)
 })

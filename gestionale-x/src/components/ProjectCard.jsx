@@ -1,13 +1,66 @@
 import StatusBadge from './ui/StatusBadge'
 
-const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete }) => {
+const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onTogglePin, onArchive, onDuplicate, compact }) => {
   const associatedNotes = getProjectNotes(project)
+
+  // Deadline indicator
+  const getDeadlineInfo = () => {
+    if (!project.deadline) return null
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const dl = new Date(project.deadline)
+    dl.setHours(0, 0, 0, 0)
+    const diff = Math.ceil((dl - now) / (1000 * 60 * 60 * 24))
+    if (diff < 0) return { text: `${Math.abs(diff)}g scaduto`, color: '#dc2626', urgent: true }
+    if (diff === 0) return { text: 'Oggi!', color: '#dc2626', urgent: true }
+    if (diff === 1) return { text: 'Domani', color: '#f59e0b', urgent: true }
+    if (diff <= 3) return { text: `${diff}g rimasti`, color: '#f59e0b', urgent: false }
+    if (diff <= 7) return { text: `${diff}g rimasti`, color: '#3b82f6', urgent: false }
+    return { text: `${diff}g rimasti`, color: '#6b7280', urgent: false }
+  }
+  const deadlineInfo = getDeadlineInfo()
+
+  if (compact) {
+    return (
+      <div className="project-list-item" onClick={() => onSelect(project)}>
+        {project.pinned && <span className="list-pin">📌</span>}
+        <div className="list-item-main">
+          <span className="list-item-name">{project.name}</span>
+          <StatusBadge status={project.status} />
+          {deadlineInfo && (
+            <span className="deadline-badge" style={{ color: deadlineInfo.color, borderColor: deadlineInfo.color }}>
+              {deadlineInfo.text}
+            </span>
+          )}
+        </div>
+        <div className="list-item-meta">
+          {(project.tags || []).slice(0, 3).map(t => <span key={t} className="tag-small">#{t}</span>)}
+          {project.todos?.length > 0 && (
+            <span className="list-item-progress">
+              {project.todos.filter(t => t.completed).length}/{project.todos.length}
+            </span>
+          )}
+        </div>
+        <div className="list-item-actions" onClick={e => e.stopPropagation()}>
+          <button onClick={() => onEdit(project)} className="btn-icon btn-edit" title="Modifica">✏️</button>
+          <button onClick={() => onDelete('project', project)} className="btn-icon btn-delete" title="Elimina">🗑️</button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
       className="project-card"
       onClick={() => onSelect(project)}
     >
+      {/* Deadline indicator */}
+      {deadlineInfo && (
+        <div className="deadline-badge card-deadline" style={{ color: deadlineInfo.color, borderColor: deadlineInfo.color }}>
+          📅 {deadlineInfo.text}
+        </div>
+      )}
+
       <div className="flex-between mb-4">
         <h3 className="title-project">{project.name}</h3>
         <StatusBadge status={project.status} />
@@ -136,8 +189,28 @@ const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete }) =
         </div>
       </div>
 
+      {/* Pin indicator */}
+      {project.pinned && <div className="pin-badge">📌</div>}
+
       {/* Action buttons */}
       <div className="card-actions" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={() => onTogglePin(project)}
+          className={`btn-icon ${project.pinned ? 'btn-pinned' : ''}`}
+          title={project.pinned ? 'Rimuovi pin' : 'Fissa in alto'}
+        >
+          📌
+        </button>
+        {onArchive && (
+          <button onClick={() => onArchive(project)} className="btn-icon" title={project.archived ? 'Ripristina' : 'Archivia'}>
+            {project.archived ? '📂' : '📦'}
+          </button>
+        )}
+        {onDuplicate && (
+          <button onClick={() => onDuplicate(project)} className="btn-icon" title="Duplica">
+            📋
+          </button>
+        )}
         <button
           onClick={() => onEdit(project)}
           className="btn-icon btn-edit"

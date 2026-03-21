@@ -1,17 +1,14 @@
 const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
-  // Calculate statistics
   const totalProjects = projects.length;
   const totalNotes = notes.length;
 
-  // Projects by status
   const projectsByStatus = {
     pending: projects.filter(p => p.status === 'pending').length,
-    inProgress: projects.filter(p => p.status === 'in-progress').length,
+    inProgress: projects.filter(p => p.status === 'in_progress' || p.status === 'in-progress').length,
     completed: projects.filter(p => p.status === 'completed').length,
-    onHold: projects.filter(p => p.status === 'on-hold').length
+    onHold: projects.filter(p => p.status === 'paused' || p.status === 'on-hold').length
   };
 
-  // Notes by type
   const notesByType = {
     note: notes.filter(n => n.type === 'note').length,
     idea: notes.filter(n => n.type === 'idea').length,
@@ -20,14 +17,58 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
     musica: notes.filter(n => n.type === 'musica').length
   };
 
-  // Recent items (last 5)
   const recentProjects = [...projects].slice(0, 5);
   const recentNotes = [...notes].slice(0, 5);
 
-  // Total todos and completed
   const allTodos = projects.flatMap(p => p.todos || []);
   const completedTodos = allTodos.filter(t => t.completed).length;
   const totalTodos = allTodos.length;
+  const globalProgress = totalTodos > 0 ? Math.round((completedTodos / totalTodos) * 100) : 0;
+
+  // Projects with progress info
+  const projectsWithProgress = projects
+    .filter(p => p.todos && p.todos.length > 0)
+    .map(p => {
+      const done = p.todos.filter(t => t.completed).length;
+      const total = p.todos.length;
+      return { ...p, progress: Math.round((done / total) * 100), done, total };
+    })
+    .sort((a, b) => b.progress - a.progress)
+    .slice(0, 6);
+
+  // Activity timeline: merge projects + notes, sort by date
+  const timeline = [
+    ...projects.map(p => ({
+      id: p.id,
+      type: 'project',
+      title: p.name,
+      icon: '📁',
+      date: p.updatedAt || p.createdAt,
+      status: p.status
+    })),
+    ...notes.map(n => ({
+      id: n.id,
+      type: 'note',
+      title: n.title,
+      icon: n.type === 'idea' ? '💡' : n.type === 'info' ? '📌' : n.type === 'monologo' ? '🎭' : n.type === 'musica' ? '🎵' : '📝',
+      date: n.updatedAt || n.createdAt,
+      noteType: n.type
+    }))
+  ]
+    .filter(item => item.date)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 8);
+
+  const formatTimeAgo = (dateStr) => {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return 'ora';
+    if (diff < 3600) return `${Math.floor(diff / 60)}min fa`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h fa`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}g fa`;
+    return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+  };
 
   return (
     <div className="home-container">
@@ -72,6 +113,20 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
         </div>
       </div>
 
+      {/* Global Progress Bar */}
+      {totalTodos > 0 && (
+        <div className="global-progress-section">
+          <div className="global-progress-header">
+            <span className="section-title">📈 Progresso Globale</span>
+            <span className="global-progress-pct">{globalProgress}%</span>
+          </div>
+          <div className="global-progress-bar">
+            <div className="global-progress-fill" style={{ width: `${globalProgress}%` }}></div>
+          </div>
+          <div className="global-progress-label">{completedTodos} di {totalTodos} task completati</div>
+        </div>
+      )}
+
       {/* Quick Actions */}
       <div className="quick-actions-section">
         <h2 className="section-title">⚡ Azioni Rapide</h2>
@@ -103,11 +158,66 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
         </div>
       </div>
 
+      {/* Project Progress Cards */}
+      {projectsWithProgress.length > 0 && (
+        <div className="progress-section">
+          <h2 className="section-title">📊 Progresso Progetti</h2>
+          <div className="progress-grid">
+            {projectsWithProgress.map(p => (
+              <div key={p.id} className="progress-card" onClick={() => onNavigate('projects')}>
+                <div className="progress-card-header">
+                  <span className="progress-card-name">{p.name}</span>
+                  <span className="progress-card-pct">{p.progress}%</span>
+                </div>
+                <div className="progress-card-bar">
+                  <div
+                    className="progress-card-fill"
+                    style={{
+                      width: `${p.progress}%`,
+                      background: p.progress === 100
+                        ? 'linear-gradient(90deg, #20c997, #28a745)'
+                        : p.progress > 50
+                        ? 'linear-gradient(90deg, #48dbfb, #54a0ff)'
+                        : 'linear-gradient(90deg, #feca57, #fd7e14)'
+                    }}
+                  ></div>
+                </div>
+                <div className="progress-card-meta">{p.done}/{p.total} task</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Two Column Layout */}
       <div className="home-two-columns">
-        {/* Projects Overview */}
+        {/* Activity Timeline */}
         <div className="home-column">
-          <h2 className="section-title">📊 Stato Progetti</h2>
+          <h2 className="section-title">🕐 Attivita Recente</h2>
+          {timeline.length > 0 ? (
+            <div className="activity-timeline">
+              {timeline.map((item, i) => (
+                <div key={`${item.type}-${item.id}`} className="timeline-item" onClick={() => onNavigate(item.type === 'project' ? 'projects' : 'notes')}>
+                  <div className="timeline-dot"></div>
+                  {i < timeline.length - 1 && <div className="timeline-line"></div>}
+                  <div className="timeline-content">
+                    <div className="timeline-icon">{item.icon}</div>
+                    <div className="timeline-info">
+                      <div className="timeline-title">{item.title}</div>
+                      <div className="timeline-time">{formatTimeAgo(item.date)}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state" style={{ padding: '1.5rem' }}>
+              <p>Nessuna attivita ancora</p>
+            </div>
+          )}
+
+          {/* Status Breakdown */}
+          <h2 className="section-title" style={{ marginTop: '2rem' }}>📊 Stato Progetti</h2>
           <div className="status-breakdown">
             <div className="status-item">
               <div className="status-bar status-pending" style={{ width: `${(projectsByStatus.pending / totalProjects * 100) || 0}%` }}></div>
@@ -138,31 +248,6 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAddNote }) => {
               </div>
             </div>
           </div>
-
-          {/* Recent Projects */}
-          {recentProjects.length > 0 && (
-            <>
-              <h2 className="section-title" style={{ marginTop: '2rem' }}>🕐 Progetti Recenti</h2>
-              <div className="recent-items">
-                {recentProjects.map(project => (
-                  <div key={project.id} className="recent-item" onClick={() => onNavigate('projects')}>
-                    <div className="recent-icon">📁</div>
-                    <div className="recent-content">
-                      <div className="recent-title">{project.name}</div>
-                      <div className="recent-meta">
-                        <span className={`badge badge-status-${project.status}`}>
-                          {project.status === 'pending' ? '⏳ Da Iniziare' :
-                           project.status === 'in-progress' ? '🚀 In Corso' :
-                           project.status === 'completed' ? '✅ Completato' :
-                           '⏸️ In Pausa'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
         </div>
 
         {/* Notes Overview */}
