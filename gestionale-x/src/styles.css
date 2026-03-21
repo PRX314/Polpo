@@ -776,7 +776,7 @@ header {
 }
 
 .filter-select {
-  min-width: 180px;
+  min-width: 0;
 }
 
 .search-field,
@@ -3174,7 +3174,8 @@ textarea.voice-active {
 
   .form-modal-content {
     max-height: 95vh;
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
     border-radius: 12px 12px 0 0;
   }
 
