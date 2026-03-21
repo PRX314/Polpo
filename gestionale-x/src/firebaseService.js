@@ -48,11 +48,15 @@ export const subscribeToProjects = (callback, onError) => {
   );
   return onSnapshot(q,
     (snapshot) => {
-      const projects = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-      })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const projects = snapshot.docs.map(doc => {
+        const data = doc.data()
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : (data.createdAt || new Date().toISOString()),
+          updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
+        }
+      }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       callback(projects);
     },
     (error) => {

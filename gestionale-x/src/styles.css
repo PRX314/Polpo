@@ -2258,6 +2258,375 @@ textarea.voice-active {
 }
 
 /* ============================================================================
+   TYPE FILTER BAR
+   ============================================================================ */
+
+.type-filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0;
+}
+
+.type-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  border: 1.5px solid var(--border, #e0e0e0);
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #333);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.type-filter-btn:hover {
+  border-color: var(--type-color, #54a0ff);
+  background: var(--type-color-light, #e8f0fe);
+}
+
+.type-filter-btn.active {
+  border-color: var(--type-color, #54a0ff);
+  background: var(--type-color, #54a0ff);
+  color: white;
+}
+
+.type-filter-count {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+/* ============================================================================
+   TYPE SELECTOR (AddProjectForm)
+   ============================================================================ */
+
+.type-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.type-selector-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  border: 2px solid var(--border, #e0e0e0);
+  background: var(--card-bg, #fff);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 70px;
+}
+
+.type-selector-btn:hover {
+  border-color: var(--type-color, #54a0ff);
+  background: var(--type-color-light, #e8f0fe);
+}
+
+.type-selector-btn.active {
+  border-color: var(--type-color, #54a0ff);
+  background: var(--type-color-light, #e8f0fe);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--type-color, #54a0ff) 20%, transparent);
+}
+
+.type-selector-icon {
+  font-size: 1.4rem;
+}
+
+.type-selector-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-primary, #555);
+}
+
+.type-selector-btn.active .type-selector-label {
+  color: var(--type-color, #54a0ff);
+}
+
+/* ============================================================================
+   TYPE BADGES
+   ============================================================================ */
+
+.item-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.item-type-badge-small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+/* ============================================================================
+   FORM ROW 2-COL
+   ============================================================================ */
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 500px) {
+  .form-row-2 {
+    grid-template-columns: 1fr;
+  }
+  .type-selector-btn {
+    min-width: 60px;
+    padding: 0.4rem 0.6rem;
+  }
+  .type-selector-icon {
+    font-size: 1.1rem;
+  }
+}
+
+/* ============================================================================
+   SECTIONS EDITOR (AddProjectForm)
+   ============================================================================ */
+
+.sections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-editor {
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card-bg, #fff);
+}
+
+.section-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary, #f5f5f5);
+  border-bottom: 1px solid var(--border, #e0e0e0);
+  gap: 0.5rem;
+}
+
+.section-editor-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.section-editor-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.section-editor-title-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary, #333);
+  padding: 0.25rem 0;
+  min-width: 0;
+}
+
+.section-editor-title-input:focus {
+  outline: none;
+  border-bottom: 2px solid var(--primary, #54a0ff);
+}
+
+.section-editor-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.section-editor-content {
+  width: 100%;
+  border: none;
+  padding: 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 80px;
+  color: var(--text-primary, #333);
+  background: var(--card-bg, #fff);
+}
+
+.section-editor-content:focus {
+  outline: none;
+  background: var(--bg-hover, #fafafa);
+}
+
+/* Section images — editor */
+.section-images-area {
+  padding: 0.5rem 0.75rem 0.75rem;
+  border-top: 1px solid var(--border, #e9ecef);
+}
+
+.section-images-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.section-image-thumb {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border, #ddd);
+}
+
+.section-image-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.section-image-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(220, 38, 38, 0.85);
+  color: white;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.section-image-thumb:hover .section-image-remove {
+  opacity: 1;
+}
+
+.section-image-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  border: 1px dashed var(--border, #ccc);
+  background: var(--card-bg, #fff);
+  color: var(--text-secondary, #666);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.section-image-upload-btn:hover {
+  border-color: var(--primary, #54a0ff);
+  color: var(--primary, #54a0ff);
+  background: var(--primary-light, #e8f0fe);
+}
+
+/* Section images — detail view */
+.section-detail-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.section-detail-image {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border, #e0e0e0);
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.section-detail-image:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.section-detail-image img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+}
+
+.section-detail-image-name {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.7rem;
+  color: var(--text-secondary, #666);
+  background: var(--bg-secondary, #f8f9fa);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.section-add-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.section-icon-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.section-icon-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 6px;
+  background: var(--card-bg, #fff);
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.section-icon-btn:hover {
+  background: var(--bg-secondary, #f0f0f0);
+  transform: scale(1.1);
+}
+
+.section-icon-btn.active {
+  border-color: var(--primary, #54a0ff);
+  background: var(--primary-light, #e8f0fe);
+  box-shadow: 0 0 0 2px rgba(84, 160, 255, 0.2);
+}
+
+/* ============================================================================
    CALENDAR
    ============================================================================ */
 

@@ -1,29 +1,26 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { auth } from './firebase'
 import {
   subscribeToProjects,
   subscribeToNotes,
   initializeSampleData,
-  addNote,
   addProject,
   updateProject,
-  updateNote,
   deleteProject,
   deleteNote
 } from './firebaseService'
 import Auth from './components/Auth'
 import Home from './components/Home'
 import AddProjectForm from './components/AddProjectForm'
-import AddNoteForm from './components/AddNoteForm'
 import ProjectCard from './components/ProjectCard'
 import NoteCard from './components/NoteCard'
 import AiChat from './components/AiChat'
 import StatusBadge from './components/ui/StatusBadge'
+import { ITEM_TYPE_LIST, getTypeInfo } from './itemTypes'
 import Calendar from './components/Calendar'
-import { exportProjectsCSV, exportNotesCSV, exportAllProjectsPDF } from './services/exportService'
+import { exportProjectsCSV } from './services/exportService'
 import { setupPushNotifications, startDeadlineChecker, stopDeadlineChecker } from './services/notificationService'
-import { useSpeechRecognition } from './hooks/useSpeechRecognition'
 import ThemeSlider from './components/ThemeSlider'
 import ThemeSettings from './components/ThemeSettings'
 import { useTheme } from './ThemeContext'
@@ -36,20 +33,17 @@ function App() {
   const [projects, setProjects] = useState([])
   const [notes, setNotes] = useState([])
   const [selectedProject, setSelectedProject] = useState(null)
-  const [view, setView] = useState('home') // 'home', 'projects', 'notes', 'project-detail', 'ai-chat', 'calendar'
+  const [view, setView] = useState('home') // 'home', 'items', 'item-detail', 'ai-chat', 'calendar'
+  const [filterType, setFilterType] = useState('all') // 'all' or a type key
   const [showAddProjectForm, setShowAddProjectForm] = useState(false)
-  const [showAddNoteForm, setShowAddNoteForm] = useState(false)
+  const [addFormInitialType, setAddFormInitialType] = useState(null)
   const [editingProject, setEditingProject] = useState(null)
-  const [editingNote, setEditingNote] = useState(null)
   const [showConfirmDelete, setShowConfirmDelete] = useState(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [searchProjects, setSearchProjects] = useState('')
-  const [searchNotes, setSearchNotes] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
-  const [filterPriority, setFilterPriority] = useState('all')
   const [showArchived, setShowArchived] = useState(false)
   const [sortProjects, setSortProjects] = useState('date') // date, name, progress
-  const [sortNotes, setSortNotes] = useState('date') // date, name, priority
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showChangePassword, setShowChangePassword] = useState(false)
@@ -58,14 +52,7 @@ function App() {
   const [activeTag, setActiveTag] = useState(null)
   const [viewMode, setViewMode] = useState('grid') // grid, list
   const [showFilters, setShowFilters] = useState(false)
-  const [showQuickCapture, setShowQuickCapture] = useState(false)
-  const [quickCaptureText, setQuickCaptureText] = useState('')
-  const [quickCaptureType, setQuickCaptureType] = useState('note')
-
-  const onQuickVoiceResult = useCallback((text) => {
-    setQuickCaptureText(prev => prev + (prev ? ' ' : '') + text)
-  }, [])
-  const { isListening: isQuickVoiceOn, isSupported: voiceSupported, toggle: toggleQuickVoice } = useSpeechRecognition({ onResult: onQuickVoiceResult })
+  const [pendingAiMessage, setPendingAiMessage] = useState('')
 
   // Auto-dismiss toast messages
   useEffect(() => {
@@ -190,51 +177,33 @@ function App() {
 
   const totalSearchResults = globalSearchResults.projects.length + globalSearchResults.notes.length
 
-  // Filter projects based on search, status, archive
-  const filteredProjects = projects
-    .filter(project => {
-      const matchesSearch = project.name?.toLowerCase().includes(searchProjects.toLowerCase()) ||
-                           project.description?.toLowerCase().includes(searchProjects.toLowerCase()) ||
-                           project.tags?.some(tag => tag.toLowerCase().includes(searchProjects.toLowerCase()))
-      const matchesStatus = filterStatus === 'all' || project.status === filterStatus
-      const matchesArchive = showArchived ? project.archived : !project.archived
-      const matchesTag = !activeTag || project.tags?.includes(activeTag)
-      return matchesSearch && matchesStatus && matchesArchive && matchesTag
+  // Normalize: projects without type default to 'progetto'
+  const normalizedProjects = projects.map(p => ({ ...p, type: p.type || 'progetto' }))
+
+  // Filter items based on search, status, archive, type
+  const filteredItems = normalizedProjects
+    .filter(item => {
+      const matchesSearch = item.name?.toLowerCase().includes(searchProjects.toLowerCase()) ||
+                           item.description?.toLowerCase().includes(searchProjects.toLowerCase()) ||
+                           item.tags?.some(tag => tag.toLowerCase().includes(searchProjects.toLowerCase()))
+      const matchesStatus = filterStatus === 'all' || item.status === filterStatus
+      const matchesArchive = showArchived ? item.archived : !item.archived
+      const matchesTag = !activeTag || item.tags?.includes(activeTag)
+      const matchesType = filterType === 'all' || item.type === filterType
+      return matchesSearch && matchesStatus && matchesArchive && matchesTag && matchesType
     })
     .sort((a, b) => {
-      // Pinned first
       if (a.pinned && !b.pinned) return -1
       if (!a.pinned && b.pinned) return 1
-      // Then by selected sort
       if (sortProjects === 'name') return (a.name || '').localeCompare(b.name || '')
       if (sortProjects === 'progress') {
         const progA = a.todos?.length ? a.todos.filter(t => t.completed).length / a.todos.length : 0
         const progB = b.todos?.length ? b.todos.filter(t => t.completed).length / b.todos.length : 0
         return progB - progA
       }
-      return new Date(b.createdAt) - new Date(a.createdAt) // date default
-    })
-
-  // Filter notes based on search, priority, with sort + pin
-  const filteredNotes = notes
-    .filter(note => {
-      const matchesSearch = note.title?.toLowerCase().includes(searchNotes.toLowerCase()) ||
-                           note.content?.toLowerCase().includes(searchNotes.toLowerCase()) ||
-                           note.projectTags?.some(tag => tag.toLowerCase().includes(searchNotes.toLowerCase()))
-      const matchesPriority = filterPriority === 'all' || note.priority === filterPriority
-      const matchesTag = !activeTag || note.projectTags?.includes(activeTag)
-      return matchesSearch && matchesPriority && matchesTag
-    })
-    .sort((a, b) => {
-      if (a.pinned && !b.pinned) return -1
-      if (!a.pinned && b.pinned) return 1
-      if (sortNotes === 'name') return (a.title || '').localeCompare(b.title || '')
-      if (sortNotes === 'priority') {
-        const prio = { high: 3, medium: 2, low: 1 }
-        return (prio[b.priority] || 0) - (prio[a.priority] || 0)
-      }
       return new Date(b.createdAt) - new Date(a.createdAt)
     })
+
 
   const handleLogout = async () => {
     try {
@@ -275,13 +244,6 @@ function App() {
     }
   }
 
-  const handleTogglePinNote = async (note) => {
-    try {
-      await updateNote(note.id, { pinned: !note.pinned })
-    } catch (err) {
-      setError('Errore nel fissare la nota')
-    }
-  }
 
   // Handle archive
   const handleArchiveProject = async (project) => {
@@ -302,18 +264,11 @@ function App() {
     } catch { setError('Errore nella duplicazione') }
   }
 
-  const handleDuplicateNote = async (note) => {
-    try {
-      const { id, createdAt, updatedAt, ...data } = note
-      await addNote({ ...data, title: `${data.title} (copia)`, pinned: false })
-      setSuccess('Nota duplicata!')
-    } catch { setError('Errore nella duplicazione') }
-  }
 
   // Handle project selection
   const handleProjectSelect = (project) => {
     setSelectedProject(project)
-    setView('project-detail')
+    setView('item-detail')
   }
 
   // Handle edit project
@@ -321,10 +276,8 @@ function App() {
     setEditingProject(project)
   }
 
-  // Handle edit note
-  const handleEditNote = (note) => {
-    setEditingNote(note)
-  }
+  // Handle edit note (legacy — notes now shown read-only)
+  const handleEditNote = () => {}
 
   // Handle delete with confirmation
   const handleDelete = (type, item) => {
@@ -356,12 +309,16 @@ function App() {
     if (!selectedProject) return null
 
     const associatedNotes = getProjectNotes(selectedProject)
+    const detailType = getTypeInfo(selectedProject.type)
 
     return (
       <div className="project-detail">
         <div className="project-card mb-6">
           <div className="flex-between mb-4">
             <div>
+              <span className="item-type-badge" style={{ background: detailType.colorLight, color: detailType.color, borderColor: detailType.color, marginBottom: '0.5rem', display: 'inline-flex' }}>
+                {detailType.icon} {detailType.label}
+              </span>
               <h2 className="title-section mb-2">{selectedProject.name}</h2>
               <p className="text-description">{selectedProject.description}</p>
             </div>
@@ -464,6 +421,46 @@ function App() {
           </div>
         )}
 
+        {/* Sezioni Personalizzate */}
+        {selectedProject.sections && selectedProject.sections.length > 0 && (
+          <div className="project-sections-detail">
+            {selectedProject.sections.map((section) => (
+              <div key={section.id} className="project-card mb-6">
+                <h3 className="title-section mb-4">
+                  {section.icon || '📄'} {section.title}
+                </h3>
+                {section.content && (
+                  <div style={{
+                    whiteSpace: 'pre-wrap',
+                    lineHeight: '1.8',
+                    color: '#555',
+                    fontSize: '0.9em',
+                    background: 'linear-gradient(135deg, #f8f9fa, #ffffff)',
+                    padding: '1rem',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef'
+                  }}>
+                    {section.content}
+                  </div>
+                )}
+                {section.images && section.images.length > 0 && (
+                  <div className="section-detail-images">
+                    {section.images.map((img, imgIdx) => (
+                      <a key={imgIdx} href={img.url} target="_blank" rel="noopener noreferrer" className="section-detail-image">
+                        <img src={img.url.includes('cloudinary.com') ? img.url.replace('/upload/', '/upload/w_400,c_limit,q_auto,f_auto/') : img.url} alt={img.name || ''} />
+                        {img.name && <span className="section-detail-image-name">{img.name}</span>}
+                      </a>
+                    ))}
+                  </div>
+                )}
+                {!section.content && (!section.images || section.images.length === 0) && (
+                  <span style={{ color: '#aaa', fontStyle: 'italic', fontSize: '0.85em' }}>Nessun contenuto</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Todo List Section - Interactive */}
         {selectedProject.todos && selectedProject.todos.length > 0 && (
           <TodoListInteractive
@@ -550,7 +547,7 @@ function App() {
                           {globalSearchResults.projects.slice(0, 5).map(p => (
                             <div key={p.id} className="search-result-item" onClick={() => {
                               setSelectedProject(p)
-                              setView('project-detail')
+                              setView('item-detail')
                               setShowSearchResults(false)
                               setGlobalSearch('')
                             }}>
@@ -609,8 +606,7 @@ function App() {
         <div className="desktop-nav-content">
           {[
             ['home', '🏠', 'Home'],
-            ['projects', '📁', 'Progetti'],
-            ['notes', '📝', 'Note'],
+            ['items', '📋', 'Elementi'],
             ['calendar', '📅', 'Calendario'],
             ['ai-chat', '🐙', 'Polpo AI']
           ].map(([v, icon, label]) => (
@@ -618,9 +614,9 @@ function App() {
               key={v}
               onClick={() => {
                 setView(v)
-                if (v !== 'project-detail') setSelectedProject(null)
+                if (v !== 'item-detail') setSelectedProject(null)
               }}
-              className={`desktop-nav-btn ${view === v || (v === 'projects' && view === 'project-detail') ? 'active' : ''}`}
+              className={`desktop-nav-btn ${view === v || (v === 'items' && view === 'item-detail') ? 'active' : ''}`}
             >
               {icon} {label}
             </button>
@@ -635,49 +631,68 @@ function App() {
             projects={projects}
             notes={notes}
             onNavigate={setView}
-            onAddProject={() => setShowAddProjectForm(true)}
-            onAddNote={(type) => {
-              setEditingNote({ type });
-              setShowAddNoteForm(true);
-            }}
-            onAiMessage={() => setView('ai-chat')}
+            onAddProject={(type) => { setAddFormInitialType(type || null); setShowAddProjectForm(true) }}
+            onAiMessage={(text) => { setPendingAiMessage(text); setView('ai-chat') }}
           />
         )}
 
-        {view === 'project-detail' && (
+        {view === 'item-detail' && (
           <div className="mb-6">
             <button
-              onClick={() => setView('projects')}
+              onClick={() => setView('items')}
               className="back-button"
             >
-              ← Torna ai progetti
+              ← Torna agli elementi
             </button>
           </div>
         )}
 
-        {view === 'projects' && (
+        {view === 'items' && (
           <div>
             <div className="flex-between mb-6">
-              <h2 className="title-section">I Miei Progetti</h2>
+              <h2 className="title-section">I Miei Elementi</h2>
               <div className="flex gap-4 items-center flex-wrap">
                 <div className="text-meta">
-                  {filteredProjects.length} di {projects.filter(p => !p.archived).length} progetti
+                  {filteredItems.length} di {normalizedProjects.filter(p => !p.archived).length} elementi
                 </div>
                 <div className="export-btns">
                   <button onClick={() => exportProjectsCSV(projects.filter(p => !p.archived), notes)} className="btn-export" title="Esporta CSV">
                     📊 CSV
-                  </button>
-                  <button onClick={() => exportAllProjectsPDF(projects.filter(p => !p.archived), notes)} className="btn-export" title="Esporta PDF">
-                    📄 PDF
                   </button>
                 </div>
                 <button
                   onClick={() => setShowAddProjectForm(true)}
                   className="btn-primary"
                 >
-                  + Nuovo Progetto
+                  + Nuovo
                 </button>
               </div>
+            </div>
+
+            {/* Type filter bar */}
+            <div className="type-filter-bar mb-4">
+              <button
+                className={`type-filter-btn ${filterType === 'all' ? 'active' : ''}`}
+                onClick={() => setFilterType('all')}
+              >
+                Tutti
+                <span className="type-filter-count">{normalizedProjects.filter(p => !p.archived).length}</span>
+              </button>
+              {ITEM_TYPE_LIST.map(t => {
+                const count = normalizedProjects.filter(p => p.type === t.key && !p.archived).length
+                if (count === 0) return null
+                return (
+                  <button
+                    key={t.key}
+                    className={`type-filter-btn ${filterType === t.key ? 'active' : ''}`}
+                    style={{ '--type-color': t.color, '--type-color-light': t.colorLight }}
+                    onClick={() => setFilterType(filterType === t.key ? 'all' : t.key)}
+                  >
+                    {t.icon} {t.label}
+                    <span className="type-filter-count">{count}</span>
+                  </button>
+                )
+              })}
             </div>
 
             {/* Toolbar: search + filter toggle + view toggle */}
@@ -685,7 +700,7 @@ function App() {
               <div className="search-input toolbar-search">
                 <input
                   type="text"
-                  placeholder="🔍 Cerca progetti..."
+                  placeholder="🔍 Cerca..."
                   value={searchProjects}
                   onChange={(e) => setSearchProjects(e.target.value)}
                   className="search-field"
@@ -723,8 +738,8 @@ function App() {
                   >
                     {showArchived ? '📦 Archiviati' : '📂 Attivi'}
                   </button>
-                  {(filterStatus !== 'all' || activeTag || showArchived) && (
-                    <button className="toolbar-btn" onClick={() => { setFilterStatus('all'); setActiveTag(null); setShowArchived(false) }}>
+                  {(filterStatus !== 'all' || activeTag || showArchived || filterType !== 'all') && (
+                    <button className="toolbar-btn" onClick={() => { setFilterStatus('all'); setActiveTag(null); setShowArchived(false); setFilterType('all') }}>
                       ✕ Reset
                     </button>
                   )}
@@ -742,9 +757,9 @@ function App() {
               </div>
             )}
 
-            {filteredProjects.length > 0 ? (
+            {filteredItems.length > 0 ? (
               <div className={viewMode === 'list' ? 'list-projects' : 'grid-projects'}>
-                {filteredProjects.map(project => (
+                {filteredItems.map(project => (
                   <ProjectCard
                     key={project.id}
                     project={project}
@@ -761,80 +776,8 @@ function App() {
               </div>
             ) : (
               <div className="empty-state">
-                <div className="empty-state-icon">📁</div>
-                <p>Nessun progetto trovato</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {view === 'notes' && (
-          <div>
-            <div className="flex-between mb-6">
-              <h2 className="title-section">Note e Idee</h2>
-              <div className="flex gap-4 items-center flex-wrap">
-                <div className="text-meta">
-                  {filteredNotes.length} di {notes.length} elementi
-                </div>
-                <button onClick={() => exportNotesCSV(notes, projects)} className="btn-export" title="Esporta CSV">
-                  📊 CSV
-                </button>
-                <button
-                  onClick={() => setShowAddNoteForm(true)}
-                  className="btn-primary"
-                >
-                  + Nuova Nota/Idea
-                </button>
-              </div>
-            </div>
-
-            {/* Toolbar */}
-            <div className="toolbar mb-4">
-              <div className="search-input toolbar-search">
-                <input type="text" placeholder="🔍 Cerca note..." value={searchNotes} onChange={(e) => setSearchNotes(e.target.value)} className="search-field" />
-              </div>
-              <button className={`toolbar-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
-                🎛️ <span className="toolbar-btn-label">Filtri</span>
-                {(filterPriority !== 'all' || sortNotes !== 'date') && <span className="filter-dot"></span>}
-              </button>
-            </div>
-
-            {showFilters && (
-              <div className="filters-panel mb-4">
-                <div className="filters-row">
-                  <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} className="filter-field">
-                    <option value="all">Tutte le priorita</option>
-                    <option value="high">Alta</option>
-                    <option value="medium">Media</option>
-                    <option value="low">Bassa</option>
-                  </select>
-                  <select value={sortNotes} onChange={(e) => setSortNotes(e.target.value)} className="filter-field">
-                    <option value="date">Ordina: Data</option>
-                    <option value="name">Ordina: Nome</option>
-                    <option value="priority">Ordina: Priorita</option>
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {filteredNotes.length > 0 ? (
-              <div className="grid-notes">
-                {filteredNotes.map(note => (
-                  <NoteCard
-                    key={note.id}
-                    note={note}
-                    projects={projects}
-                    onEdit={handleEditNote}
-                    onDelete={handleDelete}
-                    onTogglePin={handleTogglePinNote}
-                    onDuplicate={handleDuplicateNote}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <div className="empty-state-icon">📝</div>
-                <p>Nessuna nota o idea trovata</p>
+                <div className="empty-state-icon">📋</div>
+                <p>Nessun elemento trovato</p>
               </div>
             )}
           </div>
@@ -845,14 +788,14 @@ function App() {
             projects={projects}
             onProjectSelect={(project) => {
               setSelectedProject(project)
-              setView('project-detail')
+              setView('item-detail')
             }}
           />
         )}
 
-        {view === 'ai-chat' && <AiChat />}
+        {view === 'ai-chat' && <AiChat initialMessage={pendingAiMessage} onInitialMessageConsumed={() => setPendingAiMessage('')} />}
 
-        {view === 'project-detail' && <ProjectDetailView />}
+        {view === 'item-detail' && <ProjectDetailView />}
       </main>
 
       {/* Error/Success Messages */}
@@ -873,49 +816,25 @@ function App() {
       {/* Modal Forms */}
       {showAddProjectForm && (
         <AddProjectForm
-          onClose={() => setShowAddProjectForm(false)}
+          initialType={addFormInitialType}
+          onClose={() => { setShowAddProjectForm(false); setAddFormInitialType(null) }}
           onSuccess={() => {
             setShowAddProjectForm(false)
-            setSuccess('Progetto creato con successo!')
-            // Projects will auto-update via real-time listener
+            setAddFormInitialType(null)
+            setSuccess('Elemento creato con successo!')
           }}
           onError={(error) => setError(error)}
         />
       )}
 
-      {showAddNoteForm && (
-        <AddNoteForm
-          projects={projects}
-          onClose={() => setShowAddNoteForm(false)}
-          onSuccess={() => {
-            setShowAddNoteForm(false)
-            setSuccess('Nota/Idea creata con successo!')
-          }}
-          onError={(error) => setError(error)}
-        />
-      )}
-
-      {/* Edit Forms */}
+      {/* Edit Form */}
       {editingProject && (
         <AddProjectForm
           project={editingProject}
           onClose={() => setEditingProject(null)}
           onSuccess={() => {
             setEditingProject(null)
-            setSuccess('Progetto aggiornato con successo!')
-          }}
-          onError={(error) => setError(error)}
-        />
-      )}
-
-      {editingNote && (
-        <AddNoteForm
-          note={editingNote}
-          projects={projects}
-          onClose={() => setEditingNote(null)}
-          onSuccess={() => {
-            setEditingNote(null)
-            setSuccess('Nota/Idea aggiornata con successo!')
+            setSuccess('Elemento aggiornato con successo!')
           }}
           onError={(error) => setError(error)}
         />
@@ -965,18 +884,17 @@ function App() {
       <nav className="mobile-nav">
         {[
           ['home', '🏠', 'Home'],
-          ['projects', '📁', 'Progetti'],
-          ['notes', '📝', 'Note'],
-          ['calendar', '📅', 'Calendario'],
+          ['items', '📋', 'Elementi'],
+          ['calendar', '📅', 'Cal'],
           ['ai-chat', '🐙', 'AI']
         ].map(([v, icon, label]) => (
           <button
             key={v}
             onClick={() => {
               setView(v)
-              if (v !== 'project-detail') setSelectedProject(null)
+              if (v !== 'item-detail') setSelectedProject(null)
             }}
-            className={`mobile-nav-btn ${view === v || (v === 'projects' && view === 'project-detail') ? 'active' : ''}`}
+            className={`mobile-nav-btn ${view === v || (v === 'items' && view === 'item-detail') ? 'active' : ''}`}
           >
             <span className="mobile-nav-icon">{icon}</span>
             <span className="mobile-nav-label">{label}</span>
@@ -984,90 +902,6 @@ function App() {
         ))}
       </nav>
 
-      {/* Quick Capture FAB */}
-      {!showQuickCapture && (
-        <button
-          className="quick-capture-fab"
-          onClick={() => setShowQuickCapture(true)}
-          title="Cattura rapida"
-        >
-          ✏️
-        </button>
-      )}
-
-      {showQuickCapture && (
-        <div className="quick-capture-panel">
-          <div className="quick-capture-header">
-            <span>Cattura Rapida</span>
-            <button onClick={() => { setShowQuickCapture(false); setQuickCaptureText('') }} className="close-button">×</button>
-          </div>
-          <div className="quick-capture-body">
-            <div className="quick-capture-types">
-              {[['note', '📝'], ['idea', '💡'], ['monologo', '🎭'], ['musica', '🎵']].map(([type, icon]) => (
-                <button
-                  key={type}
-                  className={`quick-capture-type ${quickCaptureType === type ? 'active' : ''}`}
-                  onClick={() => setQuickCaptureType(type)}
-                >
-                  {icon}
-                </button>
-              ))}
-              {voiceSupported && (
-                <button
-                  className={`quick-capture-type voice-toggle ${isQuickVoiceOn ? 'listening' : ''}`}
-                  onClick={toggleQuickVoice}
-                  title={isQuickVoiceOn ? 'Stop' : 'Dettatura vocale'}
-                >
-                  {isQuickVoiceOn ? '⏹️' : '🎤'}
-                </button>
-              )}
-            </div>
-            <textarea
-              value={quickCaptureText}
-              onChange={(e) => setQuickCaptureText(e.target.value)}
-              placeholder={isQuickVoiceOn ? '🎤 Sto ascoltando... parla ora' : 'Scrivi qui... (titolo automatico dalla prima riga)'}
-              rows={3}
-              className="quick-capture-input"
-              autoFocus
-              onKeyDown={async (e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                  if (!quickCaptureText.trim()) return
-                  const lines = quickCaptureText.trim().split('\n')
-                  const title = lines[0].slice(0, 60)
-                  const content = lines.length > 1 ? lines.slice(1).join('\n') : lines[0]
-                  try {
-                    await addNote({ title, content, type: quickCaptureType, priority: 'medium', projectTags: [] })
-                    setQuickCaptureText('')
-                    setShowQuickCapture(false)
-                    setSuccess('Nota salvata!')
-                  } catch { setError('Errore nel salvataggio') }
-                }
-              }}
-            />
-            <div className="quick-capture-footer">
-              <span className="quick-capture-hint">Ctrl+Enter per salvare</span>
-              <button
-                className="btn-primary"
-                disabled={!quickCaptureText.trim()}
-                onClick={async () => {
-                  if (!quickCaptureText.trim()) return
-                  const lines = quickCaptureText.trim().split('\n')
-                  const title = lines[0].slice(0, 60)
-                  const content = lines.length > 1 ? lines.slice(1).join('\n') : lines[0]
-                  try {
-                    await addNote({ title, content, type: quickCaptureType, priority: 'medium', projectTags: [] })
-                    setQuickCaptureText('')
-                    setShowQuickCapture(false)
-                    setSuccess('Nota salvata!')
-                  } catch { setError('Errore nel salvataggio') }
-                }}
-              >
-                Salva
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

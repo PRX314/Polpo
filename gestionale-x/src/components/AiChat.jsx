@@ -18,6 +18,7 @@ const ACTION_META = {
   update_project: { icon: '🔄', label: 'Aggiorna Progetto', color: '#54a0ff' },
   update_note: { icon: '📋', label: 'Aggiorna Nota', color: '#54a0ff' },
   add_link_to_project: { icon: '🔗', label: 'Nuovo Link', color: '#48dbfb' },
+  add_section_to_project: { icon: '📑', label: 'Nuova Sezione', color: '#a78bfa' },
   delete_note: { icon: '🗑️', label: 'Elimina Nota', color: '#ff6b6b' }
 }
 
@@ -59,7 +60,13 @@ function getActionDetails(action) {
       `**${args.name}**`,
       args.status && `Stato: ${args.status}`,
       args.tags?.length && `Tags: ${args.tags.join(', ')}`,
+      args.sections?.length && `📑 ${args.sections.length} sezioni: ${args.sections.map(s => s.title).join(', ')}`,
       args.description
+    ].filter(Boolean)
+    case 'add_section_to_project': return [
+      `**${args.projectName}**`,
+      `${args.icon || '📄'} ${args.sectionTitle}`,
+      args.content?.length > 80 ? args.content.slice(0, 80) + '...' : args.content
     ].filter(Boolean)
     case 'add_todo': return [`**${args.projectName}**`, `Task: ${args.text}`]
     case 'complete_todo': return [`**${args.projectName}**`, `Todo: ${args.todoText}`]
@@ -77,7 +84,7 @@ function getActionDetails(action) {
   }
 }
 
-function AiChat() {
+function AiChat({ initialMessage, onInitialMessageConsumed }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -112,6 +119,16 @@ function AiChat() {
     )
     return () => unsub()
   }, [])
+
+  // Auto-send initialMessage dalla Home
+  const initialMessageSent = useRef(false)
+  useEffect(() => {
+    if (initialMessage && !initialMessageSent.current && !loading) {
+      initialMessageSent.current = true
+      handleSend(initialMessage)
+      if (onInitialMessageConsumed) onInitialMessageConsumed()
+    }
+  }, [initialMessage])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

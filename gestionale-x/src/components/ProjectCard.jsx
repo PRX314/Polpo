@@ -1,7 +1,9 @@
 import StatusBadge from './ui/StatusBadge'
+import { getTypeInfo } from '../itemTypes'
 
 const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onTogglePin, onArchive, onDuplicate, compact }) => {
   const associatedNotes = getProjectNotes(project)
+  const typeInfo = getTypeInfo(project.type)
 
   // Deadline indicator
   const getDeadlineInfo = () => {
@@ -25,6 +27,7 @@ const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onT
       <div className="project-list-item" onClick={() => onSelect(project)}>
         {project.pinned && <span className="list-pin">📌</span>}
         <div className="list-item-main">
+          <span className="item-type-badge-small" style={{ background: typeInfo.colorLight, color: typeInfo.color }}>{typeInfo.icon}</span>
           <span className="list-item-name">{project.name}</span>
           <StatusBadge status={project.status} />
           {deadlineInfo && (
@@ -62,7 +65,12 @@ const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onT
       )}
 
       <div className="flex-between mb-4">
-        <h3 className="title-project">{project.name}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
+          <span className="item-type-badge" style={{ background: typeInfo.colorLight, color: typeInfo.color, borderColor: typeInfo.color }}>
+            {typeInfo.icon} {typeInfo.label}
+          </span>
+          <h3 className="title-project" style={{ margin: 0 }}>{project.name}</h3>
+        </div>
         <StatusBadge status={project.status} />
       </div>
 
@@ -166,6 +174,28 @@ const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onT
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {project.sections && project.sections.length > 0 && (
+        <div className="mb-3" style={{ borderTop: '1px solid #e9ecef', paddingTop: '0.75rem' }}>
+          <div style={{ fontSize: '0.75em', color: '#999', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            📑 {project.sections.length} Sezioni
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+            {project.sections.map((section) => (
+              <span key={section.id} style={{
+                fontSize: '0.75em',
+                padding: '0.25rem 0.5rem',
+                background: 'linear-gradient(135deg, #f0f4ff, #e8ecf4)',
+                borderRadius: '4px',
+                color: '#555',
+                border: '1px solid #dde2ea'
+              }}>
+                {section.icon || '📄'} {section.title}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 

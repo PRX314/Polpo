@@ -105,12 +105,12 @@ const TOOLS = [
               properties: {
                 tool: {
                   type: 'string',
-                  enum: ['add_note', 'add_project', 'add_todo', 'complete_todo', 'update_project', 'update_note', 'add_link_to_project', 'delete_note'],
+                  enum: ['add_note', 'add_project', 'add_todo', 'complete_todo', 'update_project', 'update_note', 'add_link_to_project', 'delete_note', 'add_section_to_project'],
                   description: 'Tipo di azione'
                 },
                 args: {
                   type: 'object',
-                  description: 'Parametri dell\'azione. Per add_note: {title, content, type (note/idea/info/monologo/musica), category (business/tecnico/creativo/contatti/risorse/prezzi/legale/marketing/scadenze/decisioni/altro), priority (high/medium/low), projectTags[]}. Per add_project: {name, description, status, tags[], roadmap, obiettivi}. Per add_todo: {projectName, text}. Per complete_todo: {projectName, todoText}. Per update_project: {projectName, status, description, roadmap, obiettivi}. Per update_note: {noteTitle, title, content, priority}. Per add_link_to_project: {projectName, linkTitle, url}. Per delete_note: {noteTitle}.'
+                  description: 'Parametri dell\'azione. Per add_project: {type (progetto/idea/monologo/musica/video/evento/nota), name, description, status, tags[], roadmap, obiettivi, sections[{icon, title, content}]}. Per add_section_to_project: {projectName, icon, sectionTitle, content}. Per add_todo: {projectName, text}. Per complete_todo: {projectName, todoText}. Per update_project: {projectName, status, description, roadmap, obiettivi}. Per add_link_to_project: {projectName, linkTitle, url}. Per add_note: {title, content, type, category, priority, projectTags[]} (LEGACY). Per update_note: {noteTitle, title, content, priority}. Per delete_note: {noteTitle}.'
                 },
                 label: {
                   type: 'string',
@@ -153,12 +153,13 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'add_project',
-      description: 'NON usare direttamente. Usa propose_actions.',
+      description: 'NON usare direttamente. Usa propose_actions. Crea un elemento di qualsiasi tipo.',
       parameters: {
         type: 'object',
         properties: {
-          name: { type: 'string', description: 'Nome del progetto' },
-          description: { type: 'string', description: 'Descrizione del progetto' },
+          type: { type: 'string', enum: ['progetto', 'idea', 'monologo', 'musica', 'video', 'evento', 'nota'], description: 'Tipo di elemento' },
+          name: { type: 'string', description: 'Nome dell\'elemento' },
+          description: { type: 'string', description: 'Descrizione' },
           status: { type: 'string', enum: ['pending', 'in_progress', 'completed', 'paused'], description: 'Stato iniziale' },
           tags: {
             type: 'array',
@@ -166,7 +167,20 @@ const TOOLS = [
             description: 'Tag del progetto'
           },
           roadmap: { type: 'string', description: 'Roadmap (opzionale)' },
-          obiettivi: { type: 'string', description: 'Obiettivi (opzionale)' }
+          obiettivi: { type: 'string', description: 'Obiettivi (opzionale)' },
+          sections: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                icon: { type: 'string', description: 'Emoji icona della sezione' },
+                title: { type: 'string', description: 'Titolo della sezione' },
+                content: { type: 'string', description: 'Contenuto della sezione' }
+              },
+              required: ['title', 'content']
+            },
+            description: 'Sezioni personalizzate del progetto (es: Materiali, Design, Costi). Usa sezioni per organizzare informazioni dettagliate.'
+          }
         },
         required: ['name', 'description']
       }
@@ -266,6 +280,23 @@ const TOOLS = [
         required: ['noteTitle']
       }
     }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'add_section_to_project',
+      description: 'Aggiunge una sezione personalizzata a un progetto esistente. Le sezioni servono per organizzare informazioni dettagliate (materiali, design, costi, ecc.).',
+      parameters: {
+        type: 'object',
+        properties: {
+          projectName: { type: 'string', description: 'Nome del progetto' },
+          icon: { type: 'string', description: 'Emoji icona (es: 🎨, 🧵, 💰, 📦)' },
+          sectionTitle: { type: 'string', description: 'Titolo della sezione' },
+          content: { type: 'string', description: 'Contenuto della sezione' }
+        },
+        required: ['projectName', 'sectionTitle', 'content']
+      }
+    }
   }
 ]
 
@@ -296,7 +327,14 @@ async function executeTool(toolName, args, userId) {
     }
 
     case 'add_project': {
+      const sections = (args.sections || []).map((s, i) => ({
+        id: `${Date.now()}-${i}`,
+        icon: s.icon || '📄',
+        title: s.title,
+        content: s.content || ''
+      }))
       const projectData = {
+        type: args.type || 'progetto',
         name: args.name,
         description: args.description,
         status: args.status || 'pending',
@@ -305,12 +343,14 @@ async function executeTool(toolName, args, userId) {
         obiettivi: args.obiettivi || '',
         todos: [],
         links: [],
+        sections,
         userId,
         createdAt: timestamp,
         updatedAt: timestamp
       }
       const ref = await adminDb.collection('projects').add(projectData)
-      return { success: true, message: `Progetto "${args.name}" creato con successo`, id: ref.id }
+      const sectionsInfo = sections.length ? ` con ${sections.length} sezioni` : ''
+      return { success: true, message: `Progetto "${args.name}" creato${sectionsInfo}`, id: ref.id }
     }
 
     case 'add_todo': {
@@ -384,6 +424,24 @@ async function executeTool(toolName, args, userId) {
       return { success: true, message: `Nota "${note.data.title}" eliminata` }
     }
 
+    case 'add_section_to_project': {
+      const project = await findProject(args.projectName, userId)
+      if (!project) return { success: false, message: `Progetto "${args.projectName}" non trovato` }
+
+      const newSection = {
+        id: Date.now().toString(),
+        icon: args.icon || '📄',
+        title: args.sectionTitle,
+        content: args.content || ''
+      }
+      const existingSections = project.data.sections || []
+      await adminDb.collection('projects').doc(project.id).update({
+        sections: [...existingSections, newSection],
+        updatedAt: timestamp
+      })
+      return { success: true, message: `Sezione "${args.sectionTitle}" aggiunta a "${project.data.name}"` }
+    }
+
     default:
       return { success: false, message: `Azione "${toolName}" non riconosciuta` }
   }
@@ -433,14 +491,17 @@ async function getUserContext(userId) {
   const projects = projectsSnap.docs.map(d => {
     const data = d.data()
     const todos = data.todos || []
+    const sections = data.sections || []
     return {
       nome: data.name,
+      tipo: data.type || 'progetto',
       descrizione: data.description,
       stato: STATUS_LABELS[data.status] || data.status,
       tags: data.tags || [],
       roadmap: data.roadmap || '',
       obiettivi: data.obiettivi || '',
       links: (data.links || []).map(l => `${l.title}: ${l.url}`).join(', '),
+      sezioni: sections.length > 0 ? sections.map(s => `${s.icon || '📄'} ${s.title}: ${(s.content || '').slice(0, 100)}`).join(' | ') : '',
       todoCompletati: todos.filter(t => t.completed).length,
       todoTotali: todos.length,
       todos: todos.map(t => `${t.completed ? '[FATTO]' : '[DA FARE]'} ${t.text}`).join('\n'),
@@ -485,22 +546,29 @@ async function getUserContext(userId) {
 function formatContext(ctx) {
   let text = ''
   const s = ctx.stats
+  // Count by type
+  const typeCounts = {}
+  ctx.projects.forEach(p => { const t = p.tipo || 'progetto'; typeCounts[t] = (typeCounts[t] || 0) + 1 })
+  const typesSummary = Object.entries(typeCounts).map(([t, c]) => `${c} ${t}`).join(', ')
+
   text += '=== PANORAMICA RAPIDA ===\n'
-  text += `Progetti: ${s.totaleProgetti} totali (${s.progettiInCorso} in corso, ${s.progettiCompletati} completati, ${s.progettiDaFare} da fare, ${s.progettiInPausa} in pausa)\n`
-  text += `Note/Idee: ${s.totaleNote} totali (${s.tipiNote.note} note, ${s.tipiNote.idee} idee, ${s.tipiNote.monologhi} monologhi, ${s.tipiNote.musica} musica)\n`
+  text += `Elementi: ${s.totaleProgetti} totali (${typesSummary})\n`
+  text += `Per stato: ${s.progettiInCorso} in corso, ${s.progettiCompletati} completati, ${s.progettiDaFare} da fare, ${s.progettiInPausa} in pausa\n`
+  if (s.totaleNote > 0) text += `Note legacy: ${s.totaleNote}\n`
   text += `Todo: ${s.todoCompletati}/${s.todoTotali} completati\n`
-  if (s.noteAltaPriorita > 0) text += `Note ad alta priorità: ${s.noteAltaPriorita}\n`
 
   if (ctx.projects.length > 0) {
-    text += '\n=== DETTAGLIO PROGETTI ===\n'
+    text += '\n=== DETTAGLIO ELEMENTI ===\n'
     ctx.projects.forEach((p, i) => {
-      text += `\n[Progetto ${i + 1}] "${p.nome}"\n`
-      text += `  Stato: ${p.stato} | Creato: ${p.creatoIl} | Aggiornato: ${p.aggiornatoIl}\n`
+      const tipo = (p.tipo || 'progetto').charAt(0).toUpperCase() + (p.tipo || 'progetto').slice(1)
+      text += `\n[${tipo} ${i + 1}] "${p.nome}"\n`
+      text += `  Tipo: ${p.tipo || 'progetto'} | Stato: ${p.stato} | Creato: ${p.creatoIl} | Aggiornato: ${p.aggiornatoIl}\n`
       text += `  Descrizione: ${p.descrizione}\n`
       if (p.tags.length) text += `  Tags: ${p.tags.join(', ')}\n`
       if (p.links) text += `  Links: ${p.links}\n`
       if (p.roadmap) text += `  Roadmap: ${p.roadmap}\n`
       if (p.obiettivi) text += `  Obiettivi: ${p.obiettivi}\n`
+      if (p.sezioni) text += `  Sezioni: ${p.sezioni}\n`
       if (p.todoTotali > 0) {
         text += `  Progresso Todo: ${p.todoCompletati}/${p.todoTotali}\n`
         text += `  ${p.todos}\n`
@@ -533,9 +601,14 @@ const SYSTEM_PROMPT_MAIN = `Sei **Polpo AI** 🐙, l'assistente intelligente int
 - Rispondi come farebbe ChatGPT: discuti, ragiona, proponi alternative, fai domande
 - NON essere troppo formale o robotico - sii genuino, curioso e propositivo
 
+## IL GESTIONALE
+Il gestionale usa un sistema UNIFICATO: tutto è un "elemento" con un tipo.
+Tipi disponibili: **progetto**, **idea**, **monologo**, **musica**, **video**, **evento**, **nota**.
+Ogni elemento può avere: descrizione, status, tags, sezioni personalizzate, todo, link, deadline.
+
 ## IL TUO RUOLO IN QUESTA CHAT
-Questa è la **chat principale**, dedicata ESCLUSIVAMENTE alla **conversazione**.
-Il tuo compito qui è DISCUTERE, ANALIZZARE e RAGIONARE con l'utente.
+Questa è la **chat principale** — conversazione E azioni.
+Il tuo compito è DISCUTERE, ANALIZZARE, RAGIONARE e quando serve CREARE/MODIFICARE elementi.
 
 ### Cosa DEVI fare:
 - **Discutere e ragionare** come un partner creativo
@@ -546,11 +619,29 @@ Il tuo compito qui è DISCUTERE, ANALIZZARE e RAGIONARE con l'utente.
 - Pianificare strategie, roadmap e obiettivi
 - Approfondire ogni argomento con curiosità e competenza
 
-### Cosa NON devi fare:
-- NON proporre azioni di salvataggio (note, progetti, todo)
-- NON dire "vuoi che lo salvi?" o "posso creare un progetto per..."
-- Se l'utente vuole salvare qualcosa, rispondigli che può usare la **mini-chat nel pannello a destra** per organizzare e salvare
-- NON usare tools - rispondi SOLO con testo
+### Quando AGIRE (usare il tool propose_actions):
+- Se l'utente chiede di creare un progetto, una nota, un todo → USA propose_actions
+- Se l'utente dice "crea", "aggiungi", "salva", "segna", "scrivi" → USA propose_actions
+- Se dalla conversazione emerge qualcosa di concreto da salvare → PROPONI l'azione
+- Puoi proporre più azioni insieme (es: crea progetto + aggiungi todo + salva nota)
+- Le azioni NON vengono eseguite subito: l'utente le vedrà in anteprima e potrà confermare, modificare o rifiutare
+
+### Azioni disponibili:
+- **add_note** → Nuova nota/idea/info/monologo/musica
+- **add_project** → Nuovo progetto (con nome, descrizione, status, tags, roadmap, obiettivi, sezioni personalizzate)
+- **add_section_to_project** → Aggiungere una sezione a un progetto esistente (materiali, design, costi, ecc.)
+- **add_todo** → Nuovo task in un progetto
+- **complete_todo** → Completare un task
+- **update_project** → Aggiornare stato/roadmap/obiettivi/descrizione
+- **update_note** → Aggiornare una nota
+- **add_link_to_project** → Aggiungere un link a un progetto
+- **delete_note** → Eliminare una nota
+
+### Sezioni personalizzate nei progetti:
+Quando l'utente vuole organizzare informazioni dettagliate (es: materiali, design, costi, fornitori, varianti), usa le **sezioni**.
+- Per un NUOVO progetto: includi le sezioni nell'azione add_project con il campo sections[{icon, title, content}]
+- Per un progetto ESISTENTE: usa add_section_to_project per aggiungere sezioni una alla volta
+- Scegli icone appropriate: 🎨 Design, 🧵 Materiali, 💰 Costi, 📦 Fornitori, 📐 Specifiche, 🖼️ Varianti, ecc.
 
 ## Regole
 - Usa i dati dei progetti/note dell'utente per dare risposte informate
@@ -570,7 +661,8 @@ Le azioni NON vengono eseguite subito: l'utente le vedrà in anteprima e potrà 
 
 ### Azioni disponibili da proporre:
 - **add_note** → Nuova nota/idea/info/monologo/musica
-- **add_project** → Nuovo progetto
+- **add_project** → Nuovo progetto (con sezioni personalizzate: sections[{icon, title, content}])
+- **add_section_to_project** → Aggiungere una sezione a progetto esistente (materiali, design, costi, ecc.)
 - **add_todo** → Nuovo task in un progetto
 - **complete_todo** → Completare un task
 - **update_project** → Aggiornare stato/roadmap/obiettivi/descrizione
@@ -637,8 +729,8 @@ app.post('/api/chat', verifyUser, async (req, res) => {
       { role: 'user', content: message }
     ]
 
-    // Tools solo per il pannello azioni, mai per la chat principale
-    const proposeTools = isPanel ? TOOLS.filter(t => t.function.name === 'propose_actions') : undefined
+    // Tools propose_actions disponibili sia per la chat principale che per il pannello
+    const proposeTools = TOOLS.filter(t => t.function.name === 'propose_actions')
 
     const completionOpts = {
       model: 'llama-3.3-70b-versatile',
@@ -646,10 +738,8 @@ app.post('/api/chat', verifyUser, async (req, res) => {
       temperature: 0.7,
       max_tokens: isPanel ? 1024 : 2048
     }
-    if (proposeTools) {
-      completionOpts.tools = proposeTools
-      completionOpts.tool_choice = 'auto'
-    }
+    completionOpts.tools = proposeTools
+    completionOpts.tool_choice = 'auto'
 
     const completion = await groq.chat.completions.create(completionOpts)
 
