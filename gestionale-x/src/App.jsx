@@ -57,6 +57,7 @@ function App() {
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [activeTag, setActiveTag] = useState(null)
   const [viewMode, setViewMode] = useState('grid') // grid, list
+  const [showFilters, setShowFilters] = useState(false)
   const [showQuickCapture, setShowQuickCapture] = useState(false)
   const [quickCaptureText, setQuickCaptureText] = useState('')
   const [quickCaptureType, setQuickCaptureType] = useState('note')
@@ -516,123 +517,80 @@ function App() {
 
   return (
     <div className="gestionale-app">
-      {/* Header */}
+      {/* Header - Clean: logo + search + user */}
       <header>
         <div className="header-content">
-          <h1 className="title-main">🐙 Gestionale Polpo</h1>
+          <h1 className="title-main" onClick={() => { setView('home'); setSelectedProject(null) }} style={{ cursor: 'pointer' }}>🐙 Polpo</h1>
 
-          <div className="flex gap-4">
-            <nav className="flex gap-4">
-              <button
-                onClick={() => {
-                  setView('home')
-                  setSelectedProject(null)
-                }}
-                className={`nav-button ${view === 'home' ? 'active' : ''}`}
-              >
-                🏠 <span className="nav-label">Home</span>
-              </button>
-              <button
-                onClick={() => {
-                  setView('projects')
-                  setSelectedProject(null)
-                }}
-                className={`nav-button ${
-                  view === 'projects' || view === 'project-detail' ? 'active' : ''
-                }`}
-              >
-                📁 <span className="nav-label">Progetti</span>
-              </button>
-              <button
-                onClick={() => setView('notes')}
-                className={`nav-button ${view === 'notes' ? 'active' : ''}`}
-              >
-                📝 <span className="nav-label">Note & Idee</span>
-              </button>
-              <button
-                onClick={() => setView('calendar')}
-                className={`nav-button ${view === 'calendar' ? 'active' : ''}`}
-              >
-                📅 <span className="nav-label">Calendario</span>
-              </button>
-              <button
-                onClick={() => setView('ai-chat')}
-                className={`nav-button ${view === 'ai-chat' ? 'active' : ''}`}
-              >
-                🐙 <span className="nav-label">Polpo AI</span>
-              </button>
-            </nav>
+          <div className="global-search-wrapper">
+            <input
+              type="text"
+              placeholder="🔍 Cerca ovunque..."
+              value={globalSearch}
+              onChange={(e) => {
+                setGlobalSearch(e.target.value)
+                setShowSearchResults(e.target.value.length >= 2)
+              }}
+              onFocus={() => globalSearch.length >= 2 && setShowSearchResults(true)}
+              className="global-search-input"
+            />
+            {showSearchResults && globalSearch.length >= 2 && (
+              <>
+                <div className="search-overlay" onClick={() => setShowSearchResults(false)}></div>
+                <div className="global-search-dropdown">
+                  {totalSearchResults === 0 ? (
+                    <div className="search-no-results">Nessun risultato per "{globalSearch}"</div>
+                  ) : (
+                    <>
+                      {globalSearchResults.projects.length > 0 && (
+                        <div className="search-group">
+                          <div className="search-group-title">📁 Progetti ({globalSearchResults.projects.length})</div>
+                          {globalSearchResults.projects.slice(0, 5).map(p => (
+                            <div key={p.id} className="search-result-item" onClick={() => {
+                              setSelectedProject(p)
+                              setView('project-detail')
+                              setShowSearchResults(false)
+                              setGlobalSearch('')
+                            }}>
+                              <span className="search-result-name">{p.name}</span>
+                              {p.tags?.slice(0, 3).map(t => (
+                                <span key={t} className="search-result-tag">#{t}</span>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {globalSearchResults.notes.length > 0 && (
+                        <div className="search-group">
+                          <div className="search-group-title">📝 Note ({globalSearchResults.notes.length})</div>
+                          {globalSearchResults.notes.slice(0, 5).map(n => (
+                            <div key={n.id} className="search-result-item" onClick={() => {
+                              setView('notes')
+                              setShowSearchResults(false)
+                              setGlobalSearch('')
+                            }}>
+                              <span className="search-result-name">{n.title}</span>
+                              <span className={`badge badge-type-${n.type}`} style={{ fontSize: '0.65rem' }}>
+                                {n.type}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
 
-            {/* Global Search */}
-            <div className="global-search-wrapper">
-              <input
-                type="text"
-                placeholder="🔍 Cerca ovunque..."
-                value={globalSearch}
-                onChange={(e) => {
-                  setGlobalSearch(e.target.value)
-                  setShowSearchResults(e.target.value.length >= 2)
-                }}
-                onFocus={() => globalSearch.length >= 2 && setShowSearchResults(true)}
-                className="global-search-input"
-              />
-              {showSearchResults && globalSearch.length >= 2 && (
-                <>
-                  <div className="search-overlay" onClick={() => setShowSearchResults(false)}></div>
-                  <div className="global-search-dropdown">
-                    {totalSearchResults === 0 ? (
-                      <div className="search-no-results">Nessun risultato per "{globalSearch}"</div>
-                    ) : (
-                      <>
-                        {globalSearchResults.projects.length > 0 && (
-                          <div className="search-group">
-                            <div className="search-group-title">📁 Progetti ({globalSearchResults.projects.length})</div>
-                            {globalSearchResults.projects.slice(0, 5).map(p => (
-                              <div key={p.id} className="search-result-item" onClick={() => {
-                                setSelectedProject(p)
-                                setView('project-detail')
-                                setShowSearchResults(false)
-                                setGlobalSearch('')
-                              }}>
-                                <span className="search-result-name">{p.name}</span>
-                                {p.tags?.slice(0, 3).map(t => (
-                                  <span key={t} className="search-result-tag">#{t}</span>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        {globalSearchResults.notes.length > 0 && (
-                          <div className="search-group">
-                            <div className="search-group-title">📝 Note ({globalSearchResults.notes.length})</div>
-                            {globalSearchResults.notes.slice(0, 5).map(n => (
-                              <div key={n.id} className="search-result-item" onClick={() => {
-                                setView('notes')
-                                setShowSearchResults(false)
-                                setGlobalSearch('')
-                              }}>
-                                <span className="search-result-name">{n.title}</span>
-                                <span className={`badge badge-type-${n.type}`} style={{ fontSize: '0.65rem' }}>
-                                  {n.type}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-
+          <div className="header-right">
             <ThemeSlider />
-
             <div className="user-info">
               <div className="user-avatar">
                 {user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
               </div>
-              <span>{user.displayName || user.email}</span>
+              <span className="user-name">{user.displayName || user.email}</span>
               <button onClick={() => setShowChangePassword(true)} className="logout-button" title="Cambia password">
                 🔒
               </button>
@@ -643,6 +601,30 @@ function App() {
           </div>
         </div>
       </header>
+
+      {/* Desktop Nav Bar */}
+      <nav className="desktop-nav">
+        <div className="desktop-nav-content">
+          {[
+            ['home', '🏠', 'Home'],
+            ['projects', '📁', 'Progetti'],
+            ['notes', '📝', 'Note'],
+            ['calendar', '📅', 'Calendario'],
+            ['ai-chat', '🐙', 'Polpo AI']
+          ].map(([v, icon, label]) => (
+            <button
+              key={v}
+              onClick={() => {
+                setView(v)
+                if (v !== 'project-detail') setSelectedProject(null)
+              }}
+              className={`desktop-nav-btn ${view === v || (v === 'projects' && view === 'project-detail') ? 'active' : ''}`}
+            >
+              {icon} {label}
+            </button>
+          ))}
+        </div>
+      </nav>
 
       {/* Content */}
       <main className="main-content">
@@ -695,84 +677,67 @@ function App() {
               </div>
             </div>
 
-            {/* Tag Cloud */}
-            {allTags.length > 0 && (
-              <div className="tag-cloud mb-4">
-                <button
-                  className={`tag-cloud-item ${!activeTag ? 'active' : ''}`}
-                  onClick={() => setActiveTag(null)}
-                >
-                  Tutti
-                </button>
-                {allTags.slice(0, 15).map(([tag, count]) => (
-                  <button
-                    key={tag}
-                    className={`tag-cloud-item ${activeTag === tag ? 'active' : ''}`}
-                    onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-                  >
-                    #{tag} <span className="tag-cloud-count">{count}</span>
-                  </button>
-                ))}
+            {/* Toolbar: search + filter toggle + view toggle */}
+            <div className="toolbar mb-4">
+              <div className="search-input toolbar-search">
+                <input
+                  type="text"
+                  placeholder="🔍 Cerca progetti..."
+                  value={searchProjects}
+                  onChange={(e) => setSearchProjects(e.target.value)}
+                  className="search-field"
+                />
               </div>
-            )}
+              <button className={`toolbar-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
+                🎛️ <span className="toolbar-btn-label">Filtri</span>
+                {(filterStatus !== 'all' || sortProjects !== 'date' || showArchived || activeTag) && <span className="filter-dot"></span>}
+              </button>
+              <div className="view-toggle">
+                <button className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Griglia">⊞</button>
+                <button className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="Lista">☰</button>
+              </div>
+            </div>
 
-            {/* Search, Filters, Sort */}
-            <div className="filters-container mb-6">
-              <div className="flex gap-4 flex-wrap">
-                <div className="search-input">
-                  <input
-                    type="text"
-                    placeholder="🔍 Cerca progetti..."
-                    value={searchProjects}
-                    onChange={(e) => setSearchProjects(e.target.value)}
-                    className="search-field"
-                  />
-                </div>
-                <div className="filter-select">
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="filter-field"
-                  >
+            {/* Collapsible Filters */}
+            {showFilters && (
+              <div className="filters-panel mb-4">
+                <div className="filters-row">
+                  <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="filter-field">
                     <option value="all">Tutti gli stati</option>
                     <option value="pending">Da Fare</option>
                     <option value="in_progress">In Corso</option>
                     <option value="completed">Completato</option>
                     <option value="paused">In Pausa</option>
                   </select>
-                </div>
-                <div className="filter-select">
-                  <select
-                    value={sortProjects}
-                    onChange={(e) => setSortProjects(e.target.value)}
-                    className="filter-field"
-                  >
+                  <select value={sortProjects} onChange={(e) => setSortProjects(e.target.value)} className="filter-field">
                     <option value="date">Ordina: Data</option>
                     <option value="name">Ordina: Nome</option>
                     <option value="progress">Ordina: Progresso</option>
                   </select>
-                </div>
-                <button
-                  onClick={() => setShowArchived(!showArchived)}
-                  className={`btn-secondary ${showArchived ? 'active' : ''}`}
-                  style={{ fontSize: '0.8rem' }}
-                >
-                  {showArchived ? '📦 Archiviati' : '📂 Attivi'}
-                </button>
-                <div className="view-toggle">
                   <button
-                    className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                    onClick={() => setViewMode('grid')}
-                    title="Vista griglia"
-                  >⊞</button>
-                  <button
-                    className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-                    onClick={() => setViewMode('list')}
-                    title="Vista lista"
-                  >☰</button>
+                    onClick={() => setShowArchived(!showArchived)}
+                    className={`toolbar-btn ${showArchived ? 'active' : ''}`}
+                  >
+                    {showArchived ? '📦 Archiviati' : '📂 Attivi'}
+                  </button>
+                  {(filterStatus !== 'all' || activeTag || showArchived) && (
+                    <button className="toolbar-btn" onClick={() => { setFilterStatus('all'); setActiveTag(null); setShowArchived(false) }}>
+                      ✕ Reset
+                    </button>
+                  )}
                 </div>
+                {allTags.length > 0 && (
+                  <div className="tag-cloud">
+                    <button className={`tag-cloud-item ${!activeTag ? 'active' : ''}`} onClick={() => setActiveTag(null)}>Tutti</button>
+                    {allTags.slice(0, 15).map(([tag, count]) => (
+                      <button key={tag} className={`tag-cloud-item ${activeTag === tag ? 'active' : ''}`} onClick={() => setActiveTag(activeTag === tag ? null : tag)}>
+                        #{tag} <span className="tag-cloud-count">{count}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             {filteredProjects.length > 0 ? (
               <div className={viewMode === 'list' ? 'list-projects' : 'grid-projects'}>
@@ -820,43 +785,34 @@ function App() {
               </div>
             </div>
 
-            {/* Search, Filters, Sort */}
-            <div className="filters-container mb-6">
-              <div className="flex gap-4 flex-wrap">
-                <div className="search-input">
-                  <input
-                    type="text"
-                    placeholder="🔍 Cerca note e idee..."
-                    value={searchNotes}
-                    onChange={(e) => setSearchNotes(e.target.value)}
-                    className="search-field"
-                  />
-                </div>
-                <div className="filter-select">
-                  <select
-                    value={filterPriority}
-                    onChange={(e) => setFilterPriority(e.target.value)}
-                    className="filter-field"
-                  >
+            {/* Toolbar */}
+            <div className="toolbar mb-4">
+              <div className="search-input toolbar-search">
+                <input type="text" placeholder="🔍 Cerca note..." value={searchNotes} onChange={(e) => setSearchNotes(e.target.value)} className="search-field" />
+              </div>
+              <button className={`toolbar-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
+                🎛️ <span className="toolbar-btn-label">Filtri</span>
+                {(filterPriority !== 'all' || sortNotes !== 'date') && <span className="filter-dot"></span>}
+              </button>
+            </div>
+
+            {showFilters && (
+              <div className="filters-panel mb-4">
+                <div className="filters-row">
+                  <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} className="filter-field">
                     <option value="all">Tutte le priorita</option>
                     <option value="high">Alta</option>
                     <option value="medium">Media</option>
                     <option value="low">Bassa</option>
                   </select>
-                </div>
-                <div className="filter-select">
-                  <select
-                    value={sortNotes}
-                    onChange={(e) => setSortNotes(e.target.value)}
-                    className="filter-field"
-                  >
+                  <select value={sortNotes} onChange={(e) => setSortNotes(e.target.value)} className="filter-field">
                     <option value="date">Ordina: Data</option>
                     <option value="name">Ordina: Nome</option>
                     <option value="priority">Ordina: Priorita</option>
                   </select>
                 </div>
               </div>
-            </div>
+            )}
 
             {filteredNotes.length > 0 ? (
               <div className="grid-notes">
@@ -1001,6 +957,29 @@ function App() {
 
       {/* Theme Settings Modal */}
       {showThemeSettings && <ThemeSettings />}
+
+      {/* Mobile Bottom Nav */}
+      <nav className="mobile-nav">
+        {[
+          ['home', '🏠', 'Home'],
+          ['projects', '📁', 'Progetti'],
+          ['notes', '📝', 'Note'],
+          ['calendar', '📅', 'Calendario'],
+          ['ai-chat', '🐙', 'AI']
+        ].map(([v, icon, label]) => (
+          <button
+            key={v}
+            onClick={() => {
+              setView(v)
+              if (v !== 'project-detail') setSelectedProject(null)
+            }}
+            className={`mobile-nav-btn ${view === v || (v === 'projects' && view === 'project-detail') ? 'active' : ''}`}
+          >
+            <span className="mobile-nav-icon">{icon}</span>
+            <span className="mobile-nav-label">{label}</span>
+          </button>
+        ))}
+      </nav>
 
       {/* Quick Capture FAB */}
       {!showQuickCapture && (
