@@ -110,7 +110,7 @@ function App() {
   // Setup push notifications when user logs in
   useEffect(() => {
     if (user) {
-      setupPushNotifications()
+      try { setupPushNotifications().catch(() => {}) } catch (e) { console.warn('Push setup failed:', e) }
     }
   }, [user])
 
@@ -120,8 +120,10 @@ function App() {
 
   useEffect(() => {
     if (user && projects.length > 0) {
-      startDeadlineChecker(() => projectsRef.current)
-      return () => stopDeadlineChecker()
+      try {
+        startDeadlineChecker(() => projectsRef.current)
+        return () => stopDeadlineChecker()
+      } catch (e) { console.warn('Deadline checker failed:', e) }
     }
   }, [user, projects.length])
 
