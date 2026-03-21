@@ -6,6 +6,17 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# No cache for SW and HTML
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
 # Redirect rules for SPA
 [[redirects]]
   from = "/*"
