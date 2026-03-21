@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { addNote, updateNote } from '../firebaseService';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 
 const AddNoteForm = ({ onClose, onSuccess, onError, note, projects = [] }) => {
   const isEdit = !!note;
@@ -16,6 +17,15 @@ const AddNoteForm = ({ onClose, onSuccess, onError, note, projects = [] }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [newLink, setNewLink] = useState({ title: '', url: '' });
+
+  const onVoiceResult = useCallback((text) => {
+    setFormData(prev => ({
+      ...prev,
+      content: prev.content + (prev.content ? ' ' : '') + text
+    }));
+  }, []);
+
+  const { isListening, isSupported, toggle: toggleVoice } = useSpeechRecognition({ onResult: onVoiceResult });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -137,15 +147,28 @@ const AddNoteForm = ({ onClose, onSuccess, onError, note, projects = [] }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="content">Contenuto *</label>
+            <label htmlFor="content">
+              Contenuto *
+              {isSupported && (
+                <button
+                  type="button"
+                  onClick={toggleVoice}
+                  className={`voice-btn ${isListening ? 'listening' : ''}`}
+                  title={isListening ? 'Stop dettatura' : 'Dettatura vocale'}
+                >
+                  {isListening ? '⏹️ Stop' : '🎤 Voce'}
+                </button>
+              )}
+            </label>
             <textarea
               id="content"
               name="content"
               value={formData.content}
               onChange={handleChange}
-              placeholder="Scrivi qui il contenuto..."
+              placeholder={isListening ? '🎤 Sto ascoltando... parla ora' : 'Scrivi qui il contenuto...'}
               rows={4}
               required
+              className={isListening ? 'voice-active' : ''}
             />
           </div>
 

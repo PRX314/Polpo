@@ -23,6 +23,7 @@ import StatusBadge from './components/ui/StatusBadge'
 import Calendar from './components/Calendar'
 import { exportProjectsCSV, exportNotesCSV, exportAllProjectsPDF } from './services/exportService'
 import { setupPushNotifications, startDeadlineChecker, stopDeadlineChecker } from './services/notificationService'
+import { useSpeechRecognition } from './hooks/useSpeechRecognition'
 import ThemeSlider from './components/ThemeSlider'
 import ThemeSettings from './components/ThemeSettings'
 import { useTheme } from './ThemeContext'
@@ -59,6 +60,11 @@ function App() {
   const [showQuickCapture, setShowQuickCapture] = useState(false)
   const [quickCaptureText, setQuickCaptureText] = useState('')
   const [quickCaptureType, setQuickCaptureType] = useState('note')
+
+  const onQuickVoiceResult = useCallback((text) => {
+    setQuickCaptureText(prev => prev + (prev ? ' ' : '') + text)
+  }, [])
+  const { isListening: isQuickVoiceOn, isSupported: voiceSupported, toggle: toggleQuickVoice } = useSpeechRecognition({ onResult: onQuickVoiceResult })
 
   // Auto-dismiss toast messages
   useEffect(() => {
@@ -1024,11 +1030,20 @@ function App() {
                   {icon}
                 </button>
               ))}
+              {voiceSupported && (
+                <button
+                  className={`quick-capture-type voice-toggle ${isQuickVoiceOn ? 'listening' : ''}`}
+                  onClick={toggleQuickVoice}
+                  title={isQuickVoiceOn ? 'Stop' : 'Dettatura vocale'}
+                >
+                  {isQuickVoiceOn ? '⏹️' : '🎤'}
+                </button>
+              )}
             </div>
             <textarea
               value={quickCaptureText}
               onChange={(e) => setQuickCaptureText(e.target.value)}
-              placeholder="Scrivi qui... (titolo automatico dalla prima riga)"
+              placeholder={isQuickVoiceOn ? '🎤 Sto ascoltando... parla ora' : 'Scrivi qui... (titolo automatico dalla prima riga)'}
               rows={3}
               className="quick-capture-input"
               autoFocus
