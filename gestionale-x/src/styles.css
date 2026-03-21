@@ -30,6 +30,7 @@
   line-height: 1.7;
   font-size: 14px;
   transition: background 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
 
 /* ============================================================================
@@ -376,13 +377,13 @@ header {
 .grid-projects {
   display: grid;
   gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
 }
 
 .grid-notes {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
 }
 
 /* Masonry-style layout for notes */
@@ -771,7 +772,7 @@ header {
 
 .search-input {
   flex: 1;
-  min-width: 250px;
+  min-width: 0;
 }
 
 .filter-select {
@@ -2428,7 +2429,8 @@ textarea.voice-active {
 .global-search-wrapper {
   position: relative;
   flex: 1;
-  max-width: 300px;
+  max-width: 400px;
+  min-width: 0;
 }
 
 .global-search-input {
@@ -2468,7 +2470,7 @@ textarea.voice-active {
   z-index: 100;
   max-height: 350px;
   overflow-y: auto;
-  min-width: 280px;
+  min-width: 0;
 }
 
 .search-no-results {
