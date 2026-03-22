@@ -211,7 +211,7 @@ function App() {
       setProjects([])
       setNotes([])
       setSelectedProject(null)
-      setView('projects')
+      setView('home')
     } catch (error) {
       console.error('Logout error:', error)
     }
@@ -564,7 +564,7 @@ function App() {
                           <div className="search-group-title">📝 Note ({globalSearchResults.notes.length})</div>
                           {globalSearchResults.notes.slice(0, 5).map(n => (
                             <div key={n.id} className="search-result-item" onClick={() => {
-                              setView('notes')
+                              setView('items')
                               setShowSearchResults(false)
                               setGlobalSearch('')
                             }}>

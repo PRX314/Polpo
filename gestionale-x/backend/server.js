@@ -308,22 +308,28 @@ async function executeTool(toolName, args, userId) {
 
   switch (toolName) {
     case 'add_note': {
-      const noteData = {
-        title: args.title,
-        content: args.content,
-        type: args.type || 'note',
-        category: args.category || '',
-        priority: args.priority || 'medium',
-        projectTags: args.projectTags || [],
-        autoSaved: args.type === 'info',
+      // Mappa i vecchi tipi nota ai nuovi tipi unificati
+      const noteTypeMap = { note: 'nota', idea: 'idea', info: 'nota', monologo: 'monologo', musica: 'musica' }
+      const unifiedType = noteTypeMap[args.type] || 'nota'
+      const projectData = {
+        type: unifiedType,
+        name: args.title,
+        description: args.content,
+        status: 'pending',
+        tags: args.projectTags || [],
+        sections: [],
+        todos: [],
+        links: [],
+        roadmap: '',
+        obiettivi: '',
         userId,
         createdAt: timestamp,
         updatedAt: timestamp
       }
-      const ref = await adminDb.collection('notes').add(noteData)
-      const typeLabel = { note: 'Nota', idea: 'Idea', info: 'Info', monologo: 'Monologo', musica: 'Musica' }
+      const ref = await adminDb.collection('projects').add(projectData)
+      const typeLabel = { nota: 'Nota', idea: 'Idea', monologo: 'Monologo', musica: 'Musica' }
       const linkedTo = args.projectTags?.length ? ` → collegata a: ${args.projectTags.join(', ')}` : ''
-      return { success: true, message: `${typeLabel[args.type] || 'Nota'} "${args.title}" salvata${linkedTo}`, id: ref.id }
+      return { success: true, message: `${typeLabel[unifiedType] || 'Elemento'} "${args.title}" creato${linkedTo}`, id: ref.id }
     }
 
     case 'add_project': {

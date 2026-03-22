@@ -28,11 +28,15 @@ export const getProjects = async () => {
     where("userId", "==", auth.currentUser.uid)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-  })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return snapshot.docs.map(doc => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : (data.createdAt || new Date().toISOString()),
+      updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
+    }
+  }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 };
 
 // Listen to projects changes (realtime)
@@ -104,7 +108,7 @@ export const deleteProject = async (projectId) => {
 
 export const notesCollection = collection(db, "notes");
 
-// Get all notes for current user
+// Get all notes for current user (legacy collection)
 export const getNotes = async () => {
   if (!auth.currentUser) return [];
   const q = query(
@@ -112,14 +116,18 @@ export const getNotes = async () => {
     where("userId", "==", auth.currentUser.uid)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-  })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  return snapshot.docs.map(doc => {
+    const data = doc.data()
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : (data.createdAt || new Date().toISOString()),
+      updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
+    }
+  }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 };
 
-// Listen to notes changes (realtime)
+// Listen to notes changes (realtime, legacy collection)
 export const subscribeToNotes = (callback, onError) => {
   if (!auth.currentUser) {
     callback([]);
@@ -132,11 +140,15 @@ export const subscribeToNotes = (callback, onError) => {
   );
   return onSnapshot(q,
     (snapshot) => {
-      const notes = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-      })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const notes = snapshot.docs.map(doc => {
+        const data = doc.data()
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : (data.createdAt || new Date().toISOString()),
+          updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
+        }
+      }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       callback(notes);
     },
     (error) => {
@@ -176,20 +188,6 @@ export const updateNote = async (noteId, updates) => {
 export const deleteNote = async (noteId) => {
   const noteRef = doc(db, "notes", noteId);
   await deleteDoc(noteRef);
-};
-
-// Get notes by project tags
-export const getNotesByProjectTags = async (tags) => {
-  const q = query(
-    notesCollection,
-    where("projectTags", "array-contains-any", tags),
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate()?.toISOString() || new Date().toISOString()
-  }));
 };
 
 // ============================================================================
