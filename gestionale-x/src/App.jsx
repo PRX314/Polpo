@@ -14,8 +14,9 @@ import Auth from './components/Auth'
 import Home from './components/Home'
 import AddProjectForm from './components/AddProjectForm'
 import ProjectCard from './components/ProjectCard'
-import NoteCard from './components/NoteCard'
 import AiChat from './components/AiChat'
+import ProjectDetailView from './components/ProjectDetailView'
+import ChangePasswordModal from './components/ChangePasswordModal'
 import StatusBadge from './components/ui/StatusBadge'
 import { ITEM_TYPE_LIST, getTypeInfo } from './itemTypes'
 import Calendar from './components/Calendar'
@@ -161,18 +162,27 @@ function App() {
     return Object.entries(tagMap).sort((a, b) => b[1] - a[1])
   })()
 
-  // Global search results
+  // Global search results (cerca in nome, descrizione, tags, sezioni, roadmap, obiettivi)
   const globalSearchResults = globalSearch.length >= 2 ? {
-    projects: projects.filter(p =>
-      p.name.toLowerCase().includes(globalSearch.toLowerCase()) ||
-      p.description?.toLowerCase().includes(globalSearch.toLowerCase()) ||
-      p.tags?.some(t => t.toLowerCase().includes(globalSearch.toLowerCase()))
-    ),
-    notes: notes.filter(n =>
-      n.title.toLowerCase().includes(globalSearch.toLowerCase()) ||
-      n.content?.toLowerCase().includes(globalSearch.toLowerCase()) ||
-      n.projectTags?.some(t => t.toLowerCase().includes(globalSearch.toLowerCase()))
-    )
+    projects: projects.filter(p => {
+      const q = globalSearch.toLowerCase()
+      return p.name?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.tags?.some(t => t.toLowerCase().includes(q)) ||
+        p.roadmap?.toLowerCase().includes(q) ||
+        p.obiettivi?.toLowerCase().includes(q) ||
+        p.sections?.some(s =>
+          s.title?.toLowerCase().includes(q) ||
+          s.content?.toLowerCase().includes(q)
+        ) ||
+        p.todos?.some(t => t.text?.toLowerCase().includes(q))
+    }),
+    notes: notes.filter(n => {
+      const q = globalSearch.toLowerCase()
+      return n.title?.toLowerCase().includes(q) ||
+        n.content?.toLowerCase().includes(q) ||
+        n.projectTags?.some(t => t.toLowerCase().includes(q))
+    })
   } : { projects: [], notes: [] }
 
   const totalSearchResults = globalSearchResults.projects.length + globalSearchResults.notes.length
@@ -276,9 +286,6 @@ function App() {
     setEditingProject(project)
   }
 
-  // Handle edit note (legacy — notes now shown read-only)
-  const handleEditNote = () => {}
-
   // Handle delete with confirmation
   const handleDelete = (type, item) => {
     setShowConfirmDelete({ type, item })
@@ -305,199 +312,8 @@ function App() {
     }
   }
 
-  const ProjectDetailView = () => {
-    if (!selectedProject) return null
-
-    const associatedNotes = getProjectNotes(selectedProject)
-    const detailType = getTypeInfo(selectedProject.type)
-
-    return (
-      <div className="project-detail">
-        <div className="project-card mb-6">
-          <div className="flex-between mb-4">
-            <div>
-              <span className="item-type-badge" style={{ background: detailType.colorLight, color: detailType.color, borderColor: detailType.color, marginBottom: '0.5rem', display: 'inline-flex' }}>
-                {detailType.icon} {detailType.label}
-              </span>
-              <h2 className="title-section mb-2">{selectedProject.name}</h2>
-              <p className="text-description">{selectedProject.description}</p>
-            </div>
-            <StatusBadge status={selectedProject.status} />
-          </div>
-
-          {selectedProject.tags && selectedProject.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {selectedProject.tags.map(tag => (
-                <span key={tag} className="tag">
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {selectedProject.links && selectedProject.links.length > 0 && (
-            <div className="mb-4" style={{ borderTop: '2px solid #f8f9fa', paddingTop: '1rem' }}>
-              <div style={{ fontSize: '0.85em', color: '#999', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '500' }}>
-                🔗 Links del Progetto
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                {selectedProject.links.map((link, index) => (
-                  <a
-                    key={index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      fontSize: '0.85em',
-                      padding: '0.5rem 1rem',
-                      background: 'linear-gradient(135deg, #48dbfb, #54a0ff)',
-                      color: 'white',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
-                      fontWeight: '500',
-                      transition: 'all 0.3s ease',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      boxShadow: '0 2px 4px rgba(72, 219, 251, 0.3)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.transform = 'translateY(-2px)';
-                      e.target.style.boxShadow = '0 6px 12px rgba(72, 219, 251, 0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow = '0 2px 4px rgba(72, 219, 251, 0.3)';
-                    }}
-                  >
-                    {link.title}
-                    <span style={{ fontSize: '1.2em' }}>↗</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="text-meta">
-            Creato: {new Date(selectedProject.createdAt).toLocaleDateString('it-IT')}
-          </div>
-        </div>
-
-        {/* Roadmap Section */}
-        {selectedProject.roadmap && (
-          <div className="project-card mb-6">
-            <h3 className="title-section mb-4">📍 Roadmap</h3>
-            <div style={{
-              whiteSpace: 'pre-wrap',
-              lineHeight: '1.8',
-              color: '#555',
-              fontSize: '0.9em',
-              background: 'linear-gradient(135deg, #f8f9fa, #ffffff)',
-              padding: '1rem',
-              borderRadius: '6px',
-              border: '1px solid #e9ecef'
-            }}>
-              {selectedProject.roadmap}
-            </div>
-          </div>
-        )}
-
-        {/* Obiettivi Section */}
-        {selectedProject.obiettivi && (
-          <div className="project-card mb-6">
-            <h3 className="title-section mb-4">🎯 Obiettivi</h3>
-            <div style={{
-              whiteSpace: 'pre-wrap',
-              lineHeight: '1.8',
-              color: '#555',
-              fontSize: '0.9em',
-              background: 'linear-gradient(135deg, #fff5f0, #ffffff)',
-              padding: '1rem',
-              borderRadius: '6px',
-              border: '1px solid #ffe5d9'
-            }}>
-              {selectedProject.obiettivi}
-            </div>
-          </div>
-        )}
-
-        {/* Sezioni Personalizzate */}
-        {selectedProject.sections && selectedProject.sections.length > 0 && (
-          <div className="project-sections-detail">
-            {selectedProject.sections.map((section) => (
-              <div key={section.id} className="project-card mb-6">
-                <h3 className="title-section mb-4">
-                  {section.icon || '📄'} {section.title}
-                </h3>
-                {section.content && (
-                  <div style={{
-                    whiteSpace: 'pre-wrap',
-                    lineHeight: '1.8',
-                    color: '#555',
-                    fontSize: '0.9em',
-                    background: 'linear-gradient(135deg, #f8f9fa, #ffffff)',
-                    padding: '1rem',
-                    borderRadius: '6px',
-                    border: '1px solid #e9ecef'
-                  }}>
-                    {section.content}
-                  </div>
-                )}
-                {section.images && section.images.length > 0 && (
-                  <div className="section-detail-images">
-                    {section.images.map((img, imgIdx) => (
-                      <a key={imgIdx} href={img.url} target="_blank" rel="noopener noreferrer" className="section-detail-image">
-                        <img src={img.url.includes('cloudinary.com') ? img.url.replace('/upload/', '/upload/w_400,c_limit,q_auto,f_auto/') : img.url} alt={img.name || ''} />
-                        {img.name && <span className="section-detail-image-name">{img.name}</span>}
-                      </a>
-                    ))}
-                  </div>
-                )}
-                {!section.content && (!section.images || section.images.length === 0) && (
-                  <span style={{ color: '#aaa', fontStyle: 'italic', fontSize: '0.85em' }}>Nessun contenuto</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Todo List Section - Interactive */}
-        {selectedProject.todos && selectedProject.todos.length > 0 && (
-          <TodoListInteractive
-            project={selectedProject}
-            onUpdate={async (newTodos) => {
-              await updateProject(selectedProject.id, { todos: newTodos })
-            }}
-          />
-        )}
-
-        <div className="project-card">
-          <h3 className="title-section mb-4">
-            📋 Note e Idee Associate ({associatedNotes.length})
-          </h3>
-
-          {associatedNotes.length > 0 ? (
-            <div className="grid-notes">
-              {associatedNotes.map(note => (
-                <NoteCard
-                  key={note.id}
-                  note={note}
-                  projects={projects}
-                  onEdit={handleEditNote}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <div className="empty-state-icon">📝</div>
-              <p>Nessuna nota o idea associata a questo progetto</p>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
+  // Handle edit note (legacy — notes now shown read-only in detail)
+  const handleEditNote = () => {}
 
   // Loading state
   if (loading) {
@@ -706,9 +522,17 @@ function App() {
                   className="search-field"
                 />
               </div>
+              {normalizedProjects.some(p => p.archived) && (
+                <button
+                  className={`toolbar-btn ${showArchived ? 'active' : ''}`}
+                  onClick={() => setShowArchived(!showArchived)}
+                >
+                  {showArchived ? '📂 Attivi' : '📦 Archivio'}
+                </button>
+              )}
               <button className={`toolbar-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
                 🎛️ <span className="toolbar-btn-label">Filtri</span>
-                {(filterStatus !== 'all' || sortProjects !== 'date' || showArchived || activeTag) && <span className="filter-dot"></span>}
+                {(filterStatus !== 'all' || sortProjects !== 'date' || activeTag) && <span className="filter-dot"></span>}
               </button>
               <div className="view-toggle">
                 <button className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Griglia">⊞</button>
@@ -732,13 +556,7 @@ function App() {
                     <option value="name">Ordina: Nome</option>
                     <option value="progress">Ordina: Progresso</option>
                   </select>
-                  <button
-                    onClick={() => setShowArchived(!showArchived)}
-                    className={`toolbar-btn ${showArchived ? 'active' : ''}`}
-                  >
-                    {showArchived ? '📦 Archiviati' : '📂 Attivi'}
-                  </button>
-                  {(filterStatus !== 'all' || activeTag || showArchived || filterType !== 'all') && (
+                  {(filterStatus !== 'all' || activeTag || filterType !== 'all') && (
                     <button className="toolbar-btn" onClick={() => { setFilterStatus('all'); setActiveTag(null); setShowArchived(false); setFilterType('all') }}>
                       ✕ Reset
                     </button>
@@ -795,7 +613,16 @@ function App() {
 
         {view === 'ai-chat' && <AiChat initialMessage={pendingAiMessage} onInitialMessageConsumed={() => setPendingAiMessage('')} />}
 
-        {view === 'item-detail' && <ProjectDetailView />}
+        {view === 'item-detail' && (
+          <ProjectDetailView
+            project={selectedProject}
+            notes={notes}
+            projects={projects}
+            onUpdateProject={updateProject}
+            onEditNote={handleEditNote}
+            onDelete={handleDelete}
+          />
+        )}
       </main>
 
       {/* Error/Success Messages */}
@@ -902,225 +729,6 @@ function App() {
         ))}
       </nav>
 
-    </div>
-  )
-}
-
-function TodoListInteractive({ project, onUpdate }) {
-  const [todos, setTodos] = useState(project.todos || [])
-  const [dragIndex, setDragIndex] = useState(null)
-  const [newTodoText, setNewTodoText] = useState('')
-
-  useEffect(() => {
-    setTodos(project.todos || [])
-  }, [project.todos])
-
-  const handleToggle = async (index) => {
-    const updated = [...todos]
-    updated[index] = { ...updated[index], completed: !updated[index].completed }
-    setTodos(updated)
-    await onUpdate(updated)
-  }
-
-  const handleDragStart = (index) => {
-    setDragIndex(index)
-  }
-
-  const handleDragOver = (e, index) => {
-    e.preventDefault()
-    if (dragIndex === null || dragIndex === index) return
-    const updated = [...todos]
-    const [moved] = updated.splice(dragIndex, 1)
-    updated.splice(index, 0, moved)
-    setTodos(updated)
-    setDragIndex(index)
-  }
-
-  const handleDragEnd = async () => {
-    setDragIndex(null)
-    await onUpdate(todos)
-  }
-
-  const handleAddTodo = async () => {
-    if (!newTodoText.trim()) return
-    const updated = [...todos, { text: newTodoText.trim(), completed: false }]
-    setTodos(updated)
-    setNewTodoText('')
-    await onUpdate(updated)
-  }
-
-  const handleDeleteTodo = async (index) => {
-    const updated = todos.filter((_, i) => i !== index)
-    setTodos(updated)
-    await onUpdate(updated)
-  }
-
-  const done = todos.filter(t => t.completed).length
-  const progress = todos.length > 0 ? Math.round((done / todos.length) * 100) : 0
-
-  return (
-    <div className="project-card mb-6">
-      <div className="todo-header">
-        <h3 className="title-section mb-2">
-          ✅ Cose da Fare ({todos.length - done}/{todos.length})
-        </h3>
-        <span className="todo-progress-pct">{progress}%</span>
-      </div>
-      <div className="todo-progress-bar mb-4">
-        <div className="todo-progress-fill" style={{
-          width: `${progress}%`,
-          background: progress === 100 ? 'linear-gradient(90deg, #20c997, #28a745)' : 'linear-gradient(90deg, #48dbfb, #54a0ff)'
-        }}></div>
-      </div>
-      <div className="todo-list">
-        {todos.map((todo, index) => (
-          <div
-            key={index}
-            className={`todo-item ${todo.completed ? 'todo-done' : ''} ${dragIndex === index ? 'todo-dragging' : ''}`}
-            draggable
-            onDragStart={() => handleDragStart(index)}
-            onDragOver={(e) => handleDragOver(e, index)}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="todo-drag-handle" title="Trascina per riordinare">⠿</div>
-            <div
-              className={`todo-checkbox ${todo.completed ? 'checked' : ''}`}
-              onClick={() => handleToggle(index)}
-            >
-              {todo.completed && '✓'}
-            </div>
-            <div
-              className={`todo-text ${todo.completed ? 'completed' : ''}`}
-              onClick={() => handleToggle(index)}
-            >
-              {todo.text}
-            </div>
-            <button className="todo-delete" onClick={() => handleDeleteTodo(index)} title="Elimina">×</button>
-          </div>
-        ))}
-      </div>
-      <div className="todo-add-row">
-        <input
-          type="text"
-          value={newTodoText}
-          onChange={(e) => setNewTodoText(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleAddTodo()}
-          placeholder="Aggiungi un nuovo task..."
-          className="todo-add-input"
-        />
-        <button onClick={handleAddTodo} className="btn-primary" disabled={!newTodoText.trim()}>+</button>
-      </div>
-    </div>
-  )
-}
-
-function ChangePasswordModal({ onClose, onSubmit }) {
-  const [currentPw, setCurrentPw] = useState('')
-  const [newPw, setNewPw] = useState('')
-  const [confirmPw, setConfirmPw] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [showCurrent, setShowCurrent] = useState(false)
-  const [showNew, setShowNew] = useState(false)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-
-    if (newPw.length < 6) {
-      setError('La nuova password deve avere almeno 6 caratteri')
-      return
-    }
-    if (newPw !== confirmPw) {
-      setError('Le password non coincidono')
-      return
-    }
-    if (currentPw === newPw) {
-      setError('La nuova password deve essere diversa dalla attuale')
-      return
-    }
-
-    setLoading(true)
-    try {
-      await onSubmit(currentPw, newPw)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="form-modal" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="form-modal-content">
-        <div className="form-header">
-          <h2>🔒 Cambia Password</h2>
-          <button onClick={onClose} className="close-button">×</button>
-        </div>
-        <form onSubmit={handleSubmit} className="form">
-          <div className="form-group">
-            <label>Password attuale</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showCurrent ? 'text' : 'password'}
-                value={currentPw}
-                onChange={(e) => setCurrentPw(e.target.value)}
-                placeholder="Inserisci password attuale"
-                required
-                style={{ paddingRight: '2.5rem', width: '100%' }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrent(!showCurrent)}
-                style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem', opacity: 0.6 }}
-              >
-                {showCurrent ? '🙈' : '👁️'}
-              </button>
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Nuova password</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showNew ? 'text' : 'password'}
-                value={newPw}
-                onChange={(e) => setNewPw(e.target.value)}
-                placeholder="Minimo 6 caratteri"
-                required
-                minLength={6}
-                style={{ paddingRight: '2.5rem', width: '100%' }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowNew(!showNew)}
-                style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem', opacity: 0.6 }}
-              >
-                {showNew ? '🙈' : '👁️'}
-              </button>
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Conferma nuova password</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showNew ? 'text' : 'password'}
-                value={confirmPw}
-                onChange={(e) => setConfirmPw(e.target.value)}
-                placeholder="Ripeti la nuova password"
-                required
-                style={{ paddingRight: '2.5rem', width: '100%' }}
-              />
-            </div>
-          </div>
-          {error && <div className="error-message">{error}</div>}
-          <div className="form-actions">
-            <button type="button" onClick={onClose} className="btn-secondary">Annulla</button>
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Cambiando...' : 'Cambia Password'}
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
   )
 }
