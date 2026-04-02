@@ -6,7 +6,8 @@ import {
   saveConversation,
   updateConversation,
   subscribeToConversations,
-  deleteConversation
+  deleteConversation,
+  getSpecialists
 } from '../services/chatService'
 
 // Icone e label per tipo azione
@@ -105,6 +106,9 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
   const [panelMessages, setPanelMessages] = useState([])
   const [panelInput, setPanelInput] = useState('')
   const [panelLoading, setPanelLoading] = useState(false)
+  // Specialisti AI
+  const [specialists, setSpecialists] = useState([])
+  const [activeSpecialist, setActiveSpecialist] = useState(null)
 
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
@@ -112,9 +116,27 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
   const panelEndRef = useRef(null)
   const actionPanelRef = useRef(null)
 
+  const hasRestoredConv = useRef(false)
+
+  // Carica specialisti disponibili
+  useEffect(() => {
+    getSpecialists().then(setSpecialists).catch(() => {})
+  }, [])
+
   useEffect(() => {
     const unsub = subscribeToConversations(
-      (convs) => setConversations(convs),
+      (convs) => {
+        setConversations(convs)
+        // Al primo caricamento, ripristina l'ultima conversazione attiva
+        if (!hasRestoredConv.current && convs.length > 0 && messages.length === 0 && !currentConvId && !initialMessage) {
+          hasRestoredConv.current = true
+          const lastConv = convs[0] // già ordinata per updatedAt desc
+          if (lastConv.messages && lastConv.messages.length > 0) {
+            setMessages(lastConv.messages)
+            setCurrentConvId(lastConv.id)
+          }
+        }
+      },
       (err) => console.error('Errore caricamento chat:', err)
     )
     return () => unsub()
@@ -172,7 +194,7 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
     setError('')
 
     try {
-      const { reply, proposedActions, stats } = await sendMessage(text, messages)
+      const { reply, proposedActions, stats } = await sendMessage(text, messages, 'main', activeSpecialist)
       if (stats) setContextStats(stats)
 
       const aiMsg = {
@@ -378,16 +400,29 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
         <div className="chat-header-left">
           <button onClick={() => setShowSidebar(!showSidebar)} className="chat-sidebar-toggle" title="Storico">☰</button>
           <div className="chat-header-title">
-            <span className="chat-logo">🐙</span>
-            <span>Polpo AI</span>
+            <span className="chat-logo">{activeSpecialist ? specialists.find(s => s.id === activeSpecialist)?.icon || '🐙' : '🐙'}</span>
+            <span>{activeSpecialist ? specialists.find(s => s.id === activeSpecialist)?.name || 'Polpo AI' : 'Polpo AI'}</span>
           </div>
-          {contextStats && (
-            <div className="chat-header-stats">
-              <span>{contextStats.progetti} prog</span>
-              <span className="chat-header-dot">·</span>
-              <span>{contextStats.note} note</span>
-              <span className="chat-header-dot">·</span>
-              <span>{contextStats.todoCompletati}/{contextStats.todoTotali} todo</span>
+          {/* Selettore specialista */}
+          {specialists.length > 0 && (
+            <div className="chat-specialist-selector">
+              <button
+                className={`chat-specialist-btn ${!activeSpecialist ? 'active' : ''}`}
+                onClick={() => setActiveSpecialist(null)}
+                title="Assistente generico"
+              >
+                🐙
+              </button>
+              {specialists.map(s => (
+                <button
+                  key={s.id}
+                  className={`chat-specialist-btn ${activeSpecialist === s.id ? 'active' : ''}`}
+                  onClick={() => setActiveSpecialist(s.id)}
+                  title={s.description}
+                >
+                  {s.icon}
+                </button>
+              ))}
             </div>
           )}
         </div>

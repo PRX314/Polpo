@@ -50,9 +50,10 @@ export const ITEM_TYPES = {
     color: '#ff9f43',
     colorLight: '#fff0e0',
     defaultSections: [
-      { icon: '📝', title: 'Concept', content: '' },
-      { icon: '🎬', title: 'Script / Scaletta', content: '' },
-      { icon: '📦', title: 'Attrezzatura / Location', content: '' },
+      { icon: '🎣', title: 'Hook', content: '' },
+      { icon: '📝', title: 'Script', content: '' },
+      { icon: '📢', title: 'CTA / Chiusura', content: '' },
+      { icon: '🏷️', title: 'Hashtag / Note', content: '' },
     ]
   },
   evento: {

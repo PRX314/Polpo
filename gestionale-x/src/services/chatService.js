@@ -50,13 +50,23 @@ async function apiCall(endpoint, body) {
 // CHAT API
 // ============================================================================
 
-export const sendMessage = async (message, history = [], source = 'main') => {
-  const data = await apiCall('/api/chat', { message, history, source })
+export const sendMessage = async (message, history = [], source = 'main', specialist = null) => {
+  const body = { message, history, source }
+  if (specialist) body.specialist = specialist
+  const data = await apiCall('/api/chat', body)
   return {
     reply: data.reply,
     proposedActions: data.proposedActions || [],
     stats: data.stats || null
   }
+}
+
+export const getSpecialists = async () => {
+  const headers = await getAuthHeaders()
+  const res = await fetch(`${API_URL}/api/specialists`, { headers })
+  if (!res.ok) return []
+  const data = await res.json()
+  return data.specialists || []
 }
 
 export const executeActions = async (actions) => {

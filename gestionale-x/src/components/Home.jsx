@@ -1,14 +1,8 @@
-import { useState, useCallback } from 'react'
-import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
+import { useState } from 'react'
 import { ITEM_TYPE_LIST, getTypeInfo } from '../itemTypes'
 
 const Home = ({ projects, notes, onNavigate, onAddProject, onAiMessage }) => {
   const [aiInput, setAiInput] = useState('')
-
-  const onVoiceResult = useCallback((text) => {
-    setAiInput(prev => prev + (prev ? ' ' : '') + text)
-  }, [])
-  const { isListening, isSupported, toggle: toggleVoice } = useSpeechRecognition({ onResult: onVoiceResult })
 
   const handleAiSubmit = () => {
     if (!aiInput.trim()) return
@@ -91,18 +85,9 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAiMessage }) => {
             value={aiInput}
             onChange={(e) => setAiInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAiSubmit()}
-            placeholder={isListening ? '🎤 Sto ascoltando...' : 'Scrivi qualcosa o parla...'}
-            className={`home-ai-input ${isListening ? 'voice-active' : ''}`}
+            placeholder="Scrivi qualcosa..."
+            className="home-ai-input"
           />
-          {isSupported && (
-            <button
-              className={`home-ai-voice-btn ${isListening ? 'listening' : ''}`}
-              onClick={toggleVoice}
-              title={isListening ? 'Stop' : 'Parla'}
-            >
-              {isListening ? '⏹️' : '🎤'}
-            </button>
-          )}
           <button
             className="home-ai-send-btn"
             onClick={handleAiSubmit}
