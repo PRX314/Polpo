@@ -11,6 +11,9 @@ dotenv.config()
 import { readFileSync, existsSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+const execAsync = promisify(exec)
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -34,7 +37,7 @@ if (!admin.apps.length) {
 const adminDb = admin.firestore()
 
 const app = express()
-app.use(cors({ origin: ['http://localhost:5173', 'https://gestionalepolpo.netlify.app', 'https://polpo-c9un.onrender.com'] }))
+app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4321', 'https://gestionalepolpo.netlify.app', 'https://polpo-c9un.onrender.com', 'https://polpopoly.it'] }))
 app.use(express.json({ limit: '1mb' }))
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
@@ -404,12 +407,11 @@ async function executeTool(toolName, args, userId) {
       if (!note) return { success: false, message: `Nota "${args.noteTitle}" non trovata` }
 
       const updates = { updatedAt: timestamp }
-      if (args.title) updates.title = args.title
-      if (args.content) updates.content = args.content
-      if (args.priority) updates.priority = args.priority
+      if (args.title) updates.name = args.title
+      if (args.content) updates.description = args.content
 
-      await adminDb.collection('notes').doc(note.id).update(updates)
-      return { success: true, message: `Nota "${note.data.title}" aggiornata` }
+      await adminDb.collection('projects').doc(note.id).update(updates)
+      return { success: true, message: `Nota "${note.data.name}" aggiornata` }
     }
 
     case 'add_link_to_project': {
@@ -426,8 +428,8 @@ async function executeTool(toolName, args, userId) {
       const note = await findNote(args.noteTitle, userId)
       if (!note) return { success: false, message: `Nota "${args.noteTitle}" non trovata` }
 
-      await adminDb.collection('notes').doc(note.id).delete()
-      return { success: true, message: `Nota "${note.data.title}" eliminata` }
+      await adminDb.collection('projects').doc(note.id).delete()
+      return { success: true, message: `Nota "${note.data.name}" eliminata` }
     }
 
     case 'add_section_to_project': {
@@ -467,14 +469,18 @@ async function findProject(name, userId) {
   return match ? { id: match.id, data: match.data() } : null
 }
 
-// Helper: trova nota per titolo (fuzzy match)
+// Helper: trova nota per nome — cerca in projects (dove le note vengono salvate)
 async function findNote(title, userId) {
-  const snap = await adminDb.collection('notes').where('userId', '==', userId).get()
+  const NOTE_TYPES = ['nota', 'idea', 'monologo', 'musica']
+  const snap = await adminDb.collection('projects')
+    .where('userId', '==', userId)
+    .where('type', 'in', NOTE_TYPES)
+    .get()
   const titleLower = title.toLowerCase()
 
-  let match = snap.docs.find(d => d.data().title.toLowerCase() === titleLower)
-  if (!match) match = snap.docs.find(d => d.data().title.toLowerCase().includes(titleLower))
-  if (!match) match = snap.docs.find(d => titleLower.includes(d.data().title.toLowerCase()))
+  let match = snap.docs.find(d => d.data().name.toLowerCase() === titleLower)
+  if (!match) match = snap.docs.find(d => d.data().name.toLowerCase().includes(titleLower))
+  if (!match) match = snap.docs.find(d => titleLower.includes(d.data().name.toLowerCase()))
 
   return match ? { id: match.id, data: match.data() } : null
 }
@@ -975,6 +981,114 @@ app.post('/api/chat/title', verifyUser, async (req, res) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'Polpo AI', version: '2.1.0', uptime: Math.floor(process.uptime()) })
+})
+
+// ============================================================================
+// VAULT — lettura note Obsidian via GitHub API
+// ============================================================================
+const GITHUB_OWNER = 'PRX314'
+const GITHUB_REPO  = 'vault-obsidian-gestionale'
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN
+
+const VAULT_FOLDERS = ['20-Projects', '30-Areas', '40-Resources']
+
+async function githubFetch(path) {
+  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}`
+  const headers = {
+    'Accept': 'application/vnd.github.v3+json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  }
+  if (GITHUB_TOKEN) headers['Authorization'] = `Bearer ${GITHUB_TOKEN}`
+  const res = await fetch(url, { headers })
+  if (!res.ok) throw new Error(`GitHub API ${res.status}: ${res.statusText}`)
+  return res.json()
+}
+
+function parseFrontmatter(raw) {
+  const match = raw.match(/^---\n([\s\S]*?)\n---/)
+  if (!match) return { frontmatter: {}, body: raw.trim() }
+  const body = raw.slice(match[0].length).trim()
+  const frontmatter = {}
+  match[1].split('\n').forEach(line => {
+    const colon = line.indexOf(':')
+    if (colon === -1) return
+    const key = line.slice(0, colon).trim()
+    const val = line.slice(colon + 1).trim().replace(/^\[|\]$/g, '')
+    frontmatter[key] = val
+  })
+  return { frontmatter, body }
+}
+
+// Lista file .md nelle cartelle del vault
+app.get('/api/vault/tree', verifyUser, async (req, res) => {
+  if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato. Aggiungi GITHUB_TOKEN al .env' })
+  try {
+    const tree = {}
+    await Promise.all(VAULT_FOLDERS.map(async folder => {
+      try {
+        const items = await githubFetch(folder)
+        tree[folder] = Array.isArray(items)
+          ? items.filter(i => i.name.endsWith('.md')).map(i => ({ name: i.name.replace(/\.md$/, ''), path: i.path }))
+          : []
+      } catch { tree[folder] = [] }
+    }))
+    res.json({ tree })
+  } catch (err) {
+    console.error('Vault tree error:', err.message)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Ultimo commit (timestamp ultimo sync)
+app.get('/api/vault/last-sync', verifyUser, async (req, res) => {
+  if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato' })
+  try {
+    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/commits/main`
+    const r = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'X-GitHub-Api-Version': '2022-11-28' }
+    })
+    const commit = await r.json()
+    res.json({
+      lastSync: commit.commit?.committer?.date || commit.commit?.author?.date,
+      message:  commit.commit?.message,
+      sha:      commit.sha?.slice(0, 7)
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Sync manuale vault → GitHub (solo locale)
+app.post('/api/vault/sync', verifyUser, async (req, res) => {
+  const vaultPath = process.env.VAULT_PATH
+  if (!vaultPath) return res.status(503).json({ error: 'Sync manuale disponibile solo in locale (VAULT_PATH non impostato)' })
+  try {
+    const date = new Date().toLocaleString('it-IT', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+    await execAsync(`git -C "${vaultPath}" add -A`)
+    await execAsync(`git -C "${vaultPath}" commit -m "vault: sync manuale ${date}" --allow-empty`)
+    await execAsync(`git -C "${vaultPath}" push`)
+    res.json({ success: true, message: `Sync completato — ${date}` })
+  } catch (err) {
+    console.error('Vault sync error:', err.message)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Leggi contenuto di una nota
+app.get('/api/vault/note', verifyUser, async (req, res) => {
+  if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato' })
+  const { path } = req.query
+  if (!path || !path.endsWith('.md') || path.includes('..')) return res.status(400).json({ error: 'Path non valido' })
+  if (!VAULT_FOLDERS.some(f => path.startsWith(f + '/'))) return res.status(403).json({ error: 'Cartella non consentita' })
+  try {
+    const file = await githubFetch(path)
+    const raw = Buffer.from(file.content, 'base64').toString('utf-8')
+    const { frontmatter, body } = parseFrontmatter(raw)
+    res.json({ path, name: file.name.replace(/\.md$/, ''), frontmatter, body, raw })
+  } catch (err) {
+    console.error('Vault note error:', err.message)
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // ============================================================================

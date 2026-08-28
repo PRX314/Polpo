@@ -161,6 +161,10 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAiMessage }) => {
             <span className="qa-icon">🐙</span>
             <span className="qa-label">AI Chat</span>
           </button>
+          <button className="quick-action-btn" style={{ '--qa-color': '#7c3aed' }} onClick={() => onNavigate('vault-import')}>
+            <span className="qa-icon">📔</span>
+            <span className="qa-label">Importa Vault</span>
+          </button>
         </div>
       </div>
 
@@ -199,7 +203,7 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAiMessage }) => {
       <div className="home-two-columns">
         {/* Activity Timeline */}
         <div className="home-column">
-          <h2 className="section-title">🕐 Attivita Recente</h2>
+          <h2 className="section-title">🕐 Attività Recente</h2>
           {timeline.length > 0 ? (
             <div className="activity-timeline">
               {timeline.map((item, i) => (
@@ -218,7 +222,7 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAiMessage }) => {
             </div>
           ) : (
             <div className="empty-state" style={{ padding: '1.5rem' }}>
-              <p>Nessuna attivita ancora</p>
+              <p>Nessuna attività ancora</p>
             </div>
           )}
         </div>

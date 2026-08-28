@@ -12,6 +12,7 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project, initialType }) =
     status: project?.status || 'pending',
     tags: project?.tags?.join(', ') || '',
     deadline: project?.deadline || '',
+    vaultNote: project?.vaultNote || '',
     links: project?.links || [],
     roadmap: project?.roadmap || '',
     obiettivi: project?.obiettivi || '',
@@ -56,6 +57,7 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project, initialType }) =
         status: formData.status,
         tags: tagsArray,
         deadline: formData.deadline || null,
+        vaultNote: formData.vaultNote.trim() || null,
         links: formData.links,
         roadmap: formData.roadmap,
         obiettivi: formData.obiettivi,
@@ -270,6 +272,18 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project, initialType }) =
               value={formData.tags}
               onChange={handleChange}
               placeholder="es: marketing, design, musica"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="vaultNote">📔 Nota Obsidian (opzionale)</label>
+            <input
+              type="text"
+              id="vaultNote"
+              name="vaultNote"
+              value={formData.vaultNote}
+              onChange={handleChange}
+              placeholder="es: Ungesto (nome file senza estensione)"
             />
           </div>
 

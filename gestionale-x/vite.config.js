@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/', // Per Netlify deployment dalla root
+  base: '/gestionale/', // pubblicato su polpopoly.it/gestionale
   server: {
     proxy: {
       '/api': {

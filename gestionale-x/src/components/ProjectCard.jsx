@@ -1,4 +1,5 @@
 import StatusBadge from './ui/StatusBadge'
+import { ScanDot } from './ui/ScanInfo'
 import { getTypeInfo } from '../itemTypes'
 
 const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onTogglePin, onArchive, onDuplicate, compact }) => {
@@ -30,6 +31,7 @@ const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onT
           <span className="item-type-badge-small" style={{ background: typeInfo.colorLight, color: typeInfo.color }}>{typeInfo.icon}</span>
           <span className="list-item-name">{project.name}</span>
           <StatusBadge status={project.status} />
+          <ScanDot scan={project.scan} />
           {deadlineInfo && (
             <span className="deadline-badge" style={{ color: deadlineInfo.color, borderColor: deadlineInfo.color }}>
               {deadlineInfo.text}
@@ -125,7 +127,54 @@ const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onT
                 <span style={{ fontSize: '1.1em' }}>↗</span>
               </a>
             ))}
+            {project.vaultNote && (
+              <a
+                href={`obsidian://open?vault=Vault&file=20-Projects%2F${encodeURIComponent(project.vaultNote)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  fontSize: '0.75em',
+                  padding: '0.35rem 0.6rem',
+                  background: 'linear-gradient(135deg, #a78bfa, #7c3aed)',
+                  color: 'white',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  fontWeight: '500',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}
+              >
+                📔 Apri in Obsidian
+              </a>
+            )}
           </div>
+        </div>
+      )}
+
+      {!project.links?.length && project.vaultNote && (
+        <div className="mb-3" style={{ borderTop: '1px solid #e9ecef', paddingTop: '0.75rem' }}>
+          <a
+            href={`obsidian://open?vault=Vault&file=20-Projects%2F${encodeURIComponent(project.vaultNote)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              fontSize: '0.75em',
+              padding: '0.35rem 0.6rem',
+              background: 'linear-gradient(135deg, #a78bfa, #7c3aed)',
+              color: 'white',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              fontWeight: '500',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}
+          >
+            📔 Apri in Obsidian
+          </a>
         </div>
       )}
 
@@ -200,7 +249,10 @@ const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onT
       )}
 
       <div className="flex-between text-meta">
-        <span>Creato: {new Date(project.createdAt).toLocaleDateString('it-IT')}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
+          Creato: {new Date(project.createdAt).toLocaleDateString('it-IT')}
+          <ScanDot scan={project.scan} withLabel />
+        </span>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           {project.todos && project.todos.length > 0 && (
             <span className="badge badge-count" style={{

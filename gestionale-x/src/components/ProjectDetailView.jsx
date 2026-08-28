@@ -1,4 +1,5 @@
 import StatusBadge from './ui/StatusBadge'
+import ScanInfo from './ui/ScanInfo'
 import NoteCard from './NoteCard'
 import TodoListInteractive from './TodoListInteractive'
 import { getTypeInfo } from '../itemTypes'
@@ -38,11 +39,11 @@ const ProjectDetailView = ({ project, notes, projects, onUpdateProject, onEditNo
           </div>
         )}
 
-        {project.links && project.links.length > 0 && (
+        {((project.links && project.links.length > 0) || project.vaultNote) && (
           <div className="mb-4" style={{ borderTop: '1px solid var(--border-light, #f0f0f0)', paddingTop: '1rem' }}>
             <div className="text-meta" style={{ marginBottom: '0.5rem' }}>🔗 Links</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {project.links.map((link, index) => (
+              {(project.links || []).map((link, index) => (
                 <a
                   key={index}
                   href={link.url}
@@ -54,6 +55,17 @@ const ProjectDetailView = ({ project, notes, projects, onUpdateProject, onEditNo
                   {link.title} <span>↗</span>
                 </a>
               ))}
+              {project.vaultNote && (
+                <a
+                  href={`obsidian://open?vault=Vault&file=20-Projects%2F${encodeURIComponent(project.vaultNote)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary"
+                  style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', textDecoration: 'none', gap: '0.3rem' }}
+                >
+                  📔 Apri in Obsidian
+                </a>
+              )}
             </div>
           </div>
         )}
@@ -62,6 +74,8 @@ const ProjectDetailView = ({ project, notes, projects, onUpdateProject, onEditNo
           Creato: {new Date(project.createdAt).toLocaleDateString('it-IT')}
         </div>
       </div>
+
+      {project.scan && <ScanInfo scan={project.scan} />}
 
       {project.roadmap && (
         <div className="project-card mb-6">

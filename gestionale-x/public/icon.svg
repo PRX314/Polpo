@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Icona PWA Gestionale Polpo: polpetto stilizzato su gradiente blu -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#48dbfb"/>
+      <stop offset="1" stop-color="#54a0ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <!-- tentacoli -->
+  <g stroke="#ffffff" stroke-width="32" stroke-linecap="round" fill="none" opacity="0.95">
+    <path d="M186 300 C180 362 138 394 100 372"/>
+    <path d="M233 314 C233 384 204 422 166 416"/>
+    <path d="M279 314 C279 384 308 422 346 416"/>
+    <path d="M326 300 C332 362 374 394 412 372"/>
+  </g>
+  <!-- testa -->
+  <ellipse cx="256" cy="216" rx="112" ry="100" fill="#ffffff"/>
+  <!-- occhi -->
+  <circle cx="218" cy="228" r="17" fill="#2b5aa7"/>
+  <circle cx="294" cy="228" r="17" fill="#2b5aa7"/>
+  <circle cx="223" cy="222" r="6" fill="#ffffff"/>
+  <circle cx="299" cy="222" r="6" fill="#ffffff"/>
+  <!-- sorriso -->
+  <path d="M232 268 Q256 286 280 268" stroke="#2b5aa7" stroke-width="11" stroke-linecap="round" fill="none"/>
+</svg>

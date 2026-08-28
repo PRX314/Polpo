@@ -13,6 +13,7 @@ import {
 import Auth from './components/Auth'
 import Home from './components/Home'
 import AddProjectForm from './components/AddProjectForm'
+import VaultImport from './components/VaultImport'
 import ProjectCard from './components/ProjectCard'
 import AiChat from './components/AiChat'
 import ProjectDetailView from './components/ProjectDetailView'
@@ -20,8 +21,10 @@ import ChangePasswordModal from './components/ChangePasswordModal'
 import StatusBadge from './components/ui/StatusBadge'
 import { ITEM_TYPE_LIST, getTypeInfo } from './itemTypes'
 import Calendar from './components/Calendar'
+import RoutineView from './components/RoutineView'
 import { exportProjectsCSV } from './services/exportService'
-import { setupPushNotifications, startDeadlineChecker, stopDeadlineChecker } from './services/notificationService'
+import { registerServiceWorker, startDeadlineChecker, stopDeadlineChecker } from './services/notificationService'
+import NotificationSettings from './components/NotificationSettings'
 import ThemeSlider from './components/ThemeSlider'
 import ThemeSettings from './components/ThemeSettings'
 import { useTheme } from './ThemeContext'
@@ -34,7 +37,7 @@ function App() {
   const [projects, setProjects] = useState([])
   const [notes, setNotes] = useState([])
   const [selectedProject, setSelectedProject] = useState(null)
-  const [view, setView] = useState('home') // 'home', 'items', 'item-detail', 'ai-chat', 'calendar'
+  const [view, setView] = useState('home') // 'home', 'items', 'item-detail', 'ai-chat', 'calendar', 'routine', 'vault-import'
   const [filterType, setFilterType] = useState('all') // 'all' or a type key
   const [showAddProjectForm, setShowAddProjectForm] = useState(false)
   const [addFormInitialType, setAddFormInitialType] = useState(null)
@@ -54,6 +57,7 @@ function App() {
   const [viewMode, setViewMode] = useState('grid') // grid, list
   const [showFilters, setShowFilters] = useState(false)
   const [pendingAiMessage, setPendingAiMessage] = useState('')
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false)
 
   // Auto-dismiss toast messages
   useEffect(() => {
@@ -95,10 +99,13 @@ function App() {
     }
   }, [user])
 
-  // Setup push notifications when user logs in
+  // Registra il service worker (silenzioso, nessun prompt) quando l'utente accede.
+  // L'attivazione vera e propria (che richiede un gesto utente su molti browser,
+  // ed è comunque disponibile solo da app installata su iPhone) parte dal
+  // pulsante 🔔 in header -> NotificationSettings.
   useEffect(() => {
     if (user) {
-      try { setupPushNotifications().catch(() => {}) } catch (e) { console.warn('Push setup failed:', e) }
+      try { registerServiceWorker().catch(() => {}) } catch (e) { console.warn('SW registration failed:', e) }
     }
   }, [user])
 
@@ -146,12 +153,19 @@ function App() {
     }
   }, [user])
 
-  // Filtra note associate al progetto (link diretto + tag condivisi)
+  // Filtra note associate al progetto (legacy notes + progetti di tipo nota con tag condivisi)
   const getProjectNotes = (project) => {
-    return notes.filter(note =>
+    const legacyNotes = notes.filter(note =>
       note.projectId === project.id ||
       (note.projectTags && note.projectTags.some(tag => project.tags && project.tags.includes(tag)))
     )
+    const NOTE_TYPES = ['nota', 'idea', 'monologo', 'musica']
+    const projectNotes = projects.filter(p =>
+      p.id !== project.id &&
+      NOTE_TYPES.includes(p.type) &&
+      p.tags && p.tags.some(tag => project.tags && project.tags.includes(tag))
+    ).map(p => ({ ...p, title: p.name, content: p.description, projectTags: p.tags }))
+    return [...legacyNotes, ...projectNotes]
   }
 
   // All tags with counts (from projects + notes)
@@ -182,7 +196,14 @@ function App() {
       return n.title?.toLowerCase().includes(q) ||
         n.content?.toLowerCase().includes(q) ||
         n.projectTags?.some(t => t.toLowerCase().includes(q))
-    })
+    }).concat(
+      projects.filter(p => {
+        const NOTE_TYPES = ['nota', 'idea', 'monologo', 'musica']
+        if (!NOTE_TYPES.includes(p.type)) return false
+        const q = globalSearch.toLowerCase()
+        return p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
+      }).map(p => ({ id: p.id, title: p.name, content: p.description, type: p.type, projectTags: p.tags }))
+    )
   } : { projects: [], notes: [] }
 
   const totalSearchResults = globalSearchResults.projects.length + globalSearchResults.notes.length
@@ -400,6 +421,9 @@ function App() {
           </div>
 
           <div className="header-right">
+            <button onClick={() => setShowNotificationSettings(true)} className="logout-button" title="Notifiche">
+              🔔
+            </button>
             <ThemeSlider />
             <div className="user-info">
               <div className="user-avatar">
@@ -424,6 +448,7 @@ function App() {
             ['home', '🏠', 'Home'],
             ['items', '📋', 'Elementi'],
             ['calendar', '📅', 'Calendario'],
+            ['routine', '🗓️', 'Routine'],
             ['ai-chat', '🐙', 'Polpo AI']
           ].map(([v, icon, label]) => (
             <button
@@ -449,6 +474,15 @@ function App() {
             onNavigate={setView}
             onAddProject={(type) => { setAddFormInitialType(type || null); setShowAddProjectForm(true) }}
             onAiMessage={(text) => { setPendingAiMessage(text); setView('ai-chat') }}
+          />
+        )}
+
+        {view === 'vault-import' && (
+          <VaultImport
+            projects={projects}
+            onClose={() => setView('home')}
+            onSuccess={(count) => setSuccess(`${count} progett${count === 1 ? 'o' : 'i'} importat${count === 1 ? 'o' : 'i'} dal vault!`)}
+            onError={(error) => setError(error)}
           />
         )}
 
@@ -611,6 +645,8 @@ function App() {
           />
         )}
 
+        {view === 'routine' && <RoutineView />}
+
         {view === 'ai-chat' && <AiChat initialMessage={pendingAiMessage} onInitialMessageConsumed={() => setPendingAiMessage('')} />}
 
         {view === 'item-detail' && (
@@ -706,6 +742,7 @@ function App() {
 
       {/* Theme Settings Modal */}
       {showThemeSettings && <ThemeSettings />}
+      {showNotificationSettings && <NotificationSettings onClose={() => setShowNotificationSettings(false)} />}
 
       {/* Mobile Bottom Nav */}
       <nav className="mobile-nav">
@@ -713,6 +750,7 @@ function App() {
           ['home', '🏠', 'Home'],
           ['items', '📋', 'Elementi'],
           ['calendar', '📅', 'Cal'],
+          ['routine', '🗓️', 'Routine'],
           ['ai-chat', '🐙', 'AI']
         ].map(([v, icon, label]) => (
           <button

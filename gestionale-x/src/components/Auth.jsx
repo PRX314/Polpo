@@ -1,186 +1,171 @@
-// Authentication component for Gestionale Polpo
-import { useState } from 'react';
+// Accesso al Gestionale Polpo tramite codice numerico (PIN).
+// L'email dell'account è fissa: l'utente digita solo il codice, che è
+// la vera password Firebase (così la protezione dei dati resta reale).
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth } from '../firebase';
 
+const ACCOUNT_EMAIL = 'paoloandrearepetto@gmail.com';
+const PIN_LENGTH = 6; // Firebase impone minimo 6 caratteri
+
 const Auth = ({ onAuthSuccess }) => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+  const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [resetSent, setResetSent] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [shake, setShake] = useState(false);
+  const [resetMsg, setResetMsg] = useState('');
+  const submittingRef = useRef(false);
 
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    setError(''); // Clear error when user types
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const submitPin = useCallback(async (code) => {
     setLoading(true);
     setError('');
-
     try {
-      // Solo login
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
+      const cred = await signInWithEmailAndPassword(auth, ACCOUNT_EMAIL, code);
+      onAuthSuccess(cred.user);
+    } catch {
+      setError('Codice errato');
+      setShake(true);
+      setPin('');
+      setTimeout(() => setShake(false), 450);
+    } finally {
+      setLoading(false);
+    }
+  }, [onAuthSuccess]);
 
-      onAuthSuccess(userCredential.user);
-    } catch (error) {
-      console.error('Auth error:', error);
-      setError(getErrorMessage(error.code));
+  const addDigit = useCallback((d) => {
+    if (loading) return;
+    setError('');
+    setPin((prev) => (prev.length >= PIN_LENGTH ? prev : prev + d));
+  }, [loading]);
+
+  const removeDigit = useCallback(() => {
+    setError('');
+    setPin((prev) => prev.slice(0, -1));
+  }, []);
+
+  // Invia automaticamente appena il codice è completo
+  useEffect(() => {
+    if (pin.length === PIN_LENGTH && !submittingRef.current) {
+      submittingRef.current = true;
+      submitPin(pin).finally(() => { submittingRef.current = false; });
+    }
+  }, [pin, submitPin]);
+
+  // Tastiera fisica (comodo da computer)
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key >= '0' && e.key <= '9') addDigit(e.key);
+      else if (e.key === 'Backspace') removeDigit();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [addDigit, removeDigit]);
+
+  const handleReset = async () => {
+    setLoading(true);
+    setError('');
+    setResetMsg('');
+    try {
+      await sendPasswordResetEmail(auth, ACCOUNT_EMAIL);
+      setResetMsg('Ti ho inviato una mail per reimpostare il codice.');
+    } catch {
+      setError('Non riesco a inviare la mail di reset.');
     } finally {
       setLoading(false);
     }
   };
 
-  const getErrorMessage = (errorCode) => {
-    switch (errorCode) {
-      case 'auth/user-not-found':
-        return 'Utente non trovato';
-      case 'auth/wrong-password':
-        return 'Password errata';
-      case 'auth/invalid-email':
-        return 'Email non valida';
-      default:
-        return 'Errore durante l\'accesso';
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (!formData.email.trim()) {
-      setError('Inserisci la tua email prima di cliccare "Password dimenticata"');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    try {
-      await sendPasswordResetEmail(auth, formData.email);
-      setResetSent(true);
-    } catch (error) {
-      if (error.code === 'auth/user-not-found') {
-        setError('Nessun account trovato con questa email');
-      } else if (error.code === 'auth/invalid-email') {
-        setError('Email non valida');
-      } else {
-        setError('Errore nell\'invio della mail di reset');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
+      <div className="auth-card" style={{ textAlign: 'center' }}>
         <div className="auth-header">
           <h1 className="title-main">🐙 Gestionale Polpo</h1>
-          <p className="auth-subtitle">
-            Accedi al tuo account
-          </p>
+          <p className="auth-subtitle">Inserisci il tuo codice</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="tua@email.com"
-              required
+        {/* Pallini del codice */}
+        <div
+          style={{
+            display: 'flex', justifyContent: 'center', gap: '0.9rem', margin: '1.6rem 0',
+            animation: shake ? 'pin-shake 0.45s' : 'none'
+          }}
+        >
+          {Array.from({ length: PIN_LENGTH }).map((_, i) => (
+            <span
+              key={i}
+              style={{
+                width: 14, height: 14, borderRadius: '50%',
+                background: i < pin.length ? '#54a0ff' : 'transparent',
+                border: '2px solid ' + (i < pin.length ? '#54a0ff' : '#c7cdd6'),
+                transition: 'all .15s'
+              }}
             />
-          </div>
+          ))}
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Password"
-                required
-                style={{ paddingRight: '2.5rem' }}
-              />
+        {error && (
+          <div className="error-message" style={{ marginBottom: '1rem' }}>{error}</div>
+        )}
+        {resetMsg && (
+          <div style={{ color: '#065f46', fontSize: '0.85rem', marginBottom: '1rem' }}>{resetMsg}</div>
+        )}
+
+        {/* Tastierino */}
+        <div
+          style={{
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem',
+            maxWidth: 260, margin: '0 auto'
+          }}
+        >
+          {keys.map((k, i) =>
+            k === '' ? (
+              <span key={i} />
+            ) : (
               <button
+                key={i}
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => (k === '⌫' ? removeDigit() : addDigit(k))}
+                disabled={loading}
                 style={{
-                  position: 'absolute',
-                  right: '0.5rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '1.1rem',
-                  padding: '0.25rem',
-                  opacity: 0.6
+                  aspectRatio: '1', borderRadius: '50%', border: 'none',
+                  fontSize: k === '⌫' ? '1.3rem' : '1.5rem', fontWeight: 600,
+                  cursor: loading ? 'default' : 'pointer', color: '#333',
+                  background: k === '⌫' ? 'transparent' : '#f0f2f6',
+                  transition: 'transform .08s, background .15s'
                 }}
-                title={showPassword ? 'Nascondi password' : 'Mostra password'}
+                onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.92)')}
+                onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               >
-                {showPassword ? '🙈' : '👁️'}
+                {k}
               </button>
-            </div>
-          </div>
-
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
+            )
           )}
+        </div>
 
-          {resetSent && (
-            <div style={{
-              background: 'linear-gradient(135deg, #d1fae5, #ecfdf5)',
-              color: '#065f46',
-              padding: '0.75rem',
-              borderRadius: '6px',
-              fontSize: '0.85rem',
-              border: '1px solid #a7f3d0',
-              fontFamily: "'JetBrains Mono', monospace"
-            }}>
-              Email di reset inviata a <strong>{formData.email}</strong>. Controlla la tua casella di posta.
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="auth-button"
-            disabled={loading}
-          >
-            {loading ? 'Caricamento...' : 'Accedi'}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleResetPassword}
-            disabled={loading}
-            className="switch-button"
-            style={{ marginTop: '0.5rem', textAlign: 'center', display: 'block', width: '100%' }}
-          >
-            Password dimenticata?
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={handleReset}
+          disabled={loading}
+          className="switch-button"
+          style={{ marginTop: '1.5rem', textAlign: 'center', display: 'block', width: '100%' }}
+        >
+          Codice dimenticato?
+        </button>
       </div>
+
+      <style>{`
+        @keyframes pin-shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-8px); }
+          75% { transform: translateX(8px); }
+        }
+      `}</style>
     </div>
   );
 };

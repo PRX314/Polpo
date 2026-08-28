@@ -13,9 +13,11 @@ function escapeCsv(val) {
   return str
 }
 
+const STATUS_LABELS_CSV = { pending: 'Da Fare', in_progress: 'In Corso', 'in-progress': 'In Corso', completed: 'Completato', paused: 'In Pausa', 'on-hold': 'In Pausa' }
+
 export function exportProjectsCSV(projects, notes) {
   const rows = [
-    ['Progetto', 'Descrizione', 'Stato', 'Tags', 'Scadenza', 'Todo Completati', 'Todo Totali', 'Progresso %', 'Note Associate', 'Creato'].join(',')
+    ['Progetto', 'Tipo', 'Descrizione', 'Stato', 'Tags', 'Scadenza', 'Todo Completati', 'Todo Totali', 'Progresso %', 'Note Associate', 'Creato'].join(',')
   ]
 
   projects.forEach(p => {
@@ -29,8 +31,9 @@ export function exportProjectsCSV(projects, notes) {
 
     rows.push([
       escapeCsv(p.name),
+      escapeCsv(p.type || 'progetto'),
       escapeCsv(p.description),
-      escapeCsv(p.status),
+      escapeCsv(STATUS_LABELS_CSV[p.status] || p.status),
       escapeCsv((p.tags || []).join('; ')),
       escapeCsv(p.deadline || ''),
       done,
@@ -94,7 +97,7 @@ export function exportAllProjectsPDF(projects, notes) {
 }
 
 function buildProjectHTML(project, associatedNotes) {
-  const statusLabels = { pending: 'Da Fare', in_progress: 'In Corso', completed: 'Completato', paused: 'In Pausa' }
+  const statusLabels = { pending: 'Da Fare', in_progress: 'In Corso', 'in-progress': 'In Corso', completed: 'Completato', paused: 'In Pausa', 'on-hold': 'In Pausa' }
   const done = (project.todos || []).filter(t => t.completed).length
   const total = (project.todos || []).length
   const progress = total > 0 ? Math.round((done / total) * 100) : 0

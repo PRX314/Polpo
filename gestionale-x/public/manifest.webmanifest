@@ -1,0 +1,31 @@
+{
+  "name": "Gestionale Polpo",
+  "short_name": "Polpo",
+  "description": "Gestionale progetti di Polpopoly",
+  "start_url": "/gestionale/",
+  "scope": "/gestionale/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#54a0ff",
+  "lang": "it",
+  "icons": [
+    {
+      "src": "/gestionale/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/gestionale/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/gestionale/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

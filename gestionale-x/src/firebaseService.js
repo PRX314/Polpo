@@ -10,6 +10,7 @@ import {
   query,
   orderBy,
   where,
+  setDoc,
   Timestamp
 } from "firebase/firestore";
 import { db, auth } from "./firebase";
@@ -188,6 +189,31 @@ export const updateNote = async (noteId, updates) => {
 export const deleteNote = async (noteId) => {
   const noteRef = doc(db, "notes", noteId);
   await deleteDoc(noteRef);
+};
+
+// ============================================================================
+// ROUTINE (documento unico per utente: "ogni giorno" + timeline + extra)
+// ============================================================================
+
+// Listen to the current user's routine document (realtime)
+export const subscribeToRoutine = (callback, onError) => {
+  if (!auth.currentUser) {
+    callback(null);
+    return () => {};
+  }
+  const ref = doc(db, "routines", auth.currentUser.uid);
+  return onSnapshot(
+    ref,
+    (snap) => callback(snap.exists() ? snap.data() : null),
+    (error) => { console.error("Error subscribing to routine:", error); onError?.(error); }
+  );
+};
+
+// Upsert (merge) the current user's routine document
+export const saveRoutine = async (data) => {
+  if (!auth.currentUser) return;
+  const ref = doc(db, "routines", auth.currentUser.uid);
+  await setDoc(ref, data, { merge: true });
 };
 
 // ============================================================================

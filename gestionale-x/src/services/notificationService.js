@@ -47,7 +47,8 @@ let swRegistration = null
 export async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return null
   try {
-    swRegistration = await navigator.serviceWorker.register('/sw.js')
+    // percorso relativo alla base (funziona sia su / che su /gestionale/)
+    swRegistration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
     console.log('Service Worker registrato')
     return swRegistration
   } catch (err) {

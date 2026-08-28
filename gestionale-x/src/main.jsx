@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { ThemeProvider } from './ThemeContext'
+import { registerServiceWorker } from './services/notificationService'
+
+// PWA: service worker registrato all'avvio (serve per install + notifiche)
+registerServiceWorker()
 
 class ErrorBoundary extends Component {
   constructor(props) {

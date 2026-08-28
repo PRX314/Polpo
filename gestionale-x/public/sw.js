@@ -16,8 +16,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || '',
-    icon: data.icon || '/vite.svg',
-    badge: data.badge || '/vite.svg',
+    icon: data.icon || self.registration.scope + 'vite.svg',
+    badge: data.badge || self.registration.scope + 'vite.svg',
     vibrate: [200, 100, 200],
     tag: data.tag || 'polpo-notification',
     renotify: true,
@@ -26,7 +26,7 @@ self.addEventListener('push', (event) => {
       { action: 'close', title: 'Chiudi' }
     ],
     data: {
-      url: data.url || '/'
+      url: data.url || self.registration.scope
     }
   }
 
@@ -50,7 +50,7 @@ self.addEventListener('notificationclick', (event) => {
         }
       }
       // Otherwise open new window
-      return self.clients.openWindow(event.notification.data?.url || '/')
+      return self.clients.openWindow(event.notification.data?.url || self.registration.scope)
     })
   )
 })
