@@ -1003,7 +1003,7 @@ app.post('/api/chat/title', verifyUser, async (req, res) => {
 })
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'Polpo AI', version: '2.1.0', uptime: Math.floor(process.uptime()) })
+  res.json({ status: 'ok', service: 'Polpo AI', version: '2.2.0', uptime: Math.floor(process.uptime()) })
 })
 
 // ============================================================================
