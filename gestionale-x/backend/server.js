@@ -42,6 +42,25 @@ app.use(express.json({ limit: '1mb' }))
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
+// llama-3.3-70b-versatile è passato ad accesso enterprise (404 model_not_found
+// sulle key free). Default a un modello free con tool calling, override via env,
+// fallback automatico se il modello scelto non è accessibile.
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b'
+const GROQ_MODEL_FALLBACK = 'llama-3.1-8b-instant'
+
+async function groqChat(opts) {
+  try {
+    return await groq.chat.completions.create({ model: GROQ_MODEL, ...opts })
+  } catch (err) {
+    const code = err?.error?.error?.code || err?.code
+    if (err?.status === 404 || code === 'model_not_found') {
+      console.warn(`Modello ${GROQ_MODEL} non disponibile → fallback ${GROQ_MODEL_FALLBACK}`)
+      return await groq.chat.completions.create({ model: GROQ_MODEL_FALLBACK, ...opts })
+    }
+    throw err
+  }
+}
+
 // ============================================================================
 // RATE LIMITING
 // ============================================================================
@@ -857,7 +876,6 @@ app.post('/api/chat', verifyUser, async (req, res) => {
     const proposeTools = TOOLS.filter(t => t.function.name === 'propose_actions')
 
     const completionOpts = {
-      model: 'llama-3.3-70b-versatile',
       messages,
       temperature: 0.7,
       max_tokens: isPanel ? 1024 : 2048
@@ -865,7 +883,7 @@ app.post('/api/chat', verifyUser, async (req, res) => {
     completionOpts.tools = proposeTools
     completionOpts.tool_choice = 'auto'
 
-    const completion = await groq.chat.completions.create(completionOpts)
+    const completion = await groqChat(completionOpts)
 
     const responseMsg = completion.choices[0]?.message
     if (!responseMsg) throw new Error('Groq ha restituito una risposta vuota')
@@ -896,8 +914,7 @@ app.post('/api/chat', verifyUser, async (req, res) => {
       }
 
       // Seconda chiamata per la risposta testuale
-      const followUp = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+      const followUp = await groqChat({
         messages,
         temperature: 0.7,
         max_tokens: 1024
@@ -986,8 +1003,7 @@ app.post('/api/chat/title', verifyUser, async (req, res) => {
       return res.json({ title: convMessages[0]?.content?.substring(0, 40) || 'Nuova conversazione' })
     }
     const firstExchange = convMessages.slice(0, 4).map(m => `${m.role}: ${m.content}`).join('\n')
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await groqChat({
       messages: [
         { role: 'system', content: 'Genera un titolo breve (max 5 parole, in italiano) che riassuma questa conversazione. Rispondi SOLO con il titolo.' },
         { role: 'user', content: firstExchange }
@@ -1003,7 +1019,7 @@ app.post('/api/chat/title', verifyUser, async (req, res) => {
 })
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'Polpo AI', version: '2.2.0', uptime: Math.floor(process.uptime()) })
+  res.json({ status: 'ok', service: 'Polpo AI', version: '2.3.0', model: GROQ_MODEL, uptime: Math.floor(process.uptime()) })
 })
 
 // ============================================================================
