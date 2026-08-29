@@ -40,7 +40,8 @@ async function apiCall(endpoint, body) {
   }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err.error || `Errore server (${res.status})`)
+    const base = err.error || `Errore server (${res.status})`
+    throw new Error(err.detail ? `${base}\n(${err.detail})` : base)
   }
 
   return res.json()

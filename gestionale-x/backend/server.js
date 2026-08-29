@@ -555,9 +555,15 @@ async function getUserContext(userId) {
   return { projects, notes, stats }
 }
 
+const clip = (v, n) => {
+  const str = String(v || '')
+  return str.length > n ? str.slice(0, n) + '…' : str
+}
+
 function formatContext(ctx) {
   let text = ''
   const s = ctx.stats
+  const MAX_DETTAGLIO = 40   // elementi mostrati per esteso
   // Count by type
   const typeCounts = {}
   ctx.projects.forEach(p => { const t = p.tipo || 'progetto'; typeCounts[t] = (typeCounts[t] || 0) + 1 })
@@ -571,29 +577,33 @@ function formatContext(ctx) {
 
   if (ctx.projects.length > 0) {
     text += '\n=== DETTAGLIO ELEMENTI ===\n'
-    ctx.projects.forEach((p, i) => {
+    ctx.projects.slice(0, MAX_DETTAGLIO).forEach((p, i) => {
       const tipo = (p.tipo || 'progetto').charAt(0).toUpperCase() + (p.tipo || 'progetto').slice(1)
       text += `\n[${tipo} ${i + 1}] "${p.nome}"\n`
       text += `  Tipo: ${p.tipo || 'progetto'} | Stato: ${p.stato} | Creato: ${p.creatoIl} | Aggiornato: ${p.aggiornatoIl}\n`
-      text += `  Descrizione: ${p.descrizione}\n`
+      text += `  Descrizione: ${clip(p.descrizione, 300)}\n`
       if (p.tags.length) text += `  Tags: ${p.tags.join(', ')}\n`
-      if (p.links) text += `  Links: ${p.links}\n`
-      if (p.roadmap) text += `  Roadmap: ${p.roadmap}\n`
-      if (p.obiettivi) text += `  Obiettivi: ${p.obiettivi}\n`
-      if (p.sezioni) text += `  Sezioni: ${p.sezioni}\n`
+      if (p.links) text += `  Links: ${clip(p.links, 200)}\n`
+      if (p.roadmap) text += `  Roadmap: ${clip(p.roadmap, 250)}\n`
+      if (p.obiettivi) text += `  Obiettivi: ${clip(p.obiettivi, 250)}\n`
+      if (p.sezioni) text += `  Sezioni: ${clip(p.sezioni, 300)}\n`
       if (p.todoTotali > 0) {
         text += `  Progresso Todo: ${p.todoCompletati}/${p.todoTotali}\n`
-        text += `  ${p.todos}\n`
+        text += `  ${clip(p.todos, 400)}\n`
       }
     })
+    if (ctx.projects.length > MAX_DETTAGLIO) {
+      const resto = ctx.projects.slice(MAX_DETTAGLIO)
+      text += `\n…e altri ${resto.length} elementi (solo nome): ${resto.map(p => `"${p.nome}"`).join(', ')}\n`
+    }
   }
 
   if (ctx.notes.length > 0) {
     text += '\n=== DETTAGLIO NOTE E IDEE ===\n'
-    ctx.notes.forEach((n, i) => {
+    ctx.notes.slice(0, MAX_DETTAGLIO).forEach((n, i) => {
       text += `\n[${n.tipo.charAt(0).toUpperCase() + n.tipo.slice(1)} ${i + 1}] "${n.titolo}"\n`
       text += `  Priorità: ${n.priorita} | Creato: ${n.creatoIl}\n`
-      text += `  Contenuto: ${n.contenuto}\n`
+      text += `  Contenuto: ${clip(n.contenuto, 400)}\n`
       if (n.tags.length) text += `  Collegato a: ${n.tags.join(', ')}\n`
     })
   }
@@ -807,7 +817,13 @@ app.post('/api/chat', verifyUser, async (req, res) => {
 
     const isPanel = source === 'panel'
     const context = await getUserContext(req.userId)
-    const contextText = formatContext(context)
+    // Cap duro: il tier gratuito Groq ha un limite di token per richiesta.
+    // formatContext e' gia' limitato per campo, questo e' la rete di sicurezza.
+    const MAX_CONTEXT_CHARS = 14000
+    const full = formatContext(context)
+    const contextText = full.length > MAX_CONTEXT_CHARS
+      ? full.slice(0, MAX_CONTEXT_CHARS) + '\n…(contesto troncato: troppi elementi)'
+      : full
     const today = new Date().toLocaleDateString('it-IT', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     })
@@ -852,6 +868,7 @@ app.post('/api/chat', verifyUser, async (req, res) => {
     const completion = await groq.chat.completions.create(completionOpts)
 
     const responseMsg = completion.choices[0]?.message
+    if (!responseMsg) throw new Error('Groq ha restituito una risposta vuota')
     let proposedActions = []
 
     // Se l'AI ha usato propose_actions, estrai le azioni proposte
@@ -914,14 +931,20 @@ app.post('/api/chat', verifyUser, async (req, res) => {
       }
     })
   } catch (err) {
-    console.error('Errore chat AI:', err.message)
-    if (err.status === 429 || err.message?.includes('rate_limit')) {
-      return res.status(429).json({ error: 'Limite richieste raggiunto. Riprova tra qualche secondo.' })
+    const g = err?.error?.error || err?.error || {}
+    const msg = g.message || err?.message || ''
+    console.error('Errore chat AI:', err?.status, g.code || err?.code, msg)
+    const detail = [g.code || err?.code, err?.status, msg].filter(Boolean).join(' · ').slice(0, 300)
+    if (err?.status === 429 || /rate.?limit/i.test(msg)) {
+      return res.status(429).json({ error: 'Limite richieste Groq raggiunto. Riprova tra qualche secondo.', detail })
     }
-    if (err.status === 401 || err.message?.includes('api_key')) {
-      return res.status(500).json({ error: 'Errore configurazione API. Controlla la chiave Groq.' })
+    if (err?.status === 413 || /too large|context.?length|tokens per (minute|day)/i.test(msg)) {
+      return res.status(413).json({ error: 'Richiesta troppo grande per il modello: troppo contesto. Riprova con un messaggio più corto.', detail })
     }
-    res.status(500).json({ error: 'Errore nella generazione della risposta. Riprova.' })
+    if (err?.status === 401 || err?.status === 403 || /api[_ ]?key|invalid.*key|authentication|organization/i.test(msg)) {
+      return res.status(500).json({ error: 'Chiave Groq non valida o mancante su Render.', detail })
+    }
+    res.status(500).json({ error: 'Errore nella generazione della risposta.', detail })
   }
 })
 
