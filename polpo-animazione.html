@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polpo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100vh;
+    background: #050510;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  svg { width: min(580px, 90vmin); height: min(580px, 90vmin); }
+</style>
+</head>
+<body>
+
+<svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+<defs>
+
+  <!-- Sfondo con calore al centro -->
+  <radialGradient id="bgGrad" cx="50%" cy="46%" r="52%">
+    <stop offset="0%"   stop-color="#0e0828"/>
+    <stop offset="100%" stop-color="#050510"/>
+  </radialGradient>
+
+  <!-- Corpo: gradiente radiale a 5 stop, luce in alto a sinistra -->
+  <radialGradient id="bodyGrad" cx="40%" cy="30%" r="70%">
+    <stop offset="0%"   stop-color="#f4e2ff"/>
+    <stop offset="15%"  stop-color="#cb68ff"/>
+    <stop offset="42%"  stop-color="#7c22c4"/>
+    <stop offset="72%"  stop-color="#3d0a8e"/>
+    <stop offset="100%" stop-color="#180440"/>
+  </radialGradient>
+
+  <!-- Rim light bioluminescente dal basso -->
+  <radialGradient id="rimGrad" cx="50%" cy="96%" r="55%">
+    <stop offset="0%"   stop-color="#9050ff" stop-opacity="0.40"/>
+    <stop offset="100%" stop-color="#9050ff" stop-opacity="0"/>
+  </radialGradient>
+
+  <!-- Iride occhi -->
+  <radialGradient id="irisGrad" cx="36%" cy="33%" r="64%">
+    <stop offset="0%"   stop-color="#eddeff"/>
+    <stop offset="45%"  stop-color="#8a2ee0"/>
+    <stop offset="100%" stop-color="#2e0870"/>
+  </radialGradient>
+
+  <!-- Alone ambient attorno al polpo (halo molto morbido) -->
+  <filter id="halo" x="-45%" y="-45%" width="190%" height="190%">
+    <feGaussianBlur stdDeviation="22"/>
+  </filter>
+
+  <!-- Glow corpo (morbido, dà profondità) -->
+  <filter id="bodyGlow" x="-28%" y="-28%" width="156%" height="156%">
+    <feGaussianBlur stdDeviation="11" result="blur"/>
+    <feMerge>
+      <feMergeNode in="blur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+
+  <!-- Glow tentacoli (leggero) -->
+  <filter id="tentGlow" x="-18%" y="-10%" width="136%" height="120%">
+    <feGaussianBlur stdDeviation="4" result="blur"/>
+    <feMerge>
+      <feMergeNode in="blur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+
+  <!-- Micro-glow sucker -->
+  <filter id="suckGlow" x="-60%" y="-60%" width="220%" height="220%">
+    <feGaussianBlur stdDeviation="1.8" result="blur"/>
+    <feMerge>
+      <feMergeNode in="blur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+
+</defs>
+
+<!-- Sfondo -->
+<rect width="600" height="600" fill="url(#bgGrad)"/>
+
+<!-- Alone bioluminescente (dietro tutto) -->
+<ellipse cx="300" cy="262" rx="110" ry="125" fill="#6020d0" filter="url(#halo)" opacity="0.55"/>
+
+<!-- ══════════════════════════════════════
+     POLPO — centro corpo: (300, 258)
+══════════════════════════════════════ -->
+<g id="octopus">
+
+  <!-- ────────────────────────────────
+       TENTACOLI (davanti all'alone,
+       dietro al corpo)
+       Tecnica: 3 strati = ombra + corpo + highlight
+       Paths S-curve per fluidità organica
+  ──────────────────────────────────── -->
+
+  <!-- ═ T8: upper-left ═ -->
+  <g id="t8">
+    <!-- ombra/glow esterno -->
+    <path d="M 244,248 C 206,226 172,200 158,160 S 146,116 130,84"
+          fill="none" stroke="#3a0e88" stroke-width="19" stroke-linecap="round" opacity="0.45"/>
+    <!-- corpo tentacolo -->
+    <path d="M 244,248 C 206,226 172,200 158,160 S 146,116 130,84"
+          fill="none" stroke="#7828c8" stroke-width="11" stroke-linecap="round" filter="url(#tentGlow)"/>
+    <!-- highlight (stripe luminosa) -->
+    <path d="M 244,248 C 206,226 172,200 158,160 S 146,116 130,84"
+          fill="none" stroke="#cc78ff" stroke-width="4" stroke-linecap="round" opacity="0.65"/>
+    <!-- suckers -->
+    <g filter="url(#suckGlow)">
+      <circle cx="206" cy="218" r="5.5" fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="206" cy="218" r="3"   fill="#120330"/><circle cx="204" cy="216" r="1.2" fill="white" opacity="0.80"/>
+      <circle cx="178" cy="194" r="5"   fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="178" cy="194" r="2.7" fill="#120330"/><circle cx="176" cy="192" r="1.1" fill="white" opacity="0.78"/>
+      <circle cx="160" cy="163" r="4.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="160" cy="163" r="2.4" fill="#120330"/><circle cx="158" cy="161" r="1"   fill="white" opacity="0.75"/>
+      <circle cx="147" cy="130" r="4"   fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="147" cy="130" r="2.1" fill="#120330"/><circle cx="145" cy="128" r="0.9" fill="white" opacity="0.70"/>
+    </g>
+  </g>
+
+  <!-- ═ T1: bottom-far-left ═ -->
+  <g id="t1">
+    <path d="M 247,321 C 216,358 194,404 206,450 S 222,494 204,528"
+          fill="none" stroke="#3a0e88" stroke-width="19" stroke-linecap="round" opacity="0.45"/>
+    <path d="M 247,321 C 216,358 194,404 206,450 S 222,494 204,528"
+          fill="none" stroke="#7828c8" stroke-width="11" stroke-linecap="round" filter="url(#tentGlow)"/>
+    <path d="M 247,321 C 216,358 194,404 206,450 S 222,494 204,528"
+          fill="none" stroke="#cc78ff" stroke-width="4" stroke-linecap="round" opacity="0.62"/>
+    <g filter="url(#suckGlow)">
+      <circle cx="222" cy="360" r="5.5" fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="222" cy="360" r="3"   fill="#120330"/><circle cx="220" cy="358" r="1.2" fill="white" opacity="0.80"/>
+      <circle cx="200" cy="398" r="5"   fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="200" cy="398" r="2.7" fill="#120330"/><circle cx="198" cy="396" r="1.1" fill="white" opacity="0.78"/>
+      <circle cx="204" cy="438" r="4.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="204" cy="438" r="2.4" fill="#120330"/><circle cx="202" cy="436" r="1"   fill="white" opacity="0.75"/>
+      <circle cx="214" cy="475" r="4"   fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="214" cy="475" r="2.1" fill="#120330"/><circle cx="212" cy="473" r="0.9" fill="white" opacity="0.70"/>
+      <circle cx="206" cy="510" r="3.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="206" cy="510" r="1.8" fill="#120330"/><circle cx="204" cy="508" r="0.8" fill="white" opacity="0.62"/>
+    </g>
+  </g>
+
+  <!-- ═ T2: bottom-left ═ -->
+  <g id="t2">
+    <path d="M 267,340 C 248,382 242,428 256,470 S 270,508 255,544"
+          fill="none" stroke="#360c82" stroke-width="22" stroke-linecap="round" opacity="0.42"/>
+    <path d="M 267,340 C 248,382 242,428 256,470 S 270,508 255,544"
+          fill="none" stroke="#7525c0" stroke-width="13.5" stroke-linecap="round" filter="url(#tentGlow)"/>
+    <path d="M 267,340 C 248,382 242,428 256,470 S 270,508 255,544"
+          fill="none" stroke="#cc78ff" stroke-width="5" stroke-linecap="round" opacity="0.62"/>
+    <g filter="url(#suckGlow)">
+      <circle cx="250" cy="384" r="5.5" fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="250" cy="384" r="3"   fill="#120330"/><circle cx="248" cy="382" r="1.2" fill="white" opacity="0.80"/>
+      <circle cx="244" cy="425" r="5"   fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="244" cy="425" r="2.7" fill="#120330"/><circle cx="242" cy="423" r="1.1" fill="white" opacity="0.78"/>
+      <circle cx="255" cy="465" r="4.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="255" cy="465" r="2.4" fill="#120330"/><circle cx="253" cy="463" r="1"   fill="white" opacity="0.75"/>
+      <circle cx="263" cy="502" r="4"   fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="263" cy="502" r="2.1" fill="#120330"/><circle cx="261" cy="500" r="0.9" fill="white" opacity="0.70"/>
+      <circle cx="257" cy="535" r="3.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="257" cy="535" r="1.8" fill="#120330"/><circle cx="255" cy="533" r="0.8" fill="white" opacity="0.62"/>
+    </g>
+  </g>
+
+  <!-- ═ T3: center-left ═ -->
+  <g id="t3">
+    <path d="M 287,353 C 276,396 272,442 285,484 S 298,522 284,558"
+          fill="none" stroke="#320b80" stroke-width="24" stroke-linecap="round" opacity="0.40"/>
+    <path d="M 287,353 C 276,396 272,442 285,484 S 298,522 284,558"
+          fill="none" stroke="#7222bc" stroke-width="15" stroke-linecap="round" filter="url(#tentGlow)"/>
+    <path d="M 287,353 C 276,396 272,442 285,484 S 298,522 284,558"
+          fill="none" stroke="#cc78ff" stroke-width="5.5" stroke-linecap="round" opacity="0.60"/>
+    <g filter="url(#suckGlow)">
+      <circle cx="278" cy="398" r="6"   fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="278" cy="398" r="3.3" fill="#120330"/><circle cx="276" cy="396" r="1.3" fill="white" opacity="0.80"/>
+      <circle cx="274" cy="440" r="5.5" fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="274" cy="440" r="3"   fill="#120330"/><circle cx="272" cy="438" r="1.2" fill="white" opacity="0.78"/>
+      <circle cx="284" cy="481" r="5"   fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="284" cy="481" r="2.7" fill="#120330"/><circle cx="282" cy="479" r="1.1" fill="white" opacity="0.75"/>
+      <circle cx="292" cy="519" r="4.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="292" cy="519" r="2.4" fill="#120330"/><circle cx="290" cy="517" r="1"   fill="white" opacity="0.70"/>
+      <circle cx="286" cy="552" r="4"   fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="286" cy="552" r="2.1" fill="#120330"/><circle cx="284" cy="550" r="0.9" fill="white" opacity="0.62"/>
+    </g>
+  </g>
+
+  <!-- ═ T4: center-right ═ -->
+  <g id="t4">
+    <path d="M 313,353 C 324,396 328,442 315,484 S 302,522 316,558"
+          fill="none" stroke="#320b80" stroke-width="24" stroke-linecap="round" opacity="0.40"/>
+    <path d="M 313,353 C 324,396 328,442 315,484 S 302,522 316,558"
+          fill="none" stroke="#7222bc" stroke-width="15" stroke-linecap="round" filter="url(#tentGlow)"/>
+    <path d="M 313,353 C 324,396 328,442 315,484 S 302,522 316,558"
+          fill="none" stroke="#cc78ff" stroke-width="5.5" stroke-linecap="round" opacity="0.60"/>
+    <g filter="url(#suckGlow)">
+      <circle cx="322" cy="398" r="6"   fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="322" cy="398" r="3.3" fill="#120330"/><circle cx="320" cy="396" r="1.3" fill="white" opacity="0.80"/>
+      <circle cx="326" cy="440" r="5.5" fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="326" cy="440" r="3"   fill="#120330"/><circle cx="324" cy="438" r="1.2" fill="white" opacity="0.78"/>
+      <circle cx="316" cy="481" r="5"   fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="316" cy="481" r="2.7" fill="#120330"/><circle cx="314" cy="479" r="1.1" fill="white" opacity="0.75"/>
+      <circle cx="308" cy="519" r="4.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="308" cy="519" r="2.4" fill="#120330"/><circle cx="306" cy="517" r="1"   fill="white" opacity="0.70"/>
+      <circle cx="314" cy="552" r="4"   fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="314" cy="552" r="2.1" fill="#120330"/><circle cx="312" cy="550" r="0.9" fill="white" opacity="0.62"/>
+    </g>
+  </g>
+
+  <!-- ═ T5: bottom-right ═ -->
+  <g id="t5">
+    <path d="M 333,340 C 352,382 358,428 344,470 S 330,508 345,544"
+          fill="none" stroke="#360c82" stroke-width="22" stroke-linecap="round" opacity="0.42"/>
+    <path d="M 333,340 C 352,382 358,428 344,470 S 330,508 345,544"
+          fill="none" stroke="#7525c0" stroke-width="13.5" stroke-linecap="round" filter="url(#tentGlow)"/>
+    <path d="M 333,340 C 352,382 358,428 344,470 S 330,508 345,544"
+          fill="none" stroke="#cc78ff" stroke-width="5" stroke-linecap="round" opacity="0.62"/>
+    <g filter="url(#suckGlow)">
+      <circle cx="350" cy="384" r="5.5" fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="350" cy="384" r="3"   fill="#120330"/><circle cx="348" cy="382" r="1.2" fill="white" opacity="0.80"/>
+      <circle cx="356" cy="425" r="5"   fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="356" cy="425" r="2.7" fill="#120330"/><circle cx="354" cy="423" r="1.1" fill="white" opacity="0.78"/>
+      <circle cx="345" cy="465" r="4.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="345" cy="465" r="2.4" fill="#120330"/><circle cx="343" cy="463" r="1"   fill="white" opacity="0.75"/>
+      <circle cx="337" cy="502" r="4"   fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="337" cy="502" r="2.1" fill="#120330"/><circle cx="335" cy="500" r="0.9" fill="white" opacity="0.70"/>
+      <circle cx="343" cy="535" r="3.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="343" cy="535" r="1.8" fill="#120330"/><circle cx="341" cy="533" r="0.8" fill="white" opacity="0.62"/>
+    </g>
+  </g>
+
+  <!-- ═ T6: bottom-far-right ═ -->
+  <g id="t6">
+    <path d="M 353,321 C 384,358 406,404 394,450 S 378,494 396,528"
+          fill="none" stroke="#3a0e88" stroke-width="19" stroke-linecap="round" opacity="0.45"/>
+    <path d="M 353,321 C 384,358 406,404 394,450 S 378,494 396,528"
+          fill="none" stroke="#7828c8" stroke-width="11" stroke-linecap="round" filter="url(#tentGlow)"/>
+    <path d="M 353,321 C 384,358 406,404 394,450 S 378,494 396,528"
+          fill="none" stroke="#cc78ff" stroke-width="4" stroke-linecap="round" opacity="0.62"/>
+    <g filter="url(#suckGlow)">
+      <circle cx="378" cy="360" r="5.5" fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="378" cy="360" r="3"   fill="#120330"/><circle cx="376" cy="358" r="1.2" fill="white" opacity="0.80"/>
+      <circle cx="400" cy="398" r="5"   fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="400" cy="398" r="2.7" fill="#120330"/><circle cx="398" cy="396" r="1.1" fill="white" opacity="0.78"/>
+      <circle cx="396" cy="438" r="4.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="396" cy="438" r="2.4" fill="#120330"/><circle cx="394" cy="436" r="1"   fill="white" opacity="0.75"/>
+      <circle cx="386" cy="476" r="4"   fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="386" cy="476" r="2.1" fill="#120330"/><circle cx="384" cy="474" r="0.9" fill="white" opacity="0.70"/>
+      <circle cx="394" cy="510" r="3.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="394" cy="510" r="1.8" fill="#120330"/><circle cx="392" cy="508" r="0.8" fill="white" opacity="0.62"/>
+    </g>
+  </g>
+
+  <!-- ═ T7: upper-right ═ -->
+  <g id="t7">
+    <path d="M 356,248 C 394,226 428,200 442,160 S 454,116 470,84"
+          fill="none" stroke="#3a0e88" stroke-width="19" stroke-linecap="round" opacity="0.45"/>
+    <path d="M 356,248 C 394,226 428,200 442,160 S 454,116 470,84"
+          fill="none" stroke="#7828c8" stroke-width="11" stroke-linecap="round" filter="url(#tentGlow)"/>
+    <path d="M 356,248 C 394,226 428,200 442,160 S 454,116 470,84"
+          fill="none" stroke="#cc78ff" stroke-width="4" stroke-linecap="round" opacity="0.65"/>
+    <g filter="url(#suckGlow)">
+      <circle cx="394" cy="218" r="5.5" fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="394" cy="218" r="3"   fill="#120330"/><circle cx="392" cy="216" r="1.2" fill="white" opacity="0.80"/>
+      <circle cx="424" cy="194" r="5"   fill="none" stroke="#ddb0ff" stroke-width="1.6"/><circle cx="424" cy="194" r="2.7" fill="#120330"/><circle cx="422" cy="192" r="1.1" fill="white" opacity="0.78"/>
+      <circle cx="440" cy="163" r="4.5" fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="440" cy="163" r="2.4" fill="#120330"/><circle cx="438" cy="161" r="1"   fill="white" opacity="0.75"/>
+      <circle cx="452" cy="130" r="4"   fill="none" stroke="#ddb0ff" stroke-width="1.5"/><circle cx="452" cy="130" r="2.1" fill="#120330"/><circle cx="450" cy="128" r="0.9" fill="white" opacity="0.70"/>
+    </g>
+  </g>
+
+  <!-- ════════════════════════
+       CORPO
+  ════════════════════════ -->
+
+  <!-- Corpo principale con glow -->
+  <ellipse id="body" cx="300" cy="258" rx="70" ry="88"
+           fill="url(#bodyGrad)" filter="url(#bodyGlow)"/>
+
+  <!-- Rim light (luce bioluminescente dal basso) -->
+  <ellipse cx="300" cy="258" rx="70" ry="88" fill="url(#rimGrad)"/>
+
+  <!-- Chromatophore texture — macchie organiche sottili -->
+  <circle cx="286" cy="230" r="9"  fill="#9840e8" opacity="0.16"/>
+  <circle cx="320" cy="245" r="7"  fill="#9840e8" opacity="0.13"/>
+  <circle cx="270" cy="265" r="5"  fill="#b060ff" opacity="0.11"/>
+  <circle cx="318" cy="278" r="10" fill="#8228d0" opacity="0.15"/>
+  <circle cx="296" cy="298" r="8"  fill="#7020c0" opacity="0.13"/>
+  <circle cx="258" cy="250" r="4.5" fill="#b060ff" opacity="0.09"/>
+  <circle cx="340" cy="260" r="5.5" fill="#9040e8" opacity="0.11"/>
+  <circle cx="282" cy="308" r="6"  fill="#7020b8" opacity="0.10"/>
+  <circle cx="310" cy="220" r="5"  fill="#c070ff" opacity="0.09"/>
+
+  <!-- Highlight mantle: riflesso di luce sul mantello -->
+  <ellipse cx="278" cy="212" rx="30" ry="22" fill="#f8eeff" opacity="0.14"/>
+  <ellipse cx="290" cy="206" rx="13" ry="9"  fill="white"   opacity="0.07"/>
+
+  <!-- Ventre: sfumatura scura verso il basso -->
+  <ellipse cx="300" cy="322" rx="48" ry="24" fill="#0e0030" opacity="0.30"/>
+
+  <!-- ════════════════════════
+       OCCHI
+  ════════════════════════ -->
+
+  <!-- Sinistro -->
+  <!-- anello luminescente esterno -->
+  <circle cx="272" cy="258" r="19" fill="#9040e0" opacity="0.18"/>
+  <!-- sclera -->
+  <circle cx="272" cy="258" r="16" fill="url(#irisGrad)"/>
+  <!-- pupilla -->
+  <circle cx="272" cy="258" r="9.5" fill="#07001e"/>
+  <!-- riflesso principale -->
+  <circle cx="276" cy="254" r="4.2" fill="white" opacity="0.96"/>
+  <!-- riflesso secondario più piccolo -->
+  <circle cx="280" cy="261" r="1.6" fill="white" opacity="0.55"/>
+
+  <!-- Destro -->
+  <circle cx="328" cy="258" r="19" fill="#9040e0" opacity="0.18"/>
+  <circle cx="328" cy="258" r="16" fill="url(#irisGrad)"/>
+  <circle cx="328" cy="258" r="9.5" fill="#07001e"/>
+  <circle cx="332" cy="254" r="4.2" fill="white" opacity="0.96"/>
+  <circle cx="336" cy="261" r="1.6" fill="white" opacity="0.55"/>
+
+</g><!-- /octopus -->
+</svg>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+  const OX      = '300 258';
+  const tentIds = ['#t1','#t2','#t3','#t4','#t5','#t6','#t7','#t8'];
+
+  gsap.set(tentIds,   { svgOrigin: OX });
+  gsap.set('#octopus',{ svgOrigin: OX });
+
+  const tl = gsap.timeline({ repeat: -1 });
+
+  // ── Fase 0: respiro idle ──
+  tl.to('#body', { scaleX: 1.04, scaleY: 0.97, duration: 0.80, ease: 'sine.inOut', svgOrigin: '300 258' })
+    .to('#body', { scaleX: 1,    scaleY: 1,    duration: 0.80, ease: 'sine.inOut', svgOrigin: '300 258' });
+
+  // ── Fase 1: APERTURA ──
+  tl.to('#t1', { rotation: -24, duration: 1.1, ease: 'power2.inOut' }, '+=0.15')
+    .to('#t2', { rotation: -17, duration: 1.1, ease: 'power2.inOut' }, '<0.04')
+    .to('#t3', { rotation:  -9, duration: 1.1, ease: 'power2.inOut' }, '<0.04')
+    .to('#t4', { rotation:   9, duration: 1.1, ease: 'power2.inOut' }, '<0.04')
+    .to('#t5', { rotation:  17, duration: 1.1, ease: 'power2.inOut' }, '<0.04')
+    .to('#t6', { rotation:  24, duration: 1.1, ease: 'power2.inOut' }, '<0.04')
+    .to('#t7', { rotation:  22, duration: 1.1, ease: 'power2.inOut' }, '<0.04')
+    .to('#t8', { rotation: -22, duration: 1.1, ease: 'power2.inOut' }, '<0.04');
+
+  tl.to({}, { duration: 0.45 });
+
+  // ── Fase 2: CHIUSURA ──
+  tl.to('#t1', { rotation:  38, duration: 0.9, ease: 'power2.inOut' }, '+=0')
+    .to('#t2', { rotation:  28, duration: 0.9, ease: 'power2.inOut' }, '<0.04')
+    .to('#t3', { rotation:  15, duration: 0.9, ease: 'power2.inOut' }, '<0.04')
+    .to('#t4', { rotation: -15, duration: 0.9, ease: 'power2.inOut' }, '<0.04')
+    .to('#t5', { rotation: -28, duration: 0.9, ease: 'power2.inOut' }, '<0.04')
+    .to('#t6', { rotation: -38, duration: 0.9, ease: 'power2.inOut' }, '<0.04')
+    .to('#t7', { rotation: -32, duration: 0.9, ease: 'power2.inOut' }, '<0.04')
+    .to('#t8', { rotation:  32, duration: 0.9, ease: 'power2.inOut' }, '<0.04');
+
+  // ── Fase 3: ALLONTANAMENTO ──
+  tl.to('#octopus', {
+    scale: 0.04, y: -55, opacity: 0,
+    duration: 1.75, ease: 'power3.in'
+  }, '+=0.25');
+
+  // Reset e pausa prima del loop
+  tl.set('#octopus', { scale: 1, y: 0, opacity: 1 });
+  tl.set(tentIds,    { rotation: 0 });
+  tl.to({}, { duration: 0.4 });
+</script>
+
+</body>
+</html>

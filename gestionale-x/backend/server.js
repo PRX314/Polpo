@@ -1275,10 +1275,19 @@ async function checkAndNotifyDeadlines() {
   }
 }
 
-// Run deadline check every hour
-setInterval(checkAndNotifyDeadlines, 60 * 60 * 1000)
-// And once at startup (after 30s to let things initialize)
-setTimeout(checkAndNotifyDeadlines, 30000)
+// DISATTIVATO — le notifiche le manda ora la Netlify Scheduled Function
+// (polpopoly-hub/netlify/functions/sveglie.mjs).
+//
+// Due motivi. Il primo: questo processo si addormenta dopo un quarto d'ora di
+// inattivita', quindi un intervallo di un'ora non arrivava quasi mai a
+// scattare. Il secondo: girava sulla stessa collection push_subscriptions,
+// perche' senza memoria di cosa aveva gia' mandato rispediva la stessa
+// scadenza a ogni giro. Riattivarlo adesso significherebbe notifiche doppie.
+//
+// Il codice qui sopra resta come riferimento, ma non parte piu' da solo.
+// setInterval(checkAndNotifyDeadlines, 60 * 60 * 1000)
+// setTimeout(checkAndNotifyDeadlines, 30000)
+void checkAndNotifyDeadlines
 
 const PORT = process.env.PORT || 5032
 app.listen(PORT, () => {

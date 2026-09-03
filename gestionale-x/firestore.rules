@@ -17,6 +17,12 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
 
+    // Appuntamenti del calendario: data, ora ed eventuale sveglia
+    match /events/{eventId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+
     // Un solo documento per utente, id documento == uid
     match /routines/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;

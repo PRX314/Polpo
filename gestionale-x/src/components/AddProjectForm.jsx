@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { addProject, updateProject } from '../firebaseService';
 import { ITEM_TYPES, ITEM_TYPE_LIST, createSectionsFromTemplate, getTypeInfo } from '../itemTypes';
 import { uploadImage, getThumbnail } from '../services/imageService';
+import { ANTICIPI, daSelect, aSelect } from '../sveglie';
 
 const AddProjectForm = ({ onClose, onSuccess, onError, project, initialType }) => {
   const isEdit = !!project;
@@ -12,6 +13,10 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project, initialType }) =
     status: project?.status || 'pending',
     tags: project?.tags?.join(', ') || '',
     deadline: project?.deadline || '',
+    // Una scadenza con un'ora puo' avere una sveglia; senza ora finisce solo
+    // nel riepilogo del mattino, come si comportava prima.
+    deadlineTime: project?.deadlineTime || '',
+    reminder: project?.reminder ?? null,
     vaultNote: project?.vaultNote || '',
     links: project?.links || [],
     roadmap: project?.roadmap || '',
@@ -57,6 +62,10 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project, initialType }) =
         status: formData.status,
         tags: tagsArray,
         deadline: formData.deadline || null,
+        // Ora e sveglia esistono solo appese a una data: senza, la function non
+        // avrebbe un momento a cui suonare.
+        deadlineTime: formData.deadline ? (formData.deadlineTime || '') : '',
+        reminder: formData.deadline && formData.deadlineTime ? formData.reminder : null,
         vaultNote: formData.vaultNote.trim() || null,
         links: formData.links,
         roadmap: formData.roadmap,
@@ -152,7 +161,6 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project, initialType }) =
 
   // Image upload
   const [uploadingImage, setUploadingImage] = useState(null) // sectionIndex or null
-  const fileInputRef = useRef(null)
 
   const handleImageUpload = async (sectionIndex, files) => {
     if (!files || files.length === 0) return
@@ -262,6 +270,37 @@ const AddProjectForm = ({ onClose, onSuccess, onError, project, initialType }) =
               <input type="date" id="deadline" name="deadline" value={formData.deadline} onChange={handleChange} />
             </div>
           </div>
+
+          {formData.deadline && (
+            <div className="form-row-2">
+              <div className="form-group">
+                <label htmlFor="deadlineTime">🕒 A che ora</label>
+                <input
+                  type="time" id="deadlineTime" name="deadlineTime"
+                  value={formData.deadlineTime} onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="reminder">⏰ Sveglia</label>
+                <select
+                  id="reminder"
+                  value={aSelect(formData.reminder)}
+                  disabled={!formData.deadlineTime}
+                  onChange={(e) => setFormData(f => ({ ...f, reminder: daSelect(e.target.value) }))}
+                >
+                  {ANTICIPI.map(a => (
+                    <option key={String(a.value)} value={aSelect(a.value)}>{a.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+          {formData.deadline && !formData.deadlineTime && (
+            <p className="form-help">
+              Senza un&apos;ora la scadenza finisce nel riepilogo del mattino. Mettine una
+              per farla suonare a un momento preciso.
+            </p>
+          )}
 
           <div className="form-group">
             <label htmlFor="tags">Tag (separati da virgola)</label>

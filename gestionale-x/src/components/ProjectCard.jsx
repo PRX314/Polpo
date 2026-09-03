@@ -1,5 +1,6 @@
 import StatusBadge from './ui/StatusBadge'
 import { ScanDot } from './ui/ScanInfo'
+import { linkVault, haVault } from '../vault'
 import { getTypeInfo } from '../itemTypes'
 
 const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onTogglePin, onArchive, onDuplicate, compact }) => {
@@ -127,9 +128,9 @@ const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onT
                 <span style={{ fontSize: '1.1em' }}>↗</span>
               </a>
             ))}
-            {project.vaultNote && (
+            {haVault(project) && (
               <a
-                href={`obsidian://open?vault=Vault&file=20-Projects%2F${encodeURIComponent(project.vaultNote)}`}
+                href={linkVault(project)}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
@@ -153,10 +154,10 @@ const ProjectCard = ({ project, onSelect, getProjectNotes, onEdit, onDelete, onT
         </div>
       )}
 
-      {!project.links?.length && project.vaultNote && (
+      {!project.links?.length && haVault(project) && (
         <div className="mb-3" style={{ borderTop: '1px solid #e9ecef', paddingTop: '0.75rem' }}>
           <a
-            href={`obsidian://open?vault=Vault&file=20-Projects%2F${encodeURIComponent(project.vaultNote)}`}
+            href={linkVault(project)}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}

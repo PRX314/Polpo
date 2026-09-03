@@ -1,56 +1,51 @@
-// Service Worker for Gestionale Polpo - Push Notifications
+// Service worker del gestionale: riceve le push e apre l'app al tocco.
+//
+// L'icona di ripiego punta a icon-192.png dentro lo scope. Prima era
+// 'vite.svg' con il percorso assoluto, che sotto /gestionale/ non esiste: le
+// notifiche arrivavano con il quadratino grigio del browser al posto del polpo.
 
-self.addEventListener('install', (event) => {
-  self.skipWaiting()
-})
+const ICONA = self.registration.scope + 'icon-192.png'
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim())
-})
+self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()))
 
-// Handle push notifications
 self.addEventListener('push', (event) => {
   if (!event.data) return
 
-  const data = event.data.json()
-
-  const options = {
-    body: data.body || '',
-    icon: data.icon || self.registration.scope + 'vite.svg',
-    badge: data.badge || self.registration.scope + 'vite.svg',
-    vibrate: [200, 100, 200],
-    tag: data.tag || 'polpo-notification',
-    renotify: true,
-    actions: [
-      { action: 'open', title: 'Apri' },
-      { action: 'close', title: 'Chiudi' }
-    ],
-    data: {
-      url: data.url || self.registration.scope
-    }
+  let data = {}
+  try {
+    data = event.data.json()
+  } catch {
+    data = { body: event.data.text() }
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || '🐙 Gestionale Polpo', options)
+    self.registration.showNotification(data.title || '🐙 Gestionale Polpo', {
+      body: data.body || '',
+      icon: data.icon || ICONA,
+      badge: data.badge || ICONA,
+      vibrate: [200, 100, 200],
+      tag: data.tag || 'polpo',
+      renotify: true,
+      data: { url: data.url || self.registration.scope }
+    })
   )
 })
 
-// Handle notification click
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-
-  if (event.action === 'close') return
+  const destinazione = event.notification.data?.url || self.registration.scope
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
-      // If already open, focus it
-      for (const client of clients) {
-        if (client.url.includes(self.location.origin)) {
-          return client.focus()
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((finestre) => {
+      // Se l'app e' gia' aperta la portiamo in primo piano invece di aprirne
+      // un'altra copia, e la mandiamo dove punta la notifica.
+      for (const f of finestre) {
+        if (f.url.startsWith(self.registration.scope)) {
+          return f.focus().then((c) => (c.navigate ? c.navigate(destinazione) : c))
         }
       }
-      // Otherwise open new window
-      return self.clients.openWindow(event.notification.data?.url || self.registration.scope)
+      return self.clients.openWindow(destinazione)
     })
   )
 })

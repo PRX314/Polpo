@@ -95,7 +95,9 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
   const [searchConv, setSearchConv] = useState('')
   const [error, setError] = useState('')
   const [copiedIdx, setCopiedIdx] = useState(null)
-  const [contextStats, setContextStats] = useState(null)
+  // Le statistiche di contesto vengono scritte ma non mostrate da nessuna
+  // parte: impalcatura di un pannello mai finito, lasciata collegata.
+  const [, setContextStats] = useState(null)
   // Pannello azioni
   const [pendingActions, setPendingActions] = useState([])
   const [executingActions, setExecutingActions] = useState(false)
@@ -463,7 +465,7 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
             </div>
             <div className="chat-sidebar-list">
               {filteredConvs.length === 0 ? (
-                <div className="chat-sidebar-empty">{searchConv ? 'Nessun risultato' : 'Nessuna conversazione'}</div>
+                <div className="chat-sidebar-empty">{searchConv ? 'Nessun risultato' : 'Ancora nessuna chat'}</div>
               ) : filteredConvs.map(conv => (
                 <div key={conv.id} className={`chat-sidebar-item ${currentConvId === conv.id ? 'active' : ''}`} onClick={() => loadConversation(conv)}>
                   <div className="chat-sidebar-item-title">{conv.title}</div>

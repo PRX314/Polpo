@@ -1,45 +1,61 @@
-// Notification Service - Push notifications + local fallback
+// Notifiche del gestionale.
+//
+// Due canali, mai insieme:
+//
+//   push   - le manda la Netlify Scheduled Function anche ad app chiusa. E' il
+//            canale vero, l'unico che serve a qualcosa sul telefono.
+//   locale - ripiego per il browser sul computer quando la push non e' attiva:
+//            funziona solo finche' la scheda resta aperta.
+//
+// Le chiamate vanno alle function di Netlify, sullo stesso dominio del
+// gestionale. Prima andavano al server su Render, che dorme: il risveglio
+// richiede quasi un minuto, la fetch scadeva prima e l'iscrizione falliva
+// senza dire niente. Render adesso serve solo alla chat AI.
+
 import { auth } from '../firebase'
 
-const API_URL = import.meta.env.VITE_AI_API_URL || ''
-const NOTIFICATION_CHECK_INTERVAL = 60 * 60 * 1000
-const NOTIFIED_KEY = 'polpo_notified_deadlines'
+const FN = '/.netlify/functions'
+const INTERVALLO_CONTROLLO = 60 * 60 * 1000
+const CHIAVE_INVIATE = 'polpo_notified_deadlines'
+const ICONA = `${import.meta.env.BASE_URL}icon-192.png`
+
+// Chiave pubblica VAPID: e' pubblica per definizione (finisce comunque nel
+// bundle servito a chiunque), quindi sta qui invece di costare una chiamata di
+// rete al server addormentato solo per leggerla.
+const VAPID_PUBLIC = 'BEluLj80kUivOmje8jrT0rgeuJHICXPhhxF-lfFM0Yna8ZMvy8__r8BKt4G8CnM4r4KObZaYh6oXMyiB1pjSJEQ'
 
 // ============================================================================
-// LOCAL NOTIFICATION FALLBACK (when push not available)
+// STATO DEL DISPOSITIVO
 // ============================================================================
 
-function getNotified() {
-  try {
-    return JSON.parse(localStorage.getItem(NOTIFIED_KEY) || '{}')
-  } catch {
-    return {}
-  }
+export const isIOS = () =>
+  /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+  // gli iPad recenti si spacciano per Mac: il touch li smaschera
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+
+export const isInstallata = () =>
+  window.navigator.standalone === true ||
+  window.matchMedia('(display-mode: standalone)').matches
+
+export function getNotificationPermission() {
+  if (!('Notification' in window)) return 'unsupported'
+  return Notification.permission
 }
 
-function markNotified(key) {
-  const notified = getNotified()
-  notified[key] = Date.now()
-  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-  for (const k in notified) {
-    if (notified[k] < weekAgo) delete notified[k]
-  }
-  localStorage.setItem(NOTIFIED_KEY, JSON.stringify(notified))
-}
-
-function wasNotified(key) {
-  return !!getNotified()[key]
-}
-
-function showLocalNotification(title, body, tag) {
-  if (Notification.permission !== 'granted') return
-  const n = new Notification(title, { body, tag, requireInteraction: false })
-  n.onclick = () => { window.focus(); n.close() }
-  setTimeout(() => n.close(), 10000)
+// Perche' le notifiche non si possono attivare, quando non si possono.
+// Su iPhone Apple le concede solo alle app aggiunte alla schermata Home e
+// aperte dalla loro icona: da una scheda Safari, o da un collegamento, non
+// esiste alcun modo di riceverle.
+export function ostacolo() {
+  if (isIOS() && !isInstallata()) return 'installa-ios'
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return 'non-supportato'
+  if (!('PushManager' in window)) return 'niente-push'
+  if (Notification.permission === 'denied') return 'negato'
+  return null
 }
 
 // ============================================================================
-// PUSH SUBSCRIPTION (Service Worker + Web Push)
+// SERVICE WORKER
 // ============================================================================
 
 let swRegistration = null
@@ -47,185 +63,199 @@ let swRegistration = null
 export async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return null
   try {
-    // percorso relativo alla base (funziona sia su / che su /gestionale/)
+    // percorso relativo alla base: vale sia in locale che sotto /gestionale/
     swRegistration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
-    console.log('Service Worker registrato')
     return swRegistration
   } catch (err) {
-    console.error('Errore registrazione SW:', err)
+    console.error('Registrazione service worker fallita:', err)
     return null
   }
 }
 
+async function registrazione() {
+  if (swRegistration) return swRegistration
+  if (!('serviceWorker' in navigator)) return null
+  swRegistration = (await navigator.serviceWorker.getRegistration()) || await registerServiceWorker()
+  return swRegistration
+}
+
+// ============================================================================
+// PUSH
+// ============================================================================
+
+async function token() {
+  return auth.currentUser?.getIdToken()
+}
+
 export async function subscribeToPush() {
-  if (!swRegistration) await registerServiceWorker()
-  if (!swRegistration) return false
+  const reg = await registrazione()
+  if (!reg) throw new Error('Service worker non disponibile')
 
-  try {
-    // Get VAPID key from backend
-    const vapidRes = await fetch(`${API_URL}/api/push/vapid-key`)
-    const { publicKey } = await vapidRes.json()
-
-    // Convert VAPID key
-    const applicationServerKey = urlBase64ToUint8Array(publicKey)
-
-    // Subscribe to push
-    const subscription = await swRegistration.pushManager.subscribe({
+  // Se un'iscrizione c'e' gia' la riusiamo: iscriversi due volte con la stessa
+  // chiave e' inutile, e su iOS a volte fallisce del tutto.
+  const subscription = await reg.pushManager.getSubscription()
+    || await reg.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey
+      applicationServerKey: base64ToUint8Array(VAPID_PUBLIC)
     })
 
-    // Send subscription to backend
-    const token = await auth.currentUser?.getIdToken()
-    if (!token) return false
+  const t = await token()
+  if (!t) throw new Error('Sessione scaduta, rientra e riprova')
 
-    await fetch(`${API_URL}/api/push/subscribe`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ subscription: subscription.toJSON() })
-    })
-
-    console.log('Push subscription attiva')
-    return true
-  } catch (err) {
-    console.error('Errore push subscribe:', err)
-    return false
+  const res = await fetch(`${FN}/push-subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` },
+    body: JSON.stringify({ subscription: subscription.toJSON() })
+  })
+  if (!res.ok) {
+    const { error } = await res.json().catch(() => ({}))
+    throw new Error(error || `Il server ha risposto ${res.status}`)
   }
+  return true
 }
 
 export async function unsubscribeFromPush() {
-  if (!swRegistration) return
-  try {
-    const subscription = await swRegistration.pushManager.getSubscription()
-    if (subscription) {
-      await subscription.unsubscribe()
-    }
+  const reg = await registrazione()
+  const subscription = await reg?.pushManager.getSubscription()
+  if (subscription) await subscription.unsubscribe()
 
-    const token = await auth.currentUser?.getIdToken()
-    if (token) {
-      await fetch(`${API_URL}/api/push/unsubscribe`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
-    }
-  } catch (err) {
-    console.error('Errore unsubscribe:', err)
+  const t = await token()
+  if (t) {
+    await fetch(`${FN}/push-unsubscribe`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${t}` }
+    }).catch(() => {})
   }
 }
 
 export async function isPushSubscribed() {
-  if (!swRegistration) await registerServiceWorker()
-  if (!swRegistration) return false
-  const subscription = await swRegistration.pushManager.getSubscription()
-  return !!subscription
+  const reg = await registrazione()
+  if (!reg?.pushManager) return false
+  return !!(await reg.pushManager.getSubscription())
 }
-
-// ============================================================================
-// PERMISSION & SETUP
-// ============================================================================
 
 export async function requestNotificationPermission() {
   if (!('Notification' in window)) return false
   if (Notification.permission === 'granted') return true
   if (Notification.permission === 'denied') return false
-  const result = await Notification.requestPermission()
-  return result === 'granted'
+  return (await Notification.requestPermission()) === 'granted'
 }
 
-export function getNotificationPermission() {
-  if (!('Notification' in window)) return 'unsupported'
-  return Notification.permission
-}
-
-// Full setup: request permission + register SW + subscribe to push
+// Attivazione completa: permesso -> service worker -> iscrizione.
+// Va chiamata da un gesto dell'utente: quasi tutti i browser rifiutano di
+// chiedere il permesso fuori da un click.
 export async function setupPushNotifications() {
-  const granted = await requestNotificationPermission()
-  if (!granted) return false
-
+  if (!(await requestNotificationPermission())) {
+    throw new Error('Permesso negato')
+  }
   await registerServiceWorker()
-  const subscribed = await subscribeToPush()
-  return subscribed
+  return subscribeToPush()
+}
+
+// Chiede al server di mandare subito una notifica, per verificare la catena
+// senza aspettare una scadenza vera.
+export async function inviaProva() {
+  const t = await token()
+  if (!t) throw new Error('Sessione scaduta')
+  const res = await fetch(`${FN}/push-prova`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${t}` }
+  })
+  if (!res.ok) {
+    const { error } = await res.json().catch(() => ({}))
+    throw new Error(error || `Il server ha risposto ${res.status}`)
+  }
+  return true
 }
 
 // ============================================================================
-// LOCAL DEADLINE CHECKER (fallback when push not working)
+// RIPIEGO LOCALE (solo browser sul computer, solo a scheda aperta)
 // ============================================================================
+
+function inviate() {
+  try { return JSON.parse(localStorage.getItem(CHIAVE_INVIATE) || '{}') } catch { return {} }
+}
+
+function segna(chiave) {
+  const m = inviate()
+  m[chiave] = Date.now()
+  const settimanaFa = Date.now() - 7 * 86400000
+  for (const k in m) if (m[k] < settimanaFa) delete m[k]
+  localStorage.setItem(CHIAVE_INVIATE, JSON.stringify(m))
+}
+
+// new Notification() non esiste su iOS nemmeno da app installata: li' l'unica
+// via e' il service worker. Proviamo sempre prima quella.
+async function mostraLocale(title, body, tag) {
+  if (getNotificationPermission() !== 'granted') return
+  const reg = await registrazione()
+  if (reg?.showNotification) {
+    await reg.showNotification(title, { body, tag, icon: ICONA, badge: ICONA })
+    return
+  }
+  const n = new Notification(title, { body, tag })
+  n.onclick = () => { window.focus(); n.close() }
+  setTimeout(() => n.close(), 10000)
+}
+
+const oggiIso = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 export function checkDeadlines(projects) {
-  if (Notification.permission !== 'granted') return
+  if (getNotificationPermission() !== 'granted') return
+  const oggi = oggiIso()
 
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
+  // Archiviati e completati non sono scadenze: segnalarli era il difetto che
+  // riempiva anche il pannello "Scaduti" del calendario.
+  const attivi = projects.filter(p => !p.archived && p.status !== 'completed')
 
-  projects.forEach(project => {
-    if (project.deadline) {
-      const deadline = new Date(project.deadline)
-      deadline.setHours(0, 0, 0, 0)
-      const diffDays = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24))
-
-      if (diffDays === 0 && !wasNotified(`project-today-${project.id}`)) {
-        showLocalNotification('⚠️ Scadenza oggi!', `"${project.name}" scade oggi!`, `project-today-${project.id}`)
-        markNotified(`project-today-${project.id}`)
-      } else if (diffDays === 1 && !wasNotified(`project-tomorrow-${project.id}`)) {
-        showLocalNotification('📅 Scadenza domani', `"${project.name}" scade domani`, `project-tomorrow-${project.id}`)
-        markNotified(`project-tomorrow-${project.id}`)
-      } else if (diffDays === 3 && !wasNotified(`project-3days-${project.id}`)) {
-        showLocalNotification('📅 Tra 3 giorni', `"${project.name}" scade tra 3 giorni`, `project-3days-${project.id}`)
-        markNotified(`project-3days-${project.id}`)
-      } else if (diffDays < 0 && !wasNotified(`project-overdue-${project.id}`)) {
-        showLocalNotification('🚨 Scaduto!', `"${project.name}" era in scadenza ${Math.abs(diffDays)}g fa`, `project-overdue-${project.id}`)
-        markNotified(`project-overdue-${project.id}`)
-      }
+  const righe = []
+  for (const p of attivi) {
+    if (p.deadline === oggi) righe.push(`\u{1F4C1} ${p.name}`)
+    for (const todo of p.todos || []) {
+      if (!todo.completed && todo.deadline === oggi) righe.push(`✅ ${todo.text}`)
     }
+  }
+  if (!righe.length) return
 
-    (project.todos || []).forEach((todo, i) => {
-      if (todo.deadline && !todo.completed) {
-        const deadline = new Date(todo.deadline)
-        deadline.setHours(0, 0, 0, 0)
-        const diffDays = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24))
-        const key = `todo-${project.id}-${i}`
-
-        if (diffDays === 0 && !wasNotified(`${key}-today`)) {
-          showLocalNotification('✅ Task oggi!', `"${todo.text}" (${project.name})`, `${key}-today`)
-          markNotified(`${key}-today`)
-        } else if (diffDays === 1 && !wasNotified(`${key}-tomorrow`)) {
-          showLocalNotification('✅ Task domani', `"${todo.text}" (${project.name})`, `${key}-tomorrow`)
-          markNotified(`${key}-tomorrow`)
-        }
-      }
-    })
-  })
+  // Un avviso solo per tutta la giornata, non uno per riga: prima ogni scadenza
+  // era una notifica a se', ripetuta a ogni controllo.
+  const chiave = `oggi-${oggi}-${righe.length}`
+  if (inviate()[chiave]) return
+  segna(chiave)
+  mostraLocale(
+    `\u{1F419} Oggi hai ${righe.length} ${righe.length === 1 ? 'scadenza' : 'scadenze'}`,
+    righe.slice(0, 5).join('\n'),
+    chiave
+  )
 }
 
-let checkInterval = null
+let timer = null
 
-export function startDeadlineChecker(getProjects) {
-  if (checkInterval) clearInterval(checkInterval)
+// Parte solo se la push NON e' attiva: altrimenti server e client manderebbero
+// lo stesso avviso due volte, che e' esattamente quello che succedeva prima.
+export async function startDeadlineChecker(getProjects) {
+  stopDeadlineChecker()
+  if (await isPushSubscribed()) return false
   checkDeadlines(getProjects())
-  checkInterval = setInterval(() => checkDeadlines(getProjects()), NOTIFICATION_CHECK_INTERVAL)
+  timer = setInterval(() => checkDeadlines(getProjects()), INTERVALLO_CONTROLLO)
+  return true
 }
 
 export function stopDeadlineChecker() {
-  if (checkInterval) { clearInterval(checkInterval); checkInterval = null }
+  if (timer) { clearInterval(timer); timer = null }
 }
 
 // ============================================================================
-// UTILS
+// UTILI
 // ============================================================================
 
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
-  }
-  return outputArray
+function base64ToUint8Array(base64) {
+  const padding = '='.repeat((4 - base64.length % 4) % 4)
+  const grezzo = window.atob((base64 + padding).replace(/-/g, '+').replace(/_/g, '/'))
+  const out = new Uint8Array(grezzo.length)
+  for (let i = 0; i < grezzo.length; i++) out[i] = grezzo.charCodeAt(i)
+  return out
 }

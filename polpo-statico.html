@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Polpo Pixel Art</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100vh;
+    background:
+      radial-gradient(ellipse 70% 65% at 50% 46%,
+        #1e0a30 0%, #0d0320 45%, #030010 75%, #010006 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  svg {
+    width:  min(576px, 88vmin);
+    height: min(576px, 88vmin);
+    image-rendering: pixelated;
+  }
+</style>
+</head>
+<body>
+
+<svg viewBox="0 0 36 36"
+     xmlns="http://www.w3.org/2000/svg"
+     shape-rendering="crispEdges">
+
+  <defs>
+    <!-- glow rosso intorno al polpo -->
+    <filter id="glow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="0.55" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- micro-glow per le bolle -->
+    <filter id="bubbleGlow" x="-300%" y="-300%" width="700%" height="700%">
+      <feGaussianBlur stdDeviation="0.25" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g id="bg"></g>
+  <g id="bubbles"></g>
+  <g id="octopus" filter="url(#glow)"></g>
+</svg>
+
+<script>
+// ─────────────────────────────────────────
+//  PALETTE
+// ─────────────────────────────────────────
+const P = {
+  RO: '#5a0808', RS: '#981010', RM: '#c01e14', RH: '#dc3020',
+  RB: '#f04030', RS2:'#7a0e0e', SK: '#f0a090', EK: '#06000a', EW: '#f8e8e0',
+};
+
+const BG = {
+  D1: '#0e0628', D2: '#180c3c', D3: '#100420',
+  BL: '#c8dcff', BM: '#6080b8', BS: '#384878',
+};
+
+const NS = 'http://www.w3.org/2000/svg';
+
+function mkRect(c, r, fill, parent) {
+  const el = document.createElementNS(NS, 'rect');
+  el.setAttribute('x', c); el.setAttribute('y', r);
+  el.setAttribute('width', 1); el.setAttribute('height', 1);
+  el.setAttribute('fill', fill);
+  parent.appendChild(el);
+}
+
+const bgG  = document.getElementById('bg');
+const bubG = document.getElementById('bubbles');
+const octG = document.getElementById('octopus');
+
+// ─────────────────────────────────────────
+//  SFONDO — profondità dithering
+// ─────────────────────────────────────────
+[
+  [0,1,'D2'],[2,0,'D1'],[4,2,'D2'],[1,5,'D1'],[3,8,'D2'],
+  [34,0,'D2'],[33,2,'D1'],[35,4,'D2'],[34,7,'D1'],
+  [0,12,'D1'],[1,16,'D2'],[0,21,'D1'],[2,25,'D2'],[0,29,'D1'],
+  [35,12,'D2'],[34,17,'D1'],[35,22,'D2'],[33,26,'D1'],[35,30,'D2'],
+  [0,33,'D1'],[2,35,'D2'],[6,34,'D1'],[11,35,'D2'],
+  [25,35,'D2'],[30,34,'D1'],[33,35,'D2'],[35,33,'D1'],
+  [4,30,'D2'],[8,32,'D1'],[17,35,'D2'],[20,35,'D1'],[28,32,'D2'],
+].forEach(([c,r,k]) => mkRect(c, r, BG[k], bgG));
+
+// ─────────────────────────────────────────
+//  BOLLE — pixel art clusters
+// ─────────────────────────────────────────
+const bubbleClusters = [
+  // top-left
+  [2,7,'BM'],[3,6,'BL'],[2,5,'BM'],
+  [1,12,'BM'],[2,11,'BL'],
+  // top-right
+  [33,6,'BM'],[34,7,'BL'],[33,8,'BM'],
+  [34,12,'BM'],[33,11,'BL'],
+  // left mid
+  [0,20,'BM'],[1,19,'BL'],[0,18,'BM'],
+  [2,28,'BM'],[1,27,'BL'],
+  // right mid
+  [35,20,'BM'],[34,19,'BL'],
+  [33,27,'BM'],[34,28,'BL'],
+  // bottom-left
+  [4,29,'BM'],[5,28,'BL'],
+  [2,32,'BS'],[3,31,'BM'],
+  // bottom-right
+  [31,29,'BM'],[30,28,'BL'],
+  [33,32,'BS'],[32,31,'BM'],
+  // bottom center
+  [13,32,'BM'],[14,31,'BL'],
+  [21,32,'BM'],[22,31,'BL'],
+  // tiny singles
+  [5,4,'BS'],[31,3,'BS'],
+  [3,23,'BS'],[32,23,'BS'],
+  [9,34,'BS'],[26,34,'BS'],
+];
+bubbleClusters.forEach(([c,r,k]) => mkRect(c, r, BG[k], bubG));
+// Applica micro-glow alle bolle
+bubG.setAttribute('filter', 'url(#bubbleGlow)');
+
+// ─────────────────────────────────────────
+//  POLPO — corpo e tentacoli
+// ─────────────────────────────────────────
+const all = [];
+function px(c, r, k) {
+  if (c >= 0 && c < 36 && r >= 0 && r < 36) all.push([c, r, k]);
+}
+
+// ── CORPO (mantello + testa) ──
+const bodyRows = [
+  [16, 2, ['RH','RB','RH','RM']],
+  [14, 3, ['RH','RH','RB','RB','RH','RM','RM','RS']],
+  [13, 4, ['RH','RH','RB','RB','RH','RH','RM','RM','RS','RO']],
+  [12, 5, ['RM','RH','RH','RB','RB','RH','RM','RM','RS','RS','RO','RO']],
+  [12, 6, ['RM','RH','RH','RH','RM','RM','RM','RS','RS','RO','RO','RO']],
+  [12, 7, ['RM','RH','RH','RM','RM','RM','RM','RS','RS','RO','RO','RO']],
+  [12, 8, ['RM','RH','RM','RM','RM','RM','RS','RS','RO','RO','RO','RO']],
+  [13, 9, ['RS','RM','RM','RM','RM','RS','RS','RO','RO','RO']],
+  [11,10, ['RO','RH','RH','RM','RM','RM','RM','RM','RM','RM','RM','RS','RS','RO']],
+  [11,11, ['RO','RH','RH','RM','RM','RM','RM','RM','RM','RM','RM','RS','RS','RO']],
+  [11,12, ['RO','RH','RM','RM','RM','RM','RM','RM','RM','RM','RS','RS','RO','RO']],
+  [12,13, ['RO','RM','RM','RM','RM','RM','RM','RM','RM','RS','RS','RO']],
+  [13,14, ['RO','RM','RM','RM','RM','RM','RM','RS','RS','RO']],
+  [14,15, ['RO','RS','RS2','RS2','RS','RS','RO','RO']],
+  [15,16, ['RO','RS2','RS2','RS2','RS','RO']],
+  [16,17, ['RO','RS','RS','RO']],
+];
+bodyRows.forEach(([sc, r, cols]) => cols.forEach((k, i) => px(sc+i, r, k)));
+
+// ── OCCHI ──
+px(13,11,'EK'); px(14,11,'EK'); px(13,12,'EK'); px(14,12,'EW');
+px(21,11,'EK'); px(22,11,'EK'); px(21,12,'EK'); px(22,12,'EW');
+
+// ── TENTACOLI ──
+function tent(steps) {
+  steps.forEach(([c, r], i) => {
+    const k = (i > 0 && i % 3 === 0) ? 'SK' : (i % 2 === 0) ? 'RM' : 'RH';
+    px(c, r, k);
+  });
+}
+
+tent([[12,10],[11,9],[10,8],[9,7],[8,6],[7,6],[7,7],[8,8],[9,8]]);        // T1 upper-left
+tent([[23,10],[24,9],[25,8],[26,7],[27,6],[28,6],[28,7],[27,8],[26,8]]); // T2 upper-right
+tent([[11,12],[9,12],[7,13],[6,14],[5,15],[5,16],[6,16],[7,15]]);         // T3 mid-left
+tent([[24,12],[26,12],[28,13],[29,14],[30,15],[30,16],[29,16],[28,15]]); // T4 mid-right
+tent([[16,17],[14,19],[12,21],[10,23],[9,25],[9,26],[10,26],[11,25],[11,24]]);  // T5 lower-left-outer
+tent([[17,17],[16,19],[15,21],[14,23],[14,25],[15,26],[16,26],[16,25]]);        // T6 lower-left-inner
+tent([[18,17],[19,19],[20,21],[21,23],[21,25],[20,26],[19,26],[19,25]]);        // T7 lower-right-inner
+tent([[19,17],[21,19],[23,21],[25,23],[26,25],[26,26],[25,26],[24,25],[24,24]]); // T8 lower-right-outer
+
+// ── RENDER ──
+all.forEach(([c, r, k]) => mkRect(c, r, P[k], octG));
+</script>
+
+</body>
+</html>

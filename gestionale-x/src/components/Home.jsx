@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ITEM_TYPE_LIST, getTypeInfo } from '../itemTypes'
 
-const Home = ({ projects, notes, onNavigate, onAddProject, onAiMessage }) => {
+const Home = ({ projects, onNavigate, onAddProject, onAiMessage }) => {
   const [aiInput, setAiInput] = useState('')
 
   const handleAiSubmit = () => {
@@ -221,8 +221,9 @@ const Home = ({ projects, notes, onNavigate, onAddProject, onAiMessage }) => {
               ))}
             </div>
           ) : (
-            <div className="empty-state" style={{ padding: '1.5rem' }}>
-              <p>Nessuna attività ancora</p>
+            <div className="empty-state empty-state-piccolo">
+              <p>Ancora nessun movimento</p>
+              <p className="empty-state-hint">Appena tocchi qualcosa, ricompare qui</p>
             </div>
           )}
         </div>

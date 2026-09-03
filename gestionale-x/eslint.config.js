@@ -23,7 +23,9 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // ignoreRestSiblings: scartare campi con { id, ...resto } e' il modo
+      // normale di ripulire un oggetto prima di risalvarlo, non una svista.
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]', ignoreRestSiblings: true }],
     },
   },
 ])

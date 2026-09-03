@@ -1,6 +1,10 @@
 // Firebase configuration for Gestionale Polpo
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -16,7 +20,18 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase services
-export const db = getFirestore(app);
+// Cache su disco invece che in memoria.
+//
+// Da quando il gestionale conosce tutti i progetti (79, con dentro il corpo
+// delle note del vault) una apertura scarica circa 450 kB. Senza cache quel
+// peso si ripaga tutte le volte, anche dal telefono in 4G. Con la cache
+// persistente il primo avvio e' uguale, i successivi scaricano solo cio' che
+// e' cambiato davvero — e l app si apre anche senza rete.
+//
+// tabManager: serve a far convivere piu schede aperte sullo stesso browser;
+// senza, la seconda scheda resterebbe senza cache.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+});
 export const auth = getAuth(app);
 export default app;

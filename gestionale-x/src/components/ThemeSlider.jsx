@@ -1,4 +1,4 @@
-import { useTheme } from '../ThemeContext'
+import { useTheme } from '../useTheme'
 
 const ThemeSlider = () => {
   const { currentTheme, themes, setShowThemeSettings } = useTheme()

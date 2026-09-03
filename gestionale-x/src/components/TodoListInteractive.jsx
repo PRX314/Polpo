@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react'
+import { ANTICIPI, daSelect, aSelect } from '../sveglie'
 
 const TodoListInteractive = ({ project, onUpdate }) => {
   const [todos, setTodos] = useState(project.todos || [])
   const [dragIndex, setDragIndex] = useState(null)
   const [newTodoText, setNewTodoText] = useState('')
   const [newTodoDeadline, setNewTodoDeadline] = useState('')
+  const [newTodoTime, setNewTodoTime] = useState('')
+  // Quale task ha aperto il pannellino della sveglia. I task nati prima che
+  // esistesse l'orario devono poterne ricevere uno senza essere ricreati.
+  const [sveglieAperte, setSveglieAperte] = useState(null)
 
   useEffect(() => {
     setTodos(project.todos || [])
@@ -37,11 +42,29 @@ const TodoListInteractive = ({ project, onUpdate }) => {
   const handleAddTodo = async () => {
     if (!newTodoText.trim()) return
     const todo = { text: newTodoText.trim(), completed: false }
-    if (newTodoDeadline) todo.deadline = newTodoDeadline
+    if (newTodoDeadline) {
+      todo.deadline = newTodoDeadline
+      if (newTodoTime) todo.time = newTodoTime
+    }
     const updated = [...todos, todo]
     setTodos(updated)
     setNewTodoText('')
     setNewTodoDeadline('')
+    setNewTodoTime('')
+    await onUpdate(updated)
+  }
+
+  // Cambia scadenza, ora o sveglia di un task gia' esistente.
+  // Una sveglia senza data e ora non ha un momento a cui suonare: se uno dei
+  // due sparisce, sparisce anche lei.
+  const patchTodo = async (index, patch) => {
+    const updated = todos.map((t, i) => {
+      if (i !== index) return t
+      const next = { ...t, ...patch }
+      if (!next.deadline || !next.time) next.reminder = null
+      return next
+    })
+    setTodos(updated)
     await onUpdate(updated)
   }
 
@@ -78,7 +101,7 @@ const TodoListInteractive = ({ project, onUpdate }) => {
       <div className="todo-progress-bar mb-4">
         <div className="todo-progress-fill" style={{
           width: `${progress}%`,
-          background: progress === 100 ? '#22c55e' : '#4f46e5'
+          background: progress === 100 ? '#22c55e' : 'var(--accent,#4f46e5)'
         }}></div>
       </div>
       <div className="todo-list">
@@ -109,10 +132,37 @@ const TodoListInteractive = ({ project, onUpdate }) => {
                 </div>
                 {dl && (
                   <span className={`todo-deadline-badge ${dl.cls}`} style={{ fontSize: '0.7rem' }}>
-                    📅 {dl.label}
+                    📅 {dl.label}{todo.time ? ` · ${todo.time}` : ''}
+                    {todo.reminder !== null && todo.reminder !== undefined && ' ⏰'}
                   </span>
                 )}
+                {sveglieAperte === index && (
+                  <div className="todo-sveglia">
+                    <input
+                      type="date" value={todo.deadline || ''} title="Scadenza"
+                      onChange={(e) => patchTodo(index, { deadline: e.target.value })}
+                    />
+                    <input
+                      type="time" value={todo.time || ''} title="A che ora" disabled={!todo.deadline}
+                      onChange={(e) => patchTodo(index, { time: e.target.value })}
+                    />
+                    <select
+                      value={aSelect(todo.reminder)} title="Sveglia"
+                      disabled={!todo.deadline || !todo.time}
+                      onChange={(e) => patchTodo(index, { reminder: daSelect(e.target.value) })}
+                    >
+                      {ANTICIPI.map(a => (
+                        <option key={String(a.value)} value={aSelect(a.value)}>{a.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
+              <button
+                className="todo-delete"
+                onClick={() => setSveglieAperte(sveglieAperte === index ? null : index)}
+                title="Scadenza e sveglia"
+              >⏰</button>
               <button className="todo-delete" onClick={() => handleDeleteTodo(index)} title="Elimina">×</button>
             </div>
           )
@@ -133,6 +183,14 @@ const TodoListInteractive = ({ project, onUpdate }) => {
           value={newTodoDeadline}
           onChange={(e) => setNewTodoDeadline(e.target.value)}
           title="Scadenza (opzionale)"
+          style={{ width: 'auto' }}
+        />
+        <input
+          type="time"
+          value={newTodoTime}
+          onChange={(e) => setNewTodoTime(e.target.value)}
+          title="Ora (opzionale)"
+          disabled={!newTodoDeadline}
           style={{ width: 'auto' }}
         />
         <button onClick={handleAddTodo} className="btn-primary" disabled={!newTodoText.trim()}>+</button>

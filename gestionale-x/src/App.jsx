@@ -19,15 +19,16 @@ import AiChat from './components/AiChat'
 import ProjectDetailView from './components/ProjectDetailView'
 import ChangePasswordModal from './components/ChangePasswordModal'
 import StatusBadge from './components/ui/StatusBadge'
-import { ITEM_TYPE_LIST, getTypeInfo } from './itemTypes'
+import { ITEM_TYPE_LIST } from './itemTypes'
 import Calendar from './components/Calendar'
 import RoutineView from './components/RoutineView'
+import DaFare from './components/DaFare'
 import { exportProjectsCSV } from './services/exportService'
-import { registerServiceWorker, startDeadlineChecker, stopDeadlineChecker } from './services/notificationService'
+import { registerServiceWorker, startDeadlineChecker, stopDeadlineChecker, isPushSubscribed } from './services/notificationService'
 import NotificationSettings from './components/NotificationSettings'
 import ThemeSlider from './components/ThemeSlider'
 import ThemeSettings from './components/ThemeSettings'
-import { useTheme } from './ThemeContext'
+import { useTheme } from './useTheme'
 import './styles.css'
 
 function App() {
@@ -37,7 +38,7 @@ function App() {
   const [projects, setProjects] = useState([])
   const [notes, setNotes] = useState([])
   const [selectedProject, setSelectedProject] = useState(null)
-  const [view, setView] = useState('home') // 'home', 'items', 'item-detail', 'ai-chat', 'calendar', 'routine', 'vault-import'
+  const [view, setView] = useState('home') // 'home', 'items', 'item-detail', 'todos', 'ai-chat', 'calendar', 'routine', 'vault-import'
   const [filterType, setFilterType] = useState('all') // 'all' or a type key
   const [showAddProjectForm, setShowAddProjectForm] = useState(false)
   const [addFormInitialType, setAddFormInitialType] = useState(null)
@@ -46,6 +47,9 @@ function App() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [searchProjects, setSearchProjects] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+  // Da dove viene un elemento: il sync ne porta decine dal vault e dal codice,
+  // e mescolati a quelli scritti a mano l'elenco diventa difficile da leggere.
+  const [filterFonte, setFilterFonte] = useState('all')
   const [showArchived, setShowArchived] = useState(false)
   const [sortProjects, setSortProjects] = useState('date') // date, name, progress
   const [error, setError] = useState('')
@@ -58,6 +62,8 @@ function App() {
   const [showFilters, setShowFilters] = useState(false)
   const [pendingAiMessage, setPendingAiMessage] = useState('')
   const [showNotificationSettings, setShowNotificationSettings] = useState(false)
+  // null = non ancora saputo, false = da attivare (campanella col pallino)
+  const [pushAttive, setPushAttive] = useState(null)
 
   // Auto-dismiss toast messages
   useEffect(() => {
@@ -113,13 +119,24 @@ function App() {
   const projectsRef = useRef(projects)
   projectsRef.current = projects
 
+  // Stato delle notifiche per la campanella. Si ricontrolla quando il pannello
+  // si chiude, cosi' il pallino sparisce appena le attivi.
   useEffect(() => {
-    if (user && projects.length > 0) {
-      try {
-        startDeadlineChecker(() => projectsRef.current)
-        return () => stopDeadlineChecker()
-      } catch (e) { console.warn('Deadline checker failed:', e) }
-    }
+    if (!user) return
+    if (showNotificationSettings) return
+    isPushSubscribed().then(setPushAttive).catch(() => setPushAttive(false))
+  }, [user, showNotificationSettings])
+
+  // Il controllo locale e' solo un ripiego: si accende da solo unicamente se la
+  // push non e' attiva (lo decide startDeadlineChecker, che ora e' asincrono
+  // perche' deve prima chiedere al service worker se c'e' un'iscrizione).
+  useEffect(() => {
+    if (!user || projects.length === 0) return
+    let annullato = false
+    startDeadlineChecker(() => projectsRef.current)
+      .then(() => { if (annullato) stopDeadlineChecker() })
+      .catch(e => console.warn('Deadline checker failed:', e))
+    return () => { annullato = true; stopDeadlineChecker() }
   }, [user, projects.length])
 
   // Subscribe to Firebase data when user is authenticated
@@ -216,12 +233,17 @@ function App() {
     .filter(item => {
       const matchesSearch = item.name?.toLowerCase().includes(searchProjects.toLowerCase()) ||
                            item.description?.toLowerCase().includes(searchProjects.toLowerCase()) ||
-                           item.tags?.some(tag => tag.toLowerCase().includes(searchProjects.toLowerCase()))
+                           item.tags?.some(tag => tag.toLowerCase().includes(searchProjects.toLowerCase())) ||
+                           // cartella e nota del vault: si cerca anche per nome
+                           // di cartella, che non e' piu' un tag
+                           item.cartella?.toLowerCase().includes(searchProjects.toLowerCase()) ||
+                           item.vaultNote?.toLowerCase().includes(searchProjects.toLowerCase())
       const matchesStatus = filterStatus === 'all' || item.status === filterStatus
       const matchesArchive = showArchived ? item.archived : !item.archived
       const matchesTag = !activeTag || item.tags?.includes(activeTag)
       const matchesType = filterType === 'all' || item.type === filterType
-      return matchesSearch && matchesStatus && matchesArchive && matchesTag && matchesType
+      const matchesFonte = filterFonte === 'all' || (item.fonte || 'mano') === filterFonte
+      return matchesSearch && matchesStatus && matchesArchive && matchesTag && matchesType && matchesFonte
     })
     .sort((a, b) => {
       if (a.pinned && !b.pinned) return -1
@@ -270,7 +292,7 @@ function App() {
   const handleTogglePinProject = async (project) => {
     try {
       await updateProject(project.id, { pinned: !project.pinned })
-    } catch (err) {
+    } catch {
       setError('Errore nel fissare il progetto')
     }
   }
@@ -281,7 +303,7 @@ function App() {
     try {
       await updateProject(project.id, { archived: !project.archived })
       setSuccess(project.archived ? 'Progetto ripristinato!' : 'Progetto archiviato!')
-    } catch (err) {
+    } catch {
       setError('Errore nell\'archiviazione')
     }
   }
@@ -421,7 +443,13 @@ function App() {
           </div>
 
           <div className="header-right">
-            <button onClick={() => setShowNotificationSettings(true)} className="logout-button" title="Notifiche">
+            {/* Il pallino rosso quando le notifiche non sono attive: senza,
+                non c'era modo di accorgersi che esistevano. */}
+            <button
+              onClick={() => setShowNotificationSettings(true)}
+              className={`logout-button header-notif${pushAttive === false ? ' header-notif-off' : ''}`}
+              title={pushAttive ? 'Notifiche attive' : 'Notifiche non attive'}
+            >
               🔔
             </button>
             <ThemeSlider />
@@ -433,7 +461,7 @@ function App() {
               <button onClick={() => setShowChangePassword(true)} className="logout-button" title="Cambia password">
                 🔒
               </button>
-              <button onClick={handleLogout} className="logout-button">
+              <button onClick={handleLogout} className="logout-button header-esci">
                 Esci
               </button>
             </div>
@@ -447,6 +475,7 @@ function App() {
           {[
             ['home', '🏠', 'Home'],
             ['items', '📋', 'Elementi'],
+            ['todos', '✅', 'Da fare'],
             ['calendar', '📅', 'Calendario'],
             ['routine', '🗓️', 'Routine'],
             ['ai-chat', '🐙', 'Polpo AI']
@@ -566,7 +595,7 @@ function App() {
               )}
               <button className={`toolbar-btn ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(!showFilters)}>
                 🎛️ <span className="toolbar-btn-label">Filtri</span>
-                {(filterStatus !== 'all' || sortProjects !== 'date' || activeTag) && <span className="filter-dot"></span>}
+                {(filterStatus !== 'all' || sortProjects !== 'date' || activeTag || filterFonte !== 'all') && <span className="filter-dot"></span>}
               </button>
               <div className="view-toggle">
                 <button className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Griglia">⊞</button>
@@ -585,13 +614,19 @@ function App() {
                     <option value="completed">Completato</option>
                     <option value="paused">In Pausa</option>
                   </select>
+                  <select value={filterFonte} onChange={(e) => setFilterFonte(e.target.value)} className="filter-field">
+                    <option value="all">Ogni provenienza</option>
+                    <option value="vault">📓 Dal vault</option>
+                    <option value="scanner">💻 Dal codice</option>
+                    <option value="mano">✍️ Scritti a mano</option>
+                  </select>
                   <select value={sortProjects} onChange={(e) => setSortProjects(e.target.value)} className="filter-field">
                     <option value="date">Ordina: Data</option>
                     <option value="name">Ordina: Nome</option>
                     <option value="progress">Ordina: Progresso</option>
                   </select>
-                  {(filterStatus !== 'all' || activeTag || filterType !== 'all') && (
-                    <button className="toolbar-btn" onClick={() => { setFilterStatus('all'); setActiveTag(null); setShowArchived(false); setFilterType('all') }}>
+                  {(filterStatus !== 'all' || activeTag || filterType !== 'all' || filterFonte !== 'all') && (
+                    <button className="toolbar-btn" onClick={() => { setFilterStatus('all'); setActiveTag(null); setShowArchived(false); setFilterType('all'); setFilterFonte('all') }}>
                       ✕ Reset
                     </button>
                   )}
@@ -628,8 +663,11 @@ function App() {
               </div>
             ) : (
               <div className="empty-state">
-                <div className="empty-state-icon">📋</div>
-                <p>Nessun elemento trovato</p>
+                <div className="empty-state-icon">🐙</div>
+                <p>Qui sotto non c&apos;è niente</p>
+                <p className="empty-state-hint">
+                  Prova ad allargare i filtri, oppure crea il primo elemento con +
+                </p>
               </div>
             )}
           </div>
@@ -642,6 +680,14 @@ function App() {
               setSelectedProject(project)
               setView('item-detail')
             }}
+          />
+        )}
+
+        {view === 'todos' && (
+          <DaFare
+            projects={projects}
+            onProjectSelect={(p) => { setSelectedProject(p); setView('item-detail') }}
+            onUpdateProject={updateProject}
           />
         )}
 
@@ -749,6 +795,7 @@ function App() {
         {[
           ['home', '🏠', 'Home'],
           ['items', '📋', 'Elementi'],
+          ['todos', '✅', 'Da fare'],
           ['calendar', '📅', 'Cal'],
           ['routine', '🗓️', 'Routine'],
           ['ai-chat', '🐙', 'AI']

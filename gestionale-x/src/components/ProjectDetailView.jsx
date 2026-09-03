@@ -1,5 +1,6 @@
 import StatusBadge from './ui/StatusBadge'
 import ScanInfo from './ui/ScanInfo'
+import { linkVault, etichettaVault, haVault } from '../vault'
 import NoteCard from './NoteCard'
 import TodoListInteractive from './TodoListInteractive'
 import { getTypeInfo } from '../itemTypes'
@@ -55,15 +56,15 @@ const ProjectDetailView = ({ project, notes, projects, onUpdateProject, onEditNo
                   {link.title} <span>↗</span>
                 </a>
               ))}
-              {project.vaultNote && (
+              {haVault(project) && (
                 <a
-                  href={`obsidian://open?vault=Vault&file=20-Projects%2F${encodeURIComponent(project.vaultNote)}`}
+                  href={linkVault(project)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-secondary"
                   style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', textDecoration: 'none', gap: '0.3rem' }}
                 >
-                  📔 Apri in Obsidian
+                  📔 {etichettaVault(project)}
                 </a>
               )}
             </div>
@@ -147,7 +148,10 @@ const ProjectDetailView = ({ project, notes, projects, onUpdateProject, onEditNo
         ) : (
           <div className="empty-state">
             <div className="empty-state-icon">📝</div>
-            <p>Nessuna nota o idea associata</p>
+            <p>Nessuna nota collegata</p>
+            <p className="empty-state-hint">
+              Note e idee si agganciano da sole quando condividono un tag con questo progetto
+            </p>
           </div>
         )}
       </div>

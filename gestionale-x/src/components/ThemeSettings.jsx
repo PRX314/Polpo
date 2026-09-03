@@ -1,4 +1,4 @@
-import { useTheme } from '../ThemeContext'
+import { useTheme } from '../useTheme'
 
 const ThemeSettings = () => {
   const { currentTheme, changeTheme, themes, setShowThemeSettings } = useTheme()

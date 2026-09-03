@@ -2,7 +2,7 @@
 // (campo `scan` sul documento del progetto). Sola lettura: si aggiornano
 // solo rilanciando la scansione sul PC.
 
-export const SCAN_STATI = {
+const SCAN_STATI = {
   attivo:    { label: 'Attivo',    color: '#22c55e' },
   fermo:     { label: 'Fermo',     color: '#eab308' },
   dormiente: { label: 'Dormiente', color: '#9ca3af' },

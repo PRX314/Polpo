@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext } from 'react'
 
 const THEMES = {
   polpo: {
@@ -31,6 +31,13 @@ const THEMES = {
       '--border-light': '#e9ecef',
       '--border-focus': '#48dbfb',
       '--accent-primary': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      // Accento pieno: --accent-primary e' un gradiente, quindi non si puo'
+      // usare per bordi, testo o anelli di focus. Prima quei punti erano
+      // scritti a mano in indaco e non cambiavano mai tema.
+      '--accent': '#667eea',
+      '--accent-hover': '#5568d3',
+      '--accent-rgb': '102, 126, 234',
+      '--accent-contrast': '#ffffff',
       '--accent-rainbow': 'linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff)',
       '--shadow-sm': '0 1px 3px rgba(0, 0, 0, 0.06)',
       '--shadow-md': '0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.1)',
@@ -72,6 +79,13 @@ const THEMES = {
       '--border-light': '#252840',
       '--border-focus': '#667eea',
       '--accent-primary': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      // Accento pieno: --accent-primary e' un gradiente, quindi non si puo'
+      // usare per bordi, testo o anelli di focus. Prima quei punti erano
+      // scritti a mano in indaco e non cambiavano mai tema.
+      '--accent': '#818cf8',
+      '--accent-hover': '#6366f1',
+      '--accent-rgb': '129, 140, 248',
+      '--accent-contrast': '#ffffff',
       '--accent-rainbow': 'linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff)',
       '--shadow-sm': '0 1px 3px rgba(0, 0, 0, 0.3)',
       '--shadow-md': '0 4px 6px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3)',
@@ -113,6 +127,13 @@ const THEMES = {
       '--border-light': '#caf0f8',
       '--border-focus': '#0077b6',
       '--accent-primary': 'linear-gradient(135deg, #0077b6 0%, #023e8a 100%)',
+      // Accento pieno: --accent-primary e' un gradiente, quindi non si puo'
+      // usare per bordi, testo o anelli di focus. Prima quei punti erano
+      // scritti a mano in indaco e non cambiavano mai tema.
+      '--accent': '#0077b6',
+      '--accent-hover': '#023e8a',
+      '--accent-rgb': '0, 119, 182',
+      '--accent-contrast': '#ffffff',
       '--accent-rainbow': 'linear-gradient(90deg, #03045e, #0077b6, #00b4d8, #90e0ef, #caf0f8)',
       '--shadow-sm': '0 1px 3px rgba(0, 119, 182, 0.08)',
       '--shadow-md': '0 4px 6px rgba(0, 119, 182, 0.1), 0 1px 3px rgba(0, 119, 182, 0.06)',
@@ -154,6 +175,13 @@ const THEMES = {
       '--border-light': '#fce4b8',
       '--border-focus': '#f77f00',
       '--accent-primary': 'linear-gradient(135deg, #f77f00 0%, #d62828 100%)',
+      // Accento pieno: --accent-primary e' un gradiente, quindi non si puo'
+      // usare per bordi, testo o anelli di focus. Prima quei punti erano
+      // scritti a mano in indaco e non cambiavano mai tema.
+      '--accent': '#e8590c',
+      '--accent-hover': '#c2410c',
+      '--accent-rgb': '232, 89, 12',
+      '--accent-contrast': '#ffffff',
       '--accent-rainbow': 'linear-gradient(90deg, #d62828, #f77f00, #fcbf49, #eae2b7, #f4845f)',
       '--shadow-sm': '0 1px 3px rgba(247, 127, 0, 0.08)',
       '--shadow-md': '0 4px 6px rgba(247, 127, 0, 0.1), 0 1px 3px rgba(247, 127, 0, 0.06)',
@@ -195,6 +223,13 @@ const THEMES = {
       '--border-light': '#b7e4c7',
       '--border-focus': '#2d6a4f',
       '--accent-primary': 'linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%)',
+      // Accento pieno: --accent-primary e' un gradiente, quindi non si puo'
+      // usare per bordi, testo o anelli di focus. Prima quei punti erano
+      // scritti a mano in indaco e non cambiavano mai tema.
+      '--accent': '#2d6a4f',
+      '--accent-hover': '#1b4332',
+      '--accent-rgb': '45, 106, 79',
+      '--accent-contrast': '#ffffff',
       '--accent-rainbow': 'linear-gradient(90deg, #1b4332, #2d6a4f, #40916c, #74c69d, #b7e4c7)',
       '--shadow-sm': '0 1px 3px rgba(45, 106, 79, 0.08)',
       '--shadow-md': '0 4px 6px rgba(45, 106, 79, 0.1), 0 1px 3px rgba(45, 106, 79, 0.06)',
@@ -236,6 +271,13 @@ const THEMES = {
       '--border-light': '#ddd6fe',
       '--border-focus': '#7c3aed',
       '--accent-primary': 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
+      // Accento pieno: --accent-primary e' un gradiente, quindi non si puo'
+      // usare per bordi, testo o anelli di focus. Prima quei punti erano
+      // scritti a mano in indaco e non cambiavano mai tema.
+      '--accent': '#7c3aed',
+      '--accent-hover': '#5b21b6',
+      '--accent-rgb': '124, 58, 237',
+      '--accent-contrast': '#ffffff',
       '--accent-rainbow': 'linear-gradient(90deg, #5b21b6, #7c3aed, #a78bfa, #c4b5fd, #ddd6fe)',
       '--shadow-sm': '0 1px 3px rgba(124, 58, 237, 0.08)',
       '--shadow-md': '0 4px 6px rgba(124, 58, 237, 0.1), 0 1px 3px rgba(124, 58, 237, 0.06)',
@@ -277,6 +319,13 @@ const THEMES = {
       '--border-light': '#1e293b',
       '--border-focus': '#6366f1',
       '--accent-primary': 'linear-gradient(135deg, #6366f1 0%, #312e81 100%)',
+      // Accento pieno: --accent-primary e' un gradiente, quindi non si puo'
+      // usare per bordi, testo o anelli di focus. Prima quei punti erano
+      // scritti a mano in indaco e non cambiavano mai tema.
+      '--accent': '#818cf8',
+      '--accent-hover': '#6366f1',
+      '--accent-rgb': '129, 140, 248',
+      '--accent-contrast': '#ffffff',
       '--accent-rainbow': 'linear-gradient(90deg, #6366f1, #818cf8, #a5b4fc, #c7d2fe, #e0e7ff)',
       '--shadow-sm': '0 1px 3px rgba(0, 0, 0, 0.4)',
       '--shadow-md': '0 4px 6px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4)',
@@ -291,44 +340,6 @@ const THEMES = {
 }
 
 const ThemeContext = createContext()
-
-export const useTheme = () => useContext(ThemeContext)
-
-export const ThemeProvider = ({ children }) => {
-  const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('gestionale-theme') || 'polpo'
-  })
-  const [showThemeSettings, setShowThemeSettings] = useState(false)
-
-  useEffect(() => {
-    const theme = THEMES[currentTheme]
-    if (!theme) return
-
-    const root = document.documentElement
-    Object.entries(theme.vars).forEach(([key, value]) => {
-      root.style.setProperty(key, value)
-    })
-    localStorage.setItem('gestionale-theme', currentTheme)
-  }, [currentTheme])
-
-  const changeTheme = (themeId) => {
-    if (THEMES[themeId]) {
-      setCurrentTheme(themeId)
-    }
-  }
-
-  return (
-    <ThemeContext.Provider value={{
-      currentTheme,
-      changeTheme,
-      themes: THEMES,
-      showThemeSettings,
-      setShowThemeSettings
-    }}>
-      {children}
-    </ThemeContext.Provider>
-  )
-}
 
 export { THEMES }
 export default ThemeContext

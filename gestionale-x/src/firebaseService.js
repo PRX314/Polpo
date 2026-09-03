@@ -8,7 +8,6 @@ import {
   deleteDoc,
   onSnapshot,
   query,
-  orderBy,
   where,
   setDoc,
   Timestamp
@@ -225,4 +224,65 @@ export const initializeSampleData = async () => {
   // Function kept for compatibility but does nothing
   // Users will start with empty projects and notes
   return Promise.resolve();
+};
+// ============================================================================
+// EVENTS (appuntamenti del calendario: data, ora, sveglia)
+// ============================================================================
+//
+// Prima nel gestionale non esisteva niente con un orario: progetti e task hanno
+// solo una data. Senza un'ora non c'e' un momento a cui suonare, quindi non si
+// poteva chiedere "avvisami alle 15". Questa collection colma quel buco.
+//
+// reminder = minuti di anticipo (0 = all'ora esatta, null = nessuna sveglia).
+// Chi manda l'avviso e' la Netlify Scheduled Function, non il browser.
+
+export const eventsCollection = collection(db, "events");
+
+export const subscribeToEvents = (callback, onError) => {
+  if (!auth.currentUser) {
+    callback([]);
+    return () => {};
+  }
+  const q = query(eventsCollection, where("userId", "==", auth.currentUser.uid));
+  return onSnapshot(q,
+    (snapshot) => {
+      const events = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+      callback(events);
+    },
+    (error) => {
+      console.error('Error in events subscription:', error);
+      onError && onError(error);
+    }
+  );
+};
+
+export const addEvent = async (data) => {
+  if (!auth.currentUser) throw new Error('User must be authenticated');
+  const docRef = await addDoc(eventsCollection, {
+    title: '',
+    date: '',
+    time: '',
+    endTime: '',
+    reminder: null,
+    notes: '',
+    done: false,
+    ...data,
+    userId: auth.currentUser.uid,
+    createdAt: Timestamp.fromDate(new Date()),
+    updatedAt: Timestamp.fromDate(new Date())
+  });
+  return docRef.id;
+};
+
+export const updateEvent = async (eventId, updates) => {
+  await updateDoc(doc(db, "events", eventId), {
+    ...updates,
+    updatedAt: Timestamp.fromDate(new Date())
+  });
+};
+
+export const deleteEvent = async (eventId) => {
+  await deleteDoc(doc(db, "events", eventId));
 };

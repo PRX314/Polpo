@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polpo Pixel Art</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100vh;
+    background: #080018;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Ogni unità SVG = ~17px sullo schermo → pixel art croccante */
+  svg { width: min(544px, 85vmin); height: min(544px, 85vmin); }
+</style>
+</head>
+<body>
+
+<!-- viewBox 32×32: ogni unità SVG = 1 "pixel" dell'artwork -->
+<svg id="main" viewBox="0 0 32 32"
+     xmlns="http://www.w3.org/2000/svg"
+     shape-rendering="crispEdges">
+
+  <!-- sfondo -->
+  <rect width="32" height="32" fill="#080018"/>
+
+  <!-- ══════════════════════════════════════════
+       Il polpo viene generato da JS qui sotto.
+       Ogni <g id="tN"> è un tentacolo animabile.
+  ══════════════════════════════════════════ -->
+  <g id="octopus">
+    <g id="t1"></g>
+    <g id="t2"></g>
+    <g id="t3"></g>
+    <g id="t4"></g>
+    <g id="t5"></g>
+    <g id="t6"></g>
+    <g id="t7"></g>
+    <g id="t8"></g>
+    <g id="body-layer"></g>
+  </g>
+
+</svg>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+// ─────────────────────────────────────────
+//  PIXEL ART ENGINE
+// ─────────────────────────────────────────
+const NS  = 'http://www.w3.org/2000/svg';
+
+// Palette
+const C = {
+  // corpo
+  BD: '#1e0448',   // dark outline
+  BM: '#6212a8',   // main viola
+  BH: '#9c3ce0',   // highlight
+  BB: '#cc80ff',   // bright highlight
+  // occhi
+  ED: '#06000e',   // pupilla
+  EI: '#c8a0f8',   // iride
+  EW: '#ffffff',   // riflesso
+  // tentacoli
+  TD: '#320878',   // ombra
+  TM: '#6818b5',   // main
+  TH: '#9c38e0',   // highlight
+  SK: '#d090ff',   // sucker
+};
+
+function rect(c, r, color, parent) {
+  const el = document.createElementNS(NS, 'rect');
+  el.setAttribute('x', c);
+  el.setAttribute('y', r);
+  el.setAttribute('width',  1);
+  el.setAttribute('height', 1);
+  el.setAttribute('fill', color);
+  parent.appendChild(el);
+}
+
+// Scorciatoia: disegna una lista di [col, row, colorKey]
+function draw(pixels, parentId) {
+  const g = document.getElementById(parentId);
+  pixels.forEach(([c, r, col]) => rect(c, r, col, g));
+}
+
+// ─────────────────────────────────────────
+//  PIXEL DATA
+//  Coordinate su griglia 32×32
+//  Corpo centrato attorno a (16, 12)
+// ─────────────────────────────────────────
+
+// ── TENTACOLI (disegnati prima, il corpo li copre alla base) ──
+
+// T8: upper-left (si allunga su a sinistra)
+draw([
+  [14,9,C.TD],[13,8,C.TM],[12,8,C.TH],
+  [12,7,C.TM],[11,6,C.TM],[10,6,C.SK],
+  [10,5,C.TM],[9,4,C.TD],[9,3,C.TM],
+], 't8');
+
+// T7: upper-right (specchio di T8)
+draw([
+  [18,9,C.TD],[19,8,C.TM],[20,8,C.TH],
+  [20,7,C.TM],[21,6,C.TM],[22,6,C.SK],
+  [22,5,C.TM],[23,4,C.TD],[23,3,C.TM],
+], 't7');
+
+// T1: bottom-far-left
+draw([
+  [13,17,C.TM],[13,18,C.TH],
+  [12,19,C.TM],[12,20,C.SK],
+  [11,21,C.TM],[11,22,C.TH],
+  [10,23,C.TM],[10,24,C.SK],
+  [9, 25,C.TD],
+], 't1');
+
+// T2: bottom-left
+draw([
+  [14,17,C.TM],[14,18,C.TH],
+  [13,19,C.TM],[13,20,C.SK],
+  [13,21,C.TH],[12,22,C.TM],
+  [12,23,C.SK],[12,24,C.TD],
+  [11,25,C.TM],
+], 't2');
+
+// T3: center-left
+draw([
+  [15,17,C.TM],[15,18,C.TH],
+  [15,19,C.TM],[14,20,C.SK],
+  [14,21,C.TM],[15,22,C.TH],
+  [14,23,C.TM],[14,24,C.SK],
+  [14,25,C.TD],
+], 't3');
+
+// T4: center-right (specchio T3)
+draw([
+  [17,17,C.TM],[17,18,C.TH],
+  [17,19,C.TM],[18,20,C.SK],
+  [18,21,C.TM],[17,22,C.TH],
+  [18,23,C.TM],[18,24,C.SK],
+  [18,25,C.TD],
+], 't4');
+
+// T5: bottom-right (specchio T2)
+draw([
+  [18,17,C.TM],[18,18,C.TH],
+  [19,19,C.TM],[19,20,C.SK],
+  [19,21,C.TH],[20,22,C.TM],
+  [20,23,C.SK],[20,24,C.TD],
+  [21,25,C.TM],
+], 't5');
+
+// T6: bottom-far-right (specchio T1)
+draw([
+  [19,17,C.TM],[19,18,C.TH],
+  [20,19,C.TM],[20,20,C.SK],
+  [21,21,C.TM],[21,22,C.TH],
+  [22,23,C.TM],[22,24,C.SK],
+  [23,25,C.TD],
+], 't6');
+
+// ── CORPO ──
+// (in un layer separato così sta sopra alle basi dei tentacoli)
+const bodyPx = [
+
+  // ── Mantello (testa, dome) ──
+  // riga 7 (punta del mantello)
+  [15,7,C.BB],[16,7,C.BB],[17,7,C.BH],
+
+  // riga 8
+  [14,8,C.BH],[15,8,C.BB],[16,8,C.BB],[17,8,C.BH],[18,8,C.BM],
+
+  // riga 9 (bordo outline)
+  [13,9,C.BD],[14,9,C.BH],[15,9,C.BB],[16,9,C.BB],[17,9,C.BH],[18,9,C.BM],[19,9,C.BD],
+
+  // riga 10 (con occhi)
+  [12,10,C.BD],
+    [13,10,C.EI],[14,10,C.EI],          // occhio sinistro
+    [15,10,C.BH],[16,10,C.BH],
+    [17,10,C.EI],[18,10,C.EI],          // occhio destro
+  [19,10,C.BM],[20,10,C.BD],
+  // pupille
+  [13,10,C.ED],[17,10,C.ED],
+  // riflessi
+  [14,10,C.EW],[18,10,C.EW],
+
+  // riga 11
+  [12,11,C.BD],[13,11,C.BM],[14,11,C.BH],[15,11,C.BH],
+  [16,11,C.BH],[17,11,C.BH],[18,11,C.BM],[19,11,C.BM],[20,11,C.BD],
+
+  // riga 12
+  [12,12,C.BD],[13,12,C.BM],[14,12,C.BM],[15,12,C.BH],
+  [16,12,C.BH],[17,12,C.BM],[18,12,C.BM],[19,12,C.BM],[20,12,C.BD],
+
+  // riga 13
+  [12,13,C.BD],[13,13,C.BM],[14,13,C.BH],[15,13,C.BH],
+  [16,13,C.BH],[17,13,C.BH],[18,13,C.BM],[19,13,C.BM],[20,13,C.BD],
+
+  // riga 14 (centro corpo, più largo)
+  [12,14,C.BD],[13,14,C.BM],[14,14,C.BH],[15,14,C.BH],
+  [16,14,C.BH],[17,14,C.BM],[18,14,C.BM],[19,14,C.BM],[20,14,C.BD],
+
+  // riga 15 (si stringe verso il basso)
+  [12,15,C.BD],[13,15,C.BM],[14,15,C.BM],[15,15,C.BM],
+  [16,15,C.BM],[17,15,C.BM],[18,15,C.BM],[19,15,C.BD],
+
+  // riga 16 (base corpo, tentacoli si attaccano qui)
+  [13,16,C.BD],[14,16,C.BM],[15,16,C.BM],
+  [16,16,C.BM],[17,16,C.BM],[18,16,C.BD],
+];
+
+draw(bodyPx, 'body-layer');
+
+// ─────────────────────────────────────────
+//  ANIMAZIONE GSAP
+// ─────────────────────────────────────────
+
+// Pivot di rotazione = centro del corpo (SVG units)
+const OX = '16 13';
+const tentIds = ['#t1','#t2','#t3','#t4','#t5','#t6','#t7','#t8'];
+
+gsap.set(tentIds,    { svgOrigin: OX });
+gsap.set('#octopus', { svgOrigin: OX });
+
+const tl = gsap.timeline({ repeat: -1 });
+
+// Fase 0 — respiro idle
+tl.to('#body-layer', {
+  scaleX: 1.05, scaleY: 0.96,
+  duration: 0.7, ease: 'sine.inOut',
+  svgOrigin: '16 13'
+})
+.to('#body-layer', {
+  scaleX: 1, scaleY: 1,
+  duration: 0.7, ease: 'sine.inOut',
+  svgOrigin: '16 13'
+});
+
+// Fase 1 — APERTURA
+tl.to('#t1', { rotation: -26, duration: 1.0, ease: 'power2.inOut' }, '+=0.15')
+  .to('#t2', { rotation: -18, duration: 1.0, ease: 'power2.inOut' }, '<0.04')
+  .to('#t3', { rotation: -10, duration: 1.0, ease: 'power2.inOut' }, '<0.04')
+  .to('#t4', { rotation:  10, duration: 1.0, ease: 'power2.inOut' }, '<0.04')
+  .to('#t5', { rotation:  18, duration: 1.0, ease: 'power2.inOut' }, '<0.04')
+  .to('#t6', { rotation:  26, duration: 1.0, ease: 'power2.inOut' }, '<0.04')
+  .to('#t7', { rotation:  24, duration: 1.0, ease: 'power2.inOut' }, '<0.04')
+  .to('#t8', { rotation: -24, duration: 1.0, ease: 'power2.inOut' }, '<0.04');
+
+tl.to({}, { duration: 0.4 }); // hold spread
+
+// Fase 2 — CHIUSURA
+tl.to('#t1', { rotation:  40, duration: 0.85, ease: 'power2.inOut' }, '+=0')
+  .to('#t2', { rotation:  30, duration: 0.85, ease: 'power2.inOut' }, '<0.04')
+  .to('#t3', { rotation:  16, duration: 0.85, ease: 'power2.inOut' }, '<0.04')
+  .to('#t4', { rotation: -16, duration: 0.85, ease: 'power2.inOut' }, '<0.04')
+  .to('#t5', { rotation: -30, duration: 0.85, ease: 'power2.inOut' }, '<0.04')
+  .to('#t6', { rotation: -40, duration: 0.85, ease: 'power2.inOut' }, '<0.04')
+  .to('#t7', { rotation: -34, duration: 0.85, ease: 'power2.inOut' }, '<0.04')
+  .to('#t8', { rotation:  34, duration: 0.85, ease: 'power2.inOut' }, '<0.04');
+
+// Fase 3 — ALLONTANAMENTO
+tl.to('#octopus', {
+  scale: 0.03,
+  y: -6,      // in SVG units
+  opacity: 0,
+  duration: 1.6,
+  ease: 'power3.in'
+}, '+=0.2');
+
+// Reset
+tl.set('#octopus',    { scale: 1, y: 0, opacity: 1 });
+tl.set(tentIds,       { rotation: 0 });
+tl.to({}, { duration: 0.4 });
+</script>
+
+</body>
+</html>

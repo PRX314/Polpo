@@ -1,45 +1,58 @@
 import { useEffect, useState } from 'react'
-import { setupPushNotifications, isPushSubscribed, getNotificationPermission, unsubscribeFromPush } from '../services/notificationService'
+import {
+  setupPushNotifications,
+  unsubscribeFromPush,
+  isPushSubscribed,
+  inviaProva,
+  ostacolo,
+  isInstallata
+} from '../services/notificationService'
 
-const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent)
-const isStandalone = () => window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches
+// Il pannello deve rispondere a una domanda sola: "le notifiche mi arrivano,
+// si' o no?". Prima diceva "Non attive" senza spiegare che su iPhone non
+// potevano esserlo finche' l'app non veniva aggiunta alla schermata Home, e
+// non c'era modo di provare senza aspettare una scadenza vera.
 
 const NotificationSettings = ({ onClose }) => {
-  const [subscribed, setSubscribed] = useState(false)
-  const [checking, setChecking] = useState(true)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
+  const [attive, setAttive] = useState(false)
+  const [controllo, setControllo] = useState(true)
+  const [occupato, setOccupato] = useState('')
+  const [errore, setErrore] = useState('')
+  const [esito, setEsito] = useState('')
 
-  const permission = getNotificationPermission()
-  const needsInstall = isIOS() && !isStandalone()
+  const blocco = ostacolo()
 
   useEffect(() => {
-    isPushSubscribed().then((v) => { setSubscribed(v); setChecking(false) })
+    isPushSubscribed()
+      .then(setAttive)
+      .catch(() => setAttive(false))
+      .finally(() => setControllo(false))
   }, [])
 
-  const handleEnable = async () => {
-    setBusy(true)
-    setError('')
+  const azione = async (nome, fn, messaggio) => {
+    setOccupato(nome); setErrore(''); setEsito('')
     try {
-      const ok = await setupPushNotifications()
-      setSubscribed(ok)
-      if (!ok) setError('Permesso non concesso. Controlla le impostazioni di notifiche del browser/telefono.')
+      await fn()
+      if (messaggio) setEsito(messaggio)
     } catch (e) {
-      setError('Errore durante l\'attivazione: ' + (e?.message || e))
+      setErrore(e?.message || String(e))
     } finally {
-      setBusy(false)
+      setOccupato('')
     }
   }
 
-  const handleDisable = async () => {
-    setBusy(true)
-    try {
-      await unsubscribeFromPush()
-      setSubscribed(false)
-    } finally {
-      setBusy(false)
-    }
-  }
+  const attiva = () => azione('attiva', async () => {
+    await setupPushNotifications()
+    setAttive(true)
+  }, 'Attivate. Prova a mandarti una notifica qui sotto.')
+
+  const disattiva = () => azione('disattiva', async () => {
+    await unsubscribeFromPush()
+    setAttive(false)
+  })
+
+  const prova = () => azione('prova', inviaProva,
+    'Inviata: dovrebbe arrivarti entro qualche secondo.')
 
   return (
     <div className="form-modal" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -50,56 +63,87 @@ const NotificationSettings = ({ onClose }) => {
         </div>
 
         <div className="theme-settings-body">
-          <p className="theme-settings-description">
-            Ricevi un avviso su scadenze di progetti e task in arrivo (oggi, domani, tra 3 giorni) — controllate ogni ora.
-          </p>
 
-          {needsInstall && (
-            <div style={{ background: 'rgba(254, 202, 87, 0.12)', border: '1px solid rgba(254, 202, 87, 0.4)', borderRadius: 10, padding: 14, marginBottom: 16 }}>
-              <h4 style={{ marginBottom: 8 }}>⚠️ Su iPhone serve installare l'app prima</h4>
-              <p style={{ marginBottom: 6, fontSize: '0.85em' }}>
-                Safari non permette le notifiche in una scheda normale. Devi prima aggiungere Gestionale-X alla schermata Home:
+          {blocco === 'installa-ios' && (
+            <div className="notif-avviso">
+              <h4>Su iPhone serve prima installare l'app</h4>
+              <p>
+                Apple concede le notifiche solo alle app aggiunte alla schermata Home
+                e aperte dalla loro icona. Da una scheda di Safari, o da un
+                collegamento, non è possibile riceverle — non è un limite del
+                gestionale.
               </p>
-              <ol style={{ paddingLeft: 18, fontSize: '0.85em' }}>
-                <li>Apri questa pagina con <strong>Safari</strong> (non Chrome)</li>
-                <li>Tocca l'icona <strong>Condividi</strong> (il quadrato con la freccia in su)</li>
-                <li>Scegli <strong>"Aggiungi a Home"</strong></li>
-                <li>Apri l'app dall'icona in home, poi torna qui e attiva le notifiche</li>
+              <ol>
+                <li>Apri <strong>polpopoly.it/gestionale/</strong> con <strong>Safari</strong> (non Chrome)</li>
+                <li>Tocca <strong>Condividi</strong>, il quadrato con la freccia in su</li>
+                <li>Scegli <strong>Aggiungi a Home</strong> e conferma</li>
+                <li>Apri il gestionale dalla nuova icona 🐙 e torna qui</li>
               </ol>
+              <p className="notif-nota">
+                Poi puoi cancellare il vecchio collegamento: da quello le notifiche
+                non arriveranno mai.
+              </p>
             </div>
           )}
 
-          {!needsInstall && permission === 'unsupported' && (
-            <p style={{ color: 'var(--red, #e94560)' }}>Questo browser non supporta le notifiche push.</p>
-          )}
-
-          {!needsInstall && permission === 'denied' && (
-            <p style={{ color: 'var(--red, #e94560)' }}>
-              Le notifiche sono bloccate per questo sito. Riattivale dalle impostazioni del browser (icona lucchetto/ⓘ nella barra indirizzo → Notifiche).
-            </p>
-          )}
-
-          {!needsInstall && (permission === 'default' || permission === 'granted') && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-              <span>
-                Stato: {checking ? '…' : subscribed ? '✅ Attive' : '⭕ Non attive'}
-              </span>
+          {blocco === 'negato' && (
+            <div className="notif-avviso notif-avviso-rosso">
+              <h4>Notifiche bloccate</h4>
+              <p>
+                Il permesso è stato negato per questo sito. Va riattivato dalle
+                impostazioni {isInstallata() ? 'del telefono, alla voce del gestionale' : 'del browser (lucchetto o ⓘ nella barra indirizzo → Notifiche)'},
+                perché da qui non è più possibile richiederlo.
+              </p>
             </div>
           )}
 
-          {error && <p style={{ color: 'var(--red, #e94560)', fontSize: '0.85em', marginBottom: 12 }}>{error}</p>}
-
-          {!needsInstall && permission !== 'denied' && permission !== 'unsupported' && !checking && (
-            subscribed ? (
-              <button className="btn-secondary" onClick={handleDisable} disabled={busy}>
-                {busy ? '⏳ …' : 'Disattiva notifiche'}
-              </button>
-            ) : (
-              <button className="btn-primary" onClick={handleEnable} disabled={busy}>
-                {busy ? '⏳ Attivazione…' : '🔔 Attiva notifiche'}
-              </button>
-            )
+          {(blocco === 'non-supportato' || blocco === 'niente-push') && (
+            <div className="notif-avviso notif-avviso-rosso">
+              <h4>Non disponibili qui</h4>
+              <p>Questo browser non supporta le notifiche push. Prova con Chrome, Edge o Safari aggiornati.</p>
+            </div>
           )}
+
+          {!blocco && (
+            <>
+              <div className={`notif-stato ${attive ? 'notif-stato-on' : ''}`}>
+                <span className="notif-pallino" />
+                <div>
+                  <strong>{controllo ? 'Controllo…' : attive ? 'Attive' : 'Non attive'}</strong>
+                  <p>
+                    {attive
+                      ? 'Gli avvisi arrivano anche ad app chiusa: le manda il server, ogni cinque minuti controlla se è ora di suonare.'
+                      : 'Finché non le attivi, gli avvisi compaiono solo mentre il gestionale è aperto.'}
+                  </p>
+                </div>
+              </div>
+
+              {esito && <p className="notif-esito">{esito}</p>}
+              {errore && <p className="notif-errore">{errore}</p>}
+
+              <div className="notif-azioni">
+                {!controllo && (attive ? (
+                  <>
+                    <button className="btn-primary" onClick={prova} disabled={!!occupato}>
+                      {occupato === 'prova' ? '⏳ Invio…' : '📨 Mandami una prova'}
+                    </button>
+                    <button className="btn-secondary" onClick={disattiva} disabled={!!occupato}>
+                      {occupato === 'disattiva' ? '⏳ …' : 'Disattiva'}
+                    </button>
+                  </>
+                ) : (
+                  <button className="btn-primary" onClick={attiva} disabled={!!occupato}>
+                    {occupato === 'attiva' ? '⏳ Attivazione…' : '🔔 Attiva le notifiche'}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          <p className="notif-nota">
+            Cosa arriva: le sveglie che imposti su appuntamenti, routine e scadenze,
+            più un riepilogo la mattina alle 8 per le cose che hanno solo la data.
+          </p>
         </div>
       </div>
     </div>
