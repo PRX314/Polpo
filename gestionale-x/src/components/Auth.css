@@ -1,0 +1,28 @@
+.auth { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.auth-card {
+  width: 100%; max-width: 340px; border: 1px solid var(--line); padding: 28px 24px 24px;
+  display: flex; flex-direction: column; gap: 6px; text-align: center; background: var(--bg);
+}
+.auth-brand { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.auth-brand h1 { font-size: var(--fs-2xl); letter-spacing: -0.02em; }
+.auth-brand .brand-mark { width: 18px; height: 18px; background: var(--ink); }
+
+.auth-dots { display: flex; justify-content: center; gap: 12px; margin: 22px 0 10px; }
+.auth-dots span { width: 14px; height: 14px; border: 1px solid var(--line); background: transparent; }
+.auth-dots span.on { background: var(--ink); }
+.auth-dots.shake { animation: pin-shake 0.45s; }
+@keyframes pin-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+.auth-msg { min-height: 40px; display: flex; align-items: center; justify-content: center; }
+.auth-msg > * { width: 100%; text-align: left; }
+
+.auth-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 14px; }
+.auth-keys button {
+  aspect-ratio: 1.5; border: 1px solid var(--line); background: var(--bg); font-size: 20px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-keys button:hover:not(:disabled) { background: var(--ink); color: var(--on-ink); }
+.auth-keys button:active:not(:disabled) { transform: scale(0.97); }
+
+.auth-or { display: flex; align-items: center; gap: 12px; margin: 14px 0; color: var(--ink-3); font-size: var(--fs-s); }
+.auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }

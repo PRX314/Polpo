@@ -1,111 +1,63 @@
 import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
+import Modal from './ui/Modal'
 
 const ChangePasswordModal = ({ onClose, onSubmit }) => {
-  const [currentPw, setCurrentPw] = useState('')
-  const [newPw, setNewPw] = useState('')
-  const [confirmPw, setConfirmPw] = useState('')
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [show, setShow] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showCurrent, setShowCurrent] = useState(false)
-  const [showNew, setShowNew] = useState(false)
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     setError('')
-
-    if (newPw.length < 6) {
-      setError('La nuova password deve avere almeno 6 caratteri')
-      return
-    }
-    if (newPw !== confirmPw) {
-      setError('Le password non coincidono')
-      return
-    }
-    if (currentPw === newPw) {
-      setError('La nuova password deve essere diversa dalla attuale')
-      return
-    }
+    if (next.length < 6) return setError('La nuova password deve avere almeno 6 caratteri')
+    if (next !== confirm) return setError('Le password non coincidono')
+    if (current === next) return setError('La nuova password deve essere diversa dall\'attuale')
 
     setLoading(true)
     try {
-      await onSubmit(currentPw, newPw)
+      await onSubmit(current, next)
     } catch (err) {
       setError(err.message)
-    } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="form-modal" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="form-modal-content">
-        <div className="form-header">
-          <h2>Cambia Password</h2>
-          <button onClick={onClose} className="close-button">×</button>
-        </div>
-        <form onSubmit={handleSubmit} className="form">
-          <div className="form-group">
-            <label>Password attuale</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showCurrent ? 'text' : 'password'}
-                value={currentPw}
-                onChange={(e) => setCurrentPw(e.target.value)}
-                placeholder="Inserisci password attuale"
-                required
-                style={{ paddingRight: '2.5rem', width: '100%' }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrent(!showCurrent)}
-                style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem', opacity: 0.6 }}
-              >
-                {showCurrent ? '🙈' : '👁️'}
-              </button>
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Nuova password</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showNew ? 'text' : 'password'}
-                value={newPw}
-                onChange={(e) => setNewPw(e.target.value)}
-                placeholder="Minimo 6 caratteri"
-                required
-                minLength={6}
-                style={{ paddingRight: '2.5rem', width: '100%' }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowNew(!showNew)}
-                style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', padding: '0.25rem', opacity: 0.6 }}
-              >
-                {showNew ? '🙈' : '👁️'}
-              </button>
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Conferma nuova password</label>
-            <input
-              type={showNew ? 'text' : 'password'}
-              value={confirmPw}
-              onChange={(e) => setConfirmPw(e.target.value)}
-              placeholder="Ripeti la nuova password"
-              required
-              style={{ width: '100%' }}
-            />
-          </div>
-          {error && <div className="error-message">{error}</div>}
-          <div className="form-actions">
-            <button type="button" onClick={onClose} className="btn-secondary">Annulla</button>
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Cambiando...' : 'Cambia Password'}
+    <Modal
+      title="Cambia password" size="narrow" onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn" onClick={onClose}>Annulla</button>
+          <button type="submit" form="pw-form" className="btn btn-primary" disabled={loading}>{loading ? 'Cambio…' : 'Cambia password'}</button>
+        </>
+      }
+    >
+      <form id="pw-form" className="modal-body" onSubmit={submit}>
+        <div className="field">
+          <label htmlFor="pw-current">Password attuale</label>
+          <div className="input-affix">
+            <input id="pw-current" type={show ? 'text' : 'password'} autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required />
+            <button type="button" className="btn-icon" onClick={() => setShow(s => !s)} aria-label={show ? 'Nascondi le password' : 'Mostra le password'}>
+              {show ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+        <div className="field">
+          <label htmlFor="pw-new">Nuova password</label>
+          <input id="pw-new" type={show ? 'text' : 'password'} autoComplete="new-password" minLength={6} value={next} onChange={(e) => setNext(e.target.value)} required />
+          <span className="help">Minimo 6 caratteri.</span>
+        </div>
+        <div className="field">
+          <label htmlFor="pw-confirm">Ripeti la nuova password</label>
+          <input id="pw-confirm" type={show ? 'text' : 'password'} autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+        </div>
+        {error && <div className="form-error" role="alert">{error}</div>}
+      </form>
+    </Modal>
   )
 }
 

@@ -1,0 +1,37 @@
+.rt-list { display: flex; flex-direction: column; margin-bottom: 12px; }
+.rt-item { border-top: 1px solid var(--line-soft); padding: 4px 0; }
+.rt-item:first-child { border-top: 0; }
+.rt-line { display: flex; align-items: center; gap: 10px; min-height: 38px; }
+.rt-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 0 8px; }
+.rt-time { width: 108px; }
+.rt-alarm { width: auto; min-width: 150px; }
+.rt-add { display: flex; gap: 6px; }
+
+.dayp { display: flex; gap: 3px; }
+.dayp-chip { width: 26px; height: 26px; border: 1px solid var(--line-soft); font-size: var(--fs-xs); color: var(--ink-3); }
+.dayp-chip.is-on { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
+
+.rt-week-head { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 8px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+.rt-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.rt-day { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px; border: 1px solid var(--line-soft); background: var(--bg); }
+.rt-day:hover { border-color: var(--line); }
+.rt-day.is-today { border: 2px solid var(--ink); padding: 7px 1px; }
+.rt-day.is-done { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
+.rt-day.is-skip { background: repeating-linear-gradient(135deg, var(--bg) 0 5px, var(--bg-sub) 5px 6px); color: var(--ink-3); }
+.rt-dow { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; }
+.rt-glyph { font-size: var(--fs-l); line-height: 1; }
+.rt-date { font-size: var(--fs-xs); opacity: 0.75; font-variant-numeric: tabular-nums; }
+
+.rt-axis { margin: 14px 0 8px; }
+.rt-track { position: relative; height: 12px; border: 1px solid var(--line); }
+.rt-track span { position: absolute; top: 0; bottom: 0; background: var(--ink); }
+.rt-track span + span { box-shadow: -1px 0 0 var(--bg); }
+.rt-hours, .rt-labels { position: relative; height: 18px; margin-top: 4px; font-size: var(--fs-xs); color: var(--ink-3); }
+.rt-hours span { position: absolute; transform: translateX(-50%); }
+.rt-labels span { position: absolute; text-align: center; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .rt-add { flex-wrap: wrap; }
+  .rt-time { width: 100px; }
+  .rt-alarm { min-width: 0; flex: 1; }
+}

@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'gestionale-x', 'backend/node_modules']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -27,5 +27,11 @@ export default defineConfig([
       // normale di ripulire un oggetto prima di risalvarlo, non una svista.
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]', ignoreRestSiblings: true }],
     },
+  },
+  {
+    // Il server Express gira su Node, non nel browser
+    files: ['backend/**/*.js'],
+    languageOptions: { globals: globals.node },
+    rules: { 'no-unused-vars': ['error', { caughtErrors: 'none', varsIgnorePattern: '^[A-Z_]' }] },
   },
 ])

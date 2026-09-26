@@ -1,88 +1,89 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { ArrowUp, Check, ChevronDown, Copy, History, ListChecks, Mic, Plus, Square, Trash2, X } from 'lucide-react'
 import {
-  sendMessage,
-  executeActions,
-  generateTitle,
-  saveConversation,
-  updateConversation,
-  subscribeToConversations,
-  deleteConversation,
-  getSpecialists
+  sendMessage, executeActions, generateTitle, saveConversation, updateConversation,
+  subscribeToConversations, deleteConversation, getSpecialists, getProviders
 } from '../services/chatService'
+import { renderMarkdown, renderInline } from '../lib/markdown'
+import { Eco } from '../lib/eco-client'
+import './AiChat.css'
+import './prose.css'
 
-// Icone e label per tipo azione
-const ACTION_META = {
-  add_note: { icon: '📝', label: 'Nuova Nota', color: '#feca57' },
-  add_project: { icon: '📁', label: 'Nuovo Progetto', color: '#48dbfb' },
-  add_todo: { icon: '✅', label: 'Nuovo Todo', color: '#20c997' },
-  complete_todo: { icon: '✔️', label: 'Completa Todo', color: '#20c997' },
-  update_project: { icon: '🔄', label: 'Aggiorna Progetto', color: '#54a0ff' },
-  update_note: { icon: '📋', label: 'Aggiorna Nota', color: '#54a0ff' },
-  add_link_to_project: { icon: '🔗', label: 'Nuovo Link', color: '#48dbfb' },
-  add_section_to_project: { icon: '📑', label: 'Nuova Sezione', color: '#a78bfa' },
-  delete_note: { icon: '🗑️', label: 'Elimina Nota', color: '#ff6b6b' }
+// Nomi leggibili per le azioni che l'AI può proporre
+const ACTION_LABEL = {
+  add_note: 'Nuova nota',
+  add_project: 'Nuovo elemento',
+  add_todo: 'Nuova cosa da fare',
+  complete_todo: 'Completa',
+  update_project: 'Aggiorna elemento',
+  update_note: 'Aggiorna nota',
+  add_link_to_project: 'Nuovo link',
+  add_section_to_project: 'Nuova sezione',
+  delete_note: 'Elimina nota'
 }
 
-// Markdown -> HTML
-function formatMarkdown(text) {
-  if (!text) return ''
-  let html = text
-    .replace(/^### (.+)$/gm, '<h4>$1</h4>')
-    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^# (.+)$/gm, '<h2>$1</h2>')
-    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/^\d+\.\s+(.+)$/gm, '<li class="chat-li-num">$1</li>')
-    .replace(/^[-•]\s+(.+)$/gm, '<li class="chat-li-bullet">$1</li>')
-    .replace(/^---$/gm, '<hr class="chat-hr"/>')
-    .replace(/\n/g, '<br/>')
-  html = html.replace(/((?:<li class="chat-li-bullet">.+?<\/li><br\/>?)+)/g, (m) =>
-    '<ul class="chat-ul">' + m.replace(/<br\/>/g, '') + '</ul>')
-  html = html.replace(/((?:<li class="chat-li-num">.+?<\/li><br\/>?)+)/g, (m) =>
-    '<ol class="chat-ol">' + m.replace(/<br\/>/g, '') + '</ol>')
-  return html
+const SUGGESTIONS = [
+  { label: 'Riepilogo', msg: 'Fammi un riepilogo completo dei miei progetti e cosa devo fare' },
+  { label: 'Idee', msg: 'Analizza i miei progetti e suggeriscimi nuove idee o miglioramenti' },
+  { label: 'Priorità', msg: 'Quali sono le 3 priorità principali per questa settimana?' },
+  { label: 'Piano', msg: 'Creami un piano d\'azione settimanale' },
+  { label: 'Brainstorm', msg: 'Facciamo brainstorming su un nuovo progetto' },
+  { label: 'Task aperti', msg: 'Quali task ho ancora da completare?' },
+]
+
+const TARGETS_KEY = 'polpo.chatTargets'
+const MAX_TARGETS = 4
+
+const readSavedTargets = () => {
+  try { return JSON.parse(localStorage.getItem(TARGETS_KEY)) || [] } catch { return [] }
 }
 
-// Dettagli azione leggibili
+// "meta/llama-3.3-70b-instruct" -> "llama-3.3-70b-instruct"
+const shortModel = (model) => (model || '').split('/').pop()
+
+// Dettagli azione leggibili (markdown inline)
 function getActionDetails(action) {
   const { tool, args } = action
   switch (tool) {
     case 'add_note': return [
       args.title && `**${args.title}**`,
       args.type && `Tipo: ${args.type}`,
-      args.category && `Cat: ${args.category}`,
+      args.category && `Categoria: ${args.category}`,
       args.priority && `Priorità: ${args.priority}`,
-      args.projectTags?.length && `→ ${args.projectTags.join(', ')}`,
+      args.projectTags?.length && `Collegata a: ${args.projectTags.join(', ')}`,
       args.content
     ].filter(Boolean)
     case 'add_project': return [
       `**${args.name}**`,
       args.status && `Stato: ${args.status}`,
-      args.tags?.length && `Tags: ${args.tags.join(', ')}`,
-      args.sections?.length && `📑 ${args.sections.length} sezioni: ${args.sections.map(s => s.title).join(', ')}`,
+      args.tags?.length && `Tag: ${args.tags.join(', ')}`,
+      args.sections?.length && `${args.sections.length} sezioni: ${args.sections.map(s => s.title).join(', ')}`,
       args.description
     ].filter(Boolean)
     case 'add_section_to_project': return [
       `**${args.projectName}**`,
-      `${args.icon || '📄'} ${args.sectionTitle}`,
-      args.content?.length > 80 ? args.content.slice(0, 80) + '...' : args.content
+      args.sectionTitle,
+      args.content?.length > 80 ? `${args.content.slice(0, 80)}…` : args.content
     ].filter(Boolean)
     case 'add_todo': return [`**${args.projectName}**`, `Task: ${args.text}`]
     case 'complete_todo': return [`**${args.projectName}**`, `Todo: ${args.todoText}`]
     case 'update_project': return [
       `**${args.projectName}**`,
       args.status && `Nuovo stato: ${args.status}`,
-      args.description && `Descrizione aggiornata`,
-      args.roadmap && `Roadmap aggiornata`,
-      args.obiettivi && `Obiettivi aggiornati`
+      args.description && 'Descrizione aggiornata',
+      args.roadmap && 'Roadmap aggiornata',
+      args.obiettivi && 'Obiettivi aggiornati'
     ].filter(Boolean)
     case 'update_note': return [`**${args.noteTitle}**`, args.title && `Nuovo titolo: ${args.title}`].filter(Boolean)
     case 'add_link_to_project': return [`**${args.projectName}**`, `${args.linkTitle}: ${args.url}`]
     case 'delete_note': return [`**${args.noteTitle}**`]
     default: return [action.label]
   }
+}
+
+const Markdown = ({ text }) => {
+  const html = useMemo(() => renderMarkdown(text), [text])
+  return <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />
 }
 
 function AiChat({ initialMessage, onInitialMessageConsumed }) {
@@ -95,92 +96,103 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
   const [searchConv, setSearchConv] = useState('')
   const [error, setError] = useState('')
   const [copiedIdx, setCopiedIdx] = useState(null)
-  // Le statistiche di contesto vengono scritte ma non mostrate da nessuna
-  // parte: impalcatura di un pannello mai finito, lasciata collegata.
-  const [, setContextStats] = useState(null)
   // Pannello azioni
   const [pendingActions, setPendingActions] = useState([])
   const [executingActions, setExecutingActions] = useState(false)
   const [expandedAction, setExpandedAction] = useState(null)
   const [showActionPanel, setShowActionPanel] = useState(false)
   const [actionHistory, setActionHistory] = useState([])
-  // Mini-chat pannello (indipendente dalla chat principale)
+  // Mini-chat del pannello (indipendente dalla chat principale)
   const [panelMessages, setPanelMessages] = useState([])
   const [panelInput, setPanelInput] = useState('')
   const [panelLoading, setPanelLoading] = useState(false)
   // Specialisti AI
   const [specialists, setSpecialists] = useState([])
   const [activeSpecialist, setActiveSpecialist] = useState(null)
+  // Provider e modelli: uno selezionato = chat normale, più di uno = risposte a confronto
+  const [providers, setProviders] = useState([])
+  const [targets, setTargets] = useState(readSavedTargets)
+  const [showModelPicker, setShowModelPicker] = useState(false)
 
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
-  const textareaRef = useRef(null)
   const panelEndRef = useRef(null)
-  const actionPanelRef = useRef(null)
-
   const hasRestoredConv = useRef(false)
 
-  // Carica specialisti disponibili
+  // Voce: orecchie e bocca del browser (riconoscimento e sintesi vocale), niente server
+  const [voce, setVoce] = useState('fermo') // fermo | ascolto | parlo
+  const ecoRef = useRef(null)
+  const azioniRef = useRef(null)
+  useEffect(() => () => { ecoRef.current?.zitto(); ecoRef.current?.fermaAscolto() }, [])
+
+  useEffect(() => { getSpecialists().then(setSpecialists).catch(() => {}) }, [])
+
+  // Provider configurati sul server; le scelte salvate che non esistono più vengono scartate
   useEffect(() => {
-    getSpecialists().then(setSpecialists).catch(() => {})
+    getProviders().then(list => {
+      setProviders(list)
+      setTargets(prev => {
+        const valid = prev.filter(t => list.some(p => p.id === t.provider && p.models.includes(t.model)))
+        if (valid.length) return valid
+        return list[0] ? [{ provider: list[0].id, model: list[0].defaultModel }] : []
+      })
+    }).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    try { localStorage.setItem(TARGETS_KEY, JSON.stringify(targets)) } catch { /* storage non disponibile */ }
+  }, [targets])
+
+  const isTargetOn = (provider, model) => targets.some(t => t.provider === provider && t.model === model)
+
+  const toggleTarget = (provider, model) => {
+    setTargets(prev => {
+      if (prev.some(t => t.provider === provider && t.model === model)) {
+        return prev.length > 1 ? prev.filter(t => !(t.provider === provider && t.model === model)) : prev
+      }
+      return prev.length >= MAX_TARGETS ? prev : [...prev, { provider, model }]
+    })
+  }
 
   useEffect(() => {
     const unsub = subscribeToConversations(
       (convs) => {
         setConversations(convs)
-        // Al primo caricamento, ripristina l'ultima conversazione attiva
-        if (!hasRestoredConv.current && convs.length > 0 && messages.length === 0 && !currentConvId && !initialMessage) {
+        // Al primo caricamento riapre l'ultima conversazione
+        if (!hasRestoredConv.current && convs.length > 0 && !initialMessage) {
           hasRestoredConv.current = true
-          const lastConv = convs[0] // già ordinata per updatedAt desc
-          if (lastConv.messages && lastConv.messages.length > 0) {
-            setMessages(lastConv.messages)
-            setCurrentConvId(lastConv.id)
+          const last = convs[0] // già ordinata per updatedAt desc
+          if (last.messages?.length > 0) {
+            setMessages(last.messages)
+            setCurrentConvId(last.id)
           }
         }
       },
       (err) => console.error('Errore caricamento chat:', err)
     )
     return () => unsub()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Auto-send initialMessage dalla Home
-  const initialMessageSent = useRef(false)
-  useEffect(() => {
-    if (initialMessage && !initialMessageSent.current && !loading) {
-      initialMessageSent.current = true
-      handleSend(initialMessage)
-      if (onInitialMessageConsumed) onInitialMessageConsumed()
-    }
-  }, [initialMessage])
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [messages, loading])
+  useEffect(() => { panelEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [panelMessages, panelLoading])
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, loading])
-
-  useEffect(() => {
-    panelEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [panelMessages, panelLoading])
-
-  useEffect(() => {
-    if (error) {
-      const t = setTimeout(() => setError(''), 5000)
-      return () => clearTimeout(t)
-    }
+    if (!error) return
+    const t = setTimeout(() => setError(''), 6000)
+    return () => clearTimeout(t)
   }, [error])
 
-  // Apri pannello automaticamente quando ci sono azioni
+  // Apre il pannello da solo quando ci sono azioni da confermare
   useEffect(() => {
-    if (pendingActions.some(a => a.status === 'pending')) {
-      setShowActionPanel(true)
-    }
+    if (pendingActions.some(a => a.status === 'pending')) setShowActionPanel(true)
   }, [pendingActions])
 
-  const handleInputChange = useCallback((e) => {
+  const autosize = useCallback((e) => {
     setInput(e.target.value)
     const ta = e.target
     ta.style.height = 'auto'
-    ta.style.height = Math.min(ta.scrollHeight, 140) + 'px'
+    ta.style.height = `${Math.min(ta.scrollHeight, 140)}px`
   }, [])
 
   const handleSend = async (textOverride) => {
@@ -191,39 +203,45 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
     setInput('')
-    if (textareaRef.current) textareaRef.current.style.height = 'auto'
+    if (inputRef.current) inputRef.current.style.height = 'auto'
     setLoading(true)
     setError('')
 
+    let esito = null
     try {
-      const { reply, proposedActions, stats } = await sendMessage(text, messages, 'main', activeSpecialist)
-      if (stats) setContextStats(stats)
+      const { reply, proposedActions, label, replies } = await sendMessage(text, messages, 'main', activeSpecialist, targets)
 
-      const aiMsg = {
-        role: 'assistant',
-        content: reply,
-        timestamp: new Date().toISOString(),
-        executedActions: []
+      const aiMsg = { role: 'assistant', content: reply, timestamp: new Date().toISOString(), executedActions: [] }
+      if (replies?.length > 1) {
+        aiMsg.alternatives = replies.map(r => ({
+          label: r.label,
+          content: r.error ? null : r.reply,
+          error: r.error || null,
+          ms: r.ms ?? null,
+          proposedActions: r.proposedActions || []
+        }))
+        aiMsg.altIndex = replies.findIndex(r => !r.error)
+        aiMsg.label = replies[aiMsg.altIndex].label
+      } else if (label) {
+        aiMsg.label = label
       }
       const updatedMessages = [...newMessages, aiMsg]
       setMessages(updatedMessages)
 
-      // Se ci sono azioni proposte
-      if (proposedActions && proposedActions.length > 0) {
+      if (proposedActions?.length > 0) {
         setPendingActions(proposedActions.map((a, i) => ({ ...a, id: `${Date.now()}-${i}`, status: 'pending' })))
       }
+      esito = { reply: aiMsg.content, proposedActions: proposedActions || [] }
 
       // Salva su Firestore
       if (currentConvId) {
         await updateConversation(currentConvId, updatedMessages)
       } else {
-        let title = text.length > 40 ? text.substring(0, 40) + '...' : text
+        const title = text.length > 40 ? `${text.substring(0, 40)}…` : text
         const id = await saveConversation(title, updatedMessages)
         setCurrentConvId(id)
         generateTitle(updatedMessages).then(aiTitle => {
-          if (aiTitle && aiTitle !== 'Conversazione') {
-            updateConversation(id, updatedMessages, aiTitle)
-          }
+          if (aiTitle && aiTitle !== 'Conversazione') updateConversation(id, updatedMessages, aiTitle)
         }).catch(() => {})
       }
     } catch (err) {
@@ -232,46 +250,67 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
       setLoading(false)
       inputRef.current?.focus()
     }
+    return esito
+  }
+
+  // Auto-invio del messaggio arrivato dalla pagina Oggi
+  const initialSent = useRef(false)
+  useEffect(() => {
+    if (initialMessage && !initialSent.current && !loading) {
+      initialSent.current = true
+      handleSend(initialMessage)
+      onInitialMessageConsumed?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMessage])
+
+  // Sceglie quale risposta a confronto entra nella conversazione (e quindi nella history dei messaggi successivi)
+  const selectAlternative = async (msgIdx, altIdx) => {
+    const msg = messages[msgIdx]
+    const alt = msg?.alternatives?.[altIdx]
+    if (!alt || alt.error || msg.altIndex === altIdx) return
+
+    const updated = messages.map((m, i) => i === msgIdx ? { ...m, content: alt.content, altIndex: altIdx, label: alt.label } : m)
+    setMessages(updated)
+
+    // Le azioni in attesa seguono la risposta scelta, ma solo se nessuna è già stata toccata
+    if (msgIdx === messages.length - 1 && pendingActions.every(a => a.status === 'pending')) {
+      setPendingActions((alt.proposedActions || []).map((a, i) => ({ ...a, id: `${Date.now()}-${i}`, status: 'pending' })))
+    }
+    if (currentConvId) {
+      try { await updateConversation(currentConvId, updated) } catch { /* la scelta resta a schermo */ }
+    }
   }
 
   // Mini-chat nel pannello: conversazione SEPARATA per gestire le azioni
-  const handlePanelSend = async (textOverride) => {
-    const text = (textOverride || panelInput).trim()
+  const handlePanelSend = async () => {
+    const text = panelInput.trim()
     if (!text || panelLoading) return
 
-    const userMsg = { role: 'user', content: text, timestamp: new Date().toISOString() }
-    setPanelMessages(prev => [...prev, userMsg])
+    setPanelMessages(prev => [...prev, { role: 'user', content: text, timestamp: new Date().toISOString() }])
     setPanelInput('')
     setPanelLoading(true)
 
     try {
-      // Costruisco contesto con le azioni pending per l'AI
       const actionsContext = pendingActions
         .filter(a => a.status === 'pending')
         .map((a, i) => `[Azione ${i + 1}] ${a.label} (tool: ${a.tool}, args: ${JSON.stringify(a.args)})`)
         .join('\n')
-
       const contextMsg = `CONTESTO: L'utente sta gestendo queste azioni proposte nel pannello laterale:\n${actionsContext}\n\nL'utente dice: ${text}`
-
-      // Uso la history del pannello, non della chat principale
       const panelHistory = panelMessages.map(m => ({ role: m.role, content: m.content }))
-      const { reply, proposedActions, stats } = await sendMessage(contextMsg, panelHistory, 'panel')
-      if (stats) setContextStats(stats)
+      const { reply, proposedActions } = await sendMessage(contextMsg, panelHistory, 'panel', null, targets.slice(0, 1))
 
-      const aiMsg = { role: 'assistant', content: reply, timestamp: new Date().toISOString() }
-      setPanelMessages(prev => [...prev, aiMsg])
+      setPanelMessages(prev => [...prev, { role: 'assistant', content: reply, timestamp: new Date().toISOString() }])
 
-      // Se l'AI propone nuove azioni (versioni modificate), sostituisci le pending
-      if (proposedActions && proposedActions.length > 0) {
-        // Rimuovi le vecchie pending e metti le nuove
+      // Se l'AI propone versioni modificate, sostituiscono quelle ancora in attesa
+      if (proposedActions?.length > 0) {
         setPendingActions(prev => [
           ...prev.filter(a => a.status !== 'pending'),
           ...proposedActions.map((a, i) => ({ ...a, id: `${Date.now()}-${i}`, status: 'pending' }))
         ])
       }
     } catch (err) {
-      const errMsg = { role: 'assistant', content: `Errore: ${err.message}`, timestamp: new Date().toISOString() }
-      setPanelMessages(prev => [...prev, errMsg])
+      setPanelMessages(prev => [...prev, { role: 'assistant', content: `Errore: ${err.message}`, timestamp: new Date().toISOString() }])
     } finally {
       setPanelLoading(false)
     }
@@ -287,15 +326,12 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
     setPendingActions(updated)
 
     try {
-      const { results, stats } = await executeActions([action])
-      if (stats) setContextStats(stats)
-
+      const { results } = await executeActions([action])
       const result = results[0]?.result
       updated[actionIdx] = { ...action, status: result?.success ? 'confirmed' : 'error', result }
       setPendingActions([...updated])
       setActionHistory(prev => [...prev, { ...action, result, confirmedAt: new Date().toISOString() }])
 
-      // Aggiorna ultimo messaggio
       const lastMsg = messages[messages.length - 1]
       if (lastMsg?.role === 'assistant') {
         const executedActions = [...(lastMsg.executedActions || []), { ...action, result }]
@@ -319,17 +355,13 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
     setPendingActions(prev => prev.map(a => a.status === 'pending' ? { ...a, status: 'executing' } : a))
 
     try {
-      const { results, stats } = await executeActions(toConfirm)
-      if (stats) setContextStats(stats)
-
+      const { results } = await executeActions(toConfirm)
       setPendingActions(prev => prev.map(a => {
         if (a.status !== 'executing') return a
-        const r = results.find(r => r.tool === a.tool && r.label === a.label)
+        const r = results.find(x => x.tool === a.tool && x.label === a.label)
         return { ...a, status: r?.result?.success ? 'confirmed' : 'error', result: r?.result }
       }))
-
-      const newHistory = results.map(r => ({ tool: r.tool, label: r.label, result: r.result, confirmedAt: new Date().toISOString() }))
-      setActionHistory(prev => [...prev, ...newHistory])
+      setActionHistory(prev => [...prev, ...results.map(r => ({ tool: r.tool, label: r.label, result: r.result, confirmedAt: new Date().toISOString() }))])
 
       const lastMsg = messages[messages.length - 1]
       if (lastMsg?.role === 'assistant') {
@@ -345,21 +377,50 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
     }
   }
 
-  const rejectAction = (idx) => {
-    setPendingActions(prev => { const u = [...prev]; u[idx] = { ...u[idx], status: 'rejected' }; return u })
+  const rejectAction = (idx) => setPendingActions(prev => prev.map((a, i) => i === idx ? { ...a, status: 'rejected' } : a))
+  const rejectAll = () => setPendingActions(prev => prev.map(a => a.status === 'pending' ? { ...a, status: 'rejected' } : a))
+
+  // Letti dalla conversazione a voce dopo le attese: servono le versioni dell'ultimo render,
+  // non quelle di quando è partito l'ascolto (altrimenti non vedono le azioni appena proposte).
+  azioniRef.current = { confirmAll, rejectAll }
+
+  // Un tocco: ascolta, manda, legge la risposta. Se Polpo propone azioni chiede conferma a voce;
+  // senza un sì chiaro restano nel pannello come sempre.
+  const parlaConPolpo = async () => {
+    const eco = (ecoRef.current ??= new Eco({ ascolto: 'browser', voce: 'browser', onStato: setVoce }))
+    if (eco.stato === 'parlo') return eco.zitto()
+    if (eco.stato === 'ascolto') return eco.fermaAscolto()
+    if (loading) return
+
+    const testo = await eco.ascolta()
+    if (!testo) return
+    const esito = await handleSend(testo)
+    if (!esito) return
+    await eco.parla(esito.reply)
+
+    const n = esito.proposedActions.length
+    if (!n || eco.interrotto) return
+    await eco.parla(n === 1 ? 'Confermi?' : `Confermi tutte e ${n}?`)
+    if (eco.interrotto) return
+    const risposta = Eco.risposta(await eco.ascolta({ attesaMax: 6000 }))
+    if (risposta === 'si') {
+      await azioniRef.current.confirmAll()
+      await eco.parla('Fatto.')
+    } else if (risposta === 'no') {
+      azioniRef.current.rejectAll()
+      await eco.parla('Va bene, lascio stare.')
+    } else {
+      await eco.parla('Non ho capito. Le trovi nel pannello azioni.')
+    }
   }
 
-  const rejectAll = () => {
-    setPendingActions(prev => prev.map(a => a.status === 'pending' ? { ...a, status: 'rejected' } : a))
-  }
-
-  const handleKeyDown = (e) => {
+  const onKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
 
   const startNewChat = () => {
     setMessages([]); setCurrentConvId(null); setShowSidebar(false)
-    setContextStats(null); setPendingActions([]); setActionHistory([])
+    setPendingActions([]); setActionHistory([])
     setShowActionPanel(false); setPanelMessages([]); setPanelInput('')
     inputRef.current?.focus()
   }
@@ -372,7 +433,7 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
   const handleDeleteConv = async (e, convId) => {
     e.stopPropagation()
     try { await deleteConversation(convId); if (currentConvId === convId) startNewChat() }
-    catch { setError('Errore eliminazione conversazione') }
+    catch { setError('Non sono riuscito a eliminare la conversazione') }
   }
 
   const copyMessage = (text, idx) => {
@@ -383,280 +444,245 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
     ? conversations.filter(c => c.title?.toLowerCase().includes(searchConv.toLowerCase()))
     : conversations
 
-  const suggestions = [
-    { icon: '📊', label: 'Riepilogo', msg: 'Fammi un riepilogo completo dei miei progetti e cosa devo fare' },
-    { icon: '💡', label: 'Idee', msg: 'Analizza i miei progetti e suggeriscimi nuove idee o miglioramenti' },
-    { icon: '🎯', label: 'Priorità', msg: 'Quali sono le 3 priorità principali per questa settimana?' },
-    { icon: '📋', label: 'Piano', msg: 'Creami un piano d\'azione settimanale' },
-    { icon: '🧠', label: 'Brainstorm', msg: 'Facciamo brainstorming su un nuovo progetto' },
-    { icon: '✅', label: 'Task aperti', msg: 'Quali task ho ancora da completare?' },
-  ]
-
-  const hasPending = pendingActions.some(a => a.status === 'pending')
   const pendingCount = pendingActions.filter(a => a.status === 'pending').length
+  const hasPending = pendingCount > 0
+  const specialistName = specialists.find(s => s.id === activeSpecialist)?.name
 
   return (
-    <div className="ai-chat-container">
-      {/* Header */}
-      <div className="chat-header">
-        <div className="chat-header-left">
-          <button onClick={() => setShowSidebar(!showSidebar)} className="chat-sidebar-toggle" title="Storico">☰</button>
-          <div className="chat-header-title">
-            <span className="chat-logo">{activeSpecialist ? specialists.find(s => s.id === activeSpecialist)?.icon || '🐙' : '🐙'}</span>
-            <span>{activeSpecialist ? specialists.find(s => s.id === activeSpecialist)?.name || 'Polpo AI' : 'Polpo AI'}</span>
-          </div>
-          {/* Selettore specialista */}
-          {specialists.length > 0 && (
-            <div className="chat-specialist-selector">
-              <button
-                className={`chat-specialist-btn ${!activeSpecialist ? 'active' : ''}`}
-                onClick={() => setActiveSpecialist(null)}
-                title="Assistente generico"
-              >
-                🐙
-              </button>
-              {specialists.map(s => (
-                <button
-                  key={s.id}
-                  className={`chat-specialist-btn ${activeSpecialist === s.id ? 'active' : ''}`}
-                  onClick={() => setActiveSpecialist(s.id)}
-                  title={s.description}
-                >
-                  {s.icon}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="chat-header-right">
-          {/* Indicatore azioni pendenti */}
-          {hasPending && (
-            <button
-              onClick={() => setShowActionPanel(!showActionPanel)}
-              className="chat-actions-indicator"
-              title="Azioni in attesa"
-            >
-              📋 {pendingCount}
-            </button>
-          )}
-          {actionHistory.length > 0 && !hasPending && (
-            <button
-              onClick={() => setShowActionPanel(!showActionPanel)}
-              className="chat-actions-indicator done"
-              title="Storico azioni"
-            >
-              ✅ {actionHistory.length}
-            </button>
-          )}
-          <button onClick={startNewChat} className="chat-new-btn">+ Nuova</button>
-        </div>
-      </div>
+    <div className="chat">
+      {/* Barra */}
+      <div className="chat-bar">
+        <button className="btn-icon" onClick={() => setShowSidebar(v => !v)} aria-label="Conversazioni precedenti" aria-expanded={showSidebar}><History size={18} /></button>
+        <div className="chat-title grow">{specialistName || 'Polpo AI'}</div>
 
-      <div className="chat-body">
-        {/* Sidebar overlay */}
-        {showSidebar && <div className="chat-sidebar-overlay" onClick={() => setShowSidebar(false)} />}
-
-        {/* Sidebar storico */}
-        {showSidebar && (
-          <div className="chat-sidebar">
-            <div className="chat-sidebar-header"><span>Conversazioni ({conversations.length})</span></div>
-            <div className="chat-sidebar-search">
-              <input type="text" placeholder="Cerca..." value={searchConv} onChange={(e) => setSearchConv(e.target.value)} className="chat-sidebar-search-input" />
-            </div>
-            <div className="chat-sidebar-list">
-              {filteredConvs.length === 0 ? (
-                <div className="chat-sidebar-empty">{searchConv ? 'Nessun risultato' : 'Ancora nessuna chat'}</div>
-              ) : filteredConvs.map(conv => (
-                <div key={conv.id} className={`chat-sidebar-item ${currentConvId === conv.id ? 'active' : ''}`} onClick={() => loadConversation(conv)}>
-                  <div className="chat-sidebar-item-title">{conv.title}</div>
-                  <div className="chat-sidebar-item-meta">
-                    <span>{new Date(conv.updatedAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })} · {conv.messageCount || conv.messages?.length || 0} msg</span>
-                    <button onClick={(e) => handleDeleteConv(e, conv.id)} className="chat-sidebar-delete" title="Elimina">×</button>
-                  </div>
+        {providers.length > 0 && (
+          <div className="chat-model">
+            <button className={`btn btn-sm ${targets.length > 1 ? 'btn-primary' : ''}`} onClick={() => setShowModelPicker(v => !v)} aria-expanded={showModelPicker} aria-haspopup="true">
+              {targets.length > 1 ? `${targets.length} modelli` : shortModel(targets[0]?.model) || 'Modello'} <ChevronDown size={12} />
+            </button>
+            {showModelPicker && (
+              <>
+                <div className="chat-backdrop" onClick={() => setShowModelPicker(false)} />
+                <div className="chat-pop">
+                  <p className="help">Uno solo: chat normale. Fino a {MAX_TARGETS}: ricevi tutte le risposte e scegli la migliore.</p>
+                  {providers.map(p => (
+                    <div key={p.id} className="chat-pop-group">
+                      <div className="chat-pop-name">{p.name}</div>
+                      {p.models.map(m => (
+                        <label key={m} className={`chat-pop-row ${isTargetOn(p.id, m) ? 'is-on' : ''}`}>
+                          <input type="checkbox" checked={isTargetOn(p.id, m)} onChange={() => toggleTarget(p.id, m)} disabled={!isTargetOn(p.id, m) && targets.length >= MAX_TARGETS} />
+                          <span>{shortModel(m)}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         )}
 
-        {/* CHAT PRINCIPALE */}
-        <div className="chat-messages-area">
-          <div className="chat-messages">
+        {(hasPending || actionHistory.length > 0) && (
+          <button className={`btn btn-sm ${showActionPanel ? 'btn-primary' : ''}`} onClick={() => setShowActionPanel(v => !v)} aria-expanded={showActionPanel}>
+            <ListChecks size={14} /> Azioni {hasPending ? <span className="count">{pendingCount}</span> : <span className="faint">{actionHistory.length}</span>}
+          </button>
+        )}
+        <button className="btn btn-sm" onClick={startNewChat}><Plus size={14} /> <span className="chat-new-label">Nuova</span></button>
+      </div>
+
+      {specialists.length > 0 && (
+        <div className="chat-specialists chips" role="tablist" aria-label="Assistente">
+          <button role="tab" aria-selected={!activeSpecialist} className={`chip ${!activeSpecialist ? 'is-active' : ''}`} onClick={() => setActiveSpecialist(null)}>Generico</button>
+          {specialists.map(s => (
+            <button key={s.id} role="tab" aria-selected={activeSpecialist === s.id} className={`chip ${activeSpecialist === s.id ? 'is-active' : ''}`} onClick={() => setActiveSpecialist(s.id)} title={s.description}>
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="chat-body">
+        {/* Storico */}
+        {showSidebar && (
+          <>
+            <div className="chat-backdrop soft" onClick={() => setShowSidebar(false)} />
+            <aside className="chat-side" aria-label="Conversazioni">
+              <div className="chat-side-head">
+                <strong>Conversazioni</strong> <span className="count ghost">{conversations.length}</span>
+                <button className="btn-icon sm" style={{ marginLeft: 'auto' }} onClick={() => setShowSidebar(false)} aria-label="Chiudi"><X size={16} /></button>
+              </div>
+              <input type="search" placeholder="Cerca" aria-label="Cerca nelle conversazioni" value={searchConv} onChange={(e) => setSearchConv(e.target.value)} />
+              <ul className="chat-convs">
+                {filteredConvs.length === 0 && <li className="small muted" style={{ padding: 12 }}>{searchConv ? 'Nessun risultato' : 'Ancora nessuna conversazione'}</li>}
+                {filteredConvs.map(conv => (
+                  <li key={conv.id} className={currentConvId === conv.id ? 'is-active' : ''}>
+                    <button className="chat-conv" onClick={() => loadConversation(conv)}>
+                      <span className="trunc">{conv.title}</span>
+                      <span className="small faint">{new Date(conv.updatedAt).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })} · {conv.messageCount || conv.messages?.length || 0} msg</span>
+                    </button>
+                    <button className="btn-icon sm" onClick={(e) => handleDeleteConv(e, conv.id)} aria-label={`Elimina la conversazione ${conv.title}`}><Trash2 size={14} /></button>
+                  </li>
+                ))}
+              </ul>
+            </aside>
+          </>
+        )}
+
+        {/* Conversazione */}
+        <div className="chat-main">
+          <div className="chat-scroll">
             {messages.length === 0 && (
               <div className="chat-welcome">
-                <div className="chat-welcome-icon">🐙</div>
-                <h3>Ciao! Sono Polpo AI</h3>
-                <p>Chiacchieriamo! Ti aiuto a organizzare idee e progetti.<br/>
-                Quando serve salvare qualcosa, te lo propongo nel pannello a destra.</p>
-                <div className="chat-suggestions">
-                  {suggestions.map((s, i) => (
-                    <button key={i} onClick={() => handleSend(s.msg)}>
-                      <span className="chat-sug-icon">{s.icon}</span>
-                      <span>{s.label}</span>
-                    </button>
-                  ))}
+                <h2>Ciao, sono Polpo AI</h2>
+                <p className="muted">Ti aiuto a organizzare idee e progetti. Quando serve salvare qualcosa te lo propongo nel pannello Azioni: confermi tu.</p>
+                <div className="chat-suggest">
+                  {SUGGESTIONS.map(s => <button key={s.label} className="btn" onClick={() => handleSend(s.msg)}>{s.label}</button>)}
                 </div>
               </div>
             )}
 
             {messages.map((msg, i) => (
-              <div key={i}>
-                {/* Chip azioni già confermate */}
-                {msg.executedActions && msg.executedActions.length > 0 && (
-                  <div className="chat-actions-bar">
+              <div key={i} className={`chat-msg ${msg.role}`}>
+                {msg.executedActions?.length > 0 && (
+                  <div className="chat-done">
                     {msg.executedActions.map((a, j) => (
-                      <div key={j} className={`chat-action-chip ${a.result?.success ? 'success' : 'error'}`}>
-                        <span className="chat-action-icon">{a.result?.success ? (ACTION_META[a.tool]?.icon || '⚡') : '❌'}</span>
-                        <span>{a.result?.message || a.label}</span>
-                      </div>
+                      <span key={j} className="tag"><Check size={11} /> {a.result?.message || a.label}</span>
                     ))}
                   </div>
                 )}
-                <div className={`chat-message ${msg.role}`}>
-                  <div className="chat-message-avatar">{msg.role === 'user' ? '👤' : '🐙'}</div>
-                  <div className="chat-message-content">
-                    <div className="chat-message-text" dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }} />
-                    <div className="chat-message-footer">
-                      <span className="chat-message-time">
-                        {new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      {msg.role === 'assistant' && (
-                        <button className="chat-copy-btn" onClick={() => copyMessage(msg.content, i)}>
-                          {copiedIdx === i ? '✓ Copiato' : 'Copia'}
-                        </button>
-                      )}
-                    </div>
+
+                {msg.alternatives?.length > 1 && (
+                  <div className="chat-alts" role="tablist" aria-label="Risposte a confronto">
+                    {msg.alternatives.map((alt, ai) => (
+                      <button
+                        key={ai} role="tab" aria-selected={msg.altIndex === ai}
+                        className={`chip ${msg.altIndex === ai ? 'is-active' : ''}`}
+                        onClick={() => selectAlternative(i, ai)} disabled={!!alt.error} title={alt.error || alt.label}
+                      >
+                        {alt.error ? '! ' : ''}{shortModel(alt.label.split(' · ')[1])}
+                        {alt.ms != null && <span className="n">{(alt.ms / 1000).toFixed(1)}s</span>}
+                      </button>
+                    ))}
                   </div>
+                )}
+
+                <div className="chat-bubble">
+                  {msg.role === 'user' ? <p className="pre">{msg.content}</p> : <Markdown text={msg.content} />}
+                </div>
+
+                {msg.alternatives?.some(a => a.error) && (
+                  <div className="chat-alt-errors small muted">
+                    {msg.alternatives.filter(a => a.error).map((a, ei) => <div key={ei}>! {a.label}: {a.error}</div>)}
+                  </div>
+                )}
+
+                <div className="chat-meta small faint">
+                  <span>
+                    {new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                    {msg.role === 'assistant' && msg.label && !msg.alternatives && ` · ${msg.label}`}
+                  </span>
+                  {msg.role === 'assistant' && (
+                    <button className="btn btn-sm btn-quiet" onClick={() => copyMessage(msg.content, i)}>
+                      {copiedIdx === i ? <><Check size={12} /> Copiato</> : <><Copy size={12} /> Copia</>}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
 
             {loading && (
-              <div className="chat-message assistant">
-                <div className="chat-message-avatar">🐙</div>
-                <div className="chat-message-content">
-                  <div className="chat-typing"><span></span><span></span><span></span></div>
-                  <div className="chat-typing-label">Polpo sta pensando...</div>
+              <div className="chat-msg assistant" role="status">
+                <div className="chat-bubble"><span className="chat-typing" aria-hidden="true"><i /><i /><i /></span>
+                  <span className="small muted"> {targets.length > 1 ? `${targets.length} modelli stanno rispondendo…` : 'Polpo sta pensando…'}</span>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input chat */}
-          <div className="chat-input-area">
-            {error && (
-              <div className="chat-error">
-                <span>{error}</span>
-                <button onClick={() => setError('')} className="chat-error-close">×</button>
-              </div>
-            )}
+          <div className="chat-input">
+            {error && <div className="form-error" role="alert"><span className="grow">{error}</span><button className="btn-icon sm" onClick={() => setError('')} aria-label="Chiudi"><X size={14} /></button></div>}
             <div className="chat-input-row">
               <textarea
-                ref={(el) => { inputRef.current = el; textareaRef.current = el }}
-                value={input} onChange={handleInputChange} onKeyDown={handleKeyDown}
-                placeholder="Scrivi a Polpo AI..." rows={1} disabled={loading} className="chat-input"
+                ref={inputRef} rows={1} value={input} onChange={autosize} onKeyDown={onKeyDown}
+                placeholder={voce === 'ascolto' ? 'Ti ascolto…' : 'Scrivi a Polpo AI'} aria-label="Messaggio" disabled={loading}
               />
-              <button onClick={() => handleSend()} disabled={!input.trim() || loading} className="chat-send-btn">
-                {loading ? <span className="chat-send-loading"></span> : '➤'}
+              {Eco.supportato() && (
+                <button
+                  className={`btn chat-mic ${voce}`} onClick={parlaConPolpo} disabled={loading && voce === 'fermo'}
+                  aria-label={voce === 'parlo' ? 'Interrompi' : voce === 'ascolto' ? 'Smetti di ascoltare' : 'Parla con Polpo'}
+                  title={voce === 'parlo' ? 'Interrompi' : 'Parla: la risposta arriva anche a voce'}
+                >
+                  {voce === 'parlo' ? <Square size={14} /> : <Mic size={16} />}
+                </button>
+              )}
+              <button className="btn btn-primary" onClick={() => handleSend()} disabled={!input.trim() || loading} aria-label="Invia">
+                {loading ? <span className="spinner" aria-hidden="true" /> : <ArrowUp size={16} />}
               </button>
             </div>
-            <div className="chat-input-hint">Enter per inviare · Shift+Enter per a capo</div>
+            <p className="small faint chat-hint">Invio per inviare · Maiusc+Invio per andare a capo{Eco.supportato() && ' · microfono per parlare'}</p>
           </div>
         </div>
 
-        {/* PANNELLO AZIONI (destra) */}
+        {/* Pannello azioni */}
         {showActionPanel && (
-          <div className="chat-action-panel" ref={actionPanelRef}>
-            <div className="chat-action-panel-header">
-              <div className="chat-action-panel-title">
-                <span>📋 Azioni</span>
-                {hasPending && <span className="chat-action-panel-badge">{pendingCount}</span>}
-              </div>
-              <button onClick={() => setShowActionPanel(false)} className="chat-action-panel-close">×</button>
+          <aside className="chat-actions" aria-label="Azioni proposte">
+            <div className="chat-side-head">
+              <strong>Azioni</strong> {hasPending && <span className="count">{pendingCount}</span>}
+              <button className="btn-icon sm" style={{ marginLeft: 'auto' }} onClick={() => setShowActionPanel(false)} aria-label="Chiudi il pannello"><X size={16} /></button>
             </div>
 
-            {/* Bottoni conferma/rifiuta tutte */}
             {hasPending && (
-              <div className="chat-action-panel-bulk">
-                <button onClick={confirmAll} disabled={executingActions} className="chat-panel-btn confirm">
-                  ✓ Conferma tutte
-                </button>
-                <button onClick={rejectAll} disabled={executingActions} className="chat-panel-btn reject">
-                  ✕ Rifiuta tutte
-                </button>
+              <div className="row" style={{ padding: '8px 12px' }}>
+                <button className="btn btn-sm btn-primary grow" onClick={confirmAll} disabled={executingActions}><Check size={14} /> Conferma tutte</button>
+                <button className="btn btn-sm grow" onClick={rejectAll} disabled={executingActions}><X size={14} /> Rifiuta tutte</button>
               </div>
             )}
 
-            {/* Lista azioni */}
-            <div className="chat-action-panel-list">
+            <div className="chat-action-list">
               {pendingActions.length === 0 && actionHistory.length === 0 && (
-                <div className="chat-action-panel-empty">
-                  <span style={{ fontSize: '2rem' }}>📋</span>
-                  <p>Le azioni proposte da Polpo AI appariranno qui</p>
-                </div>
+                <p className="small muted" style={{ padding: 12 }}>Le azioni proposte da Polpo AI compariranno qui.</p>
               )}
 
               {pendingActions.map((action, idx) => {
-                const meta = ACTION_META[action.tool] || { icon: '⚡', label: 'Azione', color: '#999' }
-                const details = getActionDetails(action)
-                const isExpanded = expandedAction === idx
-                const statusClass = action.status
-
+                const open = expandedAction === idx
                 return (
-                  <div key={action.id} className={`chat-action-card ${statusClass}`}>
-                    <div className="chat-action-card-top" onClick={() => setExpandedAction(isExpanded ? null : idx)}>
-                      <div className="chat-action-card-icon" style={{ background: meta.color }}>{meta.icon}</div>
-                      <div className="chat-action-card-info">
-                        <div className="chat-action-card-label">{action.label}</div>
-                        <div className="chat-action-card-type">{meta.label}</div>
-                      </div>
-                      <div className="chat-action-card-btns">
-                        {action.status === 'pending' && (
-                          <>
-                            <button onClick={(e) => { e.stopPropagation(); confirmAction(idx) }} disabled={executingActions} className="chat-action-btn-sm confirm" title="Conferma">✓</button>
-                            <button onClick={(e) => { e.stopPropagation(); rejectAction(idx) }} disabled={executingActions} className="chat-action-btn-sm reject" title="Rifiuta">✕</button>
-                          </>
-                        )}
-                        {action.status === 'confirmed' && <span className="chat-action-status-tag confirmed">Salvato ✓</span>}
-                        {action.status === 'rejected' && <span className="chat-action-status-tag rejected">Rifiutata</span>}
-                        {action.status === 'executing' && <span className="chat-action-status-tag executing">Salvo...</span>}
-                        {action.status === 'error' && <span className="chat-action-status-tag error">Errore</span>}
-                      </div>
+                  <div key={action.id} className={`chat-action is-${action.status}`}>
+                    <div className="chat-action-top">
+                      <button className="chat-action-info" onClick={() => setExpandedAction(open ? null : idx)} aria-expanded={open}>
+                        <span className="tag tag-type">{ACTION_LABEL[action.tool] || 'Azione'}</span>
+                        <span className="chat-action-label">{action.label}</span>
+                      </button>
+                      {action.status === 'pending' && (
+                        <>
+                          <button className="btn-icon sm bordered" onClick={() => confirmAction(idx)} disabled={executingActions} aria-label="Conferma"><Check size={14} /></button>
+                          <button className="btn-icon sm bordered" onClick={() => rejectAction(idx)} disabled={executingActions} aria-label="Rifiuta"><X size={14} /></button>
+                        </>
+                      )}
+                      {action.status === 'confirmed' && <span className="tag tag-invert">Salvata</span>}
+                      {action.status === 'rejected' && <span className="tag">Rifiutata</span>}
+                      {action.status === 'executing' && <span className="tag">Salvo…</span>}
+                      {action.status === 'error' && <span className="tag">Errore</span>}
                     </div>
-
-                    {/* Dettagli espansi */}
-                    {isExpanded && (
-                      <div className="chat-action-card-details">
-                        {details.map((d, di) => (
-                          <div key={di} className="chat-action-detail-line" dangerouslySetInnerHTML={{ __html: formatMarkdown(d) }} />
-                        ))}
-                        {action.result?.message && (
-                          <div className={`chat-action-result ${action.result.success ? 'ok' : 'fail'}`}>
-                            {action.result.success ? '✅' : '❌'} {action.result.message}
-                          </div>
-                        )}
+                    {open && (
+                      <div className="chat-action-details">
+                        {getActionDetails(action).map((d, di) => <div key={di} className="prose" dangerouslySetInnerHTML={{ __html: renderInline(String(d)) }} />)}
+                        {action.result?.message && <div className="small muted">{action.result.success ? 'Fatto' : 'Non riuscita'}: {action.result.message}</div>}
                       </div>
                     )}
                   </div>
                 )
               })}
 
-              {/* Storico azioni già eseguite */}
               {actionHistory.length > 0 && !hasPending && (
                 <>
-                  <div className="chat-action-panel-divider">Azioni eseguite</div>
+                  <p className="cal-label" style={{ padding: '12px 12px 4px' }}>Eseguite</p>
                   {actionHistory.map((a, i) => (
-                    <div key={i} className="chat-action-card confirmed mini">
-                      <div className="chat-action-card-top">
-                        <div className="chat-action-card-icon mini" style={{ background: ACTION_META[a.tool]?.color || '#20c997' }}>
-                          {ACTION_META[a.tool]?.icon || '✓'}
-                        </div>
-                        <div className="chat-action-card-info">
-                          <div className="chat-action-card-label">{a.result?.message || a.label}</div>
-                          <div className="chat-action-card-type">
-                            {new Date(a.confirmedAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
-                          </div>
+                    <div key={i} className="chat-action is-confirmed">
+                      <div className="chat-action-top">
+                        <div className="chat-action-info" style={{ cursor: 'default' }}>
+                          <span className="chat-action-label">{a.result?.message || a.label}</span>
+                          <span className="small faint">{new Date(a.confirmedAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                       </div>
                     </div>
@@ -665,51 +691,27 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
               )}
             </div>
 
-            {/* Mini-chat indipendente per gestire le azioni */}
-            <div className="chat-action-panel-minichat">
-              <div className="chat-action-minichat-label">
-                {hasPending ? 'Chatta per modificare le azioni' : 'Chiedi di organizzare qualcosa'}
-              </div>
-
-              {/* Messaggi della mini-chat */}
+            <div className="chat-mini">
+              <div className="small muted" style={{ marginBottom: 6 }}>{hasPending ? 'Chatta per modificare le azioni' : 'Chiedi di organizzare qualcosa'}</div>
               {panelMessages.length > 0 && (
-                <div className="chat-panel-messages">
-                  {panelMessages.map((msg, i) => (
-                    <div key={i} className={`chat-panel-msg ${msg.role}`}>
-                      <span className="chat-panel-msg-avatar">{msg.role === 'user' ? '👤' : '🐙'}</span>
-                      <div className="chat-panel-msg-text" dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }} />
-                    </div>
+                <div className="chat-mini-msgs">
+                  {panelMessages.map((m, i) => (
+                    <div key={i} className={`chat-mini-msg ${m.role}`}><Markdown text={m.content} /></div>
                   ))}
-                  {panelLoading && (
-                    <div className="chat-panel-msg assistant">
-                      <span className="chat-panel-msg-avatar">🐙</span>
-                      <div className="chat-panel-msg-text">
-                        <span className="chat-panel-typing">●●●</span>
-                      </div>
-                    </div>
-                  )}
+                  {panelLoading && <div className="chat-mini-msg assistant"><span className="chat-typing" aria-hidden="true"><i /><i /><i /></span></div>}
                   <div ref={panelEndRef} />
                 </div>
               )}
-
-              <div className="chat-action-minichat-row">
+              <div className="row" style={{ gap: 6 }}>
                 <input
-                  type="text"
-                  value={panelInput}
-                  onChange={(e) => setPanelInput(e.target.value)}
+                  value={panelInput} onChange={(e) => setPanelInput(e.target.value)} disabled={panelLoading}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handlePanelSend() } }}
-                  placeholder="Es: salvalo nel progetto X..."
-                  className="chat-action-minichat-input"
-                  disabled={panelLoading}
+                  placeholder="Es. salvalo nel progetto X" aria-label="Messaggio per il pannello azioni"
                 />
-                <button
-                  onClick={() => handlePanelSend()}
-                  disabled={!panelInput.trim() || panelLoading}
-                  className="chat-action-minichat-send"
-                >➤</button>
+                <button className="btn btn-primary" onClick={handlePanelSend} disabled={!panelInput.trim() || panelLoading} aria-label="Invia"><ArrowUp size={16} /></button>
               </div>
             </div>
-          </div>
+          </aside>
         )}
       </div>
     </div>

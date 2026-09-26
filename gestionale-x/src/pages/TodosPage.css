@@ -1,0 +1,11 @@
+.todos-bar { display: flex; gap: var(--gap); align-items: center; flex-wrap: wrap; }
+.todos-bar input[type="search"] { flex: 1 1 240px; }
+.todos-bar input[type="search"]::-webkit-search-cancel-button { display: none; }
+
+.todos-group-head { display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-bottom: 1px solid var(--line); background: var(--bg-sub); }
+.todos-group-name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.todos-row { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 4px 12px; cursor: pointer; border-top: 1px solid var(--line-soft); }
+li:first-child > .todos-row { border-top: 0; }
+.todos-row:hover { background: var(--bg-sub); }
+.todos-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.todos-row.is-done .todos-text { color: var(--ink-3); text-decoration: line-through; }

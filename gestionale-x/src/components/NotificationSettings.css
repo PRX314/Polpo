@@ -1,0 +1,5 @@
+.notif-state { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); padding: 12px; }
+.notif-state .status-mark { margin-top: 4px; width: 12px; height: 12px; }
+.notif-state .status-mark.on { background: var(--ink); }
+.notif-box { border: 1px solid var(--line); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.notif-box ol { padding-left: 20px; list-style: decimal; display: flex; flex-direction: column; gap: 4px; }

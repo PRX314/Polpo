@@ -1,0 +1,18 @@
+.items-toolbar { display: flex; align-items: center; gap: var(--gap); flex-wrap: wrap; }
+.items-search { position: relative; flex: 1; min-width: 200px; display: flex; align-items: center; }
+.items-search svg { position: absolute; left: 10px; color: var(--ink-2); pointer-events: none; }
+.items-search input { padding-left: 32px; }
+.items-search input::-webkit-search-cancel-button { display: none; }
+
+.items-filters { display: flex; flex-direction: column; gap: 14px; }
+.field-row.three { grid-template-columns: repeat(3, 1fr); }
+.items-filters .tag button { display: inline-flex; margin-left: 2px; }
+
+.items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; padding-right: 4px; padding-bottom: 4px; }
+.items-list { display: flex; flex-direction: column; }
+
+@media (max-width: 640px) {
+  .items-search { flex-basis: 100%; }
+  .items-grid { grid-template-columns: 1fr; }
+  .field-row.three { grid-template-columns: 1fr; }
+}

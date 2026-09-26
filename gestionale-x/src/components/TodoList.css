@@ -1,0 +1,18 @@
+.todo-list { display: flex; flex-direction: column; margin-bottom: 10px; }
+.todo { border-top: 1px solid var(--line-soft); }
+.todo:first-child { border-top: 0; }
+.todo.is-dragging { opacity: 0.4; }
+.todo-main { display: flex; align-items: center; gap: 8px; min-height: 40px; }
+.todo-grip { color: var(--ink-3); cursor: grab; display: inline-flex; }
+.todo-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.todo.is-done .todo-text { color: var(--ink-3); text-decoration: line-through; }
+.todo-alarm { display: grid; grid-template-columns: 1fr 100px 1.4fr; gap: 6px; padding: 0 0 10px 30px; }
+
+.todo-add { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.todo-add-text, .todo-add .btn { grid-column: 1 / -1; }
+
+@media (max-width: 640px) {
+  .todo-grip { display: none; }
+  .todo-alarm { grid-template-columns: 1fr 1fr; padding-left: 0; }
+  .todo-alarm select { grid-column: 1 / -1; }
+}

@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import Groq from 'groq-sdk'
+import { listProviders, providerName, normalizeTargets, callProvider, defaultTarget } from './providers.js'
 import admin from 'firebase-admin'
 import webpush from 'web-push'
 
@@ -40,25 +40,12 @@ const app = express()
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4321', 'https://gestionalepolpo.netlify.app', 'https://polpo-c9un.onrender.com', 'https://polpopoly.it'] }))
 app.use(express.json({ limit: '1mb' }))
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-
-// llama-3.3-70b-versatile è passato ad accesso enterprise (404 model_not_found
-// sulle key free). Default a un modello free con tool calling, override via env,
-// fallback automatico se il modello scelto non è accessibile.
-const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b'
-const GROQ_MODEL_FALLBACK = 'llama-3.1-8b-instant'
-
-async function groqChat(opts) {
-  try {
-    return await groq.chat.completions.create({ model: GROQ_MODEL, ...opts })
-  } catch (err) {
-    const code = err?.error?.error?.code || err?.code
-    if (err?.status === 404 || code === 'model_not_found') {
-      console.warn(`Modello ${GROQ_MODEL} non disponibile → fallback ${GROQ_MODEL_FALLBACK}`)
-      return await groq.chat.completions.create({ model: GROQ_MODEL_FALLBACK, ...opts })
-    }
-    throw err
-  }
+// I provider AI (Groq, Nvidia, ...) vivono in providers.js; le key stanno nelle env.
+// Per titoli e altre chiamate di servizio si usa il primo provider configurato.
+async function utilityChat(opts) {
+  const target = defaultTarget()
+  if (!target) throw Object.assign(new Error('Nessun provider AI configurato'), { status: 401 })
+  return callProvider(target, opts)
 }
 
 // ============================================================================
@@ -829,14 +816,93 @@ app.get('/api/specialists', verifyUser, (req, res) => {
   res.json({ specialists: list })
 })
 
+app.get('/api/providers', verifyUser, (req, res) => {
+  res.json({ providers: listProviders() })
+})
+
+// Una chiamata completa (eventuale tool propose_actions + risposta testuale) verso un provider.
+async function runTarget(target, baseMessages, { maxTokens, tools }) {
+  const started = Date.now()
+  const messages = [...baseMessages]
+  const label = `${providerName(target.provider)} · ${target.model}`
+  const base = { provider: target.provider, model: target.model, label }
+
+  let completion
+  try {
+    completion = await callProvider(target, { messages, temperature: 0.7, max_tokens: maxTokens, tools, tool_choice: 'auto' })
+  } catch (err) {
+    // Non tutti i modelli supportano i tool: riprovo senza, la risposta resta testuale.
+    if (err?.status === 400 && /tool|function/i.test(err?.message || '')) {
+      console.warn(`${label}: tool non supportati, riprovo senza`)
+      completion = await callProvider(target, { messages, temperature: 0.7, max_tokens: maxTokens })
+    } else {
+      throw err
+    }
+  }
+
+  const responseMsg = completion.choices?.[0]?.message
+  if (!responseMsg) throw new Error(`${providerName(target.provider)} ha restituito una risposta vuota`)
+
+  if (!responseMsg.tool_calls?.length) {
+    return { ...base, reply: responseMsg.content || 'Non sono riuscito a elaborare una risposta.', proposedActions: [], ms: Date.now() - started }
+  }
+
+  let proposedActions = []
+  messages.push(responseMsg)
+  for (const toolCall of responseMsg.tool_calls) {
+    if (toolCall.function.name === 'propose_actions') {
+      let toolArgs
+      try {
+        toolArgs = JSON.parse(toolCall.function.arguments)
+      } catch {
+        toolArgs = { actions: [] }
+      }
+      proposedActions = toolArgs.actions || []
+      console.log(`📋 ${label}: proposte ${proposedActions.length} azioni:`, proposedActions.map(a => a.label))
+    }
+    messages.push({
+      role: 'tool',
+      tool_call_id: toolCall.id,
+      content: JSON.stringify({ status: 'proposed', message: 'Azioni proposte all\'utente, in attesa di conferma' })
+    })
+  }
+
+  const followUp = await callProvider(target, { messages, temperature: 0.7, max_tokens: 1024 })
+  const reply = followUp.choices?.[0]?.message?.content || 'Ecco le azioni proposte.'
+  return { ...base, reply, proposedActions, ms: Date.now() - started }
+}
+
+// Traduce un errore di provider in messaggio leggibile + dettaglio tecnico.
+function describeAiError(err, label) {
+  const g = err?.error?.error || err?.error || {}
+  const msg = g.message || err?.message || ''
+  const detail = [g.code || err?.code, err?.status, msg].filter(Boolean).join(' · ').slice(0, 300)
+  let status = 500
+  let error = 'Errore nella generazione della risposta.'
+  if (err?.status === 429 || /rate.?limit/i.test(msg)) {
+    status = 429; error = `Limite richieste ${label} raggiunto. Riprova tra qualche secondo.`
+  } else if (err?.status === 413 || /too large|context.?length|tokens per (minute|day)/i.test(msg)) {
+    status = 413; error = 'Richiesta troppo grande per il modello: troppo contesto. Riprova con un messaggio più corto.'
+  } else if (err?.status === 401 || err?.status === 403 || /api[_ ]?key|invalid.*key|authentication|organization/i.test(msg)) {
+    status = 500; error = `Chiave ${label} non valida o mancante sul server.`
+  } else if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
+    status = 504; error = `${label} non ha risposto in tempo.`
+  }
+  return { status, error, detail }
+}
+
 app.post('/api/chat', verifyUser, async (req, res) => {
   try {
     const { message, history = [], source = 'main', specialist = null } = req.body
     if (!message?.trim()) return res.status(400).json({ error: 'Messaggio vuoto' })
 
     const isPanel = source === 'panel'
+    // Il pannello azioni lavora sempre con un solo modello; la chat principale può confrontarne fino a 4.
+    const targets = normalizeTargets(req.body.targets, isPanel ? 1 : 4)
+    if (!targets.length) return res.status(500).json({ error: 'Nessun provider AI configurato sul server (mancano le chiavi).' })
+
     const context = await getUserContext(req.userId)
-    // Cap duro: il tier gratuito Groq ha un limite di token per richiesta.
+    // Cap duro: il tier gratuito ha un limite di token per richiesta.
     // formatContext e' gia' limitato per campo, questo e' la rete di sicurezza.
     const MAX_CONTEXT_CHARS = 14000
     const full = formatContext(context)
@@ -873,95 +939,43 @@ app.post('/api/chat', verifyUser, async (req, res) => {
     ]
 
     // Tools propose_actions disponibili sia per la chat principale che per il pannello
-    const proposeTools = TOOLS.filter(t => t.function.name === 'propose_actions')
+    const tools = TOOLS.filter(t => t.function.name === 'propose_actions')
+    const opts = { maxTokens: isPanel ? 1024 : 2048, tools }
 
-    const completionOpts = {
-      messages,
-      temperature: 0.7,
-      max_tokens: isPanel ? 1024 : 2048
-    }
-    completionOpts.tools = proposeTools
-    completionOpts.tool_choice = 'auto'
-
-    const completion = await groqChat(completionOpts)
-
-    const responseMsg = completion.choices[0]?.message
-    if (!responseMsg) throw new Error('Groq ha restituito una risposta vuota')
-    let proposedActions = []
-
-    // Se l'AI ha usato propose_actions, estrai le azioni proposte
-    if (responseMsg.tool_calls && responseMsg.tool_calls.length > 0) {
-      messages.push(responseMsg)
-
-      for (const toolCall of responseMsg.tool_calls) {
-        if (toolCall.function.name === 'propose_actions') {
-          let toolArgs
-          try {
-            toolArgs = JSON.parse(toolCall.function.arguments)
-          } catch {
-            toolArgs = { actions: [] }
-          }
-          proposedActions = toolArgs.actions || []
-          console.log(`📋 Proposte ${proposedActions.length} azioni:`, proposedActions.map(a => a.label))
-        }
-
-        // Rispondi al tool call dicendo che le azioni sono in attesa
-        messages.push({
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          content: JSON.stringify({ status: 'proposed', message: 'Azioni proposte all\'utente, in attesa di conferma' })
-        })
-      }
-
-      // Seconda chiamata per la risposta testuale
-      const followUp = await groqChat({
-        messages,
-        temperature: 0.7,
-        max_tokens: 1024
-      })
-
-      const reply = followUp.choices[0]?.message?.content || 'Ecco le azioni proposte.'
-
-      return res.json({
-        reply,
-        proposedActions,
-        stats: {
-          progetti: context.stats.totaleProgetti,
-          note: context.stats.totaleNote,
-          todoCompletati: context.stats.todoCompletati,
-          todoTotali: context.stats.todoTotali
-        }
-      })
+    const stats = {
+      progetti: context.stats.totaleProgetti,
+      note: context.stats.totaleNote,
+      todoCompletati: context.stats.todoCompletati,
+      todoTotali: context.stats.todoTotali
     }
 
-    // Nessun tool usato - risposta semplice
-    const reply = responseMsg.content || 'Non sono riuscito a elaborare una risposta.'
+    // Un solo modello: stessa risposta di sempre (e stessi errori HTTP).
+    if (targets.length === 1) {
+      const r = await runTarget(targets[0], messages, opts)
+      return res.json({ reply: r.reply, proposedActions: r.proposedActions, provider: r.provider, model: r.model, label: r.label, ms: r.ms, stats })
+    }
 
-    res.json({
-      reply,
-      proposedActions: [],
-      stats: {
-        progetti: context.stats.totaleProgetti,
-        note: context.stats.totaleNote,
-        todoCompletati: context.stats.todoCompletati,
-        todoTotali: context.stats.todoTotali
-      }
+    // Più modelli in parallelo: ognuno può fallire senza fermare gli altri.
+    const settled = await Promise.allSettled(targets.map(t => runTarget(t, messages, opts)))
+    const replies = settled.map((s, i) => {
+      if (s.status === 'fulfilled') return s.value
+      const t = targets[i]
+      const label = `${providerName(t.provider)} · ${t.model}`
+      const { error, detail } = describeAiError(s.reason, providerName(t.provider))
+      console.error(`Errore chat AI (${label}):`, detail)
+      return { provider: t.provider, model: t.model, label, error, detail }
     })
+    if (replies.every(r => r.error)) {
+      const first = describeAiError(settled[0].reason, providerName(targets[0].provider))
+      return res.status(first.status).json({ error: `Nessun modello ha risposto. ${first.error}`, detail: first.detail })
+    }
+    const first = replies.find(r => !r.error)
+    res.json({ reply: first.reply, proposedActions: first.proposedActions, replies, stats })
   } catch (err) {
-    const g = err?.error?.error || err?.error || {}
-    const msg = g.message || err?.message || ''
-    console.error('Errore chat AI:', err?.status, g.code || err?.code, msg)
-    const detail = [g.code || err?.code, err?.status, msg].filter(Boolean).join(' · ').slice(0, 300)
-    if (err?.status === 429 || /rate.?limit/i.test(msg)) {
-      return res.status(429).json({ error: 'Limite richieste Groq raggiunto. Riprova tra qualche secondo.', detail })
-    }
-    if (err?.status === 413 || /too large|context.?length|tokens per (minute|day)/i.test(msg)) {
-      return res.status(413).json({ error: 'Richiesta troppo grande per il modello: troppo contesto. Riprova con un messaggio più corto.', detail })
-    }
-    if (err?.status === 401 || err?.status === 403 || /api[_ ]?key|invalid.*key|authentication|organization/i.test(msg)) {
-      return res.status(500).json({ error: 'Chiave Groq non valida o mancante su Render.', detail })
-    }
-    res.status(500).json({ error: 'Errore nella generazione della risposta.', detail })
+    const label = providerName(normalizeTargets(req.body?.targets, 1)[0]?.provider || 'groq')
+    const { status, error, detail } = describeAiError(err, label)
+    console.error('Errore chat AI:', err?.status, detail)
+    res.status(status).json({ error, detail })
   }
 })
 
@@ -1003,13 +1017,14 @@ app.post('/api/chat/title', verifyUser, async (req, res) => {
       return res.json({ title: convMessages[0]?.content?.substring(0, 40) || 'Nuova conversazione' })
     }
     const firstExchange = convMessages.slice(0, 4).map(m => `${m.role}: ${m.content}`).join('\n')
-    const completion = await groqChat({
+    const completion = await utilityChat({
       messages: [
         { role: 'system', content: 'Genera un titolo breve (max 5 parole, in italiano) che riassuma questa conversazione. Rispondi SOLO con il titolo.' },
         { role: 'user', content: firstExchange }
       ],
       temperature: 0.3,
-      max_tokens: 30
+      // I modelli con ragionamento (gpt-oss) consumano i token pensando: con pochi token il titolo esce vuoto.
+      max_tokens: 300
     })
     const title = completion.choices[0]?.message?.content?.trim().replace(/^["']|["']$/g, '') || 'Conversazione'
     res.json({ title })
@@ -1019,7 +1034,7 @@ app.post('/api/chat/title', verifyUser, async (req, res) => {
 })
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'Polpo AI', version: '2.3.0', model: GROQ_MODEL, uptime: Math.floor(process.uptime()) })
+  res.json({ status: 'ok', service: 'Polpo AI', version: '2.3.0', model: defaultTarget()?.model, providers: listProviders().map(p => p.id), uptime: Math.floor(process.uptime()) })
 })
 
 // ============================================================================

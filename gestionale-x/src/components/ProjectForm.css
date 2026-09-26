@@ -1,0 +1,11 @@
+.chips.wrap { flex-wrap: wrap; overflow: visible; }
+
+.pf-block { border: 1px solid var(--line-soft); padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; margin: 0; }
+.pf-block legend { font-size: var(--fs-s); font-weight: 700; padding: 0 6px; color: var(--ink-2); letter-spacing: 0.04em; text-transform: uppercase; }
+.pf-section { border: 1px solid var(--line-soft); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.pf-item { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: 1px solid var(--line-soft); }
+.pf-images { display: flex; flex-wrap: wrap; gap: 8px; }
+.pf-image { position: relative; width: 72px; height: 72px; border: 1px solid var(--line-soft); }
+.pf-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pf-image .btn-icon { position: absolute; top: 0; right: 0; background: var(--bg); border-color: var(--line); width: 20px; height: 20px; }
+.pf-upload { align-self: flex-start; cursor: pointer; }

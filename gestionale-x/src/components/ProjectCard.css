@@ -1,0 +1,35 @@
+/* Scheda (griglia) e riga (lista) di un elemento.
+   Il titolo è il link; ::after lo estende a tutta la scheda, così la scheda è
+   cliccabile ma resta raggiungibile da tastiera, e menu e link interni restano sopra. */
+
+.item { position: relative; display: flex; flex-direction: column; gap: 8px; min-height: 132px; }
+.item:hover { background: var(--bg-sub); }
+.item-top { display: flex; align-items: center; gap: 10px; }
+.item-menu { margin-left: auto; margin-right: -8px; margin-top: -8px; position: relative; z-index: 2; }
+.item-title { font-size: var(--fs-l); font-weight: 600; line-height: 1.3; }
+.item-link { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
+.item-link:hover { text-decoration: none; }
+.item-link::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.item-link:focus-visible { outline: none; }
+.item:has(.item-link:focus-visible), .item-row:has(.item-link:focus-visible) { outline: 2px solid var(--ink); outline-offset: 2px; }
+.item-desc { font-size: var(--fs); line-height: 1.4; }
+.item-foot { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+.item-progress { display: flex; align-items: center; gap: 10px; }
+.item-progress .bar { flex: 1; }
+.item-nums { font-variant-numeric: tabular-nums; }
+.item-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+
+.item-row {
+  position: relative; display: flex; align-items: center; gap: 10px; min-height: 48px;
+  padding: 6px 4px 6px 12px; border: 1px solid var(--line); margin-bottom: -1px; background: var(--bg);
+}
+.item-row:hover { background: var(--bg-sub); }
+.item-row.is-pinned { border-left-width: 4px; padding-left: 9px; }
+.item-row-name { flex: 1 1 0; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-row-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; position: relative; z-index: 2; pointer-events: none; }
+.item-row .menu { position: relative; z-index: 2; }
+
+@media (max-width: 640px) {
+  .item-row { flex-wrap: wrap; row-gap: 2px; padding-top: 10px; padding-bottom: 6px; }
+  .item-row-meta { order: 5; flex-basis: 100%; padding-left: 20px; flex-wrap: wrap; padding-bottom: 4px; }
+}

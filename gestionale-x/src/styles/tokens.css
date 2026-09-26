@@ -1,0 +1,52 @@
+/* Token del design system: due temi soli, chiaro e scuro.
+   Stile Polpopoly: monocromo, bordi 1px, angoli a 0, nessuna ombra.
+   Nel tema scuro i colori sono invertiti, non ridisegnati. */
+
+:root {
+  color-scheme: light;
+
+  --bg: #ffffff;
+  --bg-sub: #f4f4f4;
+  --ink: #000000;
+  --ink-2: #4a4a4a;
+  --ink-3: #6f6f6f;
+  --on-ink: #ffffff;
+  --line: #000000;
+  --line-soft: #d6d6d6;
+  --overlay: rgba(0, 0, 0, 0.45);
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --fs-xs: 11px;
+  --fs-s: 12px;
+  --fs: 14px;
+  --fs-l: 16px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
+
+  --gap: 8px;
+  --pad: 12px;
+  --shell: 1100px;
+  --tap: 44px;
+  --field-h: 36px;
+  --header-h: 52px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0a0a0a;
+  --bg-sub: #171717;
+  --ink: #f5f5f5;
+  --ink-2: #b5b5b5;
+  --ink-3: #8f8f8f;
+  --on-ink: #000000;
+  --line: #f5f5f5;
+  --line-soft: #363636;
+  --overlay: rgba(0, 0, 0, 0.7);
+}
+
+@media (pointer: coarse) {
+  :root { --field-h: 44px; }
+}

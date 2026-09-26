@@ -402,8 +402,13 @@ function costruisci(voce, datiScan, esistente, catalogo) {
     ? (STATO_VAULT[fm.status] || 'pending')
     : (STATO_SCAN[datiScan && datiScan.stato] || 'pending')
 
-  const links = []
-  if (fm.liveUrl) links.push({ title: 'Online', url: fm.liveUrl })
+  // L'indirizzo online lo possiede il vault (`liveUrl:` nel frontmatter), quindi va
+  // riallineato a ogni giro. Ma i link aggiunti a mano nell'app non si toccano:
+  // sostituisco solo la voce "Online", lascio tutto il resto dov'e'.
+  const fondiLinks = (vecchi) => {
+    const altri = (vecchi || []).filter((l) => l && l.title !== 'Online')
+    return fm.liveUrl ? [{ title: 'Online', url: fm.liveUrl }, ...altri] : altri
+  }
 
   const { todos, nuove, rimosse } = fondiTodos(
     esistente && esistente.todos, voce.caselle || [], voce.fonte === 'vault')
@@ -418,7 +423,7 @@ function costruisci(voce, datiScan, esistente, catalogo) {
     obiettivi: voce.visione || '',
     roadmap: voce.roadmapTesto || '',
     todos,
-    links: (esistente && esistente.links && esistente.links.length) ? esistente.links : links,
+    links: fondiLinks(esistente && esistente.links),
     sections: sezioniGestionale(voce.sezioni || []),
     vaultNote: voce.nomeNota || '',
     // Percorso completo della nota: il collegamento a Obsidian dava per scontato

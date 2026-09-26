@@ -1,0 +1,12 @@
+.scan-dot { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-s); color: var(--ink-3); }
+.scan-mark { width: 9px; height: 9px; border: 1px solid var(--ink); flex-shrink: 0; display: inline-block; }
+.scan-mark.on { background: var(--ink); }
+.scan-mark.half { background: linear-gradient(to right, var(--ink) 50%, transparent 50%); }
+
+.scan-list { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.scan-row { display: flex; gap: 12px; align-items: baseline; }
+.scan-row dt { width: 7.5rem; flex-shrink: 0; font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
+.scan-row dd { margin: 0; min-width: 0; color: var(--ink-2); line-height: 1.5; overflow-wrap: anywhere; }
+@media (max-width: 520px) {
+  .scan-row { flex-direction: column; gap: 0; }
+}

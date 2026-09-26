@@ -1,85 +1,65 @@
-// Tipi unificati per tutti gli elementi del gestionale
-// Ogni tipo ha: icon, label, color, defaultSections (template)
+// Tipi unificati per tutti gli elementi del gestionale.
+// Ogni tipo ha un'etichetta e le sezioni di partenza. Il tipo si riconosce dal
+// testo, non dal colore: l'interfaccia è monocromatica.
 
 export const ITEM_TYPES = {
   progetto: {
-    icon: '📁',
     label: 'Progetto',
-    color: '#54a0ff',
-    colorLight: '#e8f0fe',
     defaultSections: [
-      { icon: '🎯', title: 'Obiettivi', content: '' },
-      { icon: '📍', title: 'Roadmap', content: '' },
+      { title: 'Obiettivi', content: '' },
+      { title: 'Roadmap', content: '' },
     ]
   },
   idea: {
-    icon: '💡',
     label: 'Idea',
-    color: '#feca57',
-    colorLight: '#fff9e0',
     defaultSections: [
-      { icon: '📝', title: 'Descrizione', content: '' },
-      { icon: '🚀', title: 'Sviluppo', content: '' },
+      { title: 'Descrizione', content: '' },
+      { title: 'Sviluppo', content: '' },
     ]
   },
   monologo: {
-    icon: '🎭',
     label: 'Monologo',
-    color: '#ff6b6b',
-    colorLight: '#ffe0e0',
     defaultSections: [
-      { icon: '📝', title: 'Testo', content: '' },
-      { icon: '🎯', title: 'Temi e Spunti', content: '' },
-      { icon: '💡', title: 'Note Regia', content: '' },
+      { title: 'Testo', content: '' },
+      { title: 'Temi e spunti', content: '' },
+      { title: 'Note di regia', content: '' },
     ]
   },
   musica: {
-    icon: '🎵',
     label: 'Musica',
-    color: '#a78bfa',
-    colorLight: '#f0ebff',
     defaultSections: [
-      { icon: '📝', title: 'Testo / Rime', content: '' },
-      { icon: '🎹', title: 'Beat / Produzione', content: '' },
-      { icon: '💡', title: 'Ispirazione', content: '' },
+      { title: 'Testo / rime', content: '' },
+      { title: 'Beat / produzione', content: '' },
+      { title: 'Ispirazione', content: '' },
     ]
   },
   video: {
-    icon: '🎬',
     label: 'Video',
-    color: '#ff9f43',
-    colorLight: '#fff0e0',
     defaultSections: [
-      { icon: '🎣', title: 'Hook', content: '' },
-      { icon: '📝', title: 'Script', content: '' },
-      { icon: '📢', title: 'CTA / Chiusura', content: '' },
-      { icon: '🏷️', title: 'Hashtag / Note', content: '' },
+      { title: 'Hook', content: '' },
+      { title: 'Script', content: '' },
+      { title: 'CTA / chiusura', content: '' },
+      { title: 'Hashtag / note', content: '' },
     ]
   },
   evento: {
-    icon: '🎪',
     label: 'Evento',
-    color: '#20c997',
-    colorLight: '#e0fbf1',
     defaultSections: [
-      { icon: '📋', title: 'Programma', content: '' },
-      { icon: '📍', title: 'Location', content: '' },
-      { icon: '💰', title: 'Budget', content: '' },
+      { title: 'Programma', content: '' },
+      { title: 'Location', content: '' },
+      { title: 'Budget', content: '' },
     ]
   },
   nota: {
-    icon: '📝',
     label: 'Nota',
-    color: '#6b7280',
-    colorLight: '#f0f1f3',
     defaultSections: []
   }
 }
 
-export const ITEM_TYPE_LIST = Object.entries(ITEM_TYPES).map(([key, val]) => ({
-  key,
-  ...val
-}))
+export const ITEM_TYPE_LIST = Object.entries(ITEM_TYPES).map(([key, val]) => ({ key, ...val }))
+
+// Tipi che vivono come "note" collegate a un progetto tramite i tag
+export const NOTE_TYPES = ['nota', 'idea', 'monologo', 'musica']
 
 // Genera sezioni con ID unico dal template
 export function createSectionsFromTemplate(typeKey) {
@@ -87,7 +67,6 @@ export function createSectionsFromTemplate(typeKey) {
   if (!type || !type.defaultSections.length) return []
   return type.defaultSections.map((s, i) => ({
     id: `${Date.now()}-${i}`,
-    icon: s.icon,
     title: s.title,
     content: s.content
   }))
