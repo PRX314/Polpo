@@ -6,7 +6,6 @@ import Auth from './components/Auth'
 import Shell from './layout/Shell'
 import Header from './layout/Header'
 import ChangePasswordModal from './components/ChangePasswordModal'
-import LinkGoogleModal from './components/LinkGoogleModal'
 import NotificationSettings from './components/NotificationSettings'
 import OggiPage from './pages/OggiPage'
 import ItemsPage from './pages/ItemsPage'
@@ -28,7 +27,7 @@ const Authed = ({ user }) => {
   const navigate = useNavigate()
   const toast = useToast()
   const { projects } = useData()
-  const [modal, setModal] = useState(null) // 'notifications' | 'password' | 'google'
+  const [modal, setModal] = useState(null) // 'notifications' | 'password'
   const pushActive = usePush(projects, modal === 'notifications')
 
   const changePassword = async (current, next) => {
@@ -57,7 +56,6 @@ const Authed = ({ user }) => {
                   user={user} pushActive={pushActive}
                   onNotifications={() => setModal('notifications')}
                   onPassword={() => setModal('password')}
-                  onGoogle={() => setModal('google')}
                   onImport={() => navigate('/importa')}
                   onLogout={logout}
                 />
@@ -78,9 +76,7 @@ const Authed = ({ user }) => {
       </Routes>
 
       {modal === 'notifications' && <NotificationSettings onClose={() => setModal(null)} />}
-      {modal === 'password' && <ChangePasswordModal onClose={() => setModal(null)} onSubmit={changePassword} />}
-      {modal === 'google' && <LinkGoogleModal onClose={() => setModal(null)} />}
-    </>
+      {modal === 'password' && <ChangePasswordModal onClose={() => setModal(null)} onSubmit={changePassword} />}    </>
   )
 }
 

@@ -24,5 +24,3 @@
 .auth-keys button:hover:not(:disabled) { background: var(--ink); color: var(--on-ink); }
 .auth-keys button:active:not(:disabled) { transform: scale(0.97); }
 
-.auth-or { display: flex; align-items: center; gap: 12px; margin: 14px 0; color: var(--ink-3); font-size: var(--fs-s); }
-.auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
