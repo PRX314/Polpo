@@ -52,11 +52,13 @@ async function apiCall(endpoint, body) {
 // ============================================================================
 
 // targets: [{ provider, model }] — con più di uno il backend risponde con `replies` (una per modello).
-export const sendMessage = async (message, history = [], source = 'main', specialist = null, targets = []) => {
+// voce: il messaggio è stato detto al microfono e la risposta verrà letta → il server la chiede breve.
+export const sendMessage = async (message, history = [], source = 'main', specialist = null, targets = [], { voce = false } = {}) => {
   // Il server usa solo ruolo e testo (ultimi 24): le risposte a confronto restano fuori dal payload.
   const body = { message, history: history.slice(-24).map(m => ({ role: m.role, content: m.content })), source }
   if (specialist) body.specialist = specialist
   if (targets.length) body.targets = targets
+  if (voce) body.voce = true
   const data = await apiCall('/api/chat', body)
   return {
     reply: data.reply,

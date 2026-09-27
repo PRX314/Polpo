@@ -121,6 +121,7 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
 
   // Voce: orecchie e bocca del browser (riconoscimento e sintesi vocale), niente server
   const [voce, setVoce] = useState('fermo') // fermo | ascolto | parlo
+  const [turnoVoce, setTurnoVoce] = useState(false) // un giro a voce è in corso (anche mentre pensa)
   const ecoRef = useRef(null)
   const azioniRef = useRef(null)
   useEffect(() => () => { ecoRef.current?.zitto(); ecoRef.current?.fermaAscolto() }, [])
@@ -195,7 +196,8 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
     ta.style.height = `${Math.min(ta.scrollHeight, 140)}px`
   }, [])
 
-  const handleSend = async (textOverride) => {
+  // voce: il messaggio è stato detto al microfono → risposta breve da leggere, un modello solo
+  const handleSend = async (textOverride, { voce = false } = {}) => {
     const text = (textOverride || input).trim()
     if (!text || loading) return
 
@@ -209,7 +211,9 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
 
     let esito = null
     try {
-      const { reply, proposedActions, label, replies } = await sendMessage(text, messages, 'main', activeSpecialist, targets)
+      const { reply, proposedActions, label, replies } = await sendMessage(
+        text, messages, 'main', activeSpecialist, voce ? targets.slice(0, 1) : targets, { voce }
+      )
 
       const aiMsg = { role: 'assistant', content: reply, timestamp: new Date().toISOString(), executedActions: [] }
       if (replies?.length > 1) {
@@ -387,32 +391,51 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
   // Un tocco: ascolta, manda, legge la risposta. Se Polpo propone azioni chiede conferma a voce;
   // senza un sì chiaro restano nel pannello come sempre.
   const parlaConPolpo = async () => {
-    const eco = (ecoRef.current ??= new Eco({ ascolto: 'browser', voce: 'browser', onStato: setVoce }))
+    if (!Eco.supportato()) {
+      setError('Questo browser non sa ascoltare. Usa Chrome, Edge o Safari; su iPhone, se dall\'app installata non va, prova da Safari.')
+      return
+    }
+    const eco = (ecoRef.current ??= new Eco({
+      ascolto: 'browser', voce: 'browser', whisper: false, // il backend del gestionale non ha Whisper
+      onStato: setVoce,
+      onMessaggio: (m) => { if (m.chi === 'errore') setError(m.testo) }
+    }))
+    eco.sblocca() // dentro il tocco: la risposta arriva secondi dopo e il browser (iPhone) la bloccherebbe
     if (eco.stato === 'parlo') return eco.zitto()
     if (eco.stato === 'ascolto') return eco.fermaAscolto()
     if (loading) return
 
-    const testo = await eco.ascolta()
-    if (!testo) return
-    const esito = await handleSend(testo)
-    if (!esito) return
-    await eco.parla(esito.reply)
+    setTurnoVoce(true)
+    try {
+      const testo = await eco.ascolta()
+      if (!testo) return
+      const esito = await handleSend(testo, { voce: true })
+      if (!esito) return
+      await eco.parla(esito.reply)
 
-    const n = esito.proposedActions.length
-    if (!n || eco.interrotto) return
-    await eco.parla(n === 1 ? 'Confermi?' : `Confermi tutte e ${n}?`)
-    if (eco.interrotto) return
-    const risposta = Eco.risposta(await eco.ascolta({ attesaMax: 6000 }))
-    if (risposta === 'si') {
-      await azioniRef.current.confirmAll()
-      await eco.parla('Fatto.')
-    } else if (risposta === 'no') {
-      azioniRef.current.rejectAll()
-      await eco.parla('Va bene, lascio stare.')
-    } else {
-      await eco.parla('Non ho capito. Le trovi nel pannello azioni.')
+      const n = esito.proposedActions.length
+      if (!n || eco.interrotto) return
+      await eco.parla(n === 1 ? 'Confermi?' : `Confermi tutte e ${n}?`)
+      if (eco.interrotto) return
+      const risposta = Eco.risposta(await eco.ascolta({ attesaMax: 6000 }))
+      if (risposta === 'si') {
+        await azioniRef.current.confirmAll()
+        await eco.parla('Fatto.')
+      } else if (risposta === 'no') {
+        azioniRef.current.rejectAll()
+        await eco.parla('Va bene, lascio stare.')
+      } else {
+        await eco.parla('Non ho capito. Le trovi nel pannello azioni.')
+      }
+    } finally {
+      setTurnoVoce(false)
     }
   }
+
+  const statoVoce = voce === 'ascolto' ? 'Ti ascolto: parla pure, mi fermo quando smetti.'
+    : voce === 'parlo' ? 'Sto parlando. Tocca il quadrato per interrompermi.'
+    : turnoVoce && loading ? 'Ho sentito, ci penso…'
+    : null
 
   const onKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
@@ -602,25 +625,24 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
 
           <div className="chat-input">
             {error && <div className="form-error" role="alert"><span className="grow">{error}</span><button className="btn-icon sm" onClick={() => setError('')} aria-label="Chiudi"><X size={14} /></button></div>}
+            {statoVoce && <div className={`chat-voice is-${voce}`} role="status"><span className="chat-voice-dot" aria-hidden="true" />{statoVoce}</div>}
             <div className="chat-input-row">
               <textarea
                 ref={inputRef} rows={1} value={input} onChange={autosize} onKeyDown={onKeyDown}
-                placeholder={voce === 'ascolto' ? 'Ti ascolto…' : 'Scrivi a Polpo AI'} aria-label="Messaggio" disabled={loading}
+                placeholder={voce === 'ascolto' ? 'Ti ascolto…' : 'Scrivi, o tocca il microfono e parla'} aria-label="Messaggio" disabled={loading}
               />
-              {Eco.supportato() && (
-                <button
-                  className={`btn chat-mic ${voce}`} onClick={parlaConPolpo} disabled={loading && voce === 'fermo'}
-                  aria-label={voce === 'parlo' ? 'Interrompi' : voce === 'ascolto' ? 'Smetti di ascoltare' : 'Parla con Polpo'}
-                  title={voce === 'parlo' ? 'Interrompi' : 'Parla: la risposta arriva anche a voce'}
-                >
-                  {voce === 'parlo' ? <Square size={14} /> : <Mic size={16} />}
-                </button>
-              )}
+              <button
+                className={`btn chat-mic ${voce}`} onClick={parlaConPolpo} disabled={loading && voce === 'fermo'}
+                aria-label={voce === 'parlo' ? 'Interrompi' : voce === 'ascolto' ? 'Smetti di ascoltare' : 'Parla con Polpo'}
+                title={voce === 'parlo' ? 'Interrompi' : 'Parla: ti rispondo a voce'}
+              >
+                {voce === 'parlo' ? <Square size={14} /> : <Mic size={16} />}
+              </button>
               <button className="btn btn-primary" onClick={() => handleSend()} disabled={!input.trim() || loading} aria-label="Invia">
                 {loading ? <span className="spinner" aria-hidden="true" /> : <ArrowUp size={16} />}
               </button>
             </div>
-            <p className="small faint chat-hint">Invio per inviare · Maiusc+Invio per andare a capo{Eco.supportato() && ' · microfono per parlare'}</p>
+            <p className="small faint chat-hint">Invio per inviare · Maiusc+Invio per andare a capo · microfono: parli e ti rispondo a voce</p>
           </div>
         </div>
 

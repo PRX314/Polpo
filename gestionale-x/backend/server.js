@@ -804,6 +804,17 @@ Le azioni NON vengono eseguite subito: l'utente le vedrà in anteprima e potrà 
 - NON inventare dati che non hai nel contesto
 - Parla in italiano, risposte brevi e operative`
 
+// Aggiunta al prompt quando l'utente parla al microfono: la risposta viene letta ad alta voce,
+// e una risposta scritta (elenchi, grassetti, paragrafi) detta a voce è lunghissima e illeggibile.
+const VOICE_NOTE = `
+
+## RISPOSTA A VOCE
+L'utente ti sta parlando al microfono e la tua risposta verrà LETTA AD ALTA VOCE.
+- Rispondi in 1-3 frasi brevi, come in una conversazione parlata
+- Niente elenchi, titoli, tabelle, grassetti, emoji o link: solo frasi normali
+- Se serve un testo lungo (script, piano, elenco), dillo in una frase e proponi di salvarlo con propose_actions
+- Se proponi azioni, riassumile in una frase: l'utente confermerà a voce`
+
 // ============================================================================
 // ROUTES
 // ============================================================================
@@ -922,6 +933,7 @@ app.post('/api/chat', verifyUser, async (req, res) => {
     } else {
       systemPrompt = SYSTEM_PROMPT_MAIN
     }
+    if (req.body.voce && !isPanel) systemPrompt += VOICE_NOTE
 
     const messages = [
       {
