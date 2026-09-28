@@ -57,11 +57,12 @@ async function apiCall(endpoint, body) {
 // CHAT API
 // ============================================================================
 
+// history: [{ role, content }] già pronta (vedi perStoria in components/chat/azioni.js).
+// specialist: id dell'assistente (null = Polpo generico).
 // targets: [{ provider, model }] — con più di uno il backend risponde con `replies` (una per modello).
 // voce: il messaggio è stato detto al microfono e la risposta verrà letta → il server la chiede breve.
-export const sendMessage = async (message, history = [], source = 'main', specialist = null, targets = [], { voce = false } = {}) => {
-  // Il server usa solo ruolo e testo (ultimi 24): le risposte a confronto restano fuori dal payload.
-  const body = { message, history: history.slice(-24).map(m => ({ role: m.role, content: m.content })), source }
+export const sendMessage = async (message, { history = [], specialist = null, targets = [], voce = false } = {}) => {
+  const body = { message, history: history.slice(-24) }
   if (specialist) body.specialist = specialist
   if (targets.length) body.targets = targets
   if (voce) body.voce = true
@@ -101,7 +102,8 @@ export const executeActions = async (actions) => {
 }
 
 export const generateTitle = async (messages) => {
-  const data = await apiCall('/api/chat/title', { messages })
+  // Al server serve solo il primo scambio, in chiaro
+  const data = await apiCall('/api/chat/title', { messages: messages.slice(0, 4).map(m => ({ role: m.role, content: m.content })) })
   return data.title || 'Conversazione'
 }
 
@@ -110,12 +112,14 @@ export const generateTitle = async (messages) => {
 // ============================================================================
 const chatsCollection = collection(db, "chats")
 
-export const saveConversation = async (title, messages) => {
+// extra: campi della conversazione oltre ai messaggi, es. { specialist }
+export const saveConversation = async (title, messages, extra = {}) => {
   if (!auth.currentUser) throw new Error('Non autenticato')
 
   const conv = {
     userId: auth.currentUser.uid,
     title: title || 'Nuova conversazione',
+    ...extra,
     messages,
     messageCount: messages.length,
     createdAt: Timestamp.fromDate(new Date()),
@@ -126,15 +130,19 @@ export const saveConversation = async (title, messages) => {
   return docRef.id
 }
 
-export const updateConversation = async (convId, messages, title) => {
-  const ref = doc(db, "chats", convId)
-  const updates = {
+export const updateConversation = async (convId, messages, extra = {}) => {
+  await updateDoc(doc(db, "chats", convId), {
+    ...extra,
     messages,
     messageCount: messages.length,
     updatedAt: Timestamp.fromDate(new Date())
-  }
-  if (title) updates.title = title
-  await updateDoc(ref, updates)
+  })
+}
+
+// Solo alcuni campi (titolo, assistente): non riscrive i messaggi. Il titolo arriva secondi dopo
+// e, se riscrivesse i messaggi, cancellerebbe quelli scambiati nel frattempo.
+export const patchConversation = async (convId, fields) => {
+  await updateDoc(doc(db, "chats", convId), fields)
 }
 
 export const subscribeToConversations = (callback, onError) => {

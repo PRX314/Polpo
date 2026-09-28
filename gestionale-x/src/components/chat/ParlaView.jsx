@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Mic, Square } from 'lucide-react'
-import { Eco } from '../lib/eco-client'
-import { API_URL, parametriVoce } from '../services/chatService'
+import { Eco } from '../../lib/eco-client'
+import { API_URL, parametriVoce } from '../../services/chatService'
 import './ParlaView.css'
 
 const FASE = {

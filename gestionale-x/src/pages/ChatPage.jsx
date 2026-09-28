@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import AiChat from '../components/AiChat'
+import AiChat from '../components/chat/AiChat'
 
 // Il messaggio scritto nella pagina Oggi arriva qui nello stato dell'indirizzo
 const ChatPage = () => {

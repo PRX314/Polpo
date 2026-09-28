@@ -61,6 +61,11 @@ select {
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
 }
+/* iPhone ingrandisce la pagina quando tocchi un campo con il testo sotto i 16px, e poi non torna
+   indietro da solo: la pagina resta zoomata e non sta più nello schermo. Sui touch i campi stanno a 16px. */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: 16px; }
+}
 input::placeholder, textarea::placeholder { color: var(--ink-3); }
 input:disabled, select:disabled, textarea:disabled { opacity: 0.45; cursor: not-allowed; }
 input[type="date"], input[type="time"] { padding-right: 6px; }

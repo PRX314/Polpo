@@ -465,13 +465,16 @@ async function executeTool(toolName, args, userId) {
 // Helper: trova progetto per nome (fuzzy match)
 async function findProject(name, userId) {
   const snap = await adminDb.collection('projects').where('userId', '==', userId).get()
-  const nameLower = name.toLowerCase()
+  const nameLower = String(name || '').toLowerCase()
+  if (!nameLower) return null
+  // Solo elementi con un nome: uno vuoto "contiene" qualunque testo e verrebbe scelto a caso
+  const docs = snap.docs.filter(d => typeof d.data().name === 'string' && d.data().name)
 
   // Match esatto prima
-  let match = snap.docs.find(d => d.data().name.toLowerCase() === nameLower)
+  let match = docs.find(d => d.data().name.toLowerCase() === nameLower)
   // Poi match parziale
-  if (!match) match = snap.docs.find(d => d.data().name.toLowerCase().includes(nameLower))
-  if (!match) match = snap.docs.find(d => nameLower.includes(d.data().name.toLowerCase()))
+  if (!match) match = docs.find(d => d.data().name.toLowerCase().includes(nameLower))
+  if (!match) match = docs.find(d => nameLower.includes(d.data().name.toLowerCase()))
 
   return match ? { id: match.id, data: match.data() } : null
 }
@@ -483,11 +486,13 @@ async function findNote(title, userId) {
     .where('userId', '==', userId)
     .where('type', 'in', NOTE_TYPES)
     .get()
-  const titleLower = title.toLowerCase()
+  const titleLower = String(title || '').toLowerCase()
+  if (!titleLower) return null
+  const docs = snap.docs.filter(d => typeof d.data().name === 'string' && d.data().name)
 
-  let match = snap.docs.find(d => d.data().name.toLowerCase() === titleLower)
-  if (!match) match = snap.docs.find(d => d.data().name.toLowerCase().includes(titleLower))
-  if (!match) match = snap.docs.find(d => titleLower.includes(d.data().name.toLowerCase()))
+  let match = docs.find(d => d.data().name.toLowerCase() === titleLower)
+  if (!match) match = docs.find(d => d.data().name.toLowerCase().includes(titleLower))
+  if (!match) match = docs.find(d => titleLower.includes(d.data().name.toLowerCase()))
 
   return match ? { id: match.id, data: match.data() } : null
 }
@@ -496,34 +501,55 @@ async function findNote(title, userId) {
 // CONTESTO UTENTE
 // ============================================================================
 const STATUS_LABELS = {
-  pending: 'Da Fare', in_progress: 'In Corso', 'in-progress': 'In Corso',
-  completed: 'Completato', paused: 'In Pausa', 'on-hold': 'In Pausa'
+  pending: 'Da fare', in_progress: 'In corso', 'in-progress': 'In corso',
+  completed: 'Completato', paused: 'In pausa', 'on-hold': 'In pausa'
 }
 const PRIORITY_LABELS = { high: 'Alta', medium: 'Media', low: 'Bassa' }
+// In che ordine l'AI conosce gli elementi: prima ciò che è vivo adesso
+const STATUS_ORDER = { 'In corso': 0, 'Da fare': 1, 'In pausa': 2, 'Completato': 3 }
+
+// Il server gira in UTC: "oggi" è quello di Paolo, in Italia
+const oggiRoma = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date())
+const piuGiorni = (iso, n) => {
+  const d = new Date(`${iso}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+const conOra = (giorno, ora) => (ora ? `${giorno} ${ora}` : giorno)
 
 async function getUserContext(userId) {
-  const [projectsSnap, notesSnap] = await Promise.all([
+  const [projectsSnap, notesSnap, eventsSnap] = await Promise.all([
     adminDb.collection('projects').where('userId', '==', userId).get(),
-    adminDb.collection('notes').where('userId', '==', userId).get()
+    adminDb.collection('notes').where('userId', '==', userId).get(),
+    adminDb.collection('events').where('userId', '==', userId).get()
   ])
+  const oggi = oggiRoma()
+  const orizzonte = piuGiorni(oggi, 14)
 
   const projects = projectsSnap.docs.map(d => {
     const data = d.data()
     const todos = data.todos || []
+    const aperti = todos.filter(t => !t.completed)
     const sections = data.sections || []
     return {
-      nome: data.name,
+      nome: data.name || '(senza nome)',
       tipo: data.type || 'progetto',
-      descrizione: data.description,
-      stato: STATUS_LABELS[data.status] || data.status,
+      descrizione: data.description || '',
+      stato: STATUS_LABELS[data.status] || data.status || 'Da fare',
+      archiviato: !!data.archived,
+      fissato: !!data.pinned,
       tags: data.tags || [],
       roadmap: data.roadmap || '',
       obiettivi: data.obiettivi || '',
+      scadenza: data.deadline || '',
+      scadenzaOra: data.deadlineTime || '',
       links: (data.links || []).map(l => `${l.title}: ${l.url}`).join(', '),
-      sezioni: sections.length > 0 ? sections.map(s => `${s.icon || '📄'} ${s.title}: ${(s.content || '').slice(0, 100)}`).join(' | ') : '',
-      todoCompletati: todos.filter(t => t.completed).length,
+      sezioni: sections.map(s => `${s.title}: ${(s.content || '').slice(0, 100)}`).join(' | '),
+      todoCompletati: todos.length - aperti.length,
       todoTotali: todos.length,
-      todos: todos.map(t => `${t.completed ? '[FATTO]' : '[DA FARE]'} ${t.text}`).join('\n'),
+      // Solo le voci aperte: quelle già fatte sono rumore per chi deve consigliare cosa fare
+      todoAperti: aperti,
+      aggiornato: data.updatedAt?.toMillis?.() || 0,
       creatoIl: data.createdAt?.toDate()?.toLocaleDateString('it-IT') || 'N/D',
       aggiornatoIl: data.updatedAt?.toDate()?.toLocaleDateString('it-IT') || 'N/D'
     }
@@ -532,8 +558,8 @@ async function getUserContext(userId) {
   const notes = notesSnap.docs.map(d => {
     const data = d.data()
     return {
-      titolo: data.title,
-      contenuto: data.content,
+      titolo: data.title || '(senza titolo)',
+      contenuto: data.content || '',
       tipo: data.type || 'nota',
       priorita: PRIORITY_LABELS[data.priority] || data.priority || 'Media',
       tags: data.projectTags || [],
@@ -541,78 +567,113 @@ async function getUserContext(userId) {
     }
   })
 
-  const stats = {
-    totaleProgetti: projects.length,
-    progettiInCorso: projects.filter(p => p.stato === 'In Corso').length,
-    progettiCompletati: projects.filter(p => p.stato === 'Completato').length,
-    progettiDaFare: projects.filter(p => p.stato === 'Da Fare').length,
-    progettiInPausa: projects.filter(p => p.stato === 'In Pausa').length,
-    totaleNote: notes.length,
-    noteAltaPriorita: notes.filter(n => n.priorita === 'Alta').length,
-    todoTotali: projects.reduce((s, p) => s + p.todoTotali, 0),
-    todoCompletati: projects.reduce((s, p) => s + p.todoCompletati, 0),
-    tipiNote: {
-      note: notes.filter(n => n.tipo === 'note' || n.tipo === 'nota').length,
-      idee: notes.filter(n => n.tipo === 'idea').length,
-      monologhi: notes.filter(n => n.tipo === 'monologo').length,
-      musica: notes.filter(n => n.tipo === 'musica').length
+  // Agenda: scadenze (anche già passate, se non fatte) e appuntamenti fino a due settimane da oggi.
+  // È la risposta a "cosa devo fare oggi": prima all'AI non arrivava.
+  const agenda = []
+  for (const p of projects) {
+    if (p.archiviato) continue
+    if (p.scadenza && p.stato !== 'Completato' && p.scadenza <= orizzonte) {
+      agenda.push({ giorno: p.scadenza, ora: p.scadenzaOra, testo: `Scadenza di "${p.nome}"` })
+    }
+    for (const t of p.todoAperti) {
+      if (t.deadline && t.deadline <= orizzonte) {
+        agenda.push({ giorno: t.deadline, ora: t.time || '', testo: `"${t.text}" (${p.nome})` })
+      }
     }
   }
+  for (const d of eventsSnap.docs) {
+    const e = d.data()
+    if (e.date && e.date >= oggi && e.date <= orizzonte) {
+      agenda.push({ giorno: e.date, ora: e.time || '', testo: `Appuntamento: ${e.title || 'senza titolo'}` })
+    }
+  }
+  agenda.sort((a, b) => conOra(a.giorno, a.ora).localeCompare(conOra(b.giorno, b.ora)))
 
-  return { projects, notes, stats }
+  const attivi = projects.filter(p => !p.archiviato)
+  const stats = {
+    totaleProgetti: attivi.length,
+    archiviati: projects.length - attivi.length,
+    progettiInCorso: attivi.filter(p => p.stato === 'In corso').length,
+    progettiCompletati: attivi.filter(p => p.stato === 'Completato').length,
+    progettiDaFare: attivi.filter(p => p.stato === 'Da fare').length,
+    progettiInPausa: attivi.filter(p => p.stato === 'In pausa').length,
+    totaleNote: notes.length,
+    todoTotali: attivi.reduce((s, p) => s + p.todoTotali, 0),
+    todoCompletati: attivi.reduce((s, p) => s + p.todoCompletati, 0)
+  }
+
+  return { projects, notes, agenda, oggi, stats }
 }
 
 const clip = (v, n) => {
-  const str = String(v || '')
+  const str = String(v || '').replace(/\s+/g, ' ').trim()
   return str.length > n ? str.slice(0, n) + '…' : str
 }
 
+// Quanto contesto: i dettagli si riempiono in ordine di importanza finché c'è spazio, così
+// resta fuori il meno rilevante (prima erano i primi 40 nell'ordine casuale del database).
+const BUDGET_DETTAGLIO = 7000
+const BUDGET_TOTALE = 11800
+
 function formatContext(ctx) {
-  let text = ''
   const s = ctx.stats
-  const MAX_DETTAGLIO = 40   // elementi mostrati per esteso
-  // Count by type
-  const typeCounts = {}
-  ctx.projects.forEach(p => { const t = p.tipo || 'progetto'; typeCounts[t] = (typeCounts[t] || 0) + 1 })
-  const typesSummary = Object.entries(typeCounts).map(([t, c]) => `${c} ${t}`).join(', ')
+  let text = ''
 
-  text += '=== PANORAMICA RAPIDA ===\n'
-  text += `Elementi: ${s.totaleProgetti} totali (${typesSummary})\n`
-  text += `Per stato: ${s.progettiInCorso} in corso, ${s.progettiCompletati} completati, ${s.progettiDaFare} da fare, ${s.progettiInPausa} in pausa\n`
-  if (s.totaleNote > 0) text += `Note legacy: ${s.totaleNote}\n`
-  text += `Todo: ${s.todoCompletati}/${s.todoTotali} completati\n`
-
-  if (ctx.projects.length > 0) {
-    text += '\n=== DETTAGLIO ELEMENTI ===\n'
-    ctx.projects.slice(0, MAX_DETTAGLIO).forEach((p, i) => {
-      const tipo = (p.tipo || 'progetto').charAt(0).toUpperCase() + (p.tipo || 'progetto').slice(1)
-      text += `\n[${tipo} ${i + 1}] "${p.nome}"\n`
-      text += `  Tipo: ${p.tipo || 'progetto'} | Stato: ${p.stato} | Creato: ${p.creatoIl} | Aggiornato: ${p.aggiornatoIl}\n`
-      text += `  Descrizione: ${clip(p.descrizione, 300)}\n`
-      if (p.tags.length) text += `  Tags: ${p.tags.join(', ')}\n`
-      if (p.links) text += `  Links: ${clip(p.links, 200)}\n`
-      if (p.roadmap) text += `  Roadmap: ${clip(p.roadmap, 250)}\n`
-      if (p.obiettivi) text += `  Obiettivi: ${clip(p.obiettivi, 250)}\n`
-      if (p.sezioni) text += `  Sezioni: ${clip(p.sezioni, 300)}\n`
-      if (p.todoTotali > 0) {
-        text += `  Progresso Todo: ${p.todoCompletati}/${p.todoTotali}\n`
-        text += `  ${clip(p.todos, 400)}\n`
-      }
-    })
-    if (ctx.projects.length > MAX_DETTAGLIO) {
-      const resto = ctx.projects.slice(MAX_DETTAGLIO)
-      text += `\n…e altri ${resto.length} elementi (solo nome): ${resto.map(p => `"${p.nome}"`).join(', ')}\n`
+  text += `=== AGENDA (oggi è ${ctx.oggi}; scadenze e appuntamenti fino a 14 giorni) ===\n`
+  if (ctx.agenda.length) {
+    for (const a of ctx.agenda.slice(0, 25)) {
+      const segno = a.giorno < ctx.oggi ? ' (SCADUTA)' : a.giorno === ctx.oggi ? ' (OGGI)' : ''
+      text += `- ${conOra(a.giorno, a.ora)}${segno}: ${a.testo}\n`
     }
+  } else {
+    text += 'Niente in agenda: nessuna scadenza né appuntamento nei prossimi 14 giorni.\n'
   }
 
-  if (ctx.notes.length > 0) {
-    text += '\n=== DETTAGLIO NOTE E IDEE ===\n'
-    ctx.notes.slice(0, MAX_DETTAGLIO).forEach((n, i) => {
-      text += `\n[${n.tipo.charAt(0).toUpperCase() + n.tipo.slice(1)} ${i + 1}] "${n.titolo}"\n`
-      text += `  Priorità: ${n.priorita} | Creato: ${n.creatoIl}\n`
-      text += `  Contenuto: ${clip(n.contenuto, 400)}\n`
-      if (n.tags.length) text += `  Collegato a: ${n.tags.join(', ')}\n`
-    })
+  text += '\n=== PANORAMICA ===\n'
+  text += `Elementi: ${s.totaleProgetti} (${s.progettiInCorso} in corso, ${s.progettiDaFare} da fare, ${s.progettiInPausa} in pausa, ${s.progettiCompletati} completati)`
+  text += s.archiviati ? `, più ${s.archiviati} archiviati (non mostrati)\n` : '\n'
+  text += `Cose da fare: ${s.todoTotali - s.todoCompletati} aperte su ${s.todoTotali}\n`
+
+  const ordinati = ctx.projects
+    .filter(p => !p.archiviato)
+    .sort((a, b) =>
+      (b.fissato - a.fissato) ||
+      ((STATUS_ORDER[a.stato] ?? 1) - (STATUS_ORDER[b.stato] ?? 1)) ||
+      (b.aggiornato - a.aggiornato))
+
+  text += '\n=== ELEMENTI (dal più attivo) ===\n'
+  const soloNome = []
+  for (const p of ordinati) {
+    const testa = `[${p.tipo}] "${p.nome}" — ${p.stato}${p.fissato ? ', fissato' : ''}${p.scadenza ? `, scadenza ${conOra(p.scadenza, p.scadenzaOra)}` : ''}`
+    const voci = p.todoAperti.slice(0, 6).map(t => clip(t.text, 90) + (t.deadline ? ` (entro ${t.deadline})` : ''))
+    const altre = p.todoAperti.length > 6 ? ` +${p.todoAperti.length - 6} altre` : ''
+    let blocco
+    if (text.length < BUDGET_DETTAGLIO) {
+      blocco = `\n${testa}\n`
+      if (p.descrizione) blocco += `  ${clip(p.descrizione, 240)}\n`
+      if (p.tags.length) blocco += `  Tag: ${p.tags.join(', ')}\n`
+      if (p.obiettivi) blocco += `  Obiettivi: ${clip(p.obiettivi, 160)}\n`
+      if (p.roadmap) blocco += `  Roadmap: ${clip(p.roadmap, 200)}\n`
+      if (p.sezioni) blocco += `  Sezioni: ${clip(p.sezioni, 200)}\n`
+      if (p.links) blocco += `  Link: ${clip(p.links, 120)}\n`
+      if (p.todoTotali) blocco += `  Da fare (${p.todoAperti.length} aperte su ${p.todoTotali}): ${voci.join('; ')}${altre}\n`
+    } else {
+      // Oltre il primo blocco: una riga sola per elemento, con le prime cose da fare
+      const prime = voci.length ? ` | da fare: ${voci.slice(0, 3).join('; ')}${p.todoAperti.length > 3 ? '…' : ''}` : ''
+      blocco = `- ${testa}${p.descrizione ? `: ${clip(p.descrizione, 90)}` : ''}${prime}\n`
+    }
+    if (text.length + blocco.length > BUDGET_TOTALE) { soloNome.push(p); continue }
+    text += blocco
+  }
+  if (soloNome.length) {
+    text += `\n…e altri ${soloNome.length} elementi, solo il nome: ${clip(soloNome.map(p => `"${p.nome}" (${p.stato})`).join(', '), 900)}\n`
+  }
+
+  if (ctx.notes.length) {
+    text += '\n=== NOTE (vecchio formato) ===\n'
+    for (const n of ctx.notes.slice(0, 15)) {
+      text += `- "${n.titolo}" (${n.tipo}, priorità ${n.priorita}): ${clip(n.contenuto, 160)}\n`
+    }
   }
 
   return text
@@ -621,7 +682,27 @@ function formatContext(ctx) {
 // ============================================================================
 // SYSTEM PROMPT
 // ============================================================================
-// System prompt per la CHAT PRINCIPALE: solo conversazione, zero azioni
+// Regole comuni a ogni assistente: cos'è davvero il gestionale e come funzionano le proposte.
+// Senza, il Content Creator inventava funzioni ("fatture e magazzino") che non esistono.
+const REGOLE_COMUNI = `
+
+## COS'È IL GESTIONALE (non inventare altro)
+È lo strumento PERSONALE di Paolo per organizzare progetti, idee, note, cose da fare, scadenze e
+appuntamenti. Non gestisce fatture, magazzino, clienti o vendite. Quando parli dei suoi progetti usa
+SOLO ciò che trovi nel contesto qui sotto: non inventare funzioni, dati, numeri o risultati.
+
+## PROPOSTE (tool propose_actions)
+- Proponi azioni SOLO se l'utente chiede di creare, salvare, segnare, modificare o completare qualcosa
+- Se una cosa ti sembra da salvare ma lui non l'ha chiesto, chiediglielo a parole: niente proposte non richieste
+- Al massimo 5 azioni per volta
+- Le proposte compaiono sotto la tua risposta e l'utente le conferma o le rifiuta una per una
+- Nei messaggi precedenti trovi le tue proposte tra [Proposte: …] con il loro stato
+- Una proposta "in attesa" NON è stata eseguita: nel gestionale non esiste. Se l'utente chiede di
+  cambiarla, proponi SOLO la versione corretta (la vecchia viene scartata da sola). Non proporre di
+  completare, modificare o eliminare la vecchia: toccheresti un'altra cosa con un nome simile
+- Una proposta "fatta" invece esiste: per cambiarla serve un'azione di modifica`
+
+// System prompt per la chat: conversazione e, quando richiesto, proposte di azioni
 const SYSTEM_PROMPT_MAIN = `Sei **Polpo AI** 🐙, l'assistente intelligente integrato nel Gestionale Polpo.
 
 ## Chi sei
@@ -646,13 +727,7 @@ Chat principale — conversazione E azioni.
 - Aiutare a scrivere testi per monologhi, canzoni, idee creative
 - Pianificare strategie, roadmap, obiettivi
 
-### Quando AGIRE (usare il tool propose_actions):
-- Se l'utente chiede di creare, aggiungere, salvare, segnare → USA propose_actions
-- Se dalla conversazione emerge qualcosa di concreto da salvare → PROPONI
-- Puoi proporre più azioni insieme
-- Le azioni NON vengono eseguite subito: l'utente vedrà un'anteprima e potrà confermare, modificare o rifiutare
-
-### Azioni disponibili:
+### Azioni disponibili (vedi PROPOSTE più sotto per quando usarle):
 - **add_project** → Nuovo elemento (con sezioni personalizzate)
 - **add_section_to_project** → Aggiungere sezione a elemento esistente
 - **add_note** → Nuova nota/idea/info
@@ -757,54 +832,6 @@ Puoi anche salvare contenuti nel gestionale usando il tool propose_actions.
   // events: { name: 'Event Planner', icon: '🎪', prompt: '...' },
 }
 
-// System prompt per la MINI-CHAT del PANNELLO: azioni e organizzazione
-const SYSTEM_PROMPT_PANEL = `Sei **Polpo AI** 🐙, l'assistente organizzativo del Gestionale Polpo.
-
-## IL TUO RUOLO
-Questa è la **mini-chat del pannello azioni**, dedicata a ORGANIZZARE e SALVARE.
-Il tuo compito qui è proporre azioni concrete per salvare, creare e gestire dati nel gestionale.
-
-## COME FUNZIONI
-Quando vuoi creare, modificare o eliminare qualcosa, usa SEMPRE il tool **propose_actions**.
-Le azioni NON vengono eseguite subito: l'utente le vedrà in anteprima e potrà CONFERMARE, MODIFICARE o RIFIUTARE ogni singola azione.
-
-### Azioni disponibili da proporre:
-- **add_note** → Nuova nota/idea/info/monologo/musica
-- **add_project** → Nuovo progetto (con sezioni personalizzate: sections[{icon, title, content}])
-- **add_section_to_project** → Aggiungere una sezione a progetto esistente (materiali, design, costi, ecc.)
-- **add_todo** → Nuovo task in un progetto
-- **complete_todo** → Completare un task
-- **update_project** → Aggiornare stato/roadmap/obiettivi/descrizione
-- **update_note** → Aggiornare una nota
-- **add_link_to_project** → Aggiungere un link a un progetto
-- **delete_note** → Eliminare una nota
-
-## QUANDO PROPORRE azioni:
-- Prezzi, costi, preventivi → add_note type "info", categoria "prezzi"
-- Contatti, fornitori, servizi → add_note type "info", categoria "contatti"
-- Dati tecnici, specifiche → add_note type "info", categoria "tecnico"
-- Idee di business, strategie → add_note type "idea", categoria "business"
-- Risorse, tool, siti utili → add_note type "info", categoria "risorse"
-- Scadenze, date, appuntamenti → add_note type "info", categoria "scadenze"
-- Decisioni prese → add_note type "info", categoria "decisioni"
-- Nuovi progetti → add_project
-- Task operativi → add_todo
-- L'utente dice "aggiungi", "crea", "scrivi", "segna", "salva" → PROPONI l'azione
-
-## COME PROPORRE:
-- Titolo: chiaro e specifico
-- Contenuto: tutte le info rilevanti
-- ProjectTags: collega SEMPRE ai progetti pertinenti se esistono
-- Proponi più azioni insieme quando ha senso
-- Rispondi brevemente e vai dritto al punto
-
-## Regole
-- USA SEMPRE propose_actions (mai i tools singoli direttamente)
-- Usa i nomi ESATTI dei progetti/note dal contesto
-- Se non trovi un progetto/nota, chiedi all'utente di specificare
-- NON inventare dati che non hai nel contesto
-- Parla in italiano, risposte brevi e operative`
-
 // Aggiunta al prompt quando l'utente parla al microfono: la risposta viene letta ad alta voce,
 // e una risposta scritta (elenchi, grassetti, paragrafi) detta a voce è lunghissima e illeggibile.
 const VOICE_NOTE = `
@@ -905,12 +932,11 @@ function describeAiError(err, label) {
 
 app.post('/api/chat', verifyUser, async (req, res) => {
   try {
-    const { message, history = [], source = 'main', specialist = null } = req.body
+    const { message, history = [], specialist = null } = req.body
     if (!message?.trim()) return res.status(400).json({ error: 'Messaggio vuoto' })
 
-    const isPanel = source === 'panel'
-    // Il pannello azioni lavora sempre con un solo modello; la chat principale può confrontarne fino a 4.
-    const targets = normalizeTargets(req.body.targets, isPanel ? 1 : 4)
+    // Fino a 4 modelli a confronto
+    const targets = normalizeTargets(req.body.targets, 4)
     if (!targets.length) return res.status(500).json({ error: 'Nessun provider AI configurato sul server (mancano le chiavi).' })
 
     const context = await getUserContext(req.userId)
@@ -922,19 +948,12 @@ app.post('/api/chat', verifyUser, async (req, res) => {
       ? full.slice(0, MAX_CONTEXT_CHARS) + '\n…(contesto troncato: troppi elementi)'
       : full
     const today = new Date().toLocaleDateString('it-IT', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Rome'
     })
 
-    // Seleziona il prompt: specialista > pannello > generico
-    let systemPrompt
-    if (isPanel) {
-      systemPrompt = SYSTEM_PROMPT_PANEL
-    } else if (specialist && SPECIALISTS[specialist]) {
-      systemPrompt = SPECIALISTS[specialist].prompt
-    } else {
-      systemPrompt = SYSTEM_PROMPT_MAIN
-    }
-    if (req.body.voce && !isPanel) systemPrompt += VOICE_NOTE
+    // Il prompt dell'assistente scelto, più le regole comuni a tutti
+    let systemPrompt = (SPECIALISTS[specialist]?.prompt || SYSTEM_PROMPT_MAIN) + REGOLE_COMUNI
+    if (req.body.voce) systemPrompt += VOICE_NOTE
 
     const messages = [
       {
@@ -947,13 +966,16 @@ app.post('/api/chat', verifyUser, async (req, res) => {
           contextText || 'L\'utente non ha ancora progetti o note. Suggerisci di iniziare!'
         ].join('\n')
       },
-      ...history.slice(-24).map(m => ({ role: m.role, content: m.content })),
+      // Solo ruoli e testi validi: dalla history non deve poter entrare un messaggio di sistema
+      ...history.slice(-24)
+        .filter(m => (m?.role === 'user' || m?.role === 'assistant') && typeof m.content === 'string' && m.content)
+        .map(m => ({ role: m.role, content: m.content.slice(0, 8000) })),
       { role: 'user', content: message }
     ]
 
-    // Tools propose_actions disponibili sia per la chat principale che per il pannello
+    // All'AI si dà solo propose_actions: le azioni vere partono da /api/chat/execute dopo la conferma
     const tools = TOOLS.filter(t => t.function.name === 'propose_actions')
-    const opts = { maxTokens: isPanel ? 1024 : 2048, tools }
+    const opts = { maxTokens: 2048, tools }
 
     const stats = {
       progetti: context.stats.totaleProgetti,
