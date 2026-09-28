@@ -13,7 +13,13 @@ import {
 import { db, auth } from "../firebase"
 
 // In dev usa proxy Vite (/api -> localhost:5032), in prod usa URL diretto
-const API_URL = import.meta.env.VITE_AI_API_URL || ''
+export const API_URL = import.meta.env.VITE_AI_API_URL || ''
+
+// Per la voce della modalità Parla: la suona un <audio src>, quindi il token va nell'indirizzo
+export const parametriVoce = async () => {
+  const token = await auth.currentUser?.getIdToken()
+  return token ? `&k=${encodeURIComponent(token)}` : ''
+}
 
 // ============================================================================
 // HELPERS

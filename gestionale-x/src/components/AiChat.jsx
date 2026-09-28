@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { ArrowUp, Check, ChevronDown, Copy, History, ListChecks, Mic, Plus, Square, Trash2, X } from 'lucide-react'
+import { ArrowUp, Check, ChevronDown, Copy, History, ListChecks, Plus, Trash2, X } from 'lucide-react'
 import {
   sendMessage, executeActions, generateTitle, saveConversation, updateConversation,
   subscribeToConversations, deleteConversation, getSpecialists, getProviders
 } from '../services/chatService'
 import { renderMarkdown, renderInline } from '../lib/markdown'
-import { Eco } from '../lib/eco-client'
+import ParlaView from './ParlaView'
 import './AiChat.css'
 import './prose.css'
 
@@ -32,6 +32,7 @@ const SUGGESTIONS = [
 ]
 
 const TARGETS_KEY = 'polpo.chatTargets'
+const MODO_KEY = 'polpo.chatModo' // 'scrivi' | 'parla'
 const MAX_TARGETS = 4
 
 const readSavedTargets = () => {
@@ -119,12 +120,10 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
   const panelEndRef = useRef(null)
   const hasRestoredConv = useRef(false)
 
-  // Voce: orecchie e bocca del browser (riconoscimento e sintesi vocale), niente server
-  const [voce, setVoce] = useState('fermo') // fermo | ascolto | parlo
-  const [turnoVoce, setTurnoVoce] = useState(false) // un giro a voce è in corso (anche mentre pensa)
-  const ecoRef = useRef(null)
+  // Due modi separati: Scrivi (chat di testo, muta) e Parla (conversazione a voce, ParlaView)
+  const [modo, setModo] = useState(() => { try { return localStorage.getItem(MODO_KEY) || 'scrivi' } catch { return 'scrivi' } })
+  useEffect(() => { try { localStorage.setItem(MODO_KEY, modo) } catch { /* storage non disponibile */ } }, [modo])
   const azioniRef = useRef(null)
-  useEffect(() => () => { ecoRef.current?.zitto(); ecoRef.current?.fermaAscolto() }, [])
 
   useEffect(() => { getSpecialists().then(setSpecialists).catch(() => {}) }, [])
 
@@ -388,55 +387,6 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
   // non quelle di quando è partito l'ascolto (altrimenti non vedono le azioni appena proposte).
   azioniRef.current = { confirmAll, rejectAll }
 
-  // Un tocco: ascolta, manda, legge la risposta. Se Polpo propone azioni chiede conferma a voce;
-  // senza un sì chiaro restano nel pannello come sempre.
-  const parlaConPolpo = async () => {
-    if (!Eco.supportato()) {
-      setError('Questo browser non sa ascoltare. Usa Chrome, Edge o Safari; su iPhone, se dall\'app installata non va, prova da Safari.')
-      return
-    }
-    const eco = (ecoRef.current ??= new Eco({
-      ascolto: 'browser', voce: 'browser', whisper: false, // il backend del gestionale non ha Whisper
-      onStato: setVoce,
-      onMessaggio: (m) => { if (m.chi === 'errore') setError(m.testo) }
-    }))
-    eco.sblocca() // dentro il tocco: la risposta arriva secondi dopo e il browser (iPhone) la bloccherebbe
-    if (eco.stato === 'parlo') return eco.zitto()
-    if (eco.stato === 'ascolto') return eco.fermaAscolto()
-    if (loading) return
-
-    setTurnoVoce(true)
-    try {
-      const testo = await eco.ascolta()
-      if (!testo) return
-      const esito = await handleSend(testo, { voce: true })
-      if (!esito) return
-      await eco.parla(esito.reply)
-
-      const n = esito.proposedActions.length
-      if (!n || eco.interrotto) return
-      await eco.parla(n === 1 ? 'Confermi?' : `Confermi tutte e ${n}?`)
-      if (eco.interrotto) return
-      const risposta = Eco.risposta(await eco.ascolta({ attesaMax: 6000 }))
-      if (risposta === 'si') {
-        await azioniRef.current.confirmAll()
-        await eco.parla('Fatto.')
-      } else if (risposta === 'no') {
-        azioniRef.current.rejectAll()
-        await eco.parla('Va bene, lascio stare.')
-      } else {
-        await eco.parla('Non ho capito. Le trovi nel pannello azioni.')
-      }
-    } finally {
-      setTurnoVoce(false)
-    }
-  }
-
-  const statoVoce = voce === 'ascolto' ? 'Ti ascolto: parla pure, mi fermo quando smetti.'
-    : voce === 'parlo' ? 'Sto parlando. Tocca il quadrato per interrompermi.'
-    : turnoVoce && loading ? 'Ho sentito, ci penso…'
-    : null
-
   const onKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
@@ -477,6 +427,11 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
       <div className="chat-bar">
         <button className="btn-icon" onClick={() => setShowSidebar(v => !v)} aria-label="Conversazioni precedenti" aria-expanded={showSidebar}><History size={18} /></button>
         <div className="chat-title grow">{specialistName || 'Polpo AI'}</div>
+
+        <div className="chat-modo chips" role="tablist" aria-label="Modo">
+          <button role="tab" aria-selected={modo === 'scrivi'} className={`chip ${modo === 'scrivi' ? 'is-active' : ''}`} onClick={() => setModo('scrivi')}>Scrivi</button>
+          <button role="tab" aria-selected={modo === 'parla'} className={`chip ${modo === 'parla' ? 'is-active' : ''}`} onClick={() => setModo('parla')}>Parla</button>
+        </div>
 
         {providers.length > 0 && (
           <div className="chat-model">
@@ -553,6 +508,9 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
 
         {/* Conversazione */}
         <div className="chat-main">
+          {modo === 'parla' ? (
+            <ParlaView invia={(testo) => handleSend(testo, { voce: true })} azioni={azioniRef} />
+          ) : (<>
           <div className="chat-scroll">
             {messages.length === 0 && (
               <div className="chat-welcome">
@@ -625,25 +583,18 @@ function AiChat({ initialMessage, onInitialMessageConsumed }) {
 
           <div className="chat-input">
             {error && <div className="form-error" role="alert"><span className="grow">{error}</span><button className="btn-icon sm" onClick={() => setError('')} aria-label="Chiudi"><X size={14} /></button></div>}
-            {statoVoce && <div className={`chat-voice is-${voce}`} role="status"><span className="chat-voice-dot" aria-hidden="true" />{statoVoce}</div>}
             <div className="chat-input-row">
               <textarea
                 ref={inputRef} rows={1} value={input} onChange={autosize} onKeyDown={onKeyDown}
-                placeholder={voce === 'ascolto' ? 'Ti ascolto…' : 'Scrivi, o tocca il microfono e parla'} aria-label="Messaggio" disabled={loading}
+                placeholder="Scrivi a Polpo AI" aria-label="Messaggio" disabled={loading}
               />
-              <button
-                className={`btn chat-mic ${voce}`} onClick={parlaConPolpo} disabled={loading && voce === 'fermo'}
-                aria-label={voce === 'parlo' ? 'Interrompi' : voce === 'ascolto' ? 'Smetti di ascoltare' : 'Parla con Polpo'}
-                title={voce === 'parlo' ? 'Interrompi' : 'Parla: ti rispondo a voce'}
-              >
-                {voce === 'parlo' ? <Square size={14} /> : <Mic size={16} />}
-              </button>
               <button className="btn btn-primary" onClick={() => handleSend()} disabled={!input.trim() || loading} aria-label="Invia">
                 {loading ? <span className="spinner" aria-hidden="true" /> : <ArrowUp size={16} />}
               </button>
             </div>
-            <p className="small faint chat-hint">Invio per inviare · Maiusc+Invio per andare a capo · microfono: parli e ti rispondo a voce</p>
+            <p className="small faint chat-hint">Invio per inviare · Maiusc+Invio per andare a capo · per parlare a voce: Parla, in alto</p>
           </div>
+          </>)}
         </div>
 
         {/* Pannello azioni */}

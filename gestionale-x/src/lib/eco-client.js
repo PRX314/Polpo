@@ -28,9 +28,10 @@ export class Eco {
     onMessaggio = () => {},        // { chi: 'tu'|'eco'|'azione'|'errore', testo, ... }
     onLivello = () => {},          // volume del microfono 0..1, per le animazioni
     onDiario = () => {},           // cosa succede all'audio, per capire i problemi a distanza
+    parametriVoce = async () => '', // es. '&k=<token>': un <audio src> non manda intestazioni
   } = {}) {
     Object.assign(this, { api, intestazioni, lingua, ascolto, whisper, voce, paroleChiave,
-                          onStato, onMessaggio, onLivello, onDiario });
+                          onStato, onMessaggio, onLivello, onDiario, parametriVoce });
     this.stato = 'fermo';
     this._maniLibere = false;
     this._ultimoScambio = 0;
@@ -117,24 +118,38 @@ export class Eco {
       r.interimResults = false;
       r.maxAlternatives = 1;
       const pezzi = [];
-      let finito = false;
+      let finito = false, chiuso = false, passaAWhisper = false, attesaFine = null;
       const limite = Date.now() + 120000;
-      const sicurezza = setTimeout(() => { finito = true; r.abort(); }, 120000);
+      // Chiusura unica: la chiama "end", ma anche una scadenza se "end" non arriva. Dopo un
+      // errore di rete Edge a volte non lo manda mai, e ECO restava fermo in ascolto per sempre.
+      const chiudi = () => {
+        if (chiuso) return;
+        chiuso = true;
+        clearTimeout(sicurezza); clearTimeout(silenzioIniziale); clearTimeout(attesaFine);
+        this._fermaAscolto = null;
+        // Riconoscimento del browser irraggiungibile: stesso turno, si continua con Whisper.
+        if (passaAWhisper) risolvi(this._ascoltaWhisper(attesaMax));
+        else risolvi(pezzi.join(' ').trim());
+      };
+      const chiudiPresto = () => { clearTimeout(attesaFine); attesaFine = setTimeout(chiudi, 1500); };
+      const sicurezza = setTimeout(() => { finito = true; r.abort(); chiudiPresto(); }, 120000);
       const silenzioIniziale = attesaMax && setTimeout(() => {
-        if (!pezzi.length && this._fineAuto) { finito = true; r.stop(); }
+        if (!pezzi.length && this._fineAuto) { finito = true; r.stop(); chiudiPresto(); }
       }, attesaMax);
       r.onresult = (e) => {
         for (let i = e.resultIndex; i < e.results.length; i++) {
           if (e.results[i].isFinal) pezzi.push(e.results[i][0].transcript.trim());
         }
-        if (this._fineAuto) { finito = true; r.stop(); }
+        if (this._fineAuto) { finito = true; r.stop(); chiudiPresto(); }
       };
       r.onerror = (e) => {
         if (e.error === 'aborted') return; // l'hai fermato tu
-        if (e.error !== 'no-speech') finito = true;
+        if (e.error !== 'no-speech') { finito = true; chiudiPresto(); }
         if (e.error === 'network' && this.whisper) {
-          this.onMessaggio({ chi: 'errore', testo: 'Riconoscimento del browser offline: passo a Whisper.' });
+          this.onMessaggio({ chi: 'errore', testo: 'Il riconoscimento di Edge non risponde: continuo con Whisper, ripeti pure.' });
           this.ascolto = 'whisper';
+          passaAWhisper = true;
+          chiudi();
         } else if (Eco.ERRORI_ASCOLTO[e.error] && (e.error !== 'no-speech' || this._fineAuto)) {
           this.onMessaggio({ chi: 'errore', testo: Eco.ERRORI_ASCOLTO[e.error] });
         }
@@ -144,18 +159,14 @@ export class Eco {
         if (!finito && !this._fineAuto && Date.now() < limite) {
           try { r.start(); return; } catch { /* non riparte: si chiude */ }
         }
-        clearTimeout(sicurezza); clearTimeout(silenzioIniziale);
-        this._fermaAscolto = null;
-        risolvi(pezzi.join(' ').trim());
+        chiudi();
       };
-      this._fermaAscolto = () => { finito = true; r.stop(); };
+      this._fermaAscolto = () => { finito = true; r.stop(); chiudiPresto(); };
       try {
         r.start();
       } catch {
-        clearTimeout(sicurezza); clearTimeout(silenzioIniziale);
-        this._fermaAscolto = null;
         this.onMessaggio({ chi: 'errore', testo: 'Il microfono non è partito. Riprova.' });
-        risolvi('');
+        chiudi();
       }
     });
   }
@@ -288,7 +299,8 @@ export class Eco {
   // Sempre lo stesso lettore (quello sbloccato). La prima frase suona a flusso mentre arriva;
   // le successive si scaricano subito in parallelo e sono pronte quando tocca a loro.
   async _parlaServer(frasi) {
-    const indirizzo = (t) => `${this.api}/api/parla?t=${encodeURIComponent(t)}`;
+    const extra = await this.parametriVoce();
+    const indirizzo = (t) => `${this.api}/api/parla?t=${encodeURIComponent(t)}${extra}`;
     const scarica = (t) => fetch(indirizzo(t)).then((r) => (r.ok ? r.blob() : null)).catch(() => null);
     const successive = frasi.slice(1).map(scarica);
     this._lettore ??= new Audio();
@@ -307,14 +319,27 @@ export class Eco {
     this._audio = l;
     const inizio = performance.now();
     const tempo = () => `${((performance.now() - inizio) / 1000).toFixed(1)}s`;
-    return new Promise((risolvi) => {
-      l.onplaying = () => this.onDiario(`voce: suona dopo ${tempo()} (volume ${l.volume}, muto ${l.muted})`);
+    return new Promise((fatto) => {
+      let chiusa = false;
+      const risolvi = (esito) => { if (!chiusa) { chiusa = true; clearTimeout(scadenza); fatto(esito); } };
+      // Se la frase non parte entro 8 s (rete ferma) si passa oltre invece di aspettare per sempre.
+      const scadenza = setTimeout(() => {
+        this.onDiario(`voce: dopo ${tempo()} non è ancora partita, la salto`);
+        risolvi(true);
+        l.pause();
+      }, 8000);
+      l.onplaying = () => {
+        clearTimeout(scadenza);
+        this.onDiario(`voce: suona dopo ${tempo()} (volume ${l.volume}, muto ${l.muted})`);
+      };
       l.onended = () => { this.onDiario(`voce: finita dopo ${tempo()}`); risolvi(true); };
       l.onerror = () => { this.onDiario(`voce: errore del lettore ${l.error?.code} dopo ${tempo()}`); risolvi(false); };
       // A fine frase arriva prima "pause" e poi "ended": conta solo la pausa voluta (zitto).
       l.onpause = () => { if (this._interrotto) risolvi(true); };
       l.src = sorgente;
-      l.play().catch((e) => { // bloccato dal browser: ci pensa la riserva
+      l.play().catch((e) => {
+        if (chiusa) return; // già saltata per la scadenza: non è un rifiuto del browser
+        if (this._interrotto) return risolvi(true); // l'hai interrotta tu: niente riserva
         this.onDiario(`voce: il browser rifiuta di suonare (${e.name}), provo con Web Audio`);
         risolvi(false);
       });
@@ -324,7 +349,10 @@ export class Eco {
   async _suonaConContesto(blob) {
     try {
       if (!blob || !this._contesto) throw new Error('niente riserva');
-      if (this._contesto.state !== 'running') await this._contesto.resume();
+      // resume() senza un gesto recente può restare in sospeso per sempre: al massimo 1,5 s.
+      if (this._contesto.state !== 'running') {
+        await Promise.race([this._contesto.resume(), new Promise((r) => setTimeout(r, 1500))]);
+      }
       if (this._contesto.state !== 'running') throw new Error('audio bloccato');
       const suono = await this._contesto.decodeAudioData(await blob.arrayBuffer());
       this.onDiario(`voce: Web Audio suona ${suono.duration.toFixed(1)}s`);

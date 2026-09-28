@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import { listProviders, providerName, normalizeTargets, callProvider, defaultTarget } from './providers.js'
 import admin from 'firebase-admin'
 import webpush from 'web-push'
+import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts'
 
 dotenv.config()
 
@@ -1042,6 +1043,47 @@ app.post('/api/chat/title', verifyUser, async (req, res) => {
     res.json({ title })
   } catch (err) {
     res.json({ title: 'Conversazione' })
+  }
+})
+
+// ============================================================================
+// VOCE - modalità "Parla": voce neurale di Microsoft Edge (la stessa di ECO), gratis
+// ============================================================================
+// GET perché la suona un <audio src>, che non manda intestazioni: il token Firebase
+// viaggia nel parametro k. Limite a parte dalla chat: ogni frase letta è una richiesta.
+const VOCE = process.env.VOCE_EDGE || 'it-IT-IsabellaNeural'
+const VOCE_VELOCITA = process.env.VOCE_VELOCITA || '+10%'
+const voceLimits = new Map()
+
+app.get('/api/parla', async (req, res) => {
+  const testo = String(req.query.t || '').slice(0, 600).trim()
+  if (!testo) return res.status(400).end()
+
+  let uid
+  try {
+    uid = (await admin.auth().verifyIdToken(String(req.query.k || ''))).uid
+  } catch {
+    return res.status(401).end()
+  }
+  const ora = Date.now()
+  const l = voceLimits.get(uid)
+  if (!l || ora - l.inizio > 60000) voceLimits.set(uid, { inizio: ora, n: 1 })
+  else if (++l.n > 150) return res.status(429).end()
+
+  const tts = new MsEdgeTTS()
+  const chiudi = () => { try { tts.close() } catch { /* già chiuso */ } }
+  try {
+    await tts.setMetadata(VOCE, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3)
+    const { audioStream } = tts.toStream(testo, { rate: VOCE_VELOCITA })
+    res.set({ 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' })
+    audioStream.on('error', (err) => { console.error('Voce:', err?.message); chiudi(); res.end() })
+    audioStream.on('close', chiudi)
+    req.on('close', chiudi) // hai interrotto: niente audio scaricato per niente
+    audioStream.pipe(res)
+  } catch (err) {
+    console.error('Voce non disponibile:', err?.message)
+    chiudi()
+    if (!res.headersSent) res.status(502).end()
   }
 })
 

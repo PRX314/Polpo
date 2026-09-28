@@ -88,14 +88,5 @@
   .chat-scroll { padding: 12px; }
 }
 
-/* Microfono: pieno mentre ascolta (e pulsa), pieno fisso mentre parla */
-.chat-mic.ascolto, .chat-mic.parlo { background: var(--ink); color: var(--on-ink); }
-.chat-mic.ascolto { animation: chat-mic 1.2s ease-in-out infinite; }
-@keyframes chat-mic { 50% { opacity: .5; } }
-@media (prefers-reduced-motion: reduce) { .chat-mic.ascolto { animation: none; } }
-
-/* Stato della voce sopra il campo: dice cosa sta succedendo, anche su telefono */
-.chat-voice { display: flex; align-items: center; gap: 8px; font-size: var(--fs-s); color: var(--ink-2); }
-.chat-voice-dot { width: 8px; height: 8px; background: var(--ink); flex-shrink: 0; }
-.chat-voice.is-ascolto .chat-voice-dot { animation: chat-mic 1.2s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .chat-voice.is-ascolto .chat-voice-dot { animation: none; } }
+/* Scrivi | Parla */
+.chat-modo { flex-shrink: 0; }
