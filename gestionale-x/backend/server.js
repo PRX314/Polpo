@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import { listProviders, providerName, normalizeTargets, callProvider, defaultTarget } from './providers.js'
+import { listProviders, providerName, normalizeTargets, callProvider, streamProvider, defaultTarget } from './providers.js'
 import admin from 'firebase-admin'
 import webpush from 'web-push'
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts'
@@ -120,7 +120,7 @@ const TOOLS = [
                 },
                 args: {
                   type: 'object',
-                  description: 'Parametri dell\'azione. Per add_project: {type (progetto/idea/monologo/musica/video/evento/nota), name, description, status, tags[], roadmap, obiettivi, sections[{icon, title, content}]}. Per add_section_to_project: {projectName, icon, sectionTitle, content}. Per add_todo: {projectName, text}. Per complete_todo: {projectName, todoText}. Per update_project: {projectName, status, description, roadmap, obiettivi}. Per add_link_to_project: {projectName, linkTitle, url}. Per add_note: {title, content, type, category, priority, projectTags[]} (LEGACY). Per update_note: {noteTitle, title, content, priority}. Per delete_note: {noteTitle}.'
+                  description: 'Parametri dell\'azione. Per add_project: {type (progetto/idea/monologo/musica/video/evento/nota), name, description, status, tags[], roadmap, obiettivi, deadline?, sections[{icon, title, content}]}. Per add_section_to_project: {projectName, icon, sectionTitle, content}. Per add_todo: {projectName, text, deadline? (AAAA-MM-GG), time? (HH:MM, solo con deadline)}. Per complete_todo: {projectName, todoText}. Per update_project: {projectName, status, description, roadmap, obiettivi, deadline? (AAAA-MM-GG)}. Le date si calcolano dalla data di oggi indicata nel contesto. Per add_link_to_project: {projectName, linkTitle, url}. Per add_note: {title, content, type, category, priority, projectTags[]} (LEGACY). Per update_note: {noteTitle, title, content, priority}. Per delete_note: {noteTitle}.'
                 },
                 label: {
                   type: 'string',
@@ -313,6 +313,13 @@ const TOOLS = [
 // ============================================================================
 // TOOL EXECUTION - Esegue le azioni su Firebase
 // ============================================================================
+// Scadenze proposte dall'AI: si salvano solo se il formato è quello che usa l'app
+const DATA_RE = /^\d{4}-\d{2}-\d{2}$/
+const ORA_RE = /^\d{2}:\d{2}$/
+const dataValida = (d) => typeof d === 'string' && DATA_RE.test(d) && !Number.isNaN(Date.parse(`${d}T12:00:00Z`))
+const oraValida = (o) => typeof o === 'string' && ORA_RE.test(o)
+const dicituraScadenza = (d, o) => (dataValida(d) ? ` entro ${d}${oraValida(o) ? ` alle ${o}` : ''}` : '')
+
 async function executeTool(toolName, args, userId) {
   const timestamp = admin.firestore.Timestamp.fromDate(new Date())
 
@@ -357,6 +364,7 @@ async function executeTool(toolName, args, userId) {
         tags: args.tags || [],
         roadmap: args.roadmap || '',
         obiettivi: args.obiettivi || '',
+        ...(dataValida(args.deadline) ? { deadline: args.deadline } : {}),
         todos: [],
         links: [],
         sections,
@@ -374,9 +382,15 @@ async function executeTool(toolName, args, userId) {
       if (!project) return { success: false, message: `Progetto "${args.projectName}" non trovato` }
 
       const todos = project.data.todos || []
-      todos.push({ text: args.text, completed: false })
+      const todo = { text: args.text, completed: false }
+      // Stessa forma delle cose da fare create dall'app: deadline e, solo con quella, time
+      if (dataValida(args.deadline)) {
+        todo.deadline = args.deadline
+        if (oraValida(args.time)) todo.time = args.time
+      }
+      todos.push(todo)
       await adminDb.collection('projects').doc(project.id).update({ todos, updatedAt: timestamp })
-      return { success: true, message: `Todo "${args.text}" aggiunto al progetto "${project.data.name}"` }
+      return { success: true, message: `Todo "${args.text}"${dicituraScadenza(args.deadline, args.time)} aggiunto al progetto "${project.data.name}"` }
     }
 
     case 'complete_todo': {
@@ -403,6 +417,7 @@ async function executeTool(toolName, args, userId) {
       if (args.description) updates.description = args.description
       if (args.roadmap) updates.roadmap = args.roadmap
       if (args.obiettivi) updates.obiettivi = args.obiettivi
+      if (dataValida(args.deadline)) updates.deadline = args.deadline
 
       await adminDb.collection('projects').doc(project.id).update(updates)
       const changes = Object.keys(updates).filter(k => k !== 'updatedAt').join(', ')
@@ -930,59 +945,87 @@ function describeAiError(err, label) {
   return { status, error, detail }
 }
 
+// Contesto in memoria per 30 secondi: in una conversazione i messaggi arrivano a raffica e rileggere
+// tutti i progetti dal database costava 1-2,5 s a ogni domanda. Si svuota quando confermi un'azione,
+// così dopo una modifica fatta in chat l'AI non vede mai dati vecchi.
+const CONTESTO_TTL = 30000
+const contestiInMemoria = new Map()
+async function contestoDi(userId) {
+  const c = contestiInMemoria.get(userId)
+  if (c && Date.now() - c.quando < CONTESTO_TTL) return c.dati
+  const dati = await getUserContext(userId)
+  contestiInMemoria.set(userId, { dati, quando: Date.now() })
+  return dati
+}
+const dimenticaContesto = (userId) => contestiInMemoria.delete(userId)
+
+// Tutto ciò che serve a una risposta: modelli scelti, istruzioni, contesto, storia.
+// Lo usano sia /api/chat sia /api/chat/stream, così costruiscono la richiesta allo stesso modo.
+async function preparaChat(req, maxTargets) {
+  const { message, history = [], specialist = null } = req.body
+  if (!message?.trim()) return { errore: { status: 400, error: 'Messaggio vuoto' } }
+
+  const targets = normalizeTargets(req.body.targets, maxTargets)
+  if (!targets.length) return { errore: { status: 500, error: 'Nessun provider AI configurato sul server (mancano le chiavi).' } }
+
+  const context = await contestoDi(req.userId)
+  // Cap duro: il tier gratuito ha un limite di token per richiesta.
+  // formatContext e' gia' limitato per campo, questo e' la rete di sicurezza.
+  const MAX_CONTEXT_CHARS = 14000
+  const full = formatContext(context)
+  const contextText = full.length > MAX_CONTEXT_CHARS
+    ? full.slice(0, MAX_CONTEXT_CHARS) + '\n…(contesto troncato: troppi elementi)'
+    : full
+  const today = new Date().toLocaleDateString('it-IT', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Rome'
+  })
+
+  // Le date si leggono, non si calcolano: "dopodomani" da lunedì 28 diventava il 1° ottobre
+  const calendario = Array.from({ length: 15 }, (_, i) => {
+    const iso = piuGiorni(oggiRoma(), i)
+    const nome = new Date(`${iso}T12:00:00Z`).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+    return `${nome} = ${iso}${['  (oggi)', '  (domani)', '  (dopodomani)'][i] || ''}`
+  }).join('\n')
+
+  // Il prompt dell'assistente scelto, più le regole comuni a tutti
+  let systemPrompt = (SPECIALISTS[specialist]?.prompt || SYSTEM_PROMPT_MAIN) + REGOLE_COMUNI
+  if (req.body.voce) systemPrompt += VOICE_NOTE
+
+  const messages = [
+    {
+      role: 'system',
+      content: [
+        systemPrompt,
+        `\nData di oggi: ${today}`,
+        `Calendario dei prossimi giorni (per le date usa questo, non calcolarle):\n${calendario}`,
+        `Nome utente: ${req.userName}`,
+        '',
+        contextText || 'L\'utente non ha ancora progetti o note. Suggerisci di iniziare!'
+      ].join('\n')
+    },
+    // Solo ruoli e testi validi: dalla history non deve poter entrare un messaggio di sistema
+    ...history.slice(-24)
+      .filter(m => (m?.role === 'user' || m?.role === 'assistant') && typeof m.content === 'string' && m.content)
+      .map(m => ({ role: m.role, content: m.content.slice(0, 8000) })),
+    { role: 'user', content: message }
+  ]
+
+  // All'AI si dà solo propose_actions: le azioni vere partono da /api/chat/execute dopo la conferma
+  const tools = TOOLS.filter(t => t.function.name === 'propose_actions')
+  const stats = {
+    progetti: context.stats.totaleProgetti,
+    note: context.stats.totaleNote,
+    todoCompletati: context.stats.todoCompletati,
+    todoTotali: context.stats.todoTotali
+  }
+  return { targets, messages, opts: { maxTokens: 2048, tools }, stats }
+}
+
 app.post('/api/chat', verifyUser, async (req, res) => {
   try {
-    const { message, history = [], specialist = null } = req.body
-    if (!message?.trim()) return res.status(400).json({ error: 'Messaggio vuoto' })
-
     // Fino a 4 modelli a confronto
-    const targets = normalizeTargets(req.body.targets, 4)
-    if (!targets.length) return res.status(500).json({ error: 'Nessun provider AI configurato sul server (mancano le chiavi).' })
-
-    const context = await getUserContext(req.userId)
-    // Cap duro: il tier gratuito ha un limite di token per richiesta.
-    // formatContext e' gia' limitato per campo, questo e' la rete di sicurezza.
-    const MAX_CONTEXT_CHARS = 14000
-    const full = formatContext(context)
-    const contextText = full.length > MAX_CONTEXT_CHARS
-      ? full.slice(0, MAX_CONTEXT_CHARS) + '\n…(contesto troncato: troppi elementi)'
-      : full
-    const today = new Date().toLocaleDateString('it-IT', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Europe/Rome'
-    })
-
-    // Il prompt dell'assistente scelto, più le regole comuni a tutti
-    let systemPrompt = (SPECIALISTS[specialist]?.prompt || SYSTEM_PROMPT_MAIN) + REGOLE_COMUNI
-    if (req.body.voce) systemPrompt += VOICE_NOTE
-
-    const messages = [
-      {
-        role: 'system',
-        content: [
-          systemPrompt,
-          `\nData di oggi: ${today}`,
-          `Nome utente: ${req.userName}`,
-          '',
-          contextText || 'L\'utente non ha ancora progetti o note. Suggerisci di iniziare!'
-        ].join('\n')
-      },
-      // Solo ruoli e testi validi: dalla history non deve poter entrare un messaggio di sistema
-      ...history.slice(-24)
-        .filter(m => (m?.role === 'user' || m?.role === 'assistant') && typeof m.content === 'string' && m.content)
-        .map(m => ({ role: m.role, content: m.content.slice(0, 8000) })),
-      { role: 'user', content: message }
-    ]
-
-    // All'AI si dà solo propose_actions: le azioni vere partono da /api/chat/execute dopo la conferma
-    const tools = TOOLS.filter(t => t.function.name === 'propose_actions')
-    const opts = { maxTokens: 2048, tools }
-
-    const stats = {
-      progetti: context.stats.totaleProgetti,
-      note: context.stats.totaleNote,
-      todoCompletati: context.stats.todoCompletati,
-      todoTotali: context.stats.todoTotali
-    }
+    const { errore, targets, messages, opts, stats } = await preparaChat(req, 4)
+    if (errore) return res.status(errore.status).json({ error: errore.error })
 
     // Un solo modello: stessa risposta di sempre (e stessi errori HTTP).
     if (targets.length === 1) {
@@ -1014,6 +1057,106 @@ app.post('/api/chat', verifyUser, async (req, res) => {
   }
 })
 
+// Legge uno stream del provider: il testo passa subito a onTesto, le tool call si ricompongono
+// dai pezzi (arrivano spezzate: nome e argomenti un frammento alla volta).
+async function consumaStream(target, opts, onTesto) {
+  let content = ''
+  const calls = []
+  for await (const delta of streamProvider(target, opts)) {
+    if (delta.content) {
+      content += delta.content
+      onTesto(delta.content)
+    }
+    for (const tc of delta.tool_calls || []) {
+      const c = (calls[tc.index ?? 0] ??= { id: '', type: 'function', function: { name: '', arguments: '' } })
+      if (tc.id) c.id = tc.id
+      if (tc.function?.name) c.function.name += tc.function.name
+      if (tc.function?.arguments) c.function.arguments += tc.function.arguments
+    }
+  }
+  return { content, toolCalls: calls.filter(Boolean) }
+}
+
+// Come runTarget, ma il testo esce a pezzi mentre il modello lo scrive
+async function runTargetStream(target, baseMessages, { maxTokens, tools }, onTesto) {
+  const started = Date.now()
+  const messages = [...baseMessages]
+  const label = `${providerName(target.provider)} · ${target.model}`
+  let scritto = false
+  const scrivi = (t) => { scritto = true; onTesto(t) }
+
+  let primo
+  try {
+    primo = await consumaStream(target, { messages, temperature: 0.7, max_tokens: maxTokens, tools, tool_choice: 'auto' }, scrivi)
+  } catch (err) {
+    // Tool non supportati: si riprova senza, ma solo se non è ancora uscito niente
+    if (scritto || err?.status !== 400 || !/tool|function/i.test(err?.message || '')) throw err
+    console.warn(`${label}: tool non supportati, riprovo senza`)
+    primo = await consumaStream(target, { messages, temperature: 0.7, max_tokens: maxTokens }, scrivi)
+  }
+
+  let proposedActions = []
+  let reply = primo.content
+  if (primo.toolCalls.length) {
+    messages.push({ role: 'assistant', content: primo.content || null, tool_calls: primo.toolCalls })
+    for (const toolCall of primo.toolCalls) {
+      if (toolCall.function.name === 'propose_actions') {
+        try { proposedActions = JSON.parse(toolCall.function.arguments).actions || [] } catch { proposedActions = [] }
+        console.log(`📋 ${label}: proposte ${proposedActions.length} azioni:`, proposedActions.map(a => a.label))
+      }
+      messages.push({
+        role: 'tool',
+        tool_call_id: toolCall.id,
+        content: JSON.stringify({ status: 'proposed', message: 'Azioni proposte all\'utente, in attesa di conferma' })
+      })
+    }
+    // Se prima delle proposte aveva già scritto qualcosa, il seguito va a capo
+    if (primo.content) scrivi('\n\n')
+    const seguito = await consumaStream(target, { messages, temperature: 0.7, max_tokens: 1024 }, scrivi)
+    reply = [primo.content, seguito.content].filter(Boolean).join('\n\n') || 'Ecco le azioni proposte.'
+  }
+  if (!reply) reply = 'Non sono riuscito a elaborare una risposta.'
+  return { provider: target.provider, model: target.model, label, reply, proposedActions, ms: Date.now() - started }
+}
+
+// Risposta a pezzi (server-sent events), un modello solo. Eventi:
+//   { t: 'testo', d }   un pezzo di testo
+//   { t: 'fine', reply, proposedActions, label, … }   la risposta completa, che fa fede
+//   { t: 'errore', error, detail }
+app.post('/api/chat/stream', verifyUser, async (req, res) => {
+  const t0 = Date.now()
+  let prep
+  try {
+    prep = await preparaChat(req, 1)
+  } catch (err) {
+    const { status, error, detail } = describeAiError(err, 'AI')
+    return res.status(status).json({ error, detail })
+  }
+  if (prep.errore) return res.status(prep.errore.status).json({ error: prep.errore.error })
+
+  res.set({ 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no' })
+  res.flushHeaders()
+  const invia = (evento) => res.write(`data: ${JSON.stringify(evento)}\n\n`)
+  // Se il telefono si addormenta a metà, il proxy non deve chiudere la connessione per silenzio
+  const battito = setInterval(() => res.write(': battito\n\n'), 15000)
+
+  const tPronto = Date.now()
+  let tPrimo = 0
+  try {
+    const r = await runTargetStream(prep.targets[0], prep.messages, prep.opts, (d) => { tPrimo ||= Date.now(); invia({ t: 'testo', d }) })
+    // Dove va il tempo: preparazione (contesto dal database) e modello, fino al primo pezzo e alla fine
+    console.log(`⏱ chat: contesto ${tPronto - t0}ms · primo testo ${tPrimo ? tPrimo - tPronto : '-'}ms · fine ${Date.now() - tPronto}ms · ${prep.messages[0].content.length} caratteri di istruzioni`)
+    invia({ t: 'fine', reply: r.reply, proposedActions: r.proposedActions, provider: r.provider, model: r.model, label: r.label, ms: r.ms, stats: prep.stats })
+  } catch (err) {
+    const { error, detail } = describeAiError(err, providerName(prep.targets[0].provider))
+    console.error('Errore chat AI (stream):', err?.status, detail)
+    invia({ t: 'errore', error, detail })
+  } finally {
+    clearInterval(battito)
+    res.end()
+  }
+})
+
 // Esegue le azioni confermate dall'utente
 app.post('/api/chat/execute', verifyUser, async (req, res) => {
   try {
@@ -1021,13 +1164,16 @@ app.post('/api/chat/execute', verifyUser, async (req, res) => {
     if (!actions.length) return res.status(400).json({ error: 'Nessuna azione da eseguire' })
 
     const results = []
+    dimenticaContesto(req.userId) // i dati stanno per cambiare
     for (const action of actions) {
       console.log(`✅ Confermata: ${action.tool}`, action.args)
       const result = await executeTool(action.tool, action.args, req.userId)
       results.push({ tool: action.tool, label: action.label, result })
     }
 
+    // Riletto dopo le modifiche: serve alle statistiche e diventa il contesto fresco per la prossima domanda
     const context = await getUserContext(req.userId)
+    contestiInMemoria.set(req.userId, { dati: context, quando: Date.now() })
 
     res.json({
       results,

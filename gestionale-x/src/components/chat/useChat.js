@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
-  sendMessage, executeActions, generateTitle, saveConversation, updateConversation,
+  sendMessage, streamMessage, executeActions, generateTitle, saveConversation, updateConversation,
   patchConversation, subscribeToConversations, deleteConversation
 } from '../../services/chatService'
 import { nuoveAzioni, perStoria, segnaSostituite, ultimoConInAttesa } from './azioni'
@@ -17,8 +17,9 @@ let contatore = 0
 const nuovaChiave = () => `nuova-${++contatore}`
 const adesso = () => new Date().toISOString()
 const titoloDa = (testo) => (testo.length > 40 ? `${testo.slice(0, 40)}…` : testo)
-// I messaggi non partiti restano solo a schermo, con "Riprova": non si salvano e non vanno all'AI
-const salvabili = (messages) => messages.filter(m => !m.failed)
+// I messaggi non partiti (con "Riprova") e la risposta ancora in scrittura restano solo a schermo:
+// non si salvano e non vanno all'AI
+const salvabili = (messages) => messages.filter(m => !m.failed && !m.streaming)
 const vistaVuota = (assistente = null) => ({ chiave: nuovaChiave(), id: null, messages: [], assistente })
 
 // Dalla risposta del server al messaggio salvato
@@ -123,20 +124,41 @@ export function useChat({ ripristina = true } = {}) {
     occupa({ chiave, tipo: 'invio' })
     setErrore('')
 
+    const richiesta = {
+      history: perStoria(base),
+      specialist: assistente,
+      targets: voce ? targets.slice(0, 1) : targets, // a voce un modello solo: il confronto non si ascolta
+      voce
+    }
+    // Un modello solo, scrivendo: la risposta compare mentre arriva. A confronto (più modelli) e a
+    // voce (si legge la risposta intera) resta la chiamata normale.
+    const aPezzi = !voce && richiesta.targets.length <= 1
+    let scritto = ''
+    let fotogramma = 0
+    const iniziata = adesso() // fisso: l'orario fa parte della chiave con cui React riconosce il messaggio
+    const mostraBozza = () => {
+      fotogramma = 0
+      const bozza = { role: 'assistant', content: scritto, timestamp: iniziata, assistant: assistente || null, streaming: true }
+      aggiorna(chiave, () => [...conDomanda, bozza])
+    }
+
     let risposta
     try {
-      risposta = await sendMessage(text, {
-        history: perStoria(base),
-        specialist: assistente,
-        targets: voce ? targets.slice(0, 1) : targets, // a voce un modello solo: il confronto non si ascolta
-        voce
-      })
+      risposta = aPezzi
+        ? await streamMessage(text, richiesta, (pezzo) => {
+          scritto += pezzo
+          // Un aggiornamento per fotogramma, non uno per pezzo (ne arrivano centinaia)
+          fotogramma ||= requestAnimationFrame(mostraBozza)
+        })
+        : await sendMessage(text, richiesta)
     } catch (err) {
-      // La domanda resta a schermo, segnata: si riprova senza riscriverla
-      aggiorna(chiave, msgs => msgs.map(m => (m === domanda ? { ...m, failed: true, errore: err.message || 'Errore di comunicazione' } : m)))
+      cancelAnimationFrame(fotogramma)
+      // La domanda resta a schermo, segnata: si riprova senza riscriverla. L'eventuale bozza sparisce.
+      aggiorna(chiave, () => conDomanda.map(m => (m === domanda ? { ...m, failed: true, errore: err.message || 'Errore di comunicazione' } : m)))
       occupa(null)
       return null
     }
+    cancelAnimationFrame(fotogramma)
 
     const msg = rispostaDa(risposta, assistente)
     // Proposte nuove: quelle ancora in attesa nei messaggi precedenti sono superate

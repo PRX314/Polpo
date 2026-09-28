@@ -57,7 +57,9 @@ function ChatMessage({ msg, indice, nomeAssistente, occupato, onRiprova, onAlter
         </div>
       )}
 
-      <div className="chat-bubble"><Markdown text={msg.content} /></div>
+      <div className={`chat-bubble ${msg.streaming ? 'is-streaming' : ''}`} aria-busy={msg.streaming || undefined}>
+        <Markdown text={msg.content} />
+      </div>
 
       {msg.alternatives?.some(a => a.error) && (
         <div className="chat-alt-errors small muted">
@@ -79,12 +81,12 @@ function ChatMessage({ msg, indice, nomeAssistente, occupato, onRiprova, onAlter
         />
       )}
 
-      <div className="chat-meta small faint">
+      {!msg.streaming && <div className="chat-meta small faint">
         <span>{nomeAssistente(msg.assistant)}{modello ? ` · ${modello}` : ''} · {ora(msg.timestamp)}</span>
         <button className="btn btn-sm btn-quiet" onClick={copia}>
           {copiato ? <><Check size={12} /> Copiato</> : <><Copy size={12} /> Copia</>}
         </button>
-      </div>
+      </div>}
     </div>
   )
 }

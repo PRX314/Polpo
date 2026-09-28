@@ -104,6 +104,61 @@ async function openAiCompatible(p, model, opts) {
   return data
 }
 
+// Stessa chiamata di callProvider, ma a pezzi: restituisce i "delta" (testo e tool call parziali)
+// man mano che il modello li scrive. Gli errori di partenza (chiave, modello, tool non supportati)
+// arrivano prima del primo pezzo, quindi chi chiama può ancora riprovare in un altro modo.
+export async function* streamProvider({ provider, model }, opts) {
+  const p = PROVIDERS[provider]
+  if (!p || !p.key()) throw Object.assign(new Error(`Provider ${provider} non configurato`), { status: 401 })
+  const m = model || p.defaultModel()
+
+  if (provider === 'groq') {
+    const groq = getGroq()
+    let stream
+    try {
+      stream = await groq.chat.completions.create({ model: m, ...opts, stream: true })
+    } catch (err) {
+      const code = err?.error?.error?.code || err?.code
+      if (err?.status !== 404 && code !== 'model_not_found') throw err
+      console.warn(`Modello ${m} non disponibile su Groq → fallback ${GROQ_FALLBACK_MODEL}`)
+      stream = await groq.chat.completions.create({ model: GROQ_FALLBACK_MODEL, ...opts, stream: true })
+    }
+    for await (const chunk of stream) {
+      const delta = chunk.choices?.[0]?.delta
+      if (delta) yield delta
+    }
+    return
+  }
+
+  // Compatibile OpenAI: server-sent events, una riga "data: {…}" per pezzo
+  const res = await fetch(`${p.baseURL()}/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${p.key()}` },
+    body: JSON.stringify({ model: m, ...opts, stream: true }),
+    signal: AbortSignal.timeout(120000)
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    const e = data?.error && typeof data.error === 'object' ? data.error : { message: data?.detail || data?.error || res.statusText }
+    throw Object.assign(new Error(e.message || `HTTP ${res.status}`), { status: res.status, code: e.code, error: { error: e } })
+  }
+  const decoder = new TextDecoder()
+  let resto = ''
+  for await (const pezzo of res.body) {
+    resto += decoder.decode(pezzo, { stream: true })
+    const righe = resto.split('\n')
+    resto = righe.pop()
+    for (const riga of righe) {
+      const dato = riga.replace(/^data:\s*/, '').trim()
+      if (!riga.startsWith('data:') || !dato || dato === '[DONE]') continue
+      try {
+        const delta = JSON.parse(dato).choices?.[0]?.delta
+        if (delta) yield delta
+      } catch { /* riga incompleta o di servizio */ }
+    }
+  }
+}
+
 export async function callProvider({ provider, model }, opts) {
   const p = PROVIDERS[provider]
   if (!p || !p.key()) throw Object.assign(new Error(`Provider ${provider} non configurato`), { status: 401 })

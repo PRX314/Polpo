@@ -32,6 +32,12 @@ export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, 
     if (inFondo.current || ultimo?.role === 'user') vaiInFondo(true)
   }, [messages.length, inAttesa, ultimo?.role])
 
+  // Risposta che si sta scrivendo: la segue senza animazione (a ogni fotogramma cresce un po')
+  const inScrittura = ultimo?.streaming ? ultimo.content.length : 0
+  useEffect(() => {
+    if (inScrittura && inFondo.current) vaiInFondo(false)
+  }, [inScrittura])
+
   const onScroll = () => {
     const el = scrollRef.current
     inFondo.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
@@ -53,7 +59,7 @@ export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, 
         <ChatMessage key={`${msg.timestamp}-${i}`} msg={msg} indice={i} {...perMessaggio} />
       ))}
 
-      {inAttesa && (
+      {inAttesa && !inScrittura && (
         <div className="chat-msg assistant" role="status">
           <div className="chat-bubble">
             <span className="chat-typing" aria-hidden="true"><i /><i /><i /></span>

@@ -74,6 +74,12 @@
 .chat-typing i:nth-child(3) { animation-delay: 0.3s; }
 @keyframes blink { 0%, 60%, 100% { opacity: 0.2; } 30% { opacity: 1; } }
 
+/* Risposta mentre arriva: un quadratino che lampeggia in fondo al testo */
+.chat-bubble.is-streaming .prose > :last-child::after {
+  content: ""; display: inline-block; width: 7px; height: 1em; margin-left: 3px; vertical-align: -0.15em;
+  background: var(--ink); animation: blink 1s infinite;
+}
+
 /* Proposte di Polpo, sotto la risposta che le ha fatte */
 .chat-proposte { width: min(680px, 100%); border: 1px solid var(--line); margin-top: 4px; }
 .chat-proposte-head { padding: 8px 12px 6px; }

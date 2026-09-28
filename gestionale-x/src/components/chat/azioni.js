@@ -15,6 +15,15 @@ export const ACTION_LABEL = {
   delete_note: 'Elimina nota'
 }
 
+// "2026-10-02" → "ven 2 ott", più l'ora se c'è
+const giorno = (iso, ora) => {
+  const d = new Date(`${iso}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return iso
+  const testo = d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })
+  return ora ? `${testo}, ${ora}` : testo
+}
+const scadenza = (args) => args.deadline && `Scadenza: ${giorno(args.deadline, args.time)}`
+
 // Dettagli leggibili (markdown inline)
 export function dettagliAzione({ tool, args = {}, label }) {
   switch (tool) {
@@ -30,6 +39,7 @@ export function dettagliAzione({ tool, args = {}, label }) {
       args.status && `Stato: ${args.status}`,
       args.tags?.length && `Tag: ${args.tags.join(', ')}`,
       args.sections?.length && `${args.sections.length} sezioni: ${args.sections.map(s => s.title).join(', ')}`,
+      scadenza(args),
       args.description
     ].filter(Boolean)
     case 'add_section_to_project': return [
@@ -37,14 +47,15 @@ export function dettagliAzione({ tool, args = {}, label }) {
       args.sectionTitle,
       args.content?.length > 160 ? `${args.content.slice(0, 160)}…` : args.content
     ].filter(Boolean)
-    case 'add_todo': return [`**${args.projectName}**`, args.text]
+    case 'add_todo': return [`**${args.projectName}**`, args.text, scadenza(args)].filter(Boolean)
     case 'complete_todo': return [`**${args.projectName}**`, args.todoText]
     case 'update_project': return [
       `**${args.projectName}**`,
       args.status && `Nuovo stato: ${args.status}`,
       args.description && 'Descrizione aggiornata',
       args.roadmap && 'Roadmap aggiornata',
-      args.obiettivi && 'Obiettivi aggiornati'
+      args.obiettivi && 'Obiettivi aggiornati',
+      scadenza(args)
     ].filter(Boolean)
     case 'update_note': return [`**${args.noteTitle}**`, args.title && `Nuovo titolo: ${args.title}`].filter(Boolean)
     case 'add_link_to_project': return [`**${args.projectName}**`, `${args.linkTitle}: ${args.url}`]

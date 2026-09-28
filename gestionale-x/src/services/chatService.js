@@ -77,6 +77,46 @@ export const sendMessage = async (message, { history = [], specialist = null, ta
   }
 }
 
+// Come sendMessage (un modello solo), ma il testo arriva a pezzi: onTesto(pezzo) mentre il modello
+// scrive. Restituisce la risposta completa nella stessa forma di sendMessage. Se il server non ha lo
+// streaming (versione vecchia) si torna da soli alla chiamata normale.
+export const streamMessage = async (message, { history = [], specialist = null, targets = [], voce = false } = {}, onTesto = () => {}) => {
+  const body = { message, history: history.slice(-24) }
+  if (specialist) body.specialist = specialist
+  if (targets.length) body.targets = targets.slice(0, 1)
+  if (voce) body.voce = true
+
+  const res = await fetch(`${API_URL}/api/chat/stream`, { method: 'POST', headers: await getAuthHeaders(), body: JSON.stringify(body) })
+  if (res.status === 404) return sendMessage(message, { history, specialist, targets, voce })
+  if (res.status === 429) throw new Error('Troppe richieste. Aspetta qualche secondo e riprova.')
+  if (!res.ok || !res.body) {
+    const err = await res.json().catch(() => ({}))
+    const base = err.error || `Errore server (${res.status})`
+    throw new Error(err.detail ? `${base}\n(${err.detail})` : base)
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let resto = ''
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) break
+    resto += decoder.decode(value, { stream: true })
+    const blocchi = resto.split('\n\n')
+    resto = blocchi.pop()
+    for (const blocco of blocchi) {
+      if (!blocco.startsWith('data:')) continue // righe di servizio (battito)
+      const evento = JSON.parse(blocco.slice(5))
+      if (evento.t === 'testo') onTesto(evento.d)
+      else if (evento.t === 'errore') throw new Error(evento.detail ? `${evento.error}\n(${evento.detail})` : evento.error)
+      else if (evento.t === 'fine') {
+        return { reply: evento.reply, proposedActions: evento.proposedActions || [], stats: evento.stats || null, label: evento.label || null, ms: evento.ms ?? null, replies: null }
+      }
+    }
+  }
+  throw new Error('La risposta si è interrotta a metà. Riprova.')
+}
+
 export const getProviders = async () => {
   const headers = await getAuthHeaders()
   const res = await fetch(`${API_URL}/api/providers`, { headers })
