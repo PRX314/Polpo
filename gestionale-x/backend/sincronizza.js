@@ -9,7 +9,7 @@
  * Firestore, cosi' che il gestionale li conosca tutti:
  *
  *   vault Obsidian (20-Projects/*.md)  il perche': visione, roadmap, decisioni
- *   scan-condiviso.json (Dietro i Progetti)  il cosa: linguaggi, git, righe, TODO
+ *   scan-condiviso.json (scanner di PLANCIA)  il cosa: linguaggi, git, righe, TODO
  *
  * Perche' non bastava quello che c'era gia':
  *   - `dietroiprogetti/carica-gestionale.js` aggiorna solo il campo `scan` e
@@ -38,7 +38,8 @@ const QUI = path.dirname(fileURLToPath(import.meta.url))
 const VAULT_ROOT = 'C:/Users/paolo/Documents/Vault'
 const VAULT = VAULT_ROOT + '/20-Projects'
 const ARCHIVIO = VAULT_ROOT + '/50-Archive'
-const SCAN = 'C:/Users/paolo/Desktop/Progetti Codice/dietroiprogetti/scan-condiviso.json'
+// Lo scanner vive dentro PLANCIA dal 2026-09-28 (prima era il progetto a sé dietroiprogetti)
+const SCAN = 'C:/Users/paolo/Desktop/Progetti Codice/PLANCIA/scanner/scan-condiviso.json'
 const SERVICE_ACCOUNT = path.join(QUI, 'serviceAccount.json')
 const EMAIL = 'paoloandrearepetto@gmail.com'
 
