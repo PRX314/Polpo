@@ -3,6 +3,8 @@ import {
   subscribeToProjects, subscribeToNotes, subscribeToRoutine, subscribeToEvents,
   addProject, updateProject, deleteProject, deleteNote
 } from '../firebaseService'
+import { auth } from '../firebase'
+import { watchDocuments } from '../services/localDocuments'
 import { NOTE_TYPES } from '../itemTypes'
 import { useToast } from './useToast'
 import { DataContext } from './dataContext'
@@ -14,6 +16,10 @@ export const DataProvider = ({ children }) => {
   const [projects, setProjects] = useState(null)   // null = non ancora caricati
   const [notes, setNotes] = useState([])
   const [routine, setRoutine] = useState(undefined) // undefined = in caricamento, null = nessuna, false = errore di lettura
+  const [documents, setDocuments] = useState([])
+  const [documentsLoading, setDocumentsLoading] = useState(true)
+  const [documentsError, setDocumentsError] = useState('')
+  useEffect(() => watchDocuments(auth.currentUser.uid, rows => { setDocuments(rows); setDocumentsLoading(false); setDocumentsError('') }, () => { setDocumentsLoading(false); setDocumentsError('Archivio locale non disponibile. Verifica le impostazioni del browser.') }), [])
   const [events, setEvents] = useState([])
 
   useEffect(() => {
@@ -81,8 +87,8 @@ export const DataProvider = ({ children }) => {
   const value = useMemo(() => ({
     loading: projects === null,
     projects: projects || [],
-    items, notes, routine, events, tagCounts, notesOf, actions
-  }), [projects, items, notes, routine, events, tagCounts, notesOf, actions])
+    items, notes, routine, events, tagCounts, notesOf, actions, documents, documentsLoading, documentsError
+  }), [projects, items, notes, routine, events, tagCounts, notesOf, actions, documents, documentsLoading, documentsError])
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }

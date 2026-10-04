@@ -1,0 +1,22 @@
+.doc-page { gap: 14px; }
+.doc-notice { padding: 12px; background: var(--bg-sub); border-left: 3px solid var(--ink); }
+.doc-pick { position: relative; overflow: hidden; }
+.doc-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.doc-pick:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
+.doc-filters { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; }
+.doc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.doc-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.doc-card h2, .doc-file { overflow-wrap: anywhere; }
+.doc-excerpt { white-space: pre-wrap; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: var(--fs-s); }
+.doc-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.doc-label { display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-s); }
+.doc-back { align-self: flex-start; }
+.doc-file { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line-soft); }
+.doc-file img { width: 90px; height: 110px; object-fit: contain; background: var(--bg-sub); }
+.doc-deadline { display: grid; grid-template-columns: 2fr 1fr 1fr auto auto; gap: 10px; align-items: end; padding: 12px 0; border-top: 1px solid var(--line-soft); }
+@media(max-width: 600px) {
+  .doc-deadline { grid-template-columns: 1fr 1fr; }
+  .doc-deadline > :first-child { grid-column: 1 / -1; }
+  .doc-file { flex-wrap: wrap; }
+  .doc-file .grow { flex-basis: calc(100% - 110px); }
+}

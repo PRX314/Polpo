@@ -23,13 +23,11 @@ export function usePush(projects, panelOpen) {
 
   const count = projects.length
   useEffect(() => {
-    if (count === 0) return
-    let cancelled = false
+    if (count === 0 || active !== false) { stopDeadlineChecker(); return }
     startDeadlineChecker(() => projectsRef.current)
-      .then(() => { if (cancelled) stopDeadlineChecker() })
       .catch(e => console.warn('Deadline checker failed:', e))
-    return () => { cancelled = true; stopDeadlineChecker() }
-  }, [count])
+    return stopDeadlineChecker
+  }, [count, active])
 
   return active
 }

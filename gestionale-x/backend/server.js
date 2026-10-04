@@ -19,6 +19,18 @@ const execAsync = promisify(exec)
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+// Collaudo (tester/collauda.cjs): solo emulatori locali e progetto finto "demo-", senza credenziali.
+// Con queste variabili firebase-admin parla soltanto con gli emulatori.
+const EMULATORI = Boolean(process.env.FIRESTORE_EMULATOR_HOST && process.env.FIREBASE_AUTH_EMULATOR_HOST)
+if (EMULATORI && !admin.apps.length) {
+  if (!/^demo-/.test(process.env.GCLOUD_PROJECT || '')) {
+    console.error('Emulatori: serve GCLOUD_PROJECT che inizi con "demo-".')
+    process.exit(1)
+  }
+  admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT })
+  console.log(`🧪 Emulatori Firebase, progetto ${process.env.GCLOUD_PROJECT}`)
+}
+
 if (!admin.apps.length) {
   let credential
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -38,7 +50,7 @@ if (!admin.apps.length) {
 const adminDb = admin.firestore()
 
 const app = express()
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4321', 'https://gestionalepolpo.netlify.app', 'https://polpo-c9un.onrender.com', 'https://polpopoly.it'] }))
+app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4321', 'https://gestionalepolpo.netlify.app', 'https://polpo-c9un.onrender.com', 'https://polpopoly.it', 'https://www.polpopoly.it'] }))
 app.use(express.json({ limit: '1mb' }))
 
 // I provider AI (Groq, Nvidia, ...) vivono in providers.js; le key stanno nelle env.
@@ -1295,8 +1307,22 @@ function parseFrontmatter(raw) {
   return { frontmatter, body }
 }
 
+// Il vault è personale: autenticarsi nel progetto Firebase non basta.
+let vaultOwnerUid;
+async function verifyVaultOwner(req, res, next) {
+  try {
+    const uid = process.env.VAULT_OWNER_UID || vaultOwnerUid ||
+      (await admin.auth().getUserByEmail(process.env.VAULT_OWNER_EMAIL || 'paoloandrearepetto@gmail.com')).uid;
+    vaultOwnerUid = uid;
+    if (req.userId !== uid) return res.status(403).json({ error: 'Accesso al vault non consentito' });
+    next();
+  } catch {
+    return res.status(503).json({ error: 'Accesso al vault non configurato' });
+  }
+}
+
 // Lista file .md nelle cartelle del vault
-app.get('/api/vault/tree', verifyUser, async (req, res) => {
+app.get('/api/vault/tree', verifyUser, verifyVaultOwner, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato. Aggiungi GITHUB_TOKEN al .env' })
   try {
     const tree = {}
@@ -1316,7 +1342,7 @@ app.get('/api/vault/tree', verifyUser, async (req, res) => {
 })
 
 // Ultimo commit (timestamp ultimo sync)
-app.get('/api/vault/last-sync', verifyUser, async (req, res) => {
+app.get('/api/vault/last-sync', verifyUser, verifyVaultOwner, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato' })
   try {
     const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/commits/main`
@@ -1335,7 +1361,7 @@ app.get('/api/vault/last-sync', verifyUser, async (req, res) => {
 })
 
 // Sync manuale vault → GitHub (solo locale)
-app.post('/api/vault/sync', verifyUser, async (req, res) => {
+app.post('/api/vault/sync', verifyUser, verifyVaultOwner, async (req, res) => {
   const vaultPath = process.env.VAULT_PATH
   if (!vaultPath) return res.status(503).json({ error: 'Sync manuale disponibile solo in locale (VAULT_PATH non impostato)' })
   try {
@@ -1351,7 +1377,7 @@ app.post('/api/vault/sync', verifyUser, async (req, res) => {
 })
 
 // Leggi contenuto di una nota
-app.get('/api/vault/note', verifyUser, async (req, res) => {
+app.get('/api/vault/note', verifyUser, verifyVaultOwner, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato' })
   const { path } = req.query
   if (!path || !path.endsWith('.md') || path.includes('..')) return res.status(400).json({ error: 'Path non valido' })

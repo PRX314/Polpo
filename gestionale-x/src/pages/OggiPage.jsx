@@ -8,12 +8,13 @@ import { useUi } from '../context/useUi'
 import { saveRoutine } from '../firebaseService'
 import { addDaysIso, longDate, oggiIso, relativeDay, timeAgo } from '../lib/dates'
 import { progressOf } from '../lib/status'
+import { documentDeadlines } from '../services/localDocuments'
 import './OggiPage.css'
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1)
 
 // Scadenze, appuntamenti e cose da fare di oggi e dei prossimi giorni, in un'unica lista ordinata.
-const buildAgenda = (items, events) => {
+const buildAgenda = (items, events, documents) => {
   const out = []
   items.filter(p => !p.archived && p.status !== 'completed').forEach(p => {
     if (p.deadline) out.push({ key: `d-${p.id}`, kind: 'deadline', iso: p.deadline, time: p.deadlineTime || '', text: p.name, project: p })
@@ -24,10 +25,11 @@ const buildAgenda = (items, events) => {
   events.forEach(e => {
     if (e.date) out.push({ key: `e-${e.id}`, kind: 'event', iso: e.date, time: e.time || '', text: e.title })
   })
+  out.push(...documentDeadlines(documents).map(d => ({ key: d.key, kind: 'documento', iso: d.date, time: '', text: d.title, documentId: d.documentId })))
   return out.sort((a, b) => (a.iso + (a.time || '99')).localeCompare(b.iso + (b.time || '99')))
 }
 
-const KIND_LABEL = { todo: 'Da fare', deadline: 'Scadenza', event: 'Appuntamento' }
+const KIND_LABEL = { documento: 'Documento locale', todo: 'Da fare', deadline: 'Scadenza', event: 'Appuntamento' }
 
 const AgendaRow = ({ row, onToggle }) => {
   const rel = relativeDay(row.iso)
@@ -41,7 +43,7 @@ const AgendaRow = ({ row, onToggle }) => {
       <div className="grow">
         {row.project
           ? <Link to={`/elementi/${row.project.id}`} className="ag-text">{row.kind === 'todo' ? row.text : row.project.name}</Link>
-          : <span className="ag-text">{row.text}</span>}
+          : row.documentId ? <Link to={`/documenti/${row.documentId}`} className="ag-text">{row.text}</Link> : <span className="ag-text">{row.text}</span>}
         <div className="small faint">
           {KIND_LABEL[row.kind]}{row.kind === 'todo' && row.project ? ` · ${row.project.name}` : ''}
         </div>
@@ -66,14 +68,14 @@ const AgendaBlock = ({ title, rows, onToggle, invert, more }) => {
 
 const OggiPage = () => {
   const navigate = useNavigate()
-  const { items, events, routine, loading, actions } = useData()
+  const { items, events, routine, loading, actions, documents } = useData()
   const { openForm } = useUi()
   const [prompt, setPrompt] = useState('')
 
   const today = oggiIso()
   const weekEnd = addDaysIso(7)
 
-  const agenda = useMemo(() => buildAgenda(items, events), [items, events])
+  const agenda = useMemo(() => buildAgenda(items, events, documents), [items, events, documents])
   const overdue = agenda.filter(r => r.iso < today)
   const todayRows = agenda.filter(r => r.iso === today)
   const soon = agenda.filter(r => r.iso > today && r.iso <= weekEnd)
@@ -107,10 +109,12 @@ const OggiPage = () => {
   }
 
   const dueToday = todayRows.length
+  const routineLeft = routineTasks.filter(t => !ticks[t.id]).length
   const summary = loading
     ? 'Carico…'
     : [
         dueToday ? `${dueToday} ${dueToday === 1 ? 'cosa' : 'cose'} per oggi` : 'Niente in scadenza oggi',
+        routineLeft ? `${routineLeft} attività della routine da fare` : null,
         overdue.length ? `${overdue.length} ${overdue.length === 1 ? 'scaduta' : 'scadute'}` : null
       ].filter(Boolean).join(' · ')
 
@@ -148,24 +152,11 @@ const OggiPage = () => {
             more={overdue.length > 8 && <Link className="ag-more" to="/da-fare">Altre {overdue.length - 8} scadute</Link>}
           />
           <AgendaBlock title="Oggi" rows={todayRows} onToggle={toggleTodo} />
-          <AgendaBlock title="Prossimi 7 giorni" rows={soon.slice(0, 10)} onToggle={toggleTodo}
-            more={soon.length > 10 && <Link className="ag-more" to="/calendario">Tutto il calendario</Link>} />
-
-          {!loading && !overdue.length && !todayRows.length && !soon.length && (
-            <div className="empty">
-              <strong>Niente in scadenza</strong>
-              <p className="small">Nei prossimi 7 giorni non c&apos;è nulla di datato. Dai una scadenza a una cosa da fare per vederla qui.</p>
-              <Link to="/calendario" className="btn" style={{ marginTop: 12 }}><CalendarDays size={15} /> Apri il calendario</Link>
-            </div>
-          )}
-        </div>
-
-        <div className="stack">
           {routine && routineTasks.length > 0 && (
             <section className="card">
               <h2 className="card-title">
                 <span>Routine di oggi</span>
-                <span className="faint" style={{ letterSpacing: 0 }}>{routineTasks.filter(t => ticks[t.id]).length}/{routineTasks.length}</span>
+                <span className="faint" style={{ letterSpacing: 0 }}>{routineTasks.length - routineLeft}/{routineTasks.length}</span>
               </h2>
               <ul className="routine-list">
                 {routineTasks.map(t => (
@@ -180,7 +171,19 @@ const OggiPage = () => {
               </ul>
             </section>
           )}
+          <AgendaBlock title="Prossimi 7 giorni" rows={soon.slice(0, 10)} onToggle={toggleTodo}
+            more={soon.length > 10 && <Link className="ag-more" to="/calendario">Tutto il calendario</Link>} />
 
+          {!loading && !overdue.length && !todayRows.length && !soon.length && (
+            <div className="empty">
+              <strong>Niente in scadenza</strong>
+              <p className="small">Nei prossimi 7 giorni non c&apos;è nulla di datato. Dai una scadenza a una cosa da fare per vederla qui.</p>
+              <Link to="/calendario" className="btn" style={{ marginTop: 12 }}><CalendarDays size={15} /> Apri il calendario</Link>
+            </div>
+          )}
+        </div>
+
+        <div className="stack">
           <section className="card card-flush">
             <h2 className="ag-head"><span>In corso</span> <span className="count ghost">{inProgress.length}</span></h2>
             {inProgress.length === 0 ? (

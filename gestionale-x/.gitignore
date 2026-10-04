@@ -26,3 +26,7 @@ backend/serviceAccount.json
 *.njsproj
 *.sln
 *.sw?
+
+# Collaudatore: Java portatile, build di prova e referti
+tester/cache/
+tester/referti/

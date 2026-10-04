@@ -1,20 +1,7 @@
-// Notifiche del gestionale.
-//
-// Due canali, mai insieme:
-//
-//   push   - le manda la Netlify Scheduled Function anche ad app chiusa. E' il
-//            canale vero, l'unico che serve a qualcosa sul telefono.
-//   locale - ripiego per il browser sul computer quando la push non e' attiva:
-//            funziona solo finche' la scheda resta aperta.
-//
-// Le chiamate vanno alle function di Netlify, sullo stesso dominio del
-// gestionale. Prima andavano al server su Render, che dorme: il risveglio
-// richiede quasi un minuto, la fetch scadeva prima e l'iscrizione falliva
-// senza dire niente. Render adesso serve solo alla chat AI.
-
+// Push e sveglie su Cloudflare; ripiego locale solo quando non risultano registrate.
 import { auth } from '../firebase'
 
-const FN = '/.netlify/functions'
+const FN = '/api/gestionale-push'
 const INTERVALLO_CONTROLLO = 60 * 60 * 1000
 const CHIAVE_INVIATE = 'polpo_notified_deadlines'
 const ICONA = `${import.meta.env.BASE_URL}icon-192.png`
@@ -75,7 +62,7 @@ export async function registerServiceWorker() {
 async function registrazione() {
   if (swRegistration) return swRegistration
   if (!('serviceWorker' in navigator)) return null
-  swRegistration = (await navigator.serviceWorker.getRegistration()) || await registerServiceWorker()
+  swRegistration = (await navigator.serviceWorker.getRegistration(import.meta.env.BASE_URL)) || await registerServiceWorker()
   return swRegistration
 }
 
@@ -87,51 +74,55 @@ async function token() {
   return auth.currentUser?.getIdToken()
 }
 
-export async function subscribeToPush() {
-  const reg = await registrazione()
-  if (!reg) throw new Error('Service worker non disponibile')
-
-  // Se un'iscrizione c'e' gia' la riusiamo: iscriversi due volte con la stessa
-  // chiave e' inutile, e su iOS a volte fallisce del tutto.
-  const subscription = await reg.pushManager.getSubscription()
-    || await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: base64ToUint8Array(VAPID_PUBLIC)
-    })
-
+async function pushRequest(action, subscription) {
   const t = await token()
   if (!t) throw new Error('Sessione scaduta, rientra e riprova')
-
-  const res = await fetch(`${FN}/push-subscribe`, {
+  const res = await fetch(FN + '/' + action, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` },
-    body: JSON.stringify({ subscription: subscription.toJSON() })
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
+    body: JSON.stringify({ subscription: subscription?.toJSON() }),
+    signal: AbortSignal.timeout(15000)
   })
-  if (!res.ok) {
-    const { error } = await res.json().catch(() => ({}))
-    throw new Error(error || `Il server ha risposto ${res.status}`)
+  const data = await res.json().catch(() => null)
+  if (!res.ok || !data) throw new Error(data?.error || 'Servizio notifiche non disponibile')
+  return data
+}
+
+export async function subscribeToPush() {
+  const reg = await registrazione()
+  if (!reg?.pushManager) throw new Error('Service worker non disponibile')
+  const existing = await reg.pushManager.getSubscription()
+  const subscription = existing || await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: base64ToUint8Array(VAPID_PUBLIC)
+  })
+  try {
+    const result = await pushRequest('push-subscribe', subscription)
+    if (result.ok !== true) throw new Error('Iscrizione non confermata dal server')
+    stopDeadlineChecker()
+    return true
+  } catch (err) {
+    if (!existing) await subscription.unsubscribe().catch(() => {})
+    throw err
   }
-  return true
 }
 
 export async function unsubscribeFromPush() {
   const reg = await registrazione()
   const subscription = await reg?.pushManager.getSubscription()
-  if (subscription) await subscription.unsubscribe()
-
-  const t = await token()
-  if (t) {
-    await fetch(`${FN}/push-unsubscribe`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${t}` }
-    }).catch(() => {})
+  // Si rimuove solo questo dispositivo; gli altri continuano a ricevere avvisi.
+  if (subscription) {
+    await pushRequest('push-unsubscribe', subscription)
+    await subscription.unsubscribe()
   }
 }
 
 export async function isPushSubscribed() {
   const reg = await registrazione()
-  if (!reg?.pushManager) return false
-  return !!(await reg.pushManager.getSubscription())
+  const subscription = await reg?.pushManager?.getSubscription()
+  if (!subscription) return false
+  const status = await pushRequest('push-status', subscription)
+  return status.active === true
 }
 
 export async function requestNotificationPermission() {
@@ -155,16 +146,10 @@ export async function setupPushNotifications() {
 // Chiede al server di mandare subito una notifica, per verificare la catena
 // senza aspettare una scadenza vera.
 export async function inviaProva() {
-  const t = await token()
-  if (!t) throw new Error('Sessione scaduta')
-  const res = await fetch(`${FN}/push-prova`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${t}` }
-  })
-  if (!res.ok) {
-    const { error } = await res.json().catch(() => ({}))
-    throw new Error(error || `Il server ha risposto ${res.status}`)
-  }
+  const reg = await registrazione()
+  const subscription = await reg?.pushManager?.getSubscription()
+  if (!subscription) throw new Error('Attiva prima le notifiche')
+  await pushRequest('push-prova', subscription)
   return true
 }
 
@@ -233,18 +218,22 @@ export function checkDeadlines(projects) {
 }
 
 let timer = null
+let checkerVersion = 0
 
 // Parte solo se la push NON e' attiva: altrimenti server e client manderebbero
 // lo stesso avviso due volte, che e' esattamente quello che succedeva prima.
 export async function startDeadlineChecker(getProjects) {
   stopDeadlineChecker()
-  if (await isPushSubscribed()) return false
+  const version = checkerVersion
+  const active = await isPushSubscribed().catch(() => false)
+  if (active || version !== checkerVersion) return false
   checkDeadlines(getProjects())
   timer = setInterval(() => checkDeadlines(getProjects()), INTERVALLO_CONTROLLO)
   return true
 }
 
 export function stopDeadlineChecker() {
+  checkerVersion++
   if (timer) { clearInterval(timer); timer = null }
 }
 

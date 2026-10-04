@@ -279,11 +279,12 @@ export class Eco {
   // AudioContext, che una volta avviato da un gesto può suonare qualunque cosa più tardi.
   sblocca() {
     // Voce del browser (iOS): una frase muta detta durante il gesto sblocca quelle di dopo.
-    if (this.voce === 'browser' && window.speechSynthesis) {
+    // Si fa anche con la voce del server: è la sua riserva se il server non risponde.
+    if (window.speechSynthesis) {
       const muta = new SpeechSynthesisUtterance(' ');
       muta.volume = 0;
       speechSynthesis.speak(muta);
-      return;
+      if (this.voce === 'browser') return;
     }
     this._lettore ??= new Audio();
     if (!this._sbloccato) {
@@ -298,6 +299,7 @@ export class Eco {
 
   // Sempre lo stesso lettore (quello sbloccato). La prima frase suona a flusso mentre arriva;
   // le successive si scaricano subito in parallelo e sono pronte quando tocca a loro.
+  // Una frase che non arriva o non suona passa, con tutte le seguenti, alla voce del browser.
   async _parlaServer(frasi) {
     const extra = await this.parametriVoce();
     const indirizzo = (t) => `${this.api}/api/parla?t=${encodeURIComponent(t)}${extra}`;
@@ -306,14 +308,37 @@ export class Eco {
     this._lettore ??= new Audio();
     for (let i = 0; i < frasi.length && !this._interrotto; i++) {
       const blob = i ? await successive[i - 1] : null;
-      if (i && !blob) continue;
-      const sorgente = i ? URL.createObjectURL(blob) : indirizzo(frasi[0]);
-      const suonata = await this._suona(sorgente);
-      if (!suonata && !this._interrotto) await this._suonaConContesto(blob || await scarica(frasi[0]));
-      if (i) URL.revokeObjectURL(sorgente);
+      let suonata = false;
+      if (!i || blob) {
+        const sorgente = i ? URL.createObjectURL(blob) : indirizzo(frasi[0]);
+        const esito = await this._suona(sorgente);
+        suonata = esito === true;
+        // Rifiutata dal lettore: si riprova con Web Audio. Scaduta: il server è fermo, inutile riscaricarla.
+        if (esito === false && !this._interrotto) suonata = await this._suonaConContesto(blob || await scarica(frasi[0]));
+        if (i) URL.revokeObjectURL(sorgente);
+      }
+      if (suonata || this._interrotto) continue;
+      if (this._passaAlBrowser()) return this._parlaBrowser(frasi.slice(i));
     }
   }
 
+  // La voce del server non arriva: si continua con quella del browser per il resto della
+  // sessione, invece di aspettarla e perderla a ogni frase. Avvisa una volta sola.
+  _passaAlBrowser() {
+    if (!window.speechSynthesis) {
+      if (!this._avvisato) {
+        this._avvisato = true;
+        this.onMessaggio({ chi: 'errore', testo: 'Il browser non mi lascia parlare. Tocca il quadrato una volta e riprova.' });
+      }
+      return false;
+    }
+    this.voce = 'browser';
+    this.onDiario('voce: il server non la dà, passo alla voce del browser');
+    this.onMessaggio({ chi: 'errore', testo: 'La voce naturale non risponde: continuo con quella del browser.' });
+    return true;
+  }
+
+  // true = suonata (o interrotta da te), false = il lettore la rifiuta, 'scaduta' = non è mai partita
   _suona(sorgente) {
     const l = this._lettore;
     this._audio = l;
@@ -324,8 +349,8 @@ export class Eco {
       const risolvi = (esito) => { if (!chiusa) { chiusa = true; clearTimeout(scadenza); fatto(esito); } };
       // Se la frase non parte entro 8 s (rete ferma) si passa oltre invece di aspettare per sempre.
       const scadenza = setTimeout(() => {
-        this.onDiario(`voce: dopo ${tempo()} non è ancora partita, la salto`);
-        risolvi(true);
+        this.onDiario(`voce: dopo ${tempo()} non è ancora partita, la lascio`);
+        risolvi('scaduta');
         l.pause();
       }, 8000);
       l.onplaying = () => {
@@ -346,6 +371,7 @@ export class Eco {
     });
   }
 
+  // true se l'ha suonata
   async _suonaConContesto(blob) {
     try {
       if (!blob || !this._contesto) throw new Error('niente riserva');
@@ -365,12 +391,10 @@ export class Eco {
         s.start();
       });
       this._sorgente = null;
+      return true;
     } catch (e) {
       this.onDiario(`voce: nemmeno Web Audio suona (${e.message})`);
-      if (!this._avvisato) {
-        this._avvisato = true;
-        this.onMessaggio({ chi: 'errore', testo: 'Il browser non mi lascia parlare. Tocca il quadrato una volta e riprova, oppure scegli la voce "browser".' });
-      }
+      return false;
     }
   }
 

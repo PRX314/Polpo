@@ -18,7 +18,7 @@ const NotificationSettings = ({ onClose }) => {
   const blocker = ostacolo()
 
   useEffect(() => {
-    isPushSubscribed().then(setActive).catch(() => setActive(false)).finally(() => setChecking(false))
+    isPushSubscribed().then(setActive).catch(e => { setActive(false); setError(e.message) }).finally(() => setChecking(false))
   }, [])
 
   const run = async (name, fn, message) => {

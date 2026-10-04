@@ -25,7 +25,7 @@ const Prose = ({ text }) => {
 
 const Detail = ({ project }) => {
   const navigate = useNavigate()
-  const { actions, notesOf } = useData()
+  const { actions, notesOf, documents } = useData()
   const { openForm } = useUi()
   const menu = useItemMenu(project, { afterDelete: () => navigate('/elementi', { replace: true }) })
   const notes = notesOf(project)
@@ -146,6 +146,7 @@ const Detail = ({ project }) => {
             )}
           </section>
 
+<section className="card stack"><h2 className="card-title">Documenti su questo dispositivo</h2>{documents.filter(d => d.projectId === project.id).map(d => <Link key={d.id} to={`/documenti/${d.id}`}>{d.title}{d.objective ? ` · ${d.objective}` : ""}</Link>)}<Link className="btn btn-sm" to={`/documenti?elemento=${encodeURIComponent(project.id)}`}>Collega foto o file</Link></section>
           <TodoList project={project} onUpdate={(todos) => actions.update(project.id, { todos })} />
           {project.scan && <ScanInfo scan={project.scan} />}
         </aside>

@@ -1,381 +1,91 @@
-# Gestionale-X - Project Management Application
+# Gestionale X
 
-React-based project management application with Firebase backend for real-time collaboration.
+Gestionale personale per progetti, idee, note, attività, calendario e routine. La chat Polpo AI può proporre modifiche ai dati, che vengono eseguite dopo conferma. L'app è pubblicata su [polpopoly.it/gestionale](https://polpopoly.it/gestionale/).
 
-**Deployed at**: https://gestionalepolpo.netlify.app/
-**Tech Stack**: React 19.1 + Vite 7.1 + Firebase 12.3
-**Status**: ✅ Fully functional and production-ready
+## Struttura
 
-## Table of Contents
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Development Commands](#development-commands)
-- [Component Structure](#component-structure)
-- [Data Models](#data-models)
-- [Firebase Configuration](#firebase-configuration)
-- [Key Patterns](#key-patterns)
-- [Deployment](#deployment)
+- `src/`: frontend React 19 e Vite 7. `src/App.jsx` definisce le pagine; `src/context/DataProvider.jsx` mantiene i dati Firestore in tempo reale.
+- `backend/`: API Express per chat AI, voce e lettura del vault. Usa Firebase Admin e provider Groq; Nvidia è opzionale.
+- `backend/sincronizza.js`: sincronizza i progetti dal vault Obsidian e dalla scansione di PLANCIA verso Firestore. È uno script locale, separato dall'avvio dell'app.
+- `public/`: manifest e service worker della PWA.
+- `firestore.rules`: regole di accesso ai dati per utente.
 
-## Overview
+Il vault è la fonte delle informazioni sui progetti; l'app conserva anche dati decisi nell'interfaccia, come spunte, scadenze e appuntamenti. La nota di progetto nel vault (`20-Projects/Gestionale X.md`) descrive le decisioni e la roadmap correnti.
 
-Gestionale-X is a lightweight project management tool designed for personal and small team use. It provides:
-- **Real-time project tracking** with Firebase Firestore
-- **Note-taking system** with priority levels and project tags
-- **Tag-based project-note relationships** for flexible organization
-- **User isolation** - Each user sees only their own data
-- **Responsive design** - Works seamlessly on desktop and mobile
-- **Auto-save** - All changes persist immediately
+## Avvio locale
 
-## Features
+Servono Node.js, npm e un account Firebase configurato per il progetto. Le dipendenze del frontend e del backend si installano separatamente.
 
-### Project Management
-- Create projects with name, description, status, and tags
-- Track project status (Planning, Active, Completed, Archived)
-- Add roadmap and objectives to each project
-- Manage project links (GitHub, docs, deployment)
-- Organize projects with custom tags
-- Real-time updates across devices
-
-### Note System
-- Create notes with title, content, type, and priority
-- Link notes to projects via shared tags
-- Three note types: Note, Task, Idea
-- Priority levels: Low, Medium, High, Urgent
-- Real-time synchronization
-
-### User Experience
-- Clean, modern interface
-- Auto-dismiss toast notifications (3-5 seconds)
-- Real-time data subscriptions
-- Inline editing and quick actions
-- Status and priority badges with color coding
-
-## Architecture
-
-### Tech Stack
-
-**Frontend**:
-- **React 19.1** - Modern hooks and functional components
-- **Vite 7.1** - Fast build tool and dev server
-- **Firebase SDK 12.3** - Authentication and Firestore database
-
-**Backend**:
-- **Firebase Firestore** - NoSQL real-time database
-- **Firebase Authentication** - User management and auth
-- **Firebase Hosting** (optional) - Static site hosting
-
-**Deployment**:
-- **Netlify** - Continuous deployment from git
-- **Build base**: `gestionale-x/`
-- **Node version**: 20
-
-## Development Commands
-
-```bash
+```powershell
 cd gestionale-x
-
-# Install dependencies
 npm install
+cd backend
+npm install
+Copy-Item .env.example .env
+```
 
-# Start development server (port 5173)
+Inserire le proprie chiavi in `backend/.env`. Per le API autenticate serve anche `backend/serviceAccount.json`, oppure la variabile `FIREBASE_SERVICE_ACCOUNT` con il JSON delle credenziali. Questi file non vanno committati. La configurazione Firebase del client è in `src/firebase.js`.
+
+Avviare backend e frontend in due terminali:
+
+```powershell
+# Terminale 1, dalla cartella gestionale-x/backend
 npm run dev
 
-# Build for production
-npm run build
+# Terminale 2, dalla cartella gestionale-x
+npm run dev
+```
 
-# Preview production build
-npm run preview
+Il backend ascolta sulla porta `5032`; Vite inoltra `/api` a `http://localhost:5032`. L'accesso all'app richiede Firebase Auth. La base URL del frontend è `/gestionale/`, anche in locale.
 
-# Run ESLint code quality check
+## Controlli
+
+```powershell
 npm run lint
+npm run build
 ```
 
-## Component Structure
+`npm run build` crea `dist/`, ma non pubblica il sito. Per vedere la build in locale: `npm run preview`.
 
-### Main Application
-```
-gestionale-x/
-├── src/
-│   ├── App.jsx                    # Main router with auth flow
-│   ├── firebaseService.js         # Abstracted Firestore operations
-│   ├── components/
-│   │   ├── Auth.jsx               # Login/Register forms
-│   │   ├── Home.jsx               # Main dashboard
-│   │   ├── AddProjectForm.jsx    # Project creation form
-│   │   ├── AddNoteForm.jsx       # Note creation form
-│   │   ├── ProjectCard.jsx       # Project display component
-│   │   ├── NoteCard.jsx          # Note display component
-│   │   ├── StatusBadge.jsx       # Project status indicator
-│   │   └── PriorityBadge.jsx     # Note priority indicator
-│   └── main.jsx                   # React entry point
-├── public/                        # Static assets
-├── index.html                     # HTML template
-├── vite.config.js                # Vite configuration
-└── package.json                   # Dependencies
+### Collaudo completo
+
+```powershell
+npm run collauda              # giro veloce, referto in tester/referti/<data-ora>/referto.html
+npm run collauda:vedi         # finestra visibile e rallentata
+npm run collauda -- --seme N  # rifà identico un giro
 ```
 
-### Key Components
+`tester/collauda.cjs` usa l'app vera in Chromium, su emulatori Firebase con progetto finto
+`demo-gestionale-x`. Il backend parte in modalità emulatori, senza credenziali, e l'AI è simulata.
+Il browser blocca ogni richiesta che esce dal PC. Serve `firebase-tools` installato globalmente.
+Java 21 viene scaricato una volta in `tester/cache` se manca. In Claude Code o PLANCIA:
+`/collaudo-gestionale`.
 
-**App.jsx** (Main Router):
-- Authentication flow management
-- Real-time Firebase subscriptions (lines 83-111)
-- CRUD operations for projects and notes
-- State management for current user
+## Sincronizzazione dei progetti
 
-**firebaseService.js** (Firebase Abstraction):
-- `subscribeToProjects(userId, callback)` - Real-time project updates
-- `subscribeToNotes(userId, callback)` - Real-time note updates
-- Encapsulates Firestore queries and data transformations
+`backend/sincronizza.js` legge il vault e il report dello scanner in `PLANCIA/scanner/`. Prima di scrivere su Firestore si può controllare il risultato:
 
-**Home.jsx** (Dashboard):
-- Displays all projects and notes
-- Project-note relationship via tag matching
-- Quick add forms for projects and notes
-- Responsive grid layout
-
-## Data Models
-
-### Firestore Collections
-
-**Projects Collection** (`projects`):
-```javascript
-{
-  id: string,              // Auto-generated document ID
-  name: string,            // Project name
-  description: string,     // Project description
-  status: string,          // "Planning" | "Active" | "Completed" | "Archived"
-  tags: string[],          // Array of tag strings
-  links: {                 // Optional external links
-    github: string,
-    docs: string,
-    deployment: string
-  },
-  roadmap: string,         // Project roadmap/milestones
-  obiettivi: string,       // Project objectives
-  todos: string[],         // Array of todo items
-  createdAt: Timestamp,    // Firebase server timestamp
-  userId: string           // Owner user ID (for data isolation)
-}
+```powershell
+node backend/sincronizza.js --prova
 ```
 
-**Notes Collection** (`notes`):
-```javascript
-{
-  id: string,              // Auto-generated document ID
-  title: string,           // Note title
-  content: string,         // Note content/body
-  type: string,            // "Note" | "Task" | "Idea"
-  priority: string,        // "Low" | "Medium" | "High" | "Urgent"
-  projectTags: string[],   // Tags linking to projects
-  createdAt: Timestamp,    // Firebase server timestamp
-  userId: string           // Owner user ID
-}
-```
+Lo script richiede `backend/serviceAccount.json` e usa i percorsi locali dei progetti. Consultare la nota `Gestionale X` nel vault prima di cambiare le regole di fusione: le spunte e i campi gestiti nell'app devono sopravvivere alle sincronizzazioni successive.
 
-### Data Isolation
+## Pubblicazione
 
-**Security Model**:
-- All queries filter by `userId` field
-- Firebase security rules enforce user data isolation
-- Users can only read/write their own documents
-- No cross-user data access
+Il frontend è pubblicato dentro Polpopoly Hub su Cloudflare Pages. La chat AI usa il backend su Render; push e sveglie sono gestite dal Worker `workers/gestionale-push` dell’hub. Prima del deploy occorre ricostruire e copiare la build del gestionale nell’hub: il solo build Astro non aggiorna le sotto-app. Configurazione e comandi sono nel README del Worker. Un build locale non aggiorna i servizi online.
 
-## Firebase Configuration
+Il repository Git è la cartella padre `polpo/` e contiene anche altro codice: limitare commit e review ai file di `gestionale-x/` quando si lavora solo su questa app.
 
-### Setup Firebase Project
+## Documenti e file locali
 
-1. Create project at https://console.firebase.google.com/
-2. Enable **Firestore Database** (test mode for development)
-3. Enable **Authentication** with Email/Password provider
-4. Get Firebase config from Project Settings
+La sezione `#/documenti` conserva originali e testi in IndexedDB, separati per UID Firebase. Nessun documento viene caricato su Firestore, Storage o servizi AI. Il browser, il dominio e il dispositivo identificano l'archivio: cancellarne i dati elimina anche gli originali. Il login non cifra il database locale.
 
-### Configure Application
+- Scatto da telefono o caricamento di qualunque file; originali invariati, fino a 20 MB ciascuno e 50 MB per documento.
+- Testo da TXT/MD/CSV, foto JPG/PNG/WebP/BMP con Tesseract (italiano e inglese), PDF con PDF.js e OCR delle pagine senza testo. Massimo 30 pagine lette, originale intero conservato; gli altri formati restano allegati scaricabili.
+- L'OCR lavora sul dispositivo; al primo uso scarica motore/modelli dai CDN di Tesseract. La lettura può fallire offline senza perdere l'originale. Il riepilogo iniziale riprende il testo riconosciuto, non è una sintesi semantica AI; è modificabile e scaricabile come TXT insieme ai dati e alle scadenze.
+- Collegamento locale a un elemento e riferimento testuale a un obiettivo (gli obiettivi esistenti non hanno ID propri). Nel dettaglio dell'elemento compare il documento.
+- Scadenze inserite/verificate dall'utente, mostrate in Oggi e Calendario sul dispositivo. Pagate o documenti chiusi esclusi. Nessuna push ad app chiusa per queste scadenze locali.
+- Backup JSON completo o per documento con originali base64, testi e collegamenti. Non cifrato: conservarlo con cura. Ripristino atomico dopo validazione, aggiunge solo gli ID mancanti; i documenti esistenti non vengono sovrascritti. Per archivi oltre 75 MB usare i backup per documento (import massimo 150 MB).
 
-Edit `src/firebaseService.js` with your Firebase config:
-
-```javascript
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-```
-
-**Note**: Firebase config contains **public API keys** - this is normal and expected. Security is enforced through Firestore security rules on the backend, not client-side code.
-
-### Firestore Security Rules
-
-Deploy these rules to protect user data:
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Projects collection
-    match /projects/{projectId} {
-      allow read, write: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
-    }
-
-    // Notes collection
-    match /notes/{noteId} {
-      allow read, write: if request.auth != null
-        && request.resource.data.userId == request.auth.uid;
-    }
-  }
-}
-```
-
-See `/SECURITY_SETUP.md` for complete Firebase security configuration.
-
-## Key Patterns
-
-### Real-time Data Subscriptions
-
-App.jsx implements real-time listeners using Firebase's `onSnapshot`:
-
-```javascript
-// Lines 83-111 in App.jsx
-useEffect(() => {
-  if (currentUser) {
-    // Subscribe to projects
-    const unsubProjects = subscribeToProjects(currentUser.uid, (projects) => {
-      setProjects(projects);
-    });
-
-    // Subscribe to notes
-    const unsubNotes = subscribeToNotes(currentUser.uid, (notes) => {
-      setNotes(notes);
-    });
-
-    // Cleanup on unmount
-    return () => {
-      unsubProjects();
-      unsubNotes();
-    };
-  }
-}, [currentUser]);
-```
-
-This pattern:
-- Automatically updates UI when data changes
-- Syncs across multiple devices/tabs
-- Cleans up subscriptions to prevent memory leaks
-
-### Project-Note Relationship
-
-Notes link to projects via **shared tags** (App.jsx lines 114-118):
-
-```javascript
-const getProjectNotes = (project) => {
-  return notes.filter(note =>
-    note.projectTags && note.projectTags.some(tag =>
-      project.tags && project.tags.includes(tag)
-    )
-  );
-};
-```
-
-This flexible approach allows:
-- One note to relate to multiple projects
-- Dynamic relationships without foreign keys
-- Easy reorganization by changing tags
-
-### Toast Notifications
-
-Auto-dismiss notifications provide user feedback:
-- Success messages: 3 seconds
-- Error messages: 5 seconds
-- Positioned at top-right
-- Non-blocking UI interaction
-
-## Deployment
-
-### Netlify Configuration
-
-Configured in `/netlify.toml`:
-
-```toml
-[build]
-  base = "gestionale-x/"
-  command = "npm run build"
-  publish = "dist"
-
-[build.environment]
-  NODE_VERSION = "20"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-```
-
-**Important**: Only Gestionale-X is deployed to Netlify. The root `/index.html` and other projects are separate.
-
-### Deployment Process
-
-1. **Push to Git** - Changes are automatically detected
-2. **Netlify builds** - Runs `npm run build` in `gestionale-x/`
-3. **Deploy** - Publishes to https://gestionalepolpo.netlify.app/
-4. **SPA redirect** - All routes redirect to `/index.html` (status 200)
-
-### Build Output
-
-- **Build command**: `npm run build`
-- **Publish directory**: `dist`
-- **Node version**: 20
-- **Build time**: ~30-60 seconds
-
-## Hidden Easter Egg
-
-The portfolio hub (`/index.html` at root) contains a **long-press Easter egg** on the Polpo logo:
-- Hold logo for 1.5 seconds
-- Redirects to https://gestionalepolpo.netlify.app/
-- Implementation in `/script.js` lines 68-76
-
-This provides a hidden way to access Gestionale-X from the main portfolio.
-
-## Common Issues
-
-### Firebase Errors
-
-**Problem**: "Permission denied" errors
-**Solution**: Verify Firestore security rules are deployed and user is authenticated
-
-**Problem**: Data not syncing across devices
-**Solution**: Check that `userId` field is properly set on all documents
-
-### Build Issues
-
-**Problem**: Netlify build fails
-**Solution**:
-- Verify `netlify.toml` base directory is correct
-- Check Node version compatibility
-- Ensure all dependencies are in `package.json`
-
-### Port Conflicts
-
-**Problem**: Port 5173 already in use
-**Solution**:
-```bash
-# Kill process on port
-kill -9 $(lsof -t -i:5173)
-
-# Or use different port
-vite --port 5174
-```
-
-## Additional Documentation
-
-- **`/SECURITY_SETUP.md`** - Complete Firebase security configuration guide
-- **`/firestore.rules`** - Firestore security rules file
-- **Root `/CLAUDE.md`** - Repository-wide documentation
-
----
-
-*Deployed at: https://gestionalepolpo.netlify.app/*
-*Status: Production Ready ✅*
+Collaudo ripetibile: `npm run test:documents`. Usa Edge headless su Windows (o `PLAYWRIGHT_CHANNEL`), IndexedDB reale, Firebase simulato e documenti sintetici. Verifica OCR foto/PDF, persistenza, byte degli originali, export/import, isolamento account, rifiuto backup corrotti, collegamenti e scadenze. Serve rete per il primo download dei modelli OCR. Non usa credenziali né dati reali.

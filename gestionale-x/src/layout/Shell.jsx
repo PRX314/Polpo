@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { House, Folder, ListChecks, Calendar, Repeat, MessageSquare } from 'lucide-react'
+import { House, FileText, Folder, ListChecks, Calendar, Repeat, MessageSquare } from 'lucide-react'
 
 const SECTIONS = [
   { to: '/', label: 'Oggi', icon: House, end: true },
@@ -7,6 +7,7 @@ const SECTIONS = [
   { to: '/da-fare', label: 'Da fare', icon: ListChecks },
   { to: '/calendario', label: 'Calendario', icon: Calendar, short: 'Agenda' },
   { to: '/routine', label: 'Routine', icon: Repeat },
+  { to: '/documenti', label: 'Documenti', short: 'File', icon: FileText },
   { to: '/ai', label: 'Polpo AI', icon: MessageSquare, short: 'AI' }
 ]
 

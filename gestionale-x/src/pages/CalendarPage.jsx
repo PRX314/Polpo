@@ -6,6 +6,7 @@ import { useData } from '../context/useData'
 import { addEvent, updateEvent, deleteEvent, saveRoutine } from '../firebaseService'
 import { etichettaAnticipo } from '../sveglie'
 import { hourToTime, isoOf, longDate, oggiIso, addDaysIso, relativeDay, toIso } from '../lib/dates'
+import { documentDeadlines } from '../services/localDocuments'
 import './CalendarPage.css'
 
 const STATUS_CYCLE = ['pending', 'done', 'skip']
@@ -13,12 +14,12 @@ const STATUS_LABEL = { pending: 'Da fare', done: 'Fatta', skip: 'Saltata' }
 const STATUS_GLYPH = { pending: '○', done: '✓', skip: '—' }
 const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
 const GIORNI = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
-const KIND = { appuntamento: 'k-event', 'project-deadline': 'k-deadline', 'todo-deadline': 'k-todo' }
-const KIND_LABEL = { appuntamento: 'Appuntamento', 'project-deadline': 'Scadenza di un elemento', 'todo-deadline': 'Cosa da fare' }
+const KIND = { documento: 'k-deadline', appuntamento: 'k-event', 'project-deadline': 'k-deadline', 'todo-deadline': 'k-todo' }
+const KIND_LABEL = { documento: 'Documento locale', appuntamento: 'Appuntamento', 'project-deadline': 'Scadenza di un elemento', 'todo-deadline': 'Cosa da fare' }
 
 const CalendarPage = () => {
   const navigate = useNavigate()
-  const { projects, events, routine } = useData()
+  const { projects, events, routine, documents } = useData()
   const [current, setCurrent] = useState(() => new Date())
   const [selected, setSelected] = useState(() => oggiIso())
   const [eventForm, setEventForm] = useState(null)
@@ -42,8 +43,9 @@ const CalendarPage = () => {
 
   const entries = useMemo(() => ([
     ...deadlines,
+    ...documentDeadlines(documents),
     ...events.map(e => ({ date: e.date, time: e.time || '', reminder: e.reminder ?? null, title: e.title, type: 'appuntamento', evento: e }))
-  ]), [deadlines, events])
+  ]), [deadlines, events, documents])
 
   const byDate = useMemo(() => {
     const m = {}
@@ -96,7 +98,8 @@ const CalendarPage = () => {
   const axisStart = 6, axisEnd = 22, axis = axisEnd - axisStart
 
   const openEntry = (v) => {
-    if (v.evento) setEventForm({ evento: v.evento, data: v.date })
+    if (v.documentId) navigate(`/documenti/${v.documentId}`)
+    else if (v.evento) setEventForm({ evento: v.evento, data: v.date })
     else if (v.project) navigate(`/elementi/${v.project.id}`)
   }
 

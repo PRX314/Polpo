@@ -18,6 +18,7 @@ import { useToast } from './context/useToast'
 import { usePush } from './hooks/usePush'
 
 // Le pagine più pesanti si scaricano solo quando servono
+const DocumentsPage = lazy(() => import('./pages/DocumentsPage'))
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const RoutinePage = lazy(() => import('./pages/RoutinePage'))
 const ChatPage = lazy(() => import('./pages/ChatPage'))
@@ -66,6 +67,8 @@ const Authed = ({ user }) => {
           <Route index element={<OggiPage />} />
           <Route path="elementi" element={<ItemsPage />} />
           <Route path="elementi/:id" element={<ItemDetailPage />} />
+          <Route path="documenti" element={<Suspense fallback={<PageLoading />}><DocumentsPage /></Suspense>} />
+          <Route path="documenti/:id" element={<Suspense fallback={<PageLoading />}><DocumentsPage /></Suspense>} />
           <Route path="da-fare" element={<TodosPage />} />
           <Route path="calendario" element={<Suspense fallback={<PageLoading />}><CalendarPage /></Suspense>} />
           <Route path="routine" element={<Suspense fallback={<PageLoading />}><RoutinePage /></Suspense>} />
