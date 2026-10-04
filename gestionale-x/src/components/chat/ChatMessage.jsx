@@ -1,24 +1,45 @@
 import { memo, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Check, Copy, Mic, RotateCcw } from 'lucide-react'
-import { renderMarkdown } from '../../lib/markdown'
+import { collegaElementi, renderMarkdown } from '../../lib/markdown'
 import { shortModel } from './useModelli'
 import ActionCards from './ActionCards'
+import Passaggi from './Passaggi'
 
-const Markdown = ({ text }) => {
-  const html = useMemo(() => renderMarkdown(text), [text])
+// I nomi tra doppie quadre ([[Ungesto]]) diventano link agli elementi
+const Markdown = ({ text, indice }) => {
+  const html = useMemo(() => renderMarkdown(collegaElementi(text, indice)), [text, indice])
   return <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />
+}
+
+// Il testo di Paolo, con le citazioni @Nome cliccabili
+function TestoConCitati({ testo, citati }) {
+  if (!citati?.length) return testo
+  const nomi = [...citati].sort((a, b) => b.nome.length - a.nome.length)
+  const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const re = new RegExp(`@(${nomi.map(c => escape(c.nome)).join('|')})`, 'g')
+  const pezzi = []
+  let ultimo = 0
+  for (const m of testo.matchAll(re)) {
+    if (m.index > ultimo) pezzi.push(testo.slice(ultimo, m.index))
+    const c = nomi.find(x => x.nome === m[1])
+    pezzi.push(<Link key={m.index} to={`/elementi/${c.id}`} className="chat-cit">@{c.nome}</Link>)
+    ultimo = m.index + m[0].length
+  }
+  pezzi.push(testo.slice(ultimo))
+  return pezzi
 }
 
 const ora = (iso) => new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
 
 // Un messaggio. Sotto le risposte si legge chi ha risposto (assistente e modello).
-function ChatMessage({ msg, indice, nomeAssistente, occupato, onRiprova, onAlternativa, onConferma, onRifiuta }) {
+function ChatMessage({ msg, indice, indiceElementi, nomeAssistente, occupato, onRiprova, onAlternativa, onConferma, onRifiuta }) {
   const [copiato, setCopiato] = useState(false)
 
   if (msg.role === 'user') {
     return (
       <div className={`chat-msg user ${msg.failed ? 'is-failed' : ''}`}>
-        <div className="chat-bubble"><p className="pre">{msg.content}</p></div>
+        <div className="chat-bubble"><p className="pre"><TestoConCitati testo={msg.content} citati={msg.citati} /></p></div>
         <div className="chat-meta small faint">
           {msg.voce && <Mic size={11} aria-label="detto a voce" />}
           <span>{ora(msg.timestamp)}</span>
@@ -57,9 +78,21 @@ function ChatMessage({ msg, indice, nomeAssistente, occupato, onRiprova, onAlter
         </div>
       )}
 
-      <div className={`chat-bubble ${msg.streaming ? 'is-streaming' : ''}`} aria-busy={msg.streaming || undefined}>
-        <Markdown text={msg.content} />
-      </div>
+      <Passaggi
+        passi={msg.passi} ragionamento={msg.ragionamento} pensiero={msg.pensiero}
+        streaming={!!msg.streaming} haTesto={!!msg.content}
+      />
+
+      {msg.content ? (
+        <div className={`chat-bubble ${msg.streaming ? 'is-streaming' : ''}`} aria-busy={msg.streaming || undefined}>
+          <Markdown text={msg.content} indice={indiceElementi} />
+        </div>
+      ) : msg.streaming && (
+        <div className="chat-bubble" role="status">
+          <span className="chat-typing" aria-hidden="true"><i /><i /><i /></span>
+          <span className="small muted"> {msg.passi?.length ? 'Ci sto pensando…' : 'Polpo sta pensando…'}</span>
+        </div>
+      )}
 
       {msg.alternatives?.some(a => a.error) && (
         <div className="chat-alt-errors small muted">

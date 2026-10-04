@@ -107,7 +107,7 @@ export default function AiChat({ initialMessage, onInitialMessageConsumed }) {
                 onRiprova={riprova} onAlternativa={chat.scegliAlternativa}
                 onConferma={chat.conferma} onRifiuta={chat.rifiuta}
               />
-              <Composer onInvia={(testo) => invia(testo)} occupato={chat.occupato} inAttesa={chat.inAttesaQui} />
+              <Composer onInvia={(testo, citati) => invia(testo, { citati })} occupato={chat.occupato} inAttesa={chat.inAttesaQui} />
             </>
           )}
         </div>

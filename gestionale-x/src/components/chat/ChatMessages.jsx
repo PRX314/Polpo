@@ -1,4 +1,6 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useData } from '../../context/useData'
+import { indiceElementi } from '../../lib/markdown'
 import ChatMessage from './ChatMessage'
 
 const SUGGERIMENTI = [
@@ -13,6 +15,9 @@ const SUGGERIMENTI = [
 export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, onSuggerimento, ...perMessaggio }) {
   const scrollRef = useRef(null)
   const inFondo = useRef(true)
+  const { projects } = useData()
+  // Per riconoscere i nomi degli elementi nelle risposte ([[Ungesto]] → link)
+  const indice = useMemo(() => indiceElementi(projects), [projects])
 
   const vaiInFondo = (morbido) => {
     const el = scrollRef.current
@@ -32,11 +37,12 @@ export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, 
     if (inFondo.current || ultimo?.role === 'user') vaiInFondo(true)
   }, [messages.length, inAttesa, ultimo?.role])
 
-  // Risposta che si sta scrivendo: la segue senza animazione (a ogni fotogramma cresce un po')
-  const inScrittura = ultimo?.streaming ? ultimo.content.length : 0
+  // Risposta in arrivo (passi letti, poi testo): la segue senza animazione, cresce a ogni fotogramma
+  const inScrittura = !!ultimo?.streaming
+  const crescita = inScrittura ? `${ultimo.content.length}|${ultimo.passi?.length || 0}` : ''
   useEffect(() => {
-    if (inScrittura && inFondo.current) vaiInFondo(false)
-  }, [inScrittura])
+    if (crescita && inFondo.current) vaiInFondo(false)
+  }, [crescita])
 
   const onScroll = () => {
     const el = scrollRef.current
@@ -56,7 +62,7 @@ export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, 
       )}
 
       {messages.map((msg, i) => (
-        <ChatMessage key={`${msg.timestamp}-${i}`} msg={msg} indice={i} {...perMessaggio} />
+        <ChatMessage key={`${msg.timestamp}-${i}`} msg={msg} indice={i} indiceElementi={indice} {...perMessaggio} />
       ))}
 
       {inAttesa && !inScrittura && (

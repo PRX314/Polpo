@@ -43,7 +43,7 @@ export default function ChatSettings({ specialisti, assistente, onAssistente, mo
             <label key={s.id ?? 'generico'} className={`chat-pop-row ${assistente === s.id ? 'is-on' : ''}`}>
               <input type="radio" name="chat-assistente" checked={assistente === s.id} onChange={() => onAssistente(s.id)} />
               <span className="chat-pop-text">
-                <span>{s.name}</span>
+                <span>{s.icon ? `${s.icon} ` : ''}{s.name}</span>
                 {s.description && <span className="small muted">{s.description}</span>}
               </span>
             </label>

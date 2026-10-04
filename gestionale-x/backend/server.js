@@ -1,7 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import { listProviders, providerName, normalizeTargets, callProvider, streamProvider, defaultTarget } from './providers.js'
+import { listProviders, providerName, normalizeTargets, callProvider, defaultTarget } from './providers.js'
+import { agente, creaLettore, schedaElemento, percorsoVault, riassumiNota, STRUMENTI_LETTURA, CARTELLE_VAULT, STATUS_LABELS } from './agente.js'
 import admin from 'firebase-admin'
 import webpush from 'web-push'
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts'
@@ -10,6 +11,7 @@ dotenv.config()
 
 // Firebase Admin init
 import { readFileSync, existsSync } from 'fs'
+import { readFile, readdir } from 'fs/promises'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { exec } from 'child_process'
@@ -527,10 +529,6 @@ async function findNote(title, userId) {
 // ============================================================================
 // CONTESTO UTENTE
 // ============================================================================
-const STATUS_LABELS = {
-  pending: 'Da fare', in_progress: 'In corso', 'in-progress': 'In corso',
-  completed: 'Completato', paused: 'In pausa', 'on-hold': 'In pausa'
-}
 const PRIORITY_LABELS = { high: 'Alta', medium: 'Media', low: 'Bassa' }
 // In che ordine l'AI conosce gli elementi: prima ciò che è vivo adesso
 const STATUS_ORDER = { 'In corso': 0, 'Da fare': 1, 'In pausa': 2, 'Completato': 3 }
@@ -639,8 +637,8 @@ const clip = (v, n) => {
 
 // Quanto contesto: i dettagli si riempiono in ordine di importanza finché c'è spazio, così
 // resta fuori il meno rilevante (prima erano i primi 40 nell'ordine casuale del database).
-const BUDGET_DETTAGLIO = 7000
-const BUDGET_TOTALE = 11800
+const BUDGET_DETTAGLIO = 5000
+const BUDGET_TOTALE = 10000
 
 function formatContext(ctx) {
   const s = ctx.stats
@@ -727,7 +725,28 @@ SOLO ciò che trovi nel contesto qui sotto: non inventare funzioni, dati, numeri
 - Una proposta "in attesa" NON è stata eseguita: nel gestionale non esiste. Se l'utente chiede di
   cambiarla, proponi SOLO la versione corretta (la vecchia viene scartata da sola). Non proporre di
   completare, modificare o eliminare la vecchia: toccheresti un'altra cosa con un nome simile
-- Una proposta "fatta" invece esiste: per cambiarla serve un'azione di modifica`
+- Una proposta "fatta" invece esiste: per cambiarla serve un'azione di modifica
+
+## PRIMA DI RISPONDERE, LEGGI (strumenti di sola lettura, senza conferma)
+Il contesto qui sotto è un riassunto: molti elementi hanno poche righe o solo il nome. Puoi leggere:
+- **apri_elemento**: la scheda completa di un elemento (sezioni, tutte le cose da fare, link, roadmap)
+- **cerca_elementi**: trovare dove si parla di qualcosa
+- **leggi_nota_vault**: la nota Obsidian di un progetto (visione, decisioni recenti, roadmap, storia) o di una sessione di lavoro
+- **agenda**: scadenze e appuntamenti di un periodo oltre i 14 giorni
+Quando usarli:
+- La domanda riguarda un elemento di cui hai solo il nome o poche righe → aprilo prima di rispondere
+- Paolo chiede il perché, le decisioni, a che punto è, cosa è stato fatto → leggi la nota del vault
+- Non sai quale elemento c'entra → cerca
+- Mai dire "non ho informazioni su X" senza aver prima aperto o cercato X
+Non usarli per saluti, chiacchiere o domande che non riguardano i suoi dati. Di solito bastano 1-3 letture.
+
+## ELEMENTI CITATI CON @
+Se in fondo trovi "ELEMENTI CITATI", Paolo li ha indicati apposta: sono il centro della domanda e hai già la scheda completa
+e la nota del vault. Non riaprirli con apri_elemento; dalla nota puoi chiedere una sezione intera, se quella che vedi è tagliata.
+
+## COME NOMINARE GLI ELEMENTI
+Quando nomini un elemento che esiste nel gestionale scrivi il suo nome esatto tra doppie quadre, così diventa un link: [[Gestionale X]].
+Solo per elementi veri, non per concetti generici. Dentro un grassetto va bene: **[[Ungesto]]**.`
 
 // System prompt per la chat: conversazione e, quando richiesto, proposte di azioni
 const SYSTEM_PROMPT_MAIN = `Sei **Polpo AI** 🐙, l'assistente intelligente integrato nel Gestionale Polpo.
@@ -853,6 +872,56 @@ Puoi anche salvare contenuti nel gestionale usando il tool propose_actions.
 - Sii PRATICO e CONCRETO: scrivi i testi, non spiegare come scriverli
 - Usa **grassetto** per i punti chiave
 - Quando l'utente ti dà un'idea → rispondi con lo script pronto, non con la teoria`
+  },
+
+  // Facoltativo per ogni specialista: effort, quanto ragiona scrivendo (low | medium | high).
+  // A voce resta sempre low.
+  pianificatore: {
+    name: 'Pianificatore',
+    icon: '🗓️',
+    description: 'Settimana, priorità e scadenze realistiche',
+    prompt: `Sei **Polpo Pianificatore** 🗓️, integrato nel gestionale di Paolo. Lo aiuti a decidere cosa fare e quando.
+Parli in italiano, diretto e concreto, come un collega che tiene il calendario.
+
+## Come lavori
+- Parti SEMPRE dai dati. Prima di un piano guarda l'agenda (oltre i 14 giorni usa lo strumento agenda) e apri gli
+  elementi in corso o fissati di cui hai solo poche righe. Non pianificare a memoria.
+- Paolo porta avanti molti progetti in parallelo: il tuo lavoro è SCEGLIERE, non elencare tutto. Al massimo
+  3 priorità per settimana, e di' esplicitamente cosa NON fare adesso.
+- Ordine di priorità: scadenze vicine > cose che ne sbloccano altre > cose iniziate e quasi finite > novità.
+- Piani realistici: stima in ore o mezze giornate, lascia margine, tieni conto degli appuntamenti già fissati.
+- Se una scadenza non è realistica dillo, con una data alternativa.
+- Se manca un'informazione che cambia il piano (quanto tempo ha, cosa conta di più), fai UNA domanda prima.
+
+## Formato
+- "Cosa faccio oggi": al massimo 3 cose, la prima è quella da cui partire, il perché in mezza riga.
+- Piano della settimana: giorno per giorno in righe brevi, poi "Rimandato" con ciò che resta fuori.
+  Giorni e date li prendi dal calendario nelle istruzioni, mai calcolati a mente.
+- Scadenze da fissare: proponile con propose_actions (add_todo con deadline) solo se Paolo approva il piano o lo chiede.`
+  },
+
+  critico: {
+    name: 'Critico',
+    icon: '🧐',
+    description: 'Avvocato del diavolo su progetti e idee',
+    effort: 'high',
+    prompt: `Sei **Polpo Critico** 🧐, l'avvocato del diavolo integrato nel gestionale di Paolo.
+Il tuo compito è trovare i punti deboli prima che costino tempo. Parli in italiano, franco ma giusto.
+
+## Come lavori
+- Prima di criticare un progetto LEGGILO: apri l'elemento e la sua nota del vault (visione, decisioni recenti).
+  Critica ciò che c'è davvero, non un'idea generica del tipo di progetto.
+- Cerca: rischi, ipotesi mai verificate, costi nascosti (tempo, soldi, manutenzione), obiettivo che si allarga,
+  doppioni con altri progetti di Paolo (usa cerca_elementi), cose iniziate e lasciate a metà.
+- Niente complimenti di cortesia e niente stroncature gratuite. Ogni critica ha un "quindi": cosa tagliare,
+  cosa verificare, cosa fare diversamente.
+- Distingui: **grave** (blocca o fa perdere molto), **dubbio** (da verificare), **dettaglio**.
+- Se Paolo difende una scelta con buone ragioni, riconoscilo e cambia idea: non sei contrario per principio.
+
+## Formato
+- Breve: al massimo 5 punti, ordinati dal più grave. Problema in grassetto, una riga di spiegazione, una di proposta.
+- Chiudi con LA domanda più importante a cui Paolo dovrebbe rispondere prima di andare avanti.
+- Non proporre azioni nel gestionale, salvo che Paolo lo chieda (es. "segna questi rischi nel progetto").`
   }
   // Qui si aggiungono altri specialisti in futuro:
   // music: { name: 'Music Producer', icon: '🎵', prompt: '...' },
@@ -866,7 +935,7 @@ const VOICE_NOTE = `
 ## RISPOSTA A VOCE
 L'utente ti sta parlando al microfono e la tua risposta verrà LETTA AD ALTA VOCE.
 - Rispondi in 1-3 frasi brevi, come in una conversazione parlata
-- Niente elenchi, titoli, tabelle, grassetti, emoji o link: solo frasi normali
+- Niente elenchi, titoli, tabelle, grassetti, emoji, link o doppie quadre: solo frasi normali
 - Se serve un testo lungo (script, piano, elenco), dillo in una frase e proponi di salvarlo con propose_actions
 - Se proponi azioni, riassumile in una frase: l'utente confermerà a voce`
 
@@ -885,58 +954,6 @@ app.get('/api/specialists', verifyUser, (req, res) => {
 app.get('/api/providers', verifyUser, (req, res) => {
   res.json({ providers: listProviders() })
 })
-
-// Una chiamata completa (eventuale tool propose_actions + risposta testuale) verso un provider.
-async function runTarget(target, baseMessages, { maxTokens, tools }) {
-  const started = Date.now()
-  const messages = [...baseMessages]
-  const label = `${providerName(target.provider)} · ${target.model}`
-  const base = { provider: target.provider, model: target.model, label }
-
-  let completion
-  try {
-    completion = await callProvider(target, { messages, temperature: 0.7, max_tokens: maxTokens, tools, tool_choice: 'auto' })
-  } catch (err) {
-    // Non tutti i modelli supportano i tool: riprovo senza, la risposta resta testuale.
-    if (err?.status === 400 && /tool|function/i.test(err?.message || '')) {
-      console.warn(`${label}: tool non supportati, riprovo senza`)
-      completion = await callProvider(target, { messages, temperature: 0.7, max_tokens: maxTokens })
-    } else {
-      throw err
-    }
-  }
-
-  const responseMsg = completion.choices?.[0]?.message
-  if (!responseMsg) throw new Error(`${providerName(target.provider)} ha restituito una risposta vuota`)
-
-  if (!responseMsg.tool_calls?.length) {
-    return { ...base, reply: responseMsg.content || 'Non sono riuscito a elaborare una risposta.', proposedActions: [], ms: Date.now() - started }
-  }
-
-  let proposedActions = []
-  messages.push(responseMsg)
-  for (const toolCall of responseMsg.tool_calls) {
-    if (toolCall.function.name === 'propose_actions') {
-      let toolArgs
-      try {
-        toolArgs = JSON.parse(toolCall.function.arguments)
-      } catch {
-        toolArgs = { actions: [] }
-      }
-      proposedActions = toolArgs.actions || []
-      console.log(`📋 ${label}: proposte ${proposedActions.length} azioni:`, proposedActions.map(a => a.label))
-    }
-    messages.push({
-      role: 'tool',
-      tool_call_id: toolCall.id,
-      content: JSON.stringify({ status: 'proposed', message: 'Azioni proposte all\'utente, in attesa di conferma' })
-    })
-  }
-
-  const followUp = await callProvider(target, { messages, temperature: 0.7, max_tokens: 1024 })
-  const reply = followUp.choices?.[0]?.message?.content || 'Ecco le azioni proposte.'
-  return { ...base, reply, proposedActions, ms: Date.now() - started }
-}
 
 // Traduce un errore di provider in messaggio leggibile + dettaglio tecnico.
 function describeAiError(err, label) {
@@ -971,6 +988,94 @@ async function contestoDi(userId) {
 }
 const dimenticaContesto = (userId) => contestiInMemoria.delete(userId)
 
+// ============================================================================
+// LETTURE PER L'AGENTE (vedi agente.js)
+// ============================================================================
+const progettiDi = async (userId) =>
+  (await adminDb.collection('projects').where('userId', '==', userId).get()).docs.map(d => ({ id: d.id, ...d.data() }))
+const eventiDi = async (userId) =>
+  (await adminDb.collection('events').where('userId', '==', userId).get()).docs.map(d => ({ id: d.id, ...d.data() }))
+
+// Il vault: dal disco quando il server gira sul PC (VAULT_PATH), altrimenti dalla copia su GitHub.
+// Due minuti in memoria: in una conversazione la stessa nota si rilegge spesso.
+const VAULT_TTL = 120000
+const cacheVault = new Map()
+async function daCacheVault(chiave, leggi) {
+  const c = cacheVault.get(chiave)
+  if (c && Date.now() - c.quando < VAULT_TTL) return c.valore
+  const valore = await leggi()
+  cacheVault.set(chiave, { valore, quando: Date.now() })
+  if (cacheVault.size > 300) cacheVault.delete(cacheVault.keys().next().value)
+  return valore
+}
+const lettoreVault = {
+  leggi(percorso) {
+    if (typeof percorso !== 'string' || percorso.includes('..') || !CARTELLE_VAULT.some(c => percorso.startsWith(c + '/'))) return null
+    return daCacheVault(`f:${percorso}`, async () => {
+      try {
+        if (process.env.VAULT_PATH) return await readFile(join(process.env.VAULT_PATH, percorso), 'utf8')
+        if (!GITHUB_TOKEN) return null
+        const file = await githubFetch(percorso)
+        return Buffer.from(file.content, 'base64').toString('utf-8')
+      } catch { return null }
+    })
+  },
+  elenca(cartella) {
+    if (!CARTELLE_VAULT.includes(cartella)) return []
+    return daCacheVault(`d:${cartella}`, async () => {
+      try {
+        if (process.env.VAULT_PATH) return await readdir(join(process.env.VAULT_PATH, cartella))
+        if (!GITHUB_TOKEN) return []
+        const items = await githubFetch(cartella)
+        return Array.isArray(items) ? items.filter(i => i.type === 'file').map(i => i.name) : []
+      } catch { return [] }
+    })
+  }
+}
+// Il vault è personale: solo il proprietario lo fa leggere all'AI
+const vaultDi = async (userId) => {
+  try { return userId === await uidProprietarioVault() ? lettoreVault : null } catch { return null }
+}
+const DEPS_LETTURA = { progetti: progettiDi, eventi: eventiDi, vault: vaultDi }
+
+// Gli elementi citati con @: scheda completa più la nota del vault, già nelle istruzioni.
+// Arrivano come id; si leggono solo tra quelli dell'utente.
+const MAX_CITATI = 6
+async function elementiCitati(ids, lettore) {
+  const lista = [...new Set((Array.isArray(ids) ? ids : []).filter(id => typeof id === 'string' && /^[\w-]{1,64}$/.test(id)))].slice(0, MAX_CITATI)
+  if (!lista.length) return { testo: '', passi: [] }
+  const vault = await lettore.vault()
+  const blocchi = []
+  const passi = []
+  for (const id of lista) {
+    const p = await lettore.perId(id)
+    if (!p) continue
+    passi.push({ tipo: 'citato', testo: p.name, id: p.id })
+    let blocco = schedaElemento(p)
+    const percorso = percorsoVault(p)
+    const nota = vault && percorso ? await vault.leggi(percorso) : null
+    if (nota) {
+      blocco += `\n\nDalla nota del vault (${percorso}):\n${riassumiNota(nota, { max: lista.length > 2 ? 3000 : 6000 })}`
+      passi.push({ tipo: 'vault', testo: percorso.split('/').pop().replace(/\.md$/, ''), percorso, da: p.id })
+    }
+    blocchi.push(blocco)
+  }
+  if (!blocchi.length) return { testo: '', passi: [] }
+  return {
+    testo: `\n=== ELEMENTI CITATI DA PAOLO CON @ (scheda completa: sono il centro della domanda) ===\n\n${blocchi.join('\n\n---\n\n')}`,
+    passi
+  }
+}
+
+// A voce le doppie quadre si leggerebbero: restano solo i nomi
+const perVoce = (req, testo) => (req.body.voce ? String(testo || '').replace(/\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g, '$1') : testo)
+
+// Una risposta completa dell'agente, con i passi delle citazioni davanti
+async function rispondi(req, prep, target, eventi) {
+  const r = await agente(target, prep.messages, prep.opts, eventi)
+  return { ...r, reply: perVoce(req, r.reply), passi: [...prep.passiIniziali, ...r.passi] }
+}
+
 // Tutto ciò che serve a una risposta: modelli scelti, istruzioni, contesto, storia.
 // Lo usano sia /api/chat sia /api/chat/stream, così costruiscono la richiesta allo stesso modo.
 async function preparaChat(req, maxTargets) {
@@ -980,7 +1085,8 @@ async function preparaChat(req, maxTargets) {
   const targets = normalizeTargets(req.body.targets, maxTargets)
   if (!targets.length) return { errore: { status: 500, error: 'Nessun provider AI configurato sul server (mancano le chiavi).' } }
 
-  const context = await contestoDi(req.userId)
+  const lettore = creaLettore(DEPS_LETTURA, req.userId)
+  const [context, citati] = await Promise.all([contestoDi(req.userId), elementiCitati(req.body.citati, lettore)])
   // Cap duro: il tier gratuito ha un limite di token per richiesta.
   // formatContext e' gia' limitato per campo, questo e' la rete di sicurezza.
   const MAX_CONTEXT_CHARS = 14000
@@ -1012,8 +1118,9 @@ async function preparaChat(req, maxTargets) {
         `Calendario dei prossimi giorni (per le date usa questo, non calcolarle):\n${calendario}`,
         `Nome utente: ${req.userName}`,
         '',
-        contextText || 'L\'utente non ha ancora progetti o note. Suggerisci di iniziare!'
-      ].join('\n')
+        contextText || 'L\'utente non ha ancora progetti o note. Suggerisci di iniziare!',
+        citati.testo
+      ].filter(Boolean).join('\n')
     },
     // Solo ruoli e testi validi: dalla history non deve poter entrare un messaggio di sistema
     ...history.slice(-24)
@@ -1022,33 +1129,39 @@ async function preparaChat(req, maxTargets) {
     { role: 'user', content: message }
   ]
 
-  // All'AI si dà solo propose_actions: le azioni vere partono da /api/chat/execute dopo la conferma
-  const tools = TOOLS.filter(t => t.function.name === 'propose_actions')
+  // All'AI: le letture (le fa da sola) e propose_actions. Le modifiche vere partono da
+  // /api/chat/execute, dopo la conferma di Paolo.
+  const tools = [...TOOLS.filter(t => t.function.name === 'propose_actions'), ...STRUMENTI_LETTURA]
+  // Scrivendo ragiona di più; a voce conta la prontezza
+  const effort = req.body.voce ? 'low' : (SPECIALISTS[specialist]?.effort || 'medium')
   const stats = {
     progetti: context.stats.totaleProgetti,
     note: context.stats.totaleNote,
     todoCompletati: context.stats.todoCompletati,
     todoTotali: context.stats.todoTotali
   }
-  return { targets, messages, opts: { maxTokens: 2048, tools }, stats }
+  // max_tokens comprende anche il ragionamento: con 2048 una domanda complessa restava a metà
+  return { targets, messages, opts: { maxTokens: 4096, tools, effort, lettore }, stats, passiIniziali: citati.passi }
 }
 
 app.post('/api/chat', verifyUser, async (req, res) => {
   try {
     // Fino a 4 modelli a confronto
-    const { errore, targets, messages, opts, stats } = await preparaChat(req, 4)
-    if (errore) return res.status(errore.status).json({ error: errore.error })
+    const prep = await preparaChat(req, 4)
+    if (prep.errore) return res.status(prep.errore.status).json({ error: prep.errore.error })
+    const { targets, stats } = prep
+    const forma = (r) => ({ reply: r.reply, proposedActions: r.proposedActions, passi: r.passi, ragionamento: r.ragionamento, provider: r.provider, model: r.model, label: r.label, ms: r.ms })
 
     // Un solo modello: stessa risposta di sempre (e stessi errori HTTP).
     if (targets.length === 1) {
-      const r = await runTarget(targets[0], messages, opts)
-      return res.json({ reply: r.reply, proposedActions: r.proposedActions, provider: r.provider, model: r.model, label: r.label, ms: r.ms, stats })
+      const r = await rispondi(req, prep, targets[0])
+      return res.json({ ...forma(r), stats })
     }
 
     // Più modelli in parallelo: ognuno può fallire senza fermare gli altri.
-    const settled = await Promise.allSettled(targets.map(t => runTarget(t, messages, opts)))
+    const settled = await Promise.allSettled(targets.map(t => rispondi(req, prep, t)))
     const replies = settled.map((s, i) => {
-      if (s.status === 'fulfilled') return s.value
+      if (s.status === 'fulfilled') return forma(s.value)
       const t = targets[i]
       const label = `${providerName(t.provider)} · ${t.model}`
       const { error, detail } = describeAiError(s.reason, providerName(t.provider))
@@ -1060,7 +1173,7 @@ app.post('/api/chat', verifyUser, async (req, res) => {
       return res.status(first.status).json({ error: `Nessun modello ha risposto. ${first.error}`, detail: first.detail })
     }
     const first = replies.find(r => !r.error)
-    res.json({ reply: first.reply, proposedActions: first.proposedActions, replies, stats })
+    res.json({ reply: first.reply, proposedActions: first.proposedActions, passi: first.passi, ragionamento: first.ragionamento, replies, stats })
   } catch (err) {
     const label = providerName(normalizeTargets(req.body?.targets, 1)[0]?.provider || 'groq')
     const { status, error, detail } = describeAiError(err, label)
@@ -1069,71 +1182,11 @@ app.post('/api/chat', verifyUser, async (req, res) => {
   }
 })
 
-// Legge uno stream del provider: il testo passa subito a onTesto, le tool call si ricompongono
-// dai pezzi (arrivano spezzate: nome e argomenti un frammento alla volta).
-async function consumaStream(target, opts, onTesto) {
-  let content = ''
-  const calls = []
-  for await (const delta of streamProvider(target, opts)) {
-    if (delta.content) {
-      content += delta.content
-      onTesto(delta.content)
-    }
-    for (const tc of delta.tool_calls || []) {
-      const c = (calls[tc.index ?? 0] ??= { id: '', type: 'function', function: { name: '', arguments: '' } })
-      if (tc.id) c.id = tc.id
-      if (tc.function?.name) c.function.name += tc.function.name
-      if (tc.function?.arguments) c.function.arguments += tc.function.arguments
-    }
-  }
-  return { content, toolCalls: calls.filter(Boolean) }
-}
-
-// Come runTarget, ma il testo esce a pezzi mentre il modello lo scrive
-async function runTargetStream(target, baseMessages, { maxTokens, tools }, onTesto) {
-  const started = Date.now()
-  const messages = [...baseMessages]
-  const label = `${providerName(target.provider)} · ${target.model}`
-  let scritto = false
-  const scrivi = (t) => { scritto = true; onTesto(t) }
-
-  let primo
-  try {
-    primo = await consumaStream(target, { messages, temperature: 0.7, max_tokens: maxTokens, tools, tool_choice: 'auto' }, scrivi)
-  } catch (err) {
-    // Tool non supportati: si riprova senza, ma solo se non è ancora uscito niente
-    if (scritto || err?.status !== 400 || !/tool|function/i.test(err?.message || '')) throw err
-    console.warn(`${label}: tool non supportati, riprovo senza`)
-    primo = await consumaStream(target, { messages, temperature: 0.7, max_tokens: maxTokens }, scrivi)
-  }
-
-  let proposedActions = []
-  let reply = primo.content
-  if (primo.toolCalls.length) {
-    messages.push({ role: 'assistant', content: primo.content || null, tool_calls: primo.toolCalls })
-    for (const toolCall of primo.toolCalls) {
-      if (toolCall.function.name === 'propose_actions') {
-        try { proposedActions = JSON.parse(toolCall.function.arguments).actions || [] } catch { proposedActions = [] }
-        console.log(`📋 ${label}: proposte ${proposedActions.length} azioni:`, proposedActions.map(a => a.label))
-      }
-      messages.push({
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content: JSON.stringify({ status: 'proposed', message: 'Azioni proposte all\'utente, in attesa di conferma' })
-      })
-    }
-    // Se prima delle proposte aveva già scritto qualcosa, il seguito va a capo
-    if (primo.content) scrivi('\n\n')
-    const seguito = await consumaStream(target, { messages, temperature: 0.7, max_tokens: 1024 }, scrivi)
-    reply = [primo.content, seguito.content].filter(Boolean).join('\n\n') || 'Ecco le azioni proposte.'
-  }
-  if (!reply) reply = 'Non sono riuscito a elaborare una risposta.'
-  return { provider: target.provider, model: target.model, label, reply, proposedActions, ms: Date.now() - started }
-}
-
 // Risposta a pezzi (server-sent events), un modello solo. Eventi:
-//   { t: 'testo', d }   un pezzo di testo
-//   { t: 'fine', reply, proposedActions, label, … }   la risposta completa, che fa fede
+//   { t: 'passo', passo }   Polpo ha letto qualcosa: { tipo: citato|apri|cerca|vault|agenda, testo, id? }
+//   { t: 'pensiero', d }    un pezzo del ragionamento
+//   { t: 'testo', d }       un pezzo di testo
+//   { t: 'fine', reply, proposedActions, passi, ragionamento, label, … }   la risposta completa, che fa fede
 //   { t: 'errore', error, detail }
 app.post('/api/chat/stream', verifyUser, async (req, res) => {
   const t0 = Date.now()
@@ -1155,10 +1208,15 @@ app.post('/api/chat/stream', verifyUser, async (req, res) => {
   const tPronto = Date.now()
   let tPrimo = 0
   try {
-    const r = await runTargetStream(prep.targets[0], prep.messages, prep.opts, (d) => { tPrimo ||= Date.now(); invia({ t: 'testo', d }) })
+    for (const passo of prep.passiIniziali) invia({ t: 'passo', passo })
+    const r = await rispondi(req, prep, prep.targets[0], {
+      onTesto: (d) => { tPrimo ||= Date.now(); invia({ t: 'testo', d }) },
+      onPensiero: (d) => invia({ t: 'pensiero', d }),
+      onPasso: (passo) => invia({ t: 'passo', passo })
+    })
     // Dove va il tempo: preparazione (contesto dal database) e modello, fino al primo pezzo e alla fine
-    console.log(`⏱ chat: contesto ${tPronto - t0}ms · primo testo ${tPrimo ? tPrimo - tPronto : '-'}ms · fine ${Date.now() - tPronto}ms · ${prep.messages[0].content.length} caratteri di istruzioni`)
-    invia({ t: 'fine', reply: r.reply, proposedActions: r.proposedActions, provider: r.provider, model: r.model, label: r.label, ms: r.ms, stats: prep.stats })
+    console.log(`⏱ chat: contesto ${tPronto - t0}ms · primo testo ${tPrimo ? tPrimo - tPronto : '-'}ms · fine ${Date.now() - tPronto}ms · ${r.passi.length} letture · ${prep.messages[0].content.length} caratteri di istruzioni`)
+    invia({ t: 'fine', reply: r.reply, proposedActions: r.proposedActions, passi: r.passi, ragionamento: r.ragionamento, provider: r.provider, model: r.model, label: r.label, ms: r.ms, stats: prep.stats })
   } catch (err) {
     const { error, detail } = describeAiError(err, providerName(prep.targets[0].provider))
     console.error('Errore chat AI (stream):', err?.status, detail)
@@ -1309,11 +1367,14 @@ function parseFrontmatter(raw) {
 
 // Il vault è personale: autenticarsi nel progetto Firebase non basta.
 let vaultOwnerUid;
+async function uidProprietarioVault() {
+  vaultOwnerUid ||= process.env.VAULT_OWNER_UID ||
+    (await admin.auth().getUserByEmail(process.env.VAULT_OWNER_EMAIL || 'paoloandrearepetto@gmail.com')).uid;
+  return vaultOwnerUid;
+}
 async function verifyVaultOwner(req, res, next) {
   try {
-    const uid = process.env.VAULT_OWNER_UID || vaultOwnerUid ||
-      (await admin.auth().getUserByEmail(process.env.VAULT_OWNER_EMAIL || 'paoloandrearepetto@gmail.com')).uid;
-    vaultOwnerUid = uid;
+    const uid = await uidProprietarioVault();
     if (req.userId !== uid) return res.status(403).json({ error: 'Accesso al vault non consentito' });
     next();
   } catch {

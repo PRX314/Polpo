@@ -22,9 +22,27 @@ const titoloDa = (testo) => (testo.length > 40 ? `${testo.slice(0, 40)}…` : te
 const salvabili = (messages) => messages.filter(m => !m.failed && !m.streaming)
 const vistaVuota = (assistente = null) => ({ chiave: nuovaChiave(), id: null, messages: [], assistente })
 
+// Cosa ha letto e come ha ragionato: si salva con la risposta, il ragionamento accorciato
+// (la conversazione è un documento solo, al massimo 1 MB)
+const dietroDa = ({ passi, ragionamento } = {}) => ({
+  ...(passi?.length ? { passi: passi.slice(0, 20) } : {}),
+  ...(ragionamento ? { ragionamento: ragionamento.slice(0, 3000) } : {})
+})
+
+// Gli elementi citati con @ restano in contesto per qualche messaggio: si continua a parlarne
+// senza doverli citare di nuovo. I più recenti prima, al massimo 6.
+const MAX_CITATI = 6
+function citatiPerServer(nuovi, precedenti) {
+  const ids = nuovi.map(c => c.id)
+  for (const m of precedenti.slice(-8).reverse()) {
+    for (const c of m.citati || []) ids.push(c.id)
+  }
+  return [...new Set(ids)].slice(0, MAX_CITATI)
+}
+
 // Dalla risposta del server al messaggio salvato
-function rispostaDa({ reply, proposedActions, label, replies }, assistente) {
-  const msg = { role: 'assistant', content: reply || '', timestamp: adesso(), assistant: assistente || null }
+function rispostaDa({ reply, proposedActions, label, replies, passi, ragionamento }, assistente) {
+  const msg = { role: 'assistant', content: reply || '', timestamp: adesso(), assistant: assistente || null, ...dietroDa({ passi, ragionamento }) }
   let proposte = proposedActions
   if (replies?.length > 1) {
     const scelta = replies.findIndex(r => !r.error)
@@ -33,10 +51,14 @@ function rispostaDa({ reply, proposedActions, label, replies }, assistente) {
       content: r.error ? null : r.reply,
       error: r.error || null,
       ms: r.ms ?? null,
-      proposedActions: r.proposedActions || []
+      proposedActions: r.proposedActions || [],
+      ...dietroDa(r)
     }))
     msg.altIndex = scelta
     msg.label = replies[scelta].label
+    delete msg.passi
+    delete msg.ragionamento
+    Object.assign(msg, dietroDa(replies[scelta]))
     proposte = replies[scelta].proposedActions
   } else if (label) {
     msg.label = label
@@ -111,14 +133,19 @@ export function useChat({ ripristina = true } = {}) {
   }, [])
 
   // Manda un messaggio nella conversazione aperta. Restituisce { reply, proposedActions } o null.
-  const invia = useCallback(async (testo, { assistente = null, targets = [], voce = false } = {}) => {
+  // citati: [{ id, nome }] gli elementi citati con @ in questo messaggio
+  const invia = useCallback(async (testo, { assistente = null, targets = [], voce = false, citati = [] } = {}) => {
     const text = String(testo || '').trim()
     if (!text || occupatoRef.current) return null
     ripristinata.current = true
     const v = vistaRef.current
     const { chiave } = v
     const base = salvabili(v.messages)
-    const domanda = { role: 'user', content: text, timestamp: adesso(), ...(voce ? { voce: true } : {}) }
+    const domanda = {
+      role: 'user', content: text, timestamp: adesso(),
+      ...(voce ? { voce: true } : {}),
+      ...(citati.length ? { citati: citati.map(({ id, nome }) => ({ id, nome })) } : {})
+    }
     const conDomanda = [...base, domanda]
     aggiorna(chiave, () => conDomanda)
     occupa({ chiave, tipo: 'invio' })
@@ -128,27 +155,38 @@ export function useChat({ ripristina = true } = {}) {
       history: perStoria(base),
       specialist: assistente,
       targets: voce ? targets.slice(0, 1) : targets, // a voce un modello solo: il confronto non si ascolta
-      voce
+      voce,
+      citati: citatiPerServer(citati, base)
     }
     // Un modello solo, scrivendo: la risposta compare mentre arriva. A confronto (più modelli) e a
     // voce (si legge la risposta intera) resta la chiamata normale.
     const aPezzi = !voce && richiesta.targets.length <= 1
+    // La bozza a schermo: cosa sta leggendo, la coda del ragionamento, poi il testo
     let scritto = ''
+    let passi = []
+    let pensiero = ''
     let fotogramma = 0
     const iniziata = adesso() // fisso: l'orario fa parte della chiave con cui React riconosce il messaggio
     const mostraBozza = () => {
       fotogramma = 0
-      const bozza = { role: 'assistant', content: scritto, timestamp: iniziata, assistant: assistente || null, streaming: true }
+      const bozza = { role: 'assistant', content: scritto, timestamp: iniziata, assistant: assistente || null, streaming: true, passi, pensiero }
       aggiorna(chiave, () => [...conDomanda, bozza])
     }
+    // Un aggiornamento per fotogramma, non uno per pezzo (ne arrivano centinaia)
+    const ridisegna = () => { fotogramma ||= requestAnimationFrame(mostraBozza) }
+
+    // Gli elementi citati nei messaggi prima restano in contesto, ma tra i passi si mostrano solo
+    // quelli citati adesso: altrimenti "Ha letto @Bottega" tornerebbe sotto ogni risposta
+    const correnti = new Set(citati.map(c => c.id))
+    const soloNuovi = (ps = []) => ps.filter(p => !((p.tipo === 'citato' && !correnti.has(p.id)) || (p.da && !correnti.has(p.da))))
 
     let risposta
     try {
       risposta = aPezzi
-        ? await streamMessage(text, richiesta, (pezzo) => {
-          scritto += pezzo
-          // Un aggiornamento per fotogramma, non uno per pezzo (ne arrivano centinaia)
-          fotogramma ||= requestAnimationFrame(mostraBozza)
+        ? await streamMessage(text, richiesta, {
+          testo: (pezzo) => { scritto += pezzo; ridisegna() },
+          passo: (passo) => { passi = soloNuovi([...passi, passo]); ridisegna() },
+          pensiero: (pezzo) => { pensiero = (pensiero + pezzo).slice(-600); ridisegna() }
         })
         : await sendMessage(text, richiesta)
     } catch (err) {
@@ -160,6 +198,7 @@ export function useChat({ ripristina = true } = {}) {
     }
     cancelAnimationFrame(fotogramma)
 
+    risposta = { ...risposta, passi: soloNuovi(risposta.passi), replies: risposta.replies?.map(r => ({ ...r, passi: soloNuovi(r.passi) })) }
     const msg = rispostaDa(risposta, assistente)
     // Proposte nuove: quelle ancora in attesa nei messaggi precedenti sono superate
     const finale = [...(msg.actions ? segnaSostituite(conDomanda) : conDomanda), msg]
@@ -192,7 +231,7 @@ export function useChat({ ripristina = true } = {}) {
     const m = messages[indice]
     if (!m?.failed || occupatoRef.current) return null
     aggiorna(chiave, msgs => msgs.filter(x => x !== m))
-    return invia(m.content, { ...opzioni, voce: !!m.voce })
+    return invia(m.content, { ...opzioni, voce: !!m.voce, citati: m.citati || [] })
   }, [aggiorna, invia])
 
   // Proposte: conferma di alcune (ids) o di tutte quelle in attesa di un messaggio
@@ -245,7 +284,8 @@ export function useChat({ ripristina = true } = {}) {
     const msg = v.messages[indice]
     const alt = msg?.alternatives?.[iAlt]
     if (!alt || alt.error || msg.altIndex === iAlt || occupatoRef.current) return
-    const nuovo = { ...msg, content: alt.content, altIndex: iAlt, label: alt.label }
+    const { passi: _p, ragionamento: _r, ...resto } = msg
+    const nuovo = { ...resto, content: alt.content, altIndex: iAlt, label: alt.label, ...dietroDa(alt) }
     // Le proposte seguono la risposta scelta, ma solo se nessuna è già stata decisa
     if (!msg.actions || msg.actions.every(a => a.status === 'pending')) {
       const actions = nuoveAzioni(alt.proposedActions)

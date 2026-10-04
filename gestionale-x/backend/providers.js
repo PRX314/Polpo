@@ -6,6 +6,10 @@ const csv = (v, fallback) => (v ? v.split(',').map(s => s.trim()).filter(Boolean
 
 const GROQ_FALLBACK_MODEL = 'llama-3.1-8b-instant'
 
+// Il modello di ripiego non ragiona: con questi parametri risponderebbe 400
+// eslint-disable-next-line no-unused-vars
+const senzaRagionamento = ({ reasoning_effort, include_reasoning, ...resto }) => resto
+
 const PROVIDERS = {
   groq: {
     name: 'Groq',
@@ -121,7 +125,7 @@ export async function* streamProvider({ provider, model }, opts) {
       const code = err?.error?.error?.code || err?.code
       if (err?.status !== 404 && code !== 'model_not_found') throw err
       console.warn(`Modello ${m} non disponibile su Groq → fallback ${GROQ_FALLBACK_MODEL}`)
-      stream = await groq.chat.completions.create({ model: GROQ_FALLBACK_MODEL, ...opts, stream: true })
+      stream = await groq.chat.completions.create({ model: GROQ_FALLBACK_MODEL, ...senzaRagionamento(opts), stream: true })
     }
     for await (const chunk of stream) {
       const delta = chunk.choices?.[0]?.delta
@@ -172,7 +176,7 @@ export async function callProvider({ provider, model }, opts) {
       const code = err?.error?.error?.code || err?.code
       if (err?.status === 404 || code === 'model_not_found') {
         console.warn(`Modello ${m} non disponibile su Groq → fallback ${GROQ_FALLBACK_MODEL}`)
-        return await groq.chat.completions.create({ model: GROQ_FALLBACK_MODEL, ...opts })
+        return await groq.chat.completions.create({ model: GROQ_FALLBACK_MODEL, ...senzaRagionamento(opts) })
       }
       throw err
     }

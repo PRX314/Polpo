@@ -61,33 +61,44 @@ async function apiCall(endpoint, body) {
 // specialist: id dell'assistente (null = Polpo generico).
 // targets: [{ provider, model }] — con più di uno il backend risponde con `replies` (una per modello).
 // voce: il messaggio è stato detto al microfono e la risposta verrà letta → il server la chiede breve.
-export const sendMessage = async (message, { history = [], specialist = null, targets = [], voce = false } = {}) => {
+// citati: id degli elementi citati con @ → il server allega la loro scheda completa.
+const corpo = (message, { history, specialist, targets, voce, citati }) => {
   const body = { message, history: history.slice(-24) }
   if (specialist) body.specialist = specialist
   if (targets.length) body.targets = targets
   if (voce) body.voce = true
+  if (citati.length) body.citati = citati.slice(0, 6)
+  return body
+}
+
+// Cosa ha letto Polpo prima di rispondere e come ci ha ragionato (vuoti con un server vecchio)
+const dietro = (data) => ({ passi: data.passi || [], ragionamento: data.ragionamento || '' })
+
+export const sendMessage = async (message, { history = [], specialist = null, targets = [], voce = false, citati = [] } = {}) => {
+  const body = corpo(message, { history, specialist, targets, voce, citati })
   const data = await apiCall('/api/chat', body)
   return {
+    ...dietro(data),
     reply: data.reply,
     proposedActions: data.proposedActions || [],
     stats: data.stats || null,
     label: data.label || null,
     ms: data.ms ?? null,
-    replies: data.replies || null
+    replies: data.replies ? data.replies.map(r => ({ ...r, ...dietro(r) })) : null
   }
 }
 
-// Come sendMessage (un modello solo), ma il testo arriva a pezzi: onTesto(pezzo) mentre il modello
-// scrive. Restituisce la risposta completa nella stessa forma di sendMessage. Se il server non ha lo
+// Come sendMessage (un modello solo), ma la risposta arriva a pezzi mentre il modello lavora:
+//   su.testo(pezzo)      il testo della risposta
+//   su.passo(passo)      ha letto qualcosa (un elemento, una nota del vault, l'agenda…)
+//   su.pensiero(pezzo)   il ragionamento
+// Restituisce la risposta completa nella stessa forma di sendMessage. Se il server non ha lo
 // streaming (versione vecchia) si torna da soli alla chiamata normale.
-export const streamMessage = async (message, { history = [], specialist = null, targets = [], voce = false } = {}, onTesto = () => {}) => {
-  const body = { message, history: history.slice(-24) }
-  if (specialist) body.specialist = specialist
-  if (targets.length) body.targets = targets.slice(0, 1)
-  if (voce) body.voce = true
+export const streamMessage = async (message, { history = [], specialist = null, targets = [], voce = false, citati = [] } = {}, su = {}) => {
+  const body = corpo(message, { history, specialist, targets: targets.slice(0, 1), voce, citati })
 
   const res = await fetch(`${API_URL}/api/chat/stream`, { method: 'POST', headers: await getAuthHeaders(), body: JSON.stringify(body) })
-  if (res.status === 404) return sendMessage(message, { history, specialist, targets, voce })
+  if (res.status === 404) return sendMessage(message, { history, specialist, targets, voce, citati })
   if (res.status === 429) throw new Error('Troppe richieste. Aspetta qualche secondo e riprova.')
   if (!res.ok || !res.body) {
     const err = await res.json().catch(() => ({}))
@@ -107,10 +118,12 @@ export const streamMessage = async (message, { history = [], specialist = null, 
     for (const blocco of blocchi) {
       if (!blocco.startsWith('data:')) continue // righe di servizio (battito)
       const evento = JSON.parse(blocco.slice(5))
-      if (evento.t === 'testo') onTesto(evento.d)
+      if (evento.t === 'testo') su.testo?.(evento.d)
+      else if (evento.t === 'passo') su.passo?.(evento.passo)
+      else if (evento.t === 'pensiero') su.pensiero?.(evento.d)
       else if (evento.t === 'errore') throw new Error(evento.detail ? `${evento.error}\n(${evento.detail})` : evento.error)
       else if (evento.t === 'fine') {
-        return { reply: evento.reply, proposedActions: evento.proposedActions || [], stats: evento.stats || null, label: evento.label || null, ms: evento.ms ?? null, replies: null }
+        return { ...dietro(evento), reply: evento.reply, proposedActions: evento.proposedActions || [], stats: evento.stats || null, label: evento.label || null, ms: evento.ms ?? null, replies: null }
       }
     }
   }
