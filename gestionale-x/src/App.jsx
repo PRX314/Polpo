@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { auth } from './firebase'
 import Auth from './components/Auth'
@@ -22,10 +22,8 @@ const DocumentsPage = lazy(() => import('./pages/DocumentsPage'))
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const RoutinePage = lazy(() => import('./pages/RoutinePage'))
 const ChatPage = lazy(() => import('./pages/ChatPage'))
-const VaultImportPage = lazy(() => import('./pages/VaultImportPage'))
 
 const Authed = ({ user }) => {
-  const navigate = useNavigate()
   const toast = useToast()
   const { projects } = useData()
   const [modal, setModal] = useState(null) // 'notifications' | 'password'
@@ -57,7 +55,6 @@ const Authed = ({ user }) => {
                   user={user} pushActive={pushActive}
                   onNotifications={() => setModal('notifications')}
                   onPassword={() => setModal('password')}
-                  onImport={() => navigate('/importa')}
                   onLogout={logout}
                 />
               }
@@ -73,7 +70,6 @@ const Authed = ({ user }) => {
           <Route path="calendario" element={<Suspense fallback={<PageLoading />}><CalendarPage /></Suspense>} />
           <Route path="routine" element={<Suspense fallback={<PageLoading />}><RoutinePage /></Suspense>} />
           <Route path="ai" element={<Suspense fallback={<PageLoading />}><ChatPage /></Suspense>} />
-          <Route path="importa" element={<Suspense fallback={<PageLoading />}><VaultImportPage /></Suspense>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

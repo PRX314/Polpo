@@ -8,7 +8,7 @@ export const useItemMenu = (project, { afterDelete } = {}) => {
   const { actions } = useData()
   const { openForm, confirmDelete } = useUi()
   return [
-    { label: project.pinned ? 'Togli dai fissati' : 'Fissa in alto', icon: project.pinned ? PinOff : Pin, onClick: () => actions.togglePin(project) },
+    { label: project.pinned ? 'Togli dal primo piano' : 'Metti in primo piano', icon: project.pinned ? PinOff : Pin, onClick: () => actions.togglePin(project) },
     { label: 'Modifica', icon: Pencil, onClick: () => openForm({ project }) },
     { label: 'Duplica', icon: Copy, onClick: () => actions.duplicate(project) },
     { label: project.archived ? 'Ripristina' : 'Archivia', icon: project.archived ? ArchiveRestore : Archive, onClick: () => actions.toggleArchive(project) },

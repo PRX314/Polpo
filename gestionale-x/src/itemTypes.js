@@ -58,6 +58,10 @@ export const ITEM_TYPES = {
 
 export const ITEM_TYPE_LIST = Object.entries(ITEM_TYPES).map(([key, val]) => ({ key, ...val }))
 
+// Cosa si crea dall'app (deciso il 2026-10-04): progetti e idee. Monologhi, musica e video vivono
+// nel vault (30-Areas/Idee/); gli elementi vecchi di quei tipi restano leggibili, ma non se ne creano.
+export const TIPI_CREABILI = ITEM_TYPE_LIST.filter(t => ['progetto', 'idea'].includes(t.key))
+
 // Tipi che vivono come "note" collegate a un progetto tramite i tag
 export const NOTE_TYPES = ['nota', 'idea', 'monologo', 'musica']
 

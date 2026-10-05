@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ArrowDown, ArrowUp, ImagePlus, Plus, X } from 'lucide-react'
 import Modal from './ui/Modal'
 import { addProject, updateProject } from '../firebaseService'
-import { ITEM_TYPE_LIST, createSectionsFromTemplate, getTypeInfo } from '../itemTypes'
+import { TIPI_CREABILI, createSectionsFromTemplate, getTypeInfo } from '../itemTypes'
 import { STATUS_LABEL, STATUS_LIST } from '../lib/status'
 import { uploadImage, getThumbnail } from '../services/imageService'
 import { ANTICIPI, daSelect, aSelect } from '../sveglie'
@@ -153,7 +153,7 @@ const ProjectForm = ({ project, initialType, onClose, onSaved }) => {
           <div className="field">
             <span className="field-label">Tipo</span>
             <div className="chips wrap" role="radiogroup" aria-label="Tipo di elemento">
-              {ITEM_TYPE_LIST.map(t => (
+              {TIPI_CREABILI.map(t => (
                 <button
                   key={t.key} type="button" role="radio" aria-checked={form.type === t.key}
                   className={`chip ${form.type === t.key ? 'is-active' : ''}`} onClick={() => changeType(t.key)}

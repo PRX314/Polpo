@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  subscribeToProjects, subscribeToNotes, subscribeToRoutine, subscribeToEvents,
-  addProject, updateProject, deleteProject, deleteNote
+  subscribeToProjects, subscribeToRoutine, subscribeToEvents,
+  addProject, updateProject, deleteProject
 } from '../firebaseService'
 import { auth } from '../firebase'
 import { watchDocuments } from '../services/localDocuments'
@@ -14,7 +14,6 @@ import { DataContext } from './dataContext'
 export const DataProvider = ({ children }) => {
   const toast = useToast()
   const [projects, setProjects] = useState(null)   // null = non ancora caricati
-  const [notes, setNotes] = useState([])
   const [routine, setRoutine] = useState(undefined) // undefined = in caricamento, null = nessuna, false = errore di lettura
   const [documents, setDocuments] = useState([])
   const [documentsLoading, setDocumentsLoading] = useState(true)
@@ -25,7 +24,6 @@ export const DataProvider = ({ children }) => {
   useEffect(() => {
     const unsubs = [
       subscribeToProjects(setProjects, () => toast.err('Errore nel caricamento dei progetti')),
-      subscribeToNotes(setNotes, () => toast.err('Errore nel caricamento delle note')),
       subscribeToRoutine(setRoutine, () => setRoutine(false)),
       subscribeToEvents(setEvents, () => {})
     ]
@@ -41,20 +39,19 @@ export const DataProvider = ({ children }) => {
   const tagCounts = useMemo(() => {
     const map = {}
     items.forEach(p => (p.tags || []).forEach(t => { map[t] = (map[t] || 0) + 1 }))
-    notes.forEach(n => (n.projectTags || []).forEach(t => { map[t] = (map[t] || 0) + 1 }))
     return Object.entries(map).sort((a, b) => b[1] - a[1])
-  }, [items, notes])
+  }, [items])
 
-  // Note collegate a un progetto: le vecchie note e gli elementi di tipo nota con un tag in comune
+  // Note e idee collegate a un progetto: gli elementi di tipo nota/idea con un tag in comune.
+  // Le note del vecchio formato (collezione `notes`) non si leggono più dal 2026-10-04: sono state
+  // copiate nel vault, in 00-Inbox/2026-10-04 Note vecchie dal gestionale.md.
   const notesOf = useCallback((project) => {
     if (!project) return []
     const shares = (tags) => (tags || []).some(t => project.tags?.includes(t))
-    const legacy = notes.filter(n => n.projectId === project.id || shares(n.projectTags))
-    const linked = items
+    return items
       .filter(p => p.id !== project.id && NOTE_TYPES.includes(p.type) && shares(p.tags))
       .map(p => ({ ...p, title: p.name, content: p.description, projectTags: p.tags }))
-    return [...legacy, ...linked]
-  }, [items, notes])
+  }, [items])
 
   const guard = useCallback(async (fn, okText, errText) => {
     try {
@@ -80,15 +77,14 @@ export const DataProvider = ({ children }) => {
       const { id, createdAt, updatedAt, ...data } = p
       await addProject({ ...data, name: `${data.name} (copia)`, pinned: false, archived: false })
     }, 'Elemento duplicato', 'Non sono riuscito a duplicare'),
-    remove: (p) => guard(() => deleteProject(p.id), 'Elemento eliminato', 'Eliminazione non riuscita'),
-    removeNote: (n) => guard(() => deleteNote(n.id), 'Nota eliminata', 'Eliminazione non riuscita')
+    remove: (p) => guard(() => deleteProject(p.id), 'Elemento eliminato', 'Eliminazione non riuscita')
   }), [guard])
 
   const value = useMemo(() => ({
     loading: projects === null,
     projects: projects || [],
-    items, notes, routine, events, tagCounts, notesOf, actions, documents, documentsLoading, documentsError
-  }), [projects, items, notes, routine, events, tagCounts, notesOf, actions, documents, documentsLoading, documentsError])
+    items, routine, events, tagCounts, notesOf, actions, documents, documentsLoading, documentsError
+  }), [projects, items, routine, events, tagCounts, notesOf, actions, documents, documentsLoading, documentsError])
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>
 }

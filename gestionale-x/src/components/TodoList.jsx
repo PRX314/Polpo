@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AlarmClock, CalendarDays, GripVertical, Plus, X } from 'lucide-react'
+import { AlarmClock, CalendarDays, ChevronDown, GripVertical, Plus, X } from 'lucide-react'
 import ProgressBar from './ui/ProgressBar'
 import { ANTICIPI, daSelect, aSelect } from '../sveglie'
 import { relativeDay } from '../lib/dates'
@@ -13,6 +13,8 @@ const TodoList = ({ project, onUpdate }) => {
   // Quale voce ha aperto il pannellino scadenza/sveglia: i task nati prima
   // dell'orario devono poterne ricevere uno senza essere ricreati.
   const [openIndex, setOpenIndex] = useState(null)
+  // Chiusa se ci sono cose da fare tue: la roadmap si apre quando serve
+  const [roadmapAperta, setRoadmapAperta] = useState(() => !(project.todos || []).some(t => !t.daVault && !t.completed))
 
   useEffect(() => { setTodos(project.todos || []) }, [project.todos])
 
@@ -57,79 +59,106 @@ const TodoList = ({ project, onUpdate }) => {
     await onUpdate(todos)
   }
 
-  const done = todos.filter(t => t.completed).length
-  const pct = todos.length ? Math.round((done / todos.length) * 100) : 0
+  // Le voci arrivate dal vault (daVault) sono la roadmap del progetto: tante, senza data, scritte
+  // nella nota. Le cose da fare vere sono quelle aggiunte qui, di solito con una scadenza.
+  // Prima stavano in un elenco solo: 60 voci di roadmap seppellivano le 2 da fare davvero.
+  const conIndice = todos.map((t, i) => [t, i])
+  const mie = conIndice.filter(([t]) => !t.daVault)
+  const roadmap = conIndice.filter(([t]) => t.daVault)
+  const mieAperte = mie.filter(([t]) => !t.completed).length
+  const roadmapFatte = roadmap.filter(([t]) => t.completed).length
+  const pct = roadmap.length ? Math.round((roadmapFatte / roadmap.length) * 100) : 0
+
+  const voce = ([t, i]) => {
+    const rel = !t.completed && t.deadline ? relativeDay(t.deadline) : null
+    const hasReminder = t.reminder !== null && t.reminder !== undefined
+    return (
+      <li
+        key={i}
+        className={`todo ${t.completed ? 'is-done' : ''} ${dragIndex === i ? 'is-dragging' : ''}`}
+        draggable
+        onDragStart={() => setDragIndex(i)}
+        onDragOver={(e) => onDragOver(e, i)}
+        onDragEnd={onDragEnd}
+      >
+        <div className="todo-main">
+          <span className="todo-grip" aria-hidden="true" title="Trascina per riordinare"><GripVertical size={14} /></span>
+          <input type="checkbox" checked={!!t.completed} onChange={() => toggle(i)} aria-label={`Segna “${t.text}” come ${t.completed ? 'da fare' : 'fatta'}`} />
+          <span className="todo-text">{t.text}</span>
+          {rel && (
+            <span className={`tag ${rel.tone === 'late' ? 'tag-invert' : ''}`}>
+              <CalendarDays size={11} aria-hidden="true" />
+              {rel.text}{t.time ? ` · ${t.time}` : ''}
+              {hasReminder && <AlarmClock size={11} aria-label="Con sveglia" />}
+            </span>
+          )}
+          <button
+            className={`btn-icon sm ${openIndex === i ? 'is-on' : ''}`} onClick={() => setOpenIndex(openIndex === i ? null : i)}
+            aria-label="Scadenza e sveglia" aria-expanded={openIndex === i}
+          ><AlarmClock size={14} /></button>
+          <button className="btn-icon sm" onClick={() => remove(i)} aria-label={`Elimina “${t.text}”`}><X size={14} /></button>
+        </div>
+
+        {openIndex === i && (
+          <div className="todo-alarm">
+            <input type="date" value={t.deadline || ''} aria-label="Scadenza" onChange={(e) => patch(i, { deadline: e.target.value })} />
+            <input type="time" value={t.time || ''} aria-label="Ora" disabled={!t.deadline} onChange={(e) => patch(i, { time: e.target.value })} />
+            <select value={aSelect(t.reminder)} aria-label="Sveglia" disabled={!t.deadline || !t.time} onChange={(e) => patch(i, { reminder: daSelect(e.target.value) })}>
+              {ANTICIPI.map(a => <option key={String(a.value)} value={aSelect(a.value)}>{a.label}</option>)}
+            </select>
+          </div>
+        )}
+      </li>
+    )
+  }
 
   return (
-    <section className="card" aria-label="Cose da fare">
-      <h2 className="card-title">
-        <span>Cose da fare</span>
-        <span className="row" style={{ gap: 6 }}>
-          <span className="faint" style={{ letterSpacing: 0 }}>{done}/{todos.length}</span>
-          {todos.length - done > 0 && <span className="count">{todos.length - done}</span>}
-        </span>
-      </h2>
+    <>
+      <section className="card" aria-label="Cose da fare">
+        <h2 className="card-title">
+          <span>Cose da fare</span>
+          {mieAperte > 0 && <span className="count">{mieAperte}</span>}
+        </h2>
 
-      {todos.length > 0 && <div style={{ marginBottom: 10 }}><ProgressBar pct={pct} label="Cose da fare completate" /></div>}
+        <ul className="todo-list">{mie.map(voce)}</ul>
 
-      <ul className="todo-list">
-        {todos.map((t, i) => {
-          const rel = !t.completed && t.deadline ? relativeDay(t.deadline) : null
-          const hasReminder = t.reminder !== null && t.reminder !== undefined
-          return (
-            <li
-              key={i}
-              className={`todo ${t.completed ? 'is-done' : ''} ${dragIndex === i ? 'is-dragging' : ''}`}
-              draggable
-              onDragStart={() => setDragIndex(i)}
-              onDragOver={(e) => onDragOver(e, i)}
-              onDragEnd={onDragEnd}
-            >
-              <div className="todo-main">
-                <span className="todo-grip" aria-hidden="true" title="Trascina per riordinare"><GripVertical size={14} /></span>
-                <input type="checkbox" checked={!!t.completed} onChange={() => toggle(i)} aria-label={`Segna “${t.text}” come ${t.completed ? 'da fare' : 'fatta'}`} />
-                <span className="todo-text">{t.text}</span>
-                {rel && (
-                  <span className={`tag ${rel.tone === 'late' ? 'tag-invert' : ''}`}>
-                    <CalendarDays size={11} aria-hidden="true" />
-                    {rel.text}{t.time ? ` · ${t.time}` : ''}
-                    {hasReminder && <AlarmClock size={11} aria-label="Con sveglia" />}
-                  </span>
-                )}
-                <button
-                  className={`btn-icon sm ${openIndex === i ? 'is-on' : ''}`} onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  aria-label="Scadenza e sveglia" aria-expanded={openIndex === i}
-                ><AlarmClock size={14} /></button>
-                <button className="btn-icon sm" onClick={() => remove(i)} aria-label={`Elimina “${t.text}”`}><X size={14} /></button>
-              </div>
+        {mie.length === 0 && (
+          <p className="small muted" style={{ marginBottom: 10 }}>
+            {roadmap.length ? 'Niente di tuo da fare qui. Scegli un passo dalla roadmap e dagli una data.' : 'Niente da fare qui, per ora.'}
+          </p>
+        )}
 
-              {openIndex === i && (
-                <div className="todo-alarm">
-                  <input type="date" value={t.deadline || ''} aria-label="Scadenza" onChange={(e) => patch(i, { deadline: e.target.value })} />
-                  <input type="time" value={t.time || ''} aria-label="Ora" disabled={!t.deadline} onChange={(e) => patch(i, { time: e.target.value })} />
-                  <select value={aSelect(t.reminder)} aria-label="Sveglia" disabled={!t.deadline || !t.time} onChange={(e) => patch(i, { reminder: daSelect(e.target.value) })}>
-                    {ANTICIPI.map(a => <option key={String(a.value)} value={aSelect(a.value)}>{a.label}</option>)}
-                  </select>
-                </div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
+        <div className="todo-add">
+          <input
+            className="todo-add-text" value={draft.text} placeholder="Aggiungi una cosa da fare" aria-label="Nuova cosa da fare"
+            onChange={(e) => setDraft(d => ({ ...d, text: e.target.value }))}
+            onKeyDown={(e) => { if (e.key === 'Enter') add() }}
+          />
+          <input type="date" value={draft.deadline} aria-label="Scadenza (facoltativa)" onChange={(e) => setDraft(d => ({ ...d, deadline: e.target.value }))} />
+          <input type="time" value={draft.time} aria-label="Ora (facoltativa)" disabled={!draft.deadline} onChange={(e) => setDraft(d => ({ ...d, time: e.target.value }))} />
+          <button className="btn btn-primary" onClick={add} disabled={!draft.text.trim()}><Plus size={15} /> Aggiungi</button>
+        </div>
+      </section>
 
-      {todos.length === 0 && <p className="small muted" style={{ marginBottom: 10 }}>Niente da fare qui, per ora.</p>}
-
-      <div className="todo-add">
-        <input
-          className="todo-add-text" value={draft.text} placeholder="Aggiungi una cosa da fare" aria-label="Nuova cosa da fare"
-          onChange={(e) => setDraft(d => ({ ...d, text: e.target.value }))}
-          onKeyDown={(e) => { if (e.key === 'Enter') add() }}
-        />
-        <input type="date" value={draft.deadline} aria-label="Scadenza (facoltativa)" onChange={(e) => setDraft(d => ({ ...d, deadline: e.target.value }))} />
-        <input type="time" value={draft.time} aria-label="Ora (facoltativa)" disabled={!draft.deadline} onChange={(e) => setDraft(d => ({ ...d, time: e.target.value }))} />
-        <button className="btn btn-primary" onClick={add} disabled={!draft.text.trim()}><Plus size={15} /> Aggiungi</button>
-      </div>
-    </section>
+      {roadmap.length > 0 && (
+        <section className="card" aria-label="Roadmap dal vault">
+          <button className="card-title todo-roadmap-head" onClick={() => setRoadmapAperta(v => !v)} aria-expanded={roadmapAperta}>
+            <span>Roadmap dal vault</span>
+            <span className="row" style={{ gap: 6 }}>
+              <span className="faint" style={{ letterSpacing: 0 }}>{roadmapFatte}/{roadmap.length}</span>
+              <ChevronDown size={14} className="todo-roadmap-chev" aria-hidden="true" />
+            </span>
+          </button>
+          <div style={{ marginBottom: roadmapAperta ? 10 : 0 }}><ProgressBar pct={pct} label="Roadmap completata" /></div>
+          {roadmapAperta && (
+            <>
+              <p className="small faint" style={{ marginBottom: 6 }}>Dalla nota del vault. Spuntata qui, nel vault resta aperta finché non la aggiorni lì.</p>
+              <ul className="todo-list">{roadmap.map(voce)}</ul>
+            </>
+          )}
+        </section>
+      )}
+    </>
   )
 }
 

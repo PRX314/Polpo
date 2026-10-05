@@ -49,15 +49,19 @@
 .tab:hover { color: var(--ink); text-decoration: none; }
 .tab.is-active { color: var(--ink); font-weight: 600; border-bottom-color: var(--ink); }
 
+/* Sotto-sezioni di Progetti e Vita, in cima alla pagina */
+.subnav { margin-bottom: 14px; }
+.subnav .chip { text-decoration: none; }
+
 /* Barra in basso (telefono) */
 .bottomnav {
   display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
   background: var(--bg); border-top: 1px solid var(--line);
-  grid-template-columns: repeat(7, minmax(0, 1fr)); padding-bottom: env(safe-area-inset-bottom, 0px);
+  grid-template-columns: repeat(4, minmax(0, 1fr)); padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .bottomnav-item {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  min-height: 56px; font-size: 10px; color: var(--ink-2); position: relative;
+  min-height: 56px; font-size: 11px; color: var(--ink-2); position: relative;
 }
 .bottomnav-item:hover { text-decoration: none; }
 .bottomnav-item.is-active { color: var(--ink); font-weight: 700; }

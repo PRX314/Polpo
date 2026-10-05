@@ -19,7 +19,7 @@ const readView = () => {
 }
 
 const ItemsPage = () => {
-  const { items, projects, notes, tagCounts, loading } = useData()
+  const { items, projects, tagCounts, loading } = useData()
   const { openForm } = useUi()
   const [params, setParams] = useSearchParams()
   const [view, setView] = useState(readView)
@@ -81,11 +81,11 @@ const ItemsPage = () => {
     <div className="stack" style={{ gap: 14 }}>
       <div className="page-head">
         <div>
-          <h1>Elementi</h1>
+          <h1>Progetti</h1>
           <p className="sub">{loading ? 'Carico…' : `${filtered.length} di ${archived ? items.length - active.length : active.length}${archived ? ' archiviati' : ''}`}</p>
         </div>
         <div className="page-actions">
-          <button className="btn" onClick={() => exportProjectsCSV(projects.filter(p => !p.archived), notes)}>
+          <button className="btn" onClick={() => exportProjectsCSV(projects.filter(p => !p.archived), [])}>
             <Download size={15} /> <span className="hide-sm">CSV</span>
           </button>
           <button className="btn btn-primary" onClick={() => openForm()}>
@@ -187,7 +187,7 @@ const ItemsPage = () => {
       ) : filtered.length === 0 ? (
         <EmptyState
           title={anyFilter ? 'Nessun elemento corrisponde' : 'Ancora nessun elemento'}
-          hint={anyFilter ? 'Prova ad allargare i filtri o a svuotare la ricerca.' : 'Crea il primo con “Nuovo”, oppure importa le note dal vault.'}
+          hint={anyFilter ? 'Prova ad allargare i filtri o a svuotare la ricerca.' : 'Crea il primo con “Nuovo”: quelli del vault arrivano da soli con la sincronizzazione.'}
         >
           {anyFilter
             ? <button className="btn" style={{ marginTop: 12 }} onClick={resetAll}>Azzera filtri</button>

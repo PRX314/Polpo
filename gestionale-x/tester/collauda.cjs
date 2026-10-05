@@ -324,8 +324,17 @@ async function entra(pg) {
   await pg.keyboard.type(PIN, { delay: 40 });
   await pg.getByRole('navigation', { name: 'Sezioni' }).first().waitFor({ timeout: 20000 });
 }
+// Dal 2026-10-04 le sezioni sono quattro (Oggi, Progetti, Vita, Polpo); Progetti e Vita hanno
+// sotto-sezioni. Il giro chiama ancora le pagine col loro nome: qui si traduce in sezione + sotto-sezione.
+const DOVE = {
+  Elementi: ['Progetti', 'Elenco'], 'Da fare': ['Progetti', 'Cose da fare'],
+  Calendario: ['Vita', 'Agenda'], Documenti: ['Vita', 'Documenti'], Routine: ['Vita', 'Routine'],
+  'Polpo AI': ['Polpo'],
+};
 const vai = async (pg, testo) => {
-  await pg.getByRole('navigation', { name: 'Sezioni' }).first().getByRole('link', { name: testo, exact: true }).click();
+  const [sezione, sotto] = DOVE[testo] || [testo];
+  await pg.getByRole('navigation', { name: 'Sezioni' }).first().getByRole('link', { name: sezione, exact: true }).click();
+  if (sotto) await pg.getByRole('navigation', { name: `Sottosezioni di ${sezione}` }).getByRole('link', { name: sotto, exact: true }).click();
 };
 const toast = (pg, testo) => pg.locator('.toasts').getByText(testo).first().waitFor({ timeout: 8000 });
 const finestra = pg => pg.getByRole('dialog');
@@ -357,7 +366,8 @@ async function main() {
 
     // ── piano del giro, deciso dal seme ──
     const nomi = mescola(NOMI).slice(0, tra(3, 4));
-    const tipi = mescola(Object.keys(TIPI));
+    // Dall'app si creano solo progetti e idee (gli altri tipi vivono nel vault)
+    const tipi = mescola(['progetto', 'idea', 'progetto', 'idea']);
     const scadenze = mescola([-1, 0, tra(2, 5), null]);
     nomi.forEach((nome, i) => {
       const s = scadenze[i % scadenze.length];
@@ -388,7 +398,7 @@ async function main() {
 
     await passo(page, 'Dati già presenti, e nessun dato di un altro account', async () => {
       await vai(page, 'Elementi');
-      await page.getByRole('heading', { name: 'Elementi', level: 1 }).waitFor();
+      await page.getByRole('heading', { name: 'Progetti', level: 1 }).waitFor();
       await page.getByText('Gestionale di prova').first().waitFor({ timeout: 10000 });
       await page.getByText('Idea dal vault').first().waitFor();
       verifica(!(await page.getByText('SEGRETO di un altro account').count()), 'Si vede un elemento di un altro account');
@@ -430,7 +440,9 @@ async function main() {
         const testo = c === cattivo ? CATTIVO : 'Contenuto normale della **prima** sezione';
         if (await f.getByLabel('Contenuto della sezione 1').count()) await f.getByLabel('Contenuto della sezione 1').fill(testo);
         else { await f.getByLabel('Titolo della nuova sezione').fill('Note'); await f.getByRole('button', { name: 'Sezione' }).click(); await f.getByLabel('Contenuto della sezione 1').fill(testo); }
-        await f.getByLabel('Testo della cosa da fare').fill(scegli(TODO));
+        // Ricordato: il passo "Cose da fare nel dettaglio" ne aggiunge una con un testo diverso
+        c.todo = scegli(TODO);
+        await f.getByLabel('Testo della cosa da fare').fill(c.todo);
         await f.getByRole('button', { name: 'Aggiungi', exact: true }).click();
         await f.getByRole('button', { name: 'Crea', exact: true }).click();
         await toast(page, 'Elemento creato');
@@ -756,11 +768,19 @@ async function main() {
       const rotte = [];
       const voci = pt.locator('nav.bottomnav a');
       const n = await voci.count();
-      verifica(n >= 7, `menu in basso con ${n} voci`);
+      // Quattro sezioni dal 2026-10-04; Progetti e Vita hanno sotto-sezioni, da provare una per una
+      verifica(n === 4, `menu in basso con ${n} voci invece di 4`);
       for (let i = 0; i < n; i++) {
         await voci.nth(i).click();
         await pt.waitForTimeout(400);
-        if (!(await senzaOverflow(pt))) rotte.push(`${(await voci.nth(i).innerText()).trim()}: esce dai bordi`);
+        const nome = (await voci.nth(i).innerText()).trim();
+        if (!(await senzaOverflow(pt))) rotte.push(`${nome}: esce dai bordi`);
+        const sotto = pt.locator('nav.subnav a');
+        for (let k = 0; k < await sotto.count(); k++) {
+          await sotto.nth(k).click();
+          await pt.waitForTimeout(400);
+          if (!(await senzaOverflow(pt))) rotte.push(`${nome} › ${(await sotto.nth(k).innerText()).trim()}: esce dai bordi`);
+        }
       }
       verifica(!rotte.length, rotte.join('; '));
     });

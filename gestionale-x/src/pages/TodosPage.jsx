@@ -23,6 +23,9 @@ const FILTRI = [
 const TodosPage = () => {
   const { projects, loading, actions } = useData()
   const [filtro, setFiltro] = useState('tutte')
+  // Le tue (aggiunte nell'app) o la roadmap arrivata dal vault: prima erano mescolate,
+  // e 300 voci di roadmap senza data nascondevano le poche cose da fare vere
+  const [origine, setOrigine] = useState('mie')
   const [cerca, setCerca] = useState('')
   const [mostraFatte, setMostraFatte] = useState(false)
   const [chiusi, setChiusi] = useState(() => new Set())
@@ -48,14 +51,14 @@ const TodosPage = () => {
 
   const visibili = useMemo(() => {
     const q = cerca.trim().toLowerCase()
-    let r = righe.filter(x => mostraFatte || !x.fatta)
+    let r = righe.filter(x => (mostraFatte || !x.fatta) && (origine === 'roadmap' ? x.daVault : !x.daVault))
     if (filtro === 'scadute') r = r.filter(x => x.scadenza && x.scadenza < oggi)
     else if (filtro === 'settimana') r = r.filter(x => x.scadenza && x.scadenza >= oggi && x.scadenza <= fraUnaSettimana)
     else if (filtro === 'conScadenza') r = r.filter(x => x.scadenza)
     else if (filtro === 'senzaScadenza') r = r.filter(x => !x.scadenza)
     if (q) r = r.filter(x => x.testo.toLowerCase().includes(q) || (x.progetto.name || '').toLowerCase().includes(q))
     return r
-  }, [righe, filtro, cerca, mostraFatte, oggi, fraUnaSettimana])
+  }, [righe, filtro, cerca, mostraFatte, oggi, fraUnaSettimana, origine])
 
   // Raggruppate per progetto: con oltre duecento voci un elenco piatto è illeggibile
   const gruppi = useMemo(() => {
@@ -74,9 +77,11 @@ const TodosPage = () => {
     })
   }, [visibili, oggi])
 
-  const aperte = righe.filter(x => !x.fatta).length
+  const mieAperte = righe.filter(x => !x.fatta && !x.daVault).length
+  const roadmapAperte = righe.filter(x => !x.fatta && x.daVault).length
+  const aperte = origine === 'roadmap' ? roadmapAperte : mieAperte
   const scadute = righe.filter(x => !x.fatta && x.scadenza && x.scadenza < oggi).length
-  const progettiConLavoro = new Set(righe.filter(x => !x.fatta).map(x => x.progetto.id)).size
+  const progettiConLavoro = new Set(righe.filter(x => !x.fatta && (origine === 'roadmap') === x.daVault).map(x => x.progetto.id)).size
 
   const spunta = async (riga) => {
     if (inCorso) return
@@ -99,12 +104,21 @@ const TodosPage = () => {
     <div className="stack" style={{ gap: 14 }}>
       <div className="page-head">
         <div>
-          <h1>Da fare</h1>
+          <h1>Cose da fare</h1>
           <p className="sub">
-            {loading ? 'Carico…' : `${aperte} aperte in ${progettiConLavoro} elementi`}
+            {loading ? 'Carico…' : `${aperte} aperte in ${progettiConLavoro} progetti`}
             {scadute > 0 && <> · <strong>{scadute} scadute</strong></>}
           </p>
         </div>
+      </div>
+
+      <div className="chips" role="tablist" aria-label="Quali cose da fare">
+        <button role="tab" aria-selected={origine === 'mie'} className={`chip ${origine === 'mie' ? 'is-active' : ''}`} onClick={() => setOrigine('mie')}>
+          Le mie <span className="n">{mieAperte}</span>
+        </button>
+        <button role="tab" aria-selected={origine === 'roadmap'} className={`chip ${origine === 'roadmap' ? 'is-active' : ''}`} onClick={() => setOrigine('roadmap')}>
+          <BookOpen size={12} aria-hidden="true" /> Roadmap dal vault <span className="n">{roadmapAperte}</span>
+        </button>
       </div>
 
       <div className="todos-bar">
@@ -126,9 +140,9 @@ const TodosPage = () => {
 
       {loading ? null : gruppi.length === 0 ? (
         <EmptyState
-          title={righe.length === 0 ? 'Nessuna cosa da fare, da nessuna parte' : 'Niente che corrisponda'}
-          hint={righe.length === 0
-            ? 'Le voci della roadmap nelle note del vault arrivano qui da sole a ogni sincronizzazione.'
+          title={origine === 'mie' && !mieAperte ? 'Niente di tuo da fare' : 'Niente che corrisponda'}
+          hint={origine === 'mie' && !mieAperte
+            ? 'Qui finiscono le cose che aggiungi tu, di solito con una data. Scegli un passo dalla roadmap e dagli una scadenza, o chiedi a Polpo di pianificare la settimana.'
             : 'Prova ad allargare i filtri o a svuotare la ricerca.'}
         />
       ) : (
@@ -156,7 +170,6 @@ const TodosPage = () => {
                           <label className={`todos-row ${r.fatta ? 'is-done' : ''}`}>
                             <input type="checkbox" checked={r.fatta} disabled={inCorso === r.chiave} onChange={() => spunta(r)} />
                             <span className="todos-text">{r.testo}</span>
-                            {r.daVault && <BookOpen size={12} className="faint" aria-label="Viene dalla roadmap nel vault" />}
                             {rel && (
                               <span className={`tag ${rel.tone === 'late' && !r.fatta ? 'tag-invert' : ''}`}>
                                 {rel.text}{r.ora ? ` ${r.ora}` : ''}

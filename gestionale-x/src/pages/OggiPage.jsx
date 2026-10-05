@@ -81,13 +81,15 @@ const OggiPage = () => {
   const soon = agenda.filter(r => r.iso > today && r.iso <= weekEnd)
 
   const active = useMemo(() => items.filter(p => !p.archived), [items])
-  const inProgress = useMemo(
-    () => active.filter(p => p.status === 'in_progress')
+  // In primo piano = fissati. Lo stato "in corso" lo decide il vault (48 su 87 il 04/10, quindi non
+  // diceva più niente); il primo piano lo decidi tu nell'app e la sincronizzazione non lo tocca.
+  const focus = useMemo(
+    () => active.filter(p => p.pinned)
       .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)),
     [active]
   )
-  const allTodos = active.flatMap(p => p.todos || [])
-  const openTodos = allTodos.filter(t => !t.completed).length
+  // Solo le cose da fare tue: la roadmap importata dal vault non è "da fare oggi"
+  const openTodos = active.flatMap(p => p.todos || []).filter(t => !t.completed && !t.daVault).length
 
   const toggleTodo = (row) => {
     const todos = (row.project.todos || []).map((t, i) => i === row.index ? { ...t, completed: true } : t)
@@ -139,9 +141,9 @@ const OggiPage = () => {
       </form>
 
       <div className="stats" role="list">
-        <Link to="/elementi" className="stat" role="listitem"><b>{active.length}</b><span>Elementi</span></Link>
-        <Link to="/elementi?status=in_progress" className="stat" role="listitem"><b>{inProgress.length}</b><span>In corso</span></Link>
+        <Link to="/elementi" className="stat" role="listitem"><b>{focus.length}</b><span>In primo piano</span></Link>
         <Link to="/da-fare" className="stat" role="listitem"><b>{openTodos}</b><span>Cose da fare</span></Link>
+        <Link to="/calendario" className="stat" role="listitem"><b>{soon.length}</b><span>Prossimi 7 giorni</span></Link>
         <Link to="/da-fare" className={`stat ${overdue.length ? 'is-alert' : ''}`} role="listitem"><b>{overdue.length}</b><span>Scadute</span></Link>
       </div>
 
@@ -185,12 +187,14 @@ const OggiPage = () => {
 
         <div className="stack">
           <section className="card card-flush">
-            <h2 className="ag-head"><span>In corso</span> <span className="count ghost">{inProgress.length}</span></h2>
-            {inProgress.length === 0 ? (
-              <p className="small muted" style={{ padding: 12 }}>Nessun elemento in corso. Cambia lo stato di un elemento per vederlo qui.</p>
+            <h2 className="ag-head"><span>In primo piano</span> <span className="count ghost">{focus.length}</span></h2>
+            {focus.length === 0 ? (
+              <p className="small muted" style={{ padding: 12 }}>
+                Nessun progetto in primo piano. Scegline pochi, al massimo sette: dal menu di un progetto, “Metti in primo piano”.
+              </p>
             ) : (
               <ul>
-                {inProgress.slice(0, 6).map(p => {
+                {focus.map(p => {
                   const { done, total, pct } = progressOf(p)
                   return (
                     <li key={p.id} className="wip-row">
@@ -210,7 +214,7 @@ const OggiPage = () => {
                 })}
               </ul>
             )}
-            {inProgress.length > 6 && <Link className="ag-more" to="/elementi?status=in_progress">Tutti i {inProgress.length} in corso</Link>}
+            {focus.length > 7 && <p className="small muted" style={{ padding: '8px 12px' }}>Sono {focus.length}: oltre sette il primo piano smette di aiutare a scegliere.</p>}
           </section>
         </div>
       </div>

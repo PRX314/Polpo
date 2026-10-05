@@ -156,7 +156,7 @@ export default function Composer({ onInvia, occupato, inAttesa }) {
           <AtSign size={16} />
         </button>
         <textarea
-          ref={ref} rows={1} value={testo} placeholder="Scrivi a Polpo · @ per citare un elemento" aria-label="Messaggio"
+          ref={ref} rows={1} value={testo} placeholder="Scrivi a Polpo" aria-label="Messaggio"
           aria-expanded={!!menu} aria-autocomplete="list"
           onChange={(e) => { setTesto(e.target.value); adatta(e.target); leggiMenzione(e.target) }}
           onKeyDown={onKeyDown}

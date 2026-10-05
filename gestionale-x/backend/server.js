@@ -529,7 +529,6 @@ async function findNote(title, userId) {
 // ============================================================================
 // CONTESTO UTENTE
 // ============================================================================
-const PRIORITY_LABELS = { high: 'Alta', medium: 'Media', low: 'Bassa' }
 // In che ordine l'AI conosce gli elementi: prima ciò che è vivo adesso
 const STATUS_ORDER = { 'In corso': 0, 'Da fare': 1, 'In pausa': 2, 'Completato': 3 }
 
@@ -543,9 +542,8 @@ const piuGiorni = (iso, n) => {
 const conOra = (giorno, ora) => (ora ? `${giorno} ${ora}` : giorno)
 
 async function getUserContext(userId) {
-  const [projectsSnap, notesSnap, eventsSnap] = await Promise.all([
+  const [projectsSnap, eventsSnap] = await Promise.all([
     adminDb.collection('projects').where('userId', '==', userId).get(),
-    adminDb.collection('notes').where('userId', '==', userId).get(),
     adminDb.collection('events').where('userId', '==', userId).get()
   ])
   const oggi = oggiRoma()
@@ -580,17 +578,9 @@ async function getUserContext(userId) {
     }
   })
 
-  const notes = notesSnap.docs.map(d => {
-    const data = d.data()
-    return {
-      titolo: data.title || '(senza titolo)',
-      contenuto: data.content || '',
-      tipo: data.type || 'nota',
-      priorita: PRIORITY_LABELS[data.priority] || data.priority || 'Media',
-      tags: data.projectTags || [],
-      creatoIl: data.createdAt?.toDate()?.toLocaleDateString('it-IT') || 'N/D'
-    }
-  })
+  // Le note del vecchio formato (collezione `notes`) non si leggono più dal 2026-10-04:
+  // sono state copiate nel vault (00-Inbox/2026-10-04 Note vecchie dal gestionale.md)
+  const notes = []
 
   // Agenda: scadenze (anche già passate, se non fatte) e appuntamenti fino a due settimane da oggi.
   // È la risposta a "cosa devo fare oggi": prima all'AI non arrivava.
@@ -692,13 +682,6 @@ function formatContext(ctx) {
   }
   if (soloNome.length) {
     text += `\n…e altri ${soloNome.length} elementi, solo il nome: ${clip(soloNome.map(p => `"${p.nome}" (${p.stato})`).join(', '), 900)}\n`
-  }
-
-  if (ctx.notes.length) {
-    text += '\n=== NOTE (vecchio formato) ===\n'
-    for (const n of ctx.notes.slice(0, 15)) {
-      text += `- "${n.titolo}" (${n.tipo}, priorità ${n.priorita}): ${clip(n.contenuto, 160)}\n`
-    }
   }
 
   return text
