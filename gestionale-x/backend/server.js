@@ -1437,6 +1437,56 @@ app.get('/api/vault/note', verifyUser, verifyVaultOwner, async (req, res) => {
   }
 })
 
+// Salva un messaggio della chat in una cartella dedicata del vault (sempre nuovo file, mai sovrascritto).
+// Il sync sul PC lo riporta in Obsidian. Solo Gestionale X: niente altre cartelle.
+const INBOX_GESTIONALE = '00-Inbox/Gestionale X'
+
+function slugNome(testo) {
+  return String(testo || '').replace(/[\\/:*?"<>|#^[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 50) || 'Messaggio'
+}
+
+async function githubCrea(path, contenuto, messaggio) {
+  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}`
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ message: messaggio, content: Buffer.from(contenuto, 'utf-8').toString('base64') })
+  })
+  if (!res.ok) throw new Error(`GitHub API ${res.status}: ${res.statusText}`)
+  return res.json()
+}
+
+app.post('/api/vault/salva-inbox', verifyUser, verifyVaultOwner, async (req, res) => {
+  if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato: il vault non è scrivibile' })
+  const { testo, titolo, assistente } = req.body || {}
+  if (typeof testo !== 'string' || !testo.trim() || testo.length > 50000) return res.status(400).json({ error: 'Testo non valido' })
+  try {
+    const adesso = new Date()
+    const stampa = adesso.toLocaleString('sv-SE', { timeZone: 'Europe/Rome' }).slice(0, 16).replace(':', '')   // 2026-10-06 1712
+    const nome = `${stampa} ${slugNome(titolo || testo.split('\n')[0])}.md`
+    const path = `${INBOX_GESTIONALE}/${nome}`
+    const fm = [
+      '---',
+      'fonte: gestionale-x',
+      'tipo: chat',
+      `creato: ${adesso.toISOString()}`,
+      assistente ? `assistente: ${String(assistente).replace(/[\r\n]/g, ' ')}` : null,
+      '---',
+      ''
+    ].filter(x => x !== null).join('\n')
+    await githubCrea(path, `${fm}\n${testo.trim()}\n`, `gestionale: salva nel vault ${nome}`)
+    res.json({ success: true, path })
+  } catch (err) {
+    console.error('Vault salva-inbox error:', err.message)
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ============================================================================
 // WEB PUSH NOTIFICATIONS
 // ============================================================================

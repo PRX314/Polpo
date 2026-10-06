@@ -53,6 +53,19 @@ async function apiCall(endpoint, body) {
   return res.json()
 }
 
+// Salva un messaggio della chat in 00-Inbox/Gestionale X del vault (il sync lo porta su Obsidian)
+export async function salvaNelVault({ testo, titolo, assistente }) {
+  const headers = await getAuthHeaders()
+  const res = await fetch(`${API_URL}/api/vault/salva-inbox`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ testo, titolo, assistente })
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || `Errore server (${res.status})`)
+  return data
+}
+
 // ============================================================================
 // CHAT API
 // ============================================================================

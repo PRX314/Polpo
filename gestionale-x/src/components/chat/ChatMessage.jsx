@@ -1,7 +1,8 @@
 import { memo, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, Copy, Mic, RotateCcw } from 'lucide-react'
+import { Check, Copy, Mic, NotebookPen, RotateCcw } from 'lucide-react'
 import { collegaElementi, renderMarkdown } from '../../lib/markdown'
+import { salvaNelVault } from '../../services/chatService'
 import { shortModel } from './useModelli'
 import ActionCards from './ActionCards'
 import Passaggi from './Passaggi'
@@ -35,6 +36,8 @@ const ora = (iso) => new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit'
 // Un messaggio. Sotto le risposte si legge chi ha risposto (assistente e modello).
 function ChatMessage({ msg, indice, indiceElementi, nomeAssistente, occupato, onRiprova, onAlternativa, onConferma, onRifiuta }) {
   const [copiato, setCopiato] = useState(false)
+  // Invio al vault: 'idle' | 'invio' | 'fatto' | 'errore'
+  const [salvataggio, setSalvataggio] = useState({ stato: 'idle', errore: '' })
 
   if (msg.role === 'user') {
     return (
@@ -60,6 +63,13 @@ function ChatMessage({ msg, indice, indiceElementi, nomeAssistente, occupato, on
       .catch(() => {})
   }
   const modello = !msg.alternatives && shortModel(msg.label?.split(' · ')[1])
+
+  const inviaAlVault = () => {
+    setSalvataggio({ stato: 'invio', errore: '' })
+    salvaNelVault({ testo: msg.content, assistente: nomeAssistente(msg.assistant) })
+      .then(() => setSalvataggio({ stato: 'fatto', errore: '' }))
+      .catch(err => setSalvataggio({ stato: 'errore', errore: err.message }))
+  }
 
   return (
     <div className="chat-msg assistant">
@@ -119,7 +129,13 @@ function ChatMessage({ msg, indice, indiceElementi, nomeAssistente, occupato, on
         <button className="btn btn-sm btn-quiet" onClick={copia}>
           {copiato ? <><Check size={12} /> Copiato</> : <><Copy size={12} /> Copia</>}
         </button>
+        <button className="btn btn-sm btn-quiet" onClick={inviaAlVault} disabled={!msg.content || salvataggio.stato === 'invio'}>
+          {salvataggio.stato === 'fatto' ? <><Check size={12} /> Nel vault</> : <><NotebookPen size={12} /> {salvataggio.stato === 'invio' ? 'Invio…' : 'Invia al vault'}</>}
+        </button>
       </div>}
+      {salvataggio.stato === 'errore' && (
+        <div className="chat-failed small" role="alert"><span>Non salvato nel vault: {salvataggio.errore}</span></div>
+      )}
     </div>
   )
 }
