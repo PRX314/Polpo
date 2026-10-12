@@ -755,6 +755,19 @@ async function main() {
       const senza = await fetch(`${BACKEND}/api/vault/last-sync`);
       verifica(senza.status === 401, `senza accesso il vault risponde ${senza.status}`);
     });
+    await passo(page, 'Chat, voce e push: chiusi agli altri account', async () => {
+      const auth = { Authorization: `Bearer ${intruso.token}`, 'Content-Type': 'application/json' };
+      const chat = await fetch(`${BACKEND}/api/chat`, { method: 'POST', headers: auth, body: JSON.stringify({ message: 'ciao' }) });
+      verifica(chat.status === 403, `un altro account usa la chat AI (HTTP ${chat.status})`);
+      const stream = await fetch(`${BACKEND}/api/chat/stream`, { method: 'POST', headers: auth, body: JSON.stringify({ message: 'ciao' }) });
+      verifica(stream.status === 403, `un altro account usa la chat in streaming (HTTP ${stream.status})`);
+      const assistenti = await fetch(`${BACKEND}/api/specialists`, { headers: auth });
+      verifica(assistenti.status === 403, `un altro account vede gli assistenti (HTTP ${assistenti.status})`);
+      const voce = await fetch(`${BACKEND}/api/parla?t=ciao&k=${encodeURIComponent(intruso.token)}`);
+      verifica(voce.status === 403, `un altro account usa la voce (HTTP ${voce.status})`);
+      const push = await fetch(`${BACKEND}/api/push/subscribe`, { method: 'POST', headers: auth, body: JSON.stringify({ subscription: { endpoint: 'https://esempio.test' } }) });
+      verifica(push.status === 403, `un altro account si iscrive alle notifiche (HTTP ${push.status})`);
+    });
 
     // ── telefono ──
     const { defaultBrowserType: _tipo, ...iphone } = devices['iPhone 13'];

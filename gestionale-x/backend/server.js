@@ -91,22 +91,45 @@ setInterval(() => {
 // ============================================================================
 // AUTH MIDDLEWARE
 // ============================================================================
+// Il gestionale è di Paolo: autenticarsi nel progetto Firebase non basta.
+// Chat, voce, push e vault consumano chiavi e dati suoi, quindi passa solo il suo uid.
+let ownerUid
+async function uidProprietario() {
+  ownerUid ||= process.env.VAULT_OWNER_UID ||
+    (await admin.auth().getUserByEmail(process.env.VAULT_OWNER_EMAIL || 'paoloandrearepetto@gmail.com')).uid
+  return ownerUid
+}
+
+// 'ok' | 'estraneo' | 'non-configurato'
+async function eProprietario(uid) {
+  try {
+    return uid === await uidProprietario() ? 'ok' : 'estraneo'
+  } catch {
+    return 'non-configurato'
+  }
+}
+
 async function verifyUser(req, res, next) {
   const token = req.headers.authorization?.replace('Bearer ', '')
   if (!token) return res.status(401).json({ error: 'Token mancante' })
 
+  let decoded
   try {
-    const decoded = await admin.auth().verifyIdToken(token)
-    req.userId = decoded.uid
-    req.userEmail = decoded.email
-    req.userName = decoded.name || decoded.email?.split('@')[0] || 'Utente'
-    if (!checkRateLimit(req.userId)) {
-      return res.status(429).json({ error: 'Troppe richieste. Riprova tra un minuto.' })
-    }
-    next()
+    decoded = await admin.auth().verifyIdToken(token)
   } catch (err) {
     return res.status(401).json({ error: 'Token non valido' })
   }
+  const esito = await eProprietario(decoded.uid)
+  if (esito === 'estraneo') return res.status(403).json({ error: 'Accesso non consentito' })
+  if (esito === 'non-configurato') return res.status(503).json({ error: 'Accesso non configurato' })
+
+  req.userId = decoded.uid
+  req.userEmail = decoded.email
+  req.userName = decoded.name || decoded.email?.split('@')[0] || 'Utente'
+  if (!checkRateLimit(req.userId)) {
+    return res.status(429).json({ error: 'Troppe richieste. Riprova tra un minuto.' })
+  }
+  next()
 }
 
 // ============================================================================
@@ -1017,7 +1040,7 @@ const lettoreVault = {
 }
 // Il vault è personale: solo il proprietario lo fa leggere all'AI
 const vaultDi = async (userId) => {
-  try { return userId === await uidProprietarioVault() ? lettoreVault : null } catch { return null }
+  try { return userId === await uidProprietario() ? lettoreVault : null } catch { return null }
 }
 const DEPS_LETTURA = { progetti: progettiDi, eventi: eventiDi, vault: vaultDi }
 
@@ -1286,6 +1309,8 @@ app.get('/api/parla', async (req, res) => {
   } catch {
     return res.status(401).end()
   }
+  const esito = await eProprietario(uid)
+  if (esito !== 'ok') return res.status(esito === 'estraneo' ? 403 : 503).end()
   const ora = Date.now()
   const l = voceLimits.get(uid)
   if (!l || ora - l.inizio > 60000) voceLimits.set(uid, { inizio: ora, n: 1 })
@@ -1348,25 +1373,10 @@ function parseFrontmatter(raw) {
   return { frontmatter, body }
 }
 
-// Il vault è personale: autenticarsi nel progetto Firebase non basta.
-let vaultOwnerUid;
-async function uidProprietarioVault() {
-  vaultOwnerUid ||= process.env.VAULT_OWNER_UID ||
-    (await admin.auth().getUserByEmail(process.env.VAULT_OWNER_EMAIL || 'paoloandrearepetto@gmail.com')).uid;
-  return vaultOwnerUid;
-}
-async function verifyVaultOwner(req, res, next) {
-  try {
-    const uid = await uidProprietarioVault();
-    if (req.userId !== uid) return res.status(403).json({ error: 'Accesso al vault non consentito' });
-    next();
-  } catch {
-    return res.status(503).json({ error: 'Accesso al vault non configurato' });
-  }
-}
+// Il vault è personale: verifyUser lascia passare solo il proprietario.
 
 // Lista file .md nelle cartelle del vault
-app.get('/api/vault/tree', verifyUser, verifyVaultOwner, async (req, res) => {
+app.get('/api/vault/tree', verifyUser, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato. Aggiungi GITHUB_TOKEN al .env' })
   try {
     const tree = {}
@@ -1386,7 +1396,7 @@ app.get('/api/vault/tree', verifyUser, verifyVaultOwner, async (req, res) => {
 })
 
 // Ultimo commit (timestamp ultimo sync)
-app.get('/api/vault/last-sync', verifyUser, verifyVaultOwner, async (req, res) => {
+app.get('/api/vault/last-sync', verifyUser, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato' })
   try {
     const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/commits/main`
@@ -1405,7 +1415,7 @@ app.get('/api/vault/last-sync', verifyUser, verifyVaultOwner, async (req, res) =
 })
 
 // Sync manuale vault → GitHub (solo locale)
-app.post('/api/vault/sync', verifyUser, verifyVaultOwner, async (req, res) => {
+app.post('/api/vault/sync', verifyUser, async (req, res) => {
   const vaultPath = process.env.VAULT_PATH
   if (!vaultPath) return res.status(503).json({ error: 'Sync manuale disponibile solo in locale (VAULT_PATH non impostato)' })
   try {
@@ -1421,7 +1431,7 @@ app.post('/api/vault/sync', verifyUser, verifyVaultOwner, async (req, res) => {
 })
 
 // Leggi contenuto di una nota
-app.get('/api/vault/note', verifyUser, verifyVaultOwner, async (req, res) => {
+app.get('/api/vault/note', verifyUser, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato' })
   const { path } = req.query
   if (!path || !path.endsWith('.md') || path.includes('..')) return res.status(400).json({ error: 'Path non valido' })
@@ -1461,7 +1471,7 @@ async function githubCrea(path, contenuto, messaggio) {
   return res.json()
 }
 
-app.post('/api/vault/salva-inbox', verifyUser, verifyVaultOwner, async (req, res) => {
+app.post('/api/vault/salva-inbox', verifyUser, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato: il vault non è scrivibile' })
   const { testo, titolo, assistente } = req.body || {}
   if (typeof testo !== 'string' || !testo.trim() || testo.length > 50000) return res.status(400).json({ error: 'Testo non valido' })
@@ -1502,14 +1512,9 @@ if (VAPID_PRIVATE) {
 }
 
 // Save push subscription for a user
-app.post('/api/push/subscribe', async (req, res) => {
+app.post('/api/push/subscribe', verifyUser, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization
-    if (!authHeader) return res.status(401).json({ error: 'Non autenticato' })
-
-    const token = authHeader.split('Bearer ')[1]
-    const decoded = await admin.auth().verifyIdToken(token)
-    const userId = decoded.uid
+    const userId = req.userId
     const { subscription } = req.body
 
     if (!subscription || !subscription.endpoint) {
@@ -1531,15 +1536,9 @@ app.post('/api/push/subscribe', async (req, res) => {
 })
 
 // Unsubscribe
-app.post('/api/push/unsubscribe', async (req, res) => {
+app.post('/api/push/unsubscribe', verifyUser, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization
-    if (!authHeader) return res.status(401).json({ error: 'Non autenticato' })
-
-    const token = authHeader.split('Bearer ')[1]
-    const decoded = await admin.auth().verifyIdToken(token)
-
-    await adminDb.collection('push_subscriptions').doc(decoded.uid).delete()
+    await adminDb.collection('push_subscriptions').doc(req.userId).delete()
     res.json({ success: true })
   } catch (err) {
     console.error('Errore unsubscribe:', err)
