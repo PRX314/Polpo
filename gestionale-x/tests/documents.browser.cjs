@@ -15,7 +15,10 @@ const root = require('node:path').resolve(__dirname, '..').replaceAll('\\', '/')
   configureServer(server){ server.middlewares.use((req,res,next)=>{if(req.url==='/test'){res.setHeader('Content-Type','text/html');res.end('<html><body><div id="root"></div><script type="module" src="/harness.jsx"></script></body></html>')}else next()}); }
  }] });
  await server.listen();
- const browser = await chromium.launch({channel:process.env.PLAYWRIGHT_CHANNEL || 'msedge',headless:true});
+ // Microfono finto per le note vocali: un tono, oppure il file indicato da AUDIO_PROVA (wav), che
+ // in quel caso va anche a Whisper vero su Groq con la chiave di backend/.env.
+ const audioProva=process.env.AUDIO_PROVA;
+ const browser = await chromium.launch({channel:process.env.PLAYWRIGHT_CHANNEL || 'msedge',headless:true,args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',...(audioProva?[`--use-file-for-fake-audio-capture=${audioProva}`]:[])]});
  const page = await browser.newPage({viewport:{width:390,height:844}});
  const errors=[]; page.on('pageerror',e=>errors.push(e.message));
  try {
@@ -98,7 +101,34 @@ const root = require('node:path').resolve(__dirname, '..').replaceAll('\\', '/')
   await page.getByLabel('Aggiungi file',{exact:true}).setInputFiles({name:'ricevuta-prova.pdf',mimeType:'application/pdf',buffer:Buffer.from(pdf)});
   await page.getByText('Testo letto. Verifica il riepilogo e le scadenze con gli originali.',{exact:true}).waitFor({timeout:120000});
   assert((await page.getByLabel('Riepilogo dettagliato').inputValue()).includes('19,90'),'Real PDF extraction');
+  // Nota vocale: registra dal microfono, l'audio va a /api/trascrivi, il testo finisce nel riepilogo.
+  let trascrizione;
+  if(audioProva){ require(root+'/backend/node_modules/dotenv').config({path:root+'/backend/.env'}); const {trascriviAudio}=await import(pathToFileURL(root+'/backend/providers.js')); trascrizione=body=>trascriviAudio(body,'nota.webm'); }
+  else trascrizione=async()=>'Chiamare il commercialista martedì mattina.';
+  const inviati=[];
+  await page.route('**/api/trascrivi',async route=>{const r=route.request(); const body=r.postDataBuffer(); inviati.push({type:r.headers()['content-type'],size:body?.length||0}); await route.fulfill({contentType:'application/json',body:JSON.stringify({testo:await trascrizione(body)})})});
+  await page.goto('http://127.0.0.1:5296/test#/documenti');
+  await page.getByRole('button',{name:'Registra voce'}).click();
+  await page.getByRole('button',{name:'Annulla registrazione'}).click();
+  await page.getByRole('button',{name:'Registra voce'}).waitFor();
+  await page.getByRole('button',{name:'Registra voce'}).click();
+  await page.getByRole('group',{name:'Registrazione in corso'}).getByText(/00:0[2-9]/).waitFor({timeout:10000});
+  if(audioProva) await page.waitForTimeout(6000);
+  await page.getByRole('button',{name:'Ferma e salva'}).click();
+  await page.getByText('Testo letto. Verifica il riepilogo e le scadenze con gli originali.',{exact:true}).waitFor({timeout:30000});
+  assert.equal(inviati.length,1,'Annulla must not save or send audio'); assert.match(inviati[0].type,/^audio\/(webm|mp4)/); assert(inviati[0].size>1000,'Recorded audio sent');
+  const summary=await page.getByLabel('Riepilogo dettagliato').inputValue();
+  if(audioProva) console.log('Trascrizione vera:',summary); else assert.equal(summary,'Chiamare il commercialista martedì mattina.');
+  assert.equal(await page.getByLabel(/^Tipo/).inputValue(),'Nota vocale');
+  assert.match(await page.getByLabel('Titolo',{exact:true}).inputValue(),/^Nota vocale · /);
+  assert(await page.locator('audio').evaluate(a=>new Promise(ok=>{if(a.readyState>0)ok(a.duration>0||a.duration===Infinity);a.onloadedmetadata=()=>ok(a.duration>0||a.duration===Infinity);a.onerror=()=>ok(false)})),'Recorded audio plays back');
+  // Senza rete la registrazione resta salvata e l'avviso lo dice.
+  await page.unroute('**/api/trascrivi'); await page.route('**/api/trascrivi',route=>route.abort());
+  page.once('dialog',d=>d.accept());
+  await page.getByRole('button',{name:'Leggi gli originali'}).click();
+  await page.getByText(/serve la rete\. La registrazione è salvata/).waitFor();
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow with voice note');
   assert.deepEqual(errors,[]);
-  console.log('PASS: upload, lettura testo/foto OCR/PDF reali, salvataggio/reload, bozza col tasto Indietro, download originale identico, report, progetto, calendario, mobile 390px, isolamento account, backup/ripristino, duplicati, corruzione atomica, chiusura e pagamento.');
+  console.log('PASS: upload, lettura testo/foto OCR/PDF reali, nota vocale registrata e trascritta, salvataggio/reload, bozza col tasto Indietro, download originale identico, report, progetto, calendario, mobile 390px, isolamento account, backup/ripristino, duplicati, corruzione atomica, chiusura e pagamento.');
  } finally { await browser.close(); await server.close(); }
 })().catch(e=>{console.error(e);process.exitCode=1});

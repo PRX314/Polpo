@@ -1,5 +1,23 @@
-// Gli originali non vengono inviati a servizi AI. I modelli OCR vengono scaricati al primo utilizzo.
+// Foto e PDF si leggono sul dispositivo: non vengono inviati a servizi AI. I modelli OCR vengono
+// scaricati al primo utilizzo. Fanno eccezione le note vocali: l'audio passa dal backend a Whisper
+// (Groq) solo per la trascrizione e non viene conservato, l'originale resta qui.
 // pdf.js in build legacy: quella moderna usa API JavaScript che Safari su iPhone può non avere.
+import { auth } from '../firebase'
+
+// Come API_URL di chatService, che però apre Firestore appena importato.
+const API_URL = import.meta.env.VITE_AI_API_URL || ''
+
+const isAudio = file => /^(audio|video)\//.test(file.type) || /\.(webm|m4a|mp3|ogg|wav|flac)$/i.test(file.name)
+async function transcribe(file) {
+  const token = await auth.currentUser?.getIdToken?.()
+  let res
+  try {
+    res = await fetch(`${API_URL}/api/trascrivi`, { method: 'POST', headers: { 'Content-Type': file.type || 'audio/webm', ...(token && { Authorization: `Bearer ${token}` }) }, body: file.blob })
+  } catch { throw new Error('trascrizione non raggiungibile: serve la rete. La registrazione è salvata, riprova con “Leggi gli originali”.') }
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(`trascrizione non riuscita (${data.error || `errore ${res.status}`}). La registrazione è salvata, puoi riprovare.`)
+  return data.testo || ''
+}
 
 // Safari decodifica le foto HEIC dell'iPhone; altrove fallisce e l'originale resta comunque salvato.
 async function imageToCanvas(blob) {
@@ -28,7 +46,12 @@ export async function readDocument(files, progress) {
       progress(`Leggo ${file.name}…`)
       try {
         let text = ''
-        if (/^text\//.test(file.type) || /\.(txt|md|csv)$/i.test(file.name)) text = await file.blob.text()
+        if (isAudio(file)) {
+          progress(`Trascrivo ${file.name}…`)
+          try { text = await transcribe(file) } catch (e) { warnings.push(`${file.name}: ${e.message}`); continue }
+          if (!text) warnings.push(`${file.name}: nella registrazione non ho sentito parole.`)
+        }
+        else if (/^text\//.test(file.type) || /\.(txt|md|csv)$/i.test(file.name)) text = await file.blob.text()
         else if (/^image\/(jpeg|png|webp|bmp)$/.test(file.type)) text = await recognize(file.blob)
         else if (/^image\/hei[cf]$/.test(file.type) || /\.hei[cf]$/i.test(file.name)) {
           const canvas = await imageToCanvas(file.blob)
@@ -62,9 +85,11 @@ export async function readDocument(files, progress) {
             }
           } finally { await task.destroy() }
         } else warnings.push(`${file.name}: originale salvato; per questo formato inserisci il testo a mano.`)
-        if (text.trim()) parts.push(`--- ${file.name} ---\n${text.trim()}`)
+        if (text.trim()) parts.push({ name: file.name, text: text.trim() })
       } catch { warnings.push(`${file.name}: lettura non riuscita. L’originale è salvato; puoi riprovare con rete disponibile, una foto più nitida o inserire il testo a mano.`) }
     }
   } finally { await worker?.terminate() }
-  return { text: parts.join('\n\n').slice(0, 2000000), warnings }
+  // Con un originale solo (es. una nota vocale) il testo è quello e basta, senza intestazione.
+  const text = files.length === 1 ? parts.map(p => p.text).join('') : parts.map(p => `--- ${p.name} ---\n${p.text}`).join('\n\n')
+  return { text: text.slice(0, 2000000), warnings }
 }

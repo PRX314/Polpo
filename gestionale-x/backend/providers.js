@@ -1,4 +1,4 @@
-import Groq from 'groq-sdk'
+import Groq, { toFile } from 'groq-sdk'
 
 // Le variabili d'ambiente si leggono a ogni chiamata, non all'import:
 // server.js carica dotenv dopo gli import.
@@ -161,6 +161,20 @@ export async function* streamProvider({ provider, model }, opts) {
       } catch { /* riga incompleta o di servizio */ }
     }
   }
+}
+
+// Note vocali: Whisper su Groq (gratis, fino a 25 MB per file). Il nome del file con l'estensione
+// giusta serve: Groq riconosce il formato da lì (webm da Chrome/Edge, mp4 da Safari su iPhone).
+export async function trascriviAudio(dati, nomeFile, lingua = 'it') {
+  if (!PROVIDERS.groq.key()) throw Object.assign(new Error('Trascrizione non configurata (manca GROQ_API_KEY)'), { status: 503 })
+  const risposta = await getGroq().audio.transcriptions.create({
+    file: await toFile(dati, nomeFile),
+    model: process.env.WHISPER_MODEL || 'whisper-large-v3-turbo',
+    language: lingua,
+    response_format: 'json',
+    temperature: 0
+  })
+  return (risposta.text || '').trim()
 }
 
 export async function callProvider({ provider, model }, opts) {

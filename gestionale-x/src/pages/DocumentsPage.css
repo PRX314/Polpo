@@ -12,6 +12,13 @@
 .doc-label { display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-s); }
 .doc-back { align-self: flex-start; }
 .doc-file { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line-soft); }
+.doc-file audio { display: block; width: 100%; max-width: 420px; margin-top: 8px; }
+.voice-rec { display: inline-flex; align-items: center; gap: 10px; padding: 4px 4px 4px 12px; border: 1px solid var(--line); }
+.voice-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); animation: voice-pulse 1.2s ease-in-out infinite; }
+.voice-time { font-variant-numeric: tabular-nums; min-width: 3.2em; }
+.voice-error { flex-basis: 100%; }
+@keyframes voice-pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .voice-dot { animation: none; } }
 .doc-file img { width: 90px; height: 110px; object-fit: contain; background: var(--bg-sub); }
 .doc-deadline { display: grid; grid-template-columns: 2fr 1fr 1fr auto auto; gap: 10px; align-items: end; padding: 12px 0; border-top: 1px solid var(--line-soft); }
 @media(max-width: 600px) {

@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import { listProviders, providerName, normalizeTargets, callProvider, defaultTarget } from './providers.js'
+import { listProviders, providerName, normalizeTargets, callProvider, defaultTarget, trascriviAudio } from './providers.js'
 import { agente, creaLettore, schedaElemento, percorsoVault, riassumiNota, STRUMENTI_LETTURA, CARTELLE_VAULT, STATUS_LABELS } from './agente.js'
 import admin from 'firebase-admin'
 import webpush from 'web-push'
@@ -1330,6 +1330,29 @@ app.get('/api/parla', async (req, res) => {
     console.error('Voce non disponibile:', err?.message)
     chiudi()
     if (!res.headersSent) res.status(502).end()
+  }
+})
+
+// ============================================================================
+// NOTE VOCALI - trascrizione con Whisper (Groq)
+// ============================================================================
+// L'audio arriva grezzo nel corpo, col suo Content-Type: niente multipart, niente dipendenze.
+// Il token si controlla prima di leggere il corpo. L'audio non viene salvato: resta sul telefono.
+const ESTENSIONI_AUDIO = { 'audio/webm': 'webm', 'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a', 'audio/aac': 'm4a', 'audio/mpeg': 'mp3', 'audio/ogg': 'ogg', 'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/flac': 'flac', 'video/webm': 'webm', 'video/mp4': 'mp4' }
+
+app.post('/api/trascrivi', verifyUser, express.raw({ type: () => true, limit: '25mb' }), async (req, res) => {
+  const tipo = String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase()
+  const estensione = ESTENSIONI_AUDIO[tipo]
+  if (!estensione) return res.status(415).json({ error: `Formato audio non supportato (${tipo || 'sconosciuto'})` })
+  if (!Buffer.isBuffer(req.body) || !req.body.length) return res.status(400).json({ error: 'Audio vuoto' })
+  try {
+    const testo = await trascriviAudio(req.body, `nota.${estensione}`)
+    res.json({ testo })
+  } catch (err) {
+    console.error('Trascrizione:', err?.message)
+    if (err?.status === 503) return res.status(503).json({ error: err.message })
+    const { status, error, detail } = describeAiError(err, 'Groq')
+    res.status(status).json({ error: status === 500 && !/Chiave/.test(error) ? 'Trascrizione non riuscita.' : error, detail })
   }
 })
 

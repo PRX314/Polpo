@@ -2,7 +2,7 @@
 const DB = 'gestionale-documenti-v1'
 const MAX_FILE = 20 * 1024 * 1024
 export const MAX_BACKUP = 150 * 1024 * 1024
-export const CATEGORIES = ['Documento', 'Bolletta', 'Multa', 'Tassa', 'Ricevuta', 'Contratto', 'Altro']
+export const CATEGORIES = ['Documento', 'Nota vocale', 'Bolletta', 'Multa', 'Tassa', 'Ricevuta', 'Contratto', 'Altro']
 const listeners = new Set()
 const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(DB) : null
 channel?.addEventListener('message', () => listeners.forEach(fn => fn()))
