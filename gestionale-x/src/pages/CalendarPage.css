@@ -21,6 +21,19 @@
 .cal-kind { display: inline-block; width: 8px; height: 8px; border: 1px solid var(--ink); flex-shrink: 0; }
 .cal-kind.k-event { background: var(--ink); }
 .cal-kind.k-todo { border-radius: 0; height: 2px; margin: 3px 0; background: var(--ink); }
+/* Amministrativa: rombi pieni le proprie, vuoti le generali, cerchio le feste */
+.cal-kind.k-admin, .cal-kind.k-general { width: 7px; height: 7px; margin: 0 1px; transform: rotate(45deg); }
+.cal-kind.k-admin { background: var(--ink); }
+.cal-kind.k-holiday { border-radius: 50%; }
+.cal-cell.is-holiday .cal-num { text-decoration: underline; text-underline-offset: 3px; }
+.cal-layout.is-admin .cal-dow { background: var(--ink); color: var(--on-ink); border-right-color: var(--on-ink); }
+.cal-layout.is-admin .cal-grid { border-width: 2px 0 0 2px; }
+.cal-admin { display: flex; flex-direction: column; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--line-soft); }
+.cal-admin:last-child { border-bottom: 0; padding-bottom: 0; }
+.cal-amount { font-variant-numeric: tabular-nums; font-weight: 600; }
+.cal-link { display: inline-flex; align-items: center; gap: 4px; text-decoration: underline; }
+.cal-generali { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 12px; }
+.cal-generali .btn { align-self: flex-start; margin-top: 6px; }
 .cal-legend { display: flex; flex-wrap: wrap; gap: 14px; padding-top: 8px; }
 .cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
 

@@ -23,7 +23,8 @@ const buildAgenda = (items, events, documents) => {
     })
   })
   events.forEach(e => {
-    if (e.date) out.push({ key: `e-${e.id}`, kind: 'event', iso: e.date, time: e.time || '', text: e.title })
+    // Le scadenze amministrative fatte una volta sola restano salvate con done: true
+    if (e.date && !e.done) out.push({ key: `e-${e.id}`, kind: e.admin ? 'deadline' : 'event', iso: e.date, time: e.time || '', text: e.title })
   })
   out.push(...documentDeadlines(documents).map(d => ({ key: d.key, kind: 'documento', iso: d.date, time: '', text: d.title, documentId: d.documentId })))
   return out.sort((a, b) => (a.iso + (a.time || '99')).localeCompare(b.iso + (b.time || '99')))

@@ -1,12 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlarmClock, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
+import { AlarmClock, CalendarPlus, Check, ChevronLeft, ChevronRight, ExternalLink, Plus, X } from 'lucide-react'
 import EventForm from '../components/EventForm'
+import AdminForm from '../components/AdminForm'
 import { useData } from '../context/useData'
+import { useToast } from '../context/useToast'
 import { addEvent, updateEvent, deleteEvent, saveRoutine } from '../firebaseService'
 import { etichettaAnticipo } from '../sveglie'
-import { hourToTime, isoOf, longDate, oggiIso, addDaysIso, relativeDay, toIso } from '../lib/dates'
-import { documentDeadlines } from '../services/localDocuments'
+import { hourToTime, isoOf, longDate, oggiIso, addDaysIso, relativeDay, shortDate, toIso } from '../lib/dates'
+import {
+  AREE, GENERALI, SCADENZARIO, caricaFestivita, euro, generaliAccese, generaliTra, icsDaScadenze,
+  nextOccurrence, occurrences, prossimaGenerale, rigaIcsPersonale, righeIcsGenerali, ripetiLabel
+} from '../lib/amministrativa'
+import { documentDeadlines, download } from '../services/localDocuments'
 import './CalendarPage.css'
 
 const STATUS_CYCLE = ['pending', 'done', 'skip']
@@ -14,19 +20,64 @@ const STATUS_LABEL = { pending: 'Da fare', done: 'Fatta', skip: 'Saltata' }
 const STATUS_GLYPH = { pending: '○', done: '✓', skip: '—' }
 const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
 const GIORNI = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
-const KIND = { documento: 'k-deadline', appuntamento: 'k-event', 'project-deadline': 'k-deadline', 'todo-deadline': 'k-todo' }
-const KIND_LABEL = { documento: 'Documento locale', appuntamento: 'Appuntamento', 'project-deadline': 'Scadenza di un elemento', 'todo-deadline': 'Cosa da fare' }
+const KIND = { documento: 'k-deadline', appuntamento: 'k-event', 'project-deadline': 'k-deadline', 'todo-deadline': 'k-todo', admin: 'k-admin', generale: 'k-general', festivo: 'k-holiday' }
+const KIND_LABEL = { documento: 'Documento locale', appuntamento: 'Appuntamento', 'project-deadline': 'Scadenza di un elemento', 'todo-deadline': 'Cosa da fare', admin: 'Scadenza amministrativa', generale: 'Scadenza generale', festivo: 'Festa' }
+const LEGENDA = {
+  tutto: ['appuntamento', 'project-deadline', 'todo-deadline', 'documento', 'admin'],
+  amministrativa: ['admin', 'documento', 'generale', 'festivo']
+}
+const FINESTRA = { tutto: 14, amministrativa: 90 }
+const VISTA_KEY = 'gx-calendario-vista'
+
+const vistaSalvata = () => {
+  try { return localStorage.getItem(VISTA_KEY) === 'amministrativa' ? 'amministrativa' : 'tutto' } catch { return 'tutto' }
+}
+
+const scaricaIcs = (righe, nome) => download(new Blob([icsDaScadenze(righe)], { type: 'text/calendar;charset=utf-8' }), nome)
 
 const CalendarPage = () => {
   const navigate = useNavigate()
+  const toast = useToast()
   const { projects, events, routine, documents } = useData()
   const [current, setCurrent] = useState(() => new Date())
   const [selected, setSelected] = useState(() => oggiIso())
   const [eventForm, setEventForm] = useState(null)
+  const [adminForm, setAdminForm] = useState(null)
+  const [vista, setVista] = useState(vistaSalvata)
+  const [festivita, setFestivita] = useState({})
+
+  const admin = vista === 'amministrativa'
+  const cambiaVista = (v) => {
+    setVista(v)
+    try { localStorage.setItem(VISTA_KEY, v) } catch { /* resta solo per questa visita */ }
+  }
 
   const year = current.getFullYear()
   const month = current.getMonth()
   const today = oggiIso()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+  // Intervallo da calcolare: il mese visibile più la finestra delle prossime scadenze
+  const from = useMemo(() => [isoOf(year, month, 1), today].sort()[0], [year, month, today])
+  const to = useMemo(() => [isoOf(year, month, daysInMonth), addDaysIso(FINESTRA[vista])].sort()[1], [year, month, daysInMonth, vista])
+
+  // Festività degli anni in vista, una volta per anno
+  const richieste = useRef(new Set())
+  useEffect(() => {
+    [Number(from.slice(0, 4)), Number(to.slice(0, 4))].forEach(y => {
+      if (richieste.current.has(y)) return
+      richieste.current.add(y)
+      caricaFestivita(y).then(rows => setFestivita(f => ({ ...f, [y]: rows })))
+    })
+  }, [from, to])
+
+  const festivi = useMemo(() => {
+    const m = new Map()
+    Object.values(festivita).flat().forEach(h => m.set(h.date, h.nome))
+    return m
+  }, [festivita])
+  const festiviSet = useMemo(() => new Set(festivi.keys()), [festivi])
+  const scelte = useMemo(() => routine?.amministrativa?.generali || {}, [routine])
 
   // Scadenze di progetti e task. Archiviati e completati restano fuori: prima entravano tutti,
   // e "Scaduti" si riempiva di progetti chiusi da mesi che non erano più scaduti di niente.
@@ -41,11 +92,29 @@ const CalendarPage = () => {
     return out
   }, [projects])
 
-  const entries = useMemo(() => ([
-    ...deadlines,
-    ...documentDeadlines(documents),
-    ...events.map(e => ({ date: e.date, time: e.time || '', reminder: e.reminder ?? null, title: e.title, type: 'appuntamento', evento: e }))
-  ]), [deadlines, events, documents])
+  const adminEvents = useMemo(() => events.filter(e => e.admin && !e.done), [events])
+
+  // Una scadenza che si ripete compare in tutte le sue volte; solo la prima si può segnare fatta
+  const adminEntries = useMemo(() => adminEvents.flatMap(e => {
+    const dates = occurrences(e, from, to)
+    if (e.date < from) dates.unshift(e.date)
+    return dates.map(d => ({ date: d, time: '', reminder: null, title: e.title, type: 'admin', evento: e, futura: d !== e.date, amount: e.amount, projectName: AREE[e.area] }))
+  }), [adminEvents, from, to])
+
+  const entries = useMemo(() => {
+    if (admin) return [
+      ...documentDeadlines(documents),
+      ...adminEntries,
+      ...generaliTra(scelte, from, to, festiviSet).map(({ date, generale }) => ({ date, time: '', reminder: null, title: generale.titolo, type: 'generale', generale })),
+      ...[...festivi].filter(([d]) => d >= from && d <= to).map(([date, nome]) => ({ date, time: '', reminder: null, title: nome, type: 'festivo' }))
+    ]
+    return [
+      ...deadlines,
+      ...documentDeadlines(documents),
+      ...events.filter(e => !e.admin).map(e => ({ date: e.date, time: e.time || '', reminder: e.reminder ?? null, title: e.title, type: 'appuntamento', evento: e })),
+      ...adminEntries
+    ]
+  }, [admin, deadlines, events, documents, adminEntries, scelte, from, to, festivi, festiviSet])
 
   const byDate = useMemo(() => {
     const m = {}
@@ -55,14 +124,15 @@ const CalendarPage = () => {
   }, [entries])
 
   const upcoming = useMemo(() => {
-    const limit = addDaysIso(14)
-    return entries.filter(v => v.date >= today && v.date <= limit).sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')))
-  }, [entries, today])
-  const overdue = useMemo(() => entries.filter(v => v.date < today).sort((a, b) => b.date.localeCompare(a.date)), [entries, today])
+    const limit = addDaysIso(FINESTRA[vista])
+    return entries.filter(v => v.type !== 'festivo' && v.date >= today && v.date <= limit).sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')))
+  }, [entries, today, vista])
+  const overdue = useMemo(() => entries.filter(v => v.date < today && !v.futura && v.type !== 'generale' && v.type !== 'festivo').sort((a, b) => b.date.localeCompare(a.date)), [entries, today])
+  const daPagare = useMemo(() => upcoming.reduce((n, v) => n + (Number(v.amount) || 0), 0), [upcoming])
 
   // ── Routine ──
-  const tasks = routine?.tasks || []
-  const blocks = routine?.timeBlocks || []
+  const tasks = admin ? [] : (routine?.tasks || [])
+  const blocks = admin ? [] : (routine?.timeBlocks || [])
   const dayStatus = (d) => routine?.weekStatus?.[d] || 'pending'
   const dayTicks = (d) => routine?.dayTasks?.[d] || {}
   const doneCount = (d) => tasks.filter(t => dayTicks(d)[t.id]).length
@@ -76,10 +146,31 @@ const CalendarPage = () => {
     saveRoutine({ dayTasks: { ...(routine?.dayTasks || {}), [d]: { ...cur, [id]: !cur[id] } } }).catch(() => {})
   }
 
+  // ── Amministrativa ──
+  const toggleGenerale = (g, on) => {
+    saveRoutine({ amministrativa: { generali: { ...scelte, [g.id]: !on } } }).catch(() => toast.err('Non sono riuscito a salvare la scelta'))
+  }
+
+  // Fatta o pagata: la ricorrenza sposta la data alla volta dopo, le altre spariscono dal calendario
+  const segnaFatta = async (e) => {
+    const history = [...(e.history || []), { date: e.date, doneAt: new Date().toISOString() }].slice(-50)
+    const next = nextOccurrence(e)
+    try {
+      await updateEvent(e.id, next ? { date: next, history } : { done: true, history })
+      toast.ok(next ? `Segnata. Prossima volta: ${shortDate(next)} ${next.slice(0, 4)}` : 'Segnata come fatta')
+    } catch {
+      toast.err('Non sono riuscito a segnarla')
+    }
+  }
+
+  const tuttoAlCalendario = () => {
+    const finoA = addDaysIso(365)
+    scaricaIcs([...adminEvents.map(rigaIcsPersonale), ...righeIcsGenerali(scelte, today, finoA, festiviSet)], 'scadenze-amministrative.ics')
+  }
+
   // ── Griglia del mese (settimana da lunedì) ──
   const firstDay = new Date(year, month, 1).getDay()
   const lead = firstDay === 0 ? 6 : firstDay - 1
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
   const cells = [...Array(lead).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)]
   while (cells.length % 7) cells.push(null)
 
@@ -99,12 +190,18 @@ const CalendarPage = () => {
 
   const openEntry = (v) => {
     if (v.documentId) navigate(`/documenti/${v.documentId}`)
+    else if (v.type === 'admin') setAdminForm({ scadenza: v.evento })
     else if (v.evento) setEventForm({ evento: v.evento, data: v.date })
     else if (v.project) navigate(`/elementi/${v.project.id}`)
+    else { goTo(new Date(`${v.date}T00:00:00`)) }
   }
 
   const saveEvent = async (data) => {
     if (eventForm?.evento) await updateEvent(eventForm.evento.id, data)
+    else await addEvent(data)
+  }
+  const saveAdmin = async (data) => {
+    if (adminForm?.scadenza) await updateEvent(adminForm.scadenza.id, data)
     else await addEvent(data)
   }
 
@@ -115,30 +212,67 @@ const CalendarPage = () => {
         <span className="cal-entry-title">{v.title}</span>
         {(v.projectName || v.time) && <span className="small faint"> {v.projectName}{v.time ? ` · ${v.time}` : ''}</span>}
       </span>
+      {v.amount ? <span className="small cal-amount">{euro(v.amount)}</span> : null}
       {showDate && <span className="small muted">{relativeDay(v.date).text}</span>}
     </button>
   )
+
+  // Nel giorno selezionato: scadenza personale con "fatta" e "al calendario", generale con la sua nota
+  const AdminDetail = ({ v }) => {
+    if (v.type === 'generale') return (
+      <div className="cal-admin">
+        <EntryLine v={v} />
+        <p className="small muted">{v.generale.nota}</p>
+        {v.generale.slitta && <a className="small cal-link" href={SCADENZARIO} target="_blank" rel="noreferrer">Verifica proroghe sullo scadenzario <ExternalLink size={12} /></a>}
+      </div>
+    )
+    if (v.type !== 'admin') return <EntryLine v={v} />
+    const e = v.evento
+    return (
+      <div className="cal-admin">
+        <EntryLine v={v} />
+        <p className="small muted">
+          {[ripetiLabel(e), e.notes].filter(Boolean).join(' · ') || 'Una volta sola'}
+          {v.futura && ` · prima c'è quella del ${shortDate(e.date)}`}
+        </p>
+        <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+          {!v.futura && <button className="btn btn-sm" onClick={() => segnaFatta(e)}><Check size={14} /> {e.amount ? 'Pagata' : 'Fatta'}</button>}
+          <button className="btn btn-sm" onClick={() => scaricaIcs([rigaIcsPersonale(e)], `${e.title.replace(/[^\w\- ]+/g, '').trim() || 'scadenza'}.ics`)}><CalendarPlus size={14} /> Aggiungi al calendario</button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="stack" style={{ gap: 14 }}>
       <div className="page-head">
         <div>
           <h1>{MESI[month]} {year}</h1>
-          <p className="sub">{upcoming.length ? `${upcoming.length} in arrivo nelle prossime due settimane` : 'Due settimane sgombre'}</p>
+          <p className="sub">
+            {admin
+              ? (upcoming.length ? `${upcoming.length} scadenze nei prossimi 90 giorni${daPagare ? ` · ${euro(daPagare)} da pagare` : ''}` : 'Niente di amministrativo nei prossimi 90 giorni')
+              : (upcoming.length ? `${upcoming.length} in arrivo nelle prossime due settimane` : 'Due settimane sgombre')}
+          </p>
         </div>
         <div className="page-actions">
+          <div className="seg" role="group" aria-label="Vista del calendario">
+            <button style={{ width: 'auto', padding: '0 12px' }} className={!admin ? 'is-on' : ''} aria-pressed={!admin} onClick={() => cambiaVista('tutto')}>Tutto</button>
+            <button style={{ width: 'auto', padding: '0 12px' }} className={admin ? 'is-on' : ''} aria-pressed={admin} onClick={() => cambiaVista('amministrativa')}>Amministrativa</button>
+          </div>
           <div className="seg">
             <button onClick={() => goTo(new Date(year, month - 1, 1))} aria-label="Mese precedente"><ChevronLeft size={16} /></button>
             <button style={{ width: 'auto', padding: '0 12px' }} onClick={() => goTo(new Date())}>Oggi</button>
             <button onClick={() => goTo(new Date(year, month + 1, 1))} aria-label="Mese successivo"><ChevronRight size={16} /></button>
           </div>
-          <button className="btn btn-primary" onClick={() => setEventForm({ data: selected || today })}><Plus size={15} /> Appuntamento</button>
+          {admin
+            ? <button className="btn btn-primary" onClick={() => setAdminForm({ data: selected || today })}><Plus size={15} /> Scadenza</button>
+            : <button className="btn btn-primary" onClick={() => setEventForm({ data: selected || today })}><Plus size={15} /> Appuntamento</button>}
         </div>
       </div>
 
-      <div className="cal-layout">
+      <div className={`cal-layout ${admin ? 'is-admin' : ''}`}>
         <div>
-          <div className="cal-grid" role="grid" aria-label={`${MESI[month]} ${year}`}>
+          <div className="cal-grid" role="grid" aria-label={`${MESI[month]} ${year}${admin ? ', vista amministrativa' : ''}`}>
             {GIORNI.map(d => <div key={d} className="cal-dow" role="columnheader">{d}</div>)}
             {cells.map((day, i) => {
               if (!day) return <div key={i} className="cal-cell is-empty" role="gridcell" />
@@ -146,11 +280,13 @@ const CalendarPage = () => {
               const list = byDate[iso] || []
               const st = dayStatus(iso)
               const n = doneCount(iso)
+              const festa = festivi.get(iso)
               return (
                 <button
                   key={i} role="gridcell" onClick={() => setSelected(iso)}
-                  className={`cal-cell ${iso === today ? 'is-today' : ''} ${iso === selected ? 'is-selected' : ''}`}
-                  aria-label={`${day} ${MESI[month]}${list.length ? `, ${list.length} voci` : ''}`} aria-pressed={iso === selected}
+                  className={`cal-cell ${iso === today ? 'is-today' : ''} ${iso === selected ? 'is-selected' : ''} ${festa ? 'is-holiday' : ''}`}
+                  title={festa || undefined}
+                  aria-label={`${day} ${MESI[month]}${festa ? `, ${festa}` : ''}${list.length ? `, ${list.length} voci` : ''}`} aria-pressed={iso === selected}
                 >
                   <span className="cal-num">{day}</span>
                   {tasks.length > 0 && (st !== 'pending' || n > 0) && (
@@ -170,7 +306,7 @@ const CalendarPage = () => {
             })}
           </div>
           <div className="cal-legend small muted">
-            {Object.entries(KIND_LABEL).map(([k, label]) => <span key={k}><span className={`cal-kind ${KIND[k]}`} aria-hidden="true" /> {label}</span>)}
+            {LEGENDA[vista].map(k => <span key={k}><span className={`cal-kind ${KIND[k]}`} aria-hidden="true" /> {KIND_LABEL[k]}</span>)}
           </div>
         </div>
 
@@ -179,7 +315,7 @@ const CalendarPage = () => {
             <section className="card cal-day">
               <div className="row" style={{ alignItems: 'flex-start' }}>
                 <h2 className="grow" style={{ textTransform: 'capitalize' }}>{longDate(selected)}</h2>
-                <button className="btn-icon sm" onClick={() => setEventForm({ data: selected })} aria-label="Nuovo appuntamento in questo giorno"><Plus size={16} /></button>
+                <button className="btn-icon sm" onClick={() => (admin ? setAdminForm({ data: selected }) : setEventForm({ data: selected }))} aria-label={admin ? 'Nuova scadenza in questo giorno' : 'Nuovo appuntamento in questo giorno'}><Plus size={16} /></button>
                 <button className="btn-icon sm" onClick={() => setSelected(null)} aria-label="Chiudi il giorno"><X size={16} /></button>
               </div>
 
@@ -205,8 +341,8 @@ const CalendarPage = () => {
 
               {untimed.length > 0 && (
                 <div>
-                  <p className="cal-label">Senza orario</p>
-                  {untimed.map((v, i) => <EntryLine key={i} v={v} />)}
+                  <p className="cal-label">{admin ? 'Da fare in questo giorno' : 'Senza orario'}</p>
+                  {untimed.map((v, i) => (admin || v.type === 'admin' ? <AdminDetail key={i} v={v} /> : <EntryLine key={i} v={v} />))}
                 </div>
               )}
 
@@ -241,7 +377,7 @@ const CalendarPage = () => {
               )}
 
               {!timed.length && !untimed.length && !tasks.length && (
-                <p className="small muted">Giornata libera. Usa + per aggiungere un appuntamento.</p>
+                <p className="small muted">{admin ? 'Niente di amministrativo. Usa + per aggiungere una scadenza.' : 'Giornata libera. Usa + per aggiungere un appuntamento.'}</p>
               )}
             </section>
           )}
@@ -254,16 +390,42 @@ const CalendarPage = () => {
           )}
 
           <section className="card card-flush">
-            <h2 className="cal-head"><span>Prossime scadenze</span></h2>
+            <h2 className="cal-head"><span>{admin ? 'Prossimi 90 giorni' : 'Prossime scadenze'}</span>{admin && daPagare > 0 && <span>{euro(daPagare)}</span>}</h2>
             {upcoming.length > 0
               ? upcoming.map((v, i) => <EntryLine key={i} v={v} showDate />)
-              : <p className="small muted" style={{ padding: 12 }}>Nessuna scadenza nelle prossime due settimane.</p>}
+              : <p className="small muted" style={{ padding: 12 }}>{admin ? 'Nessuna scadenza nei prossimi 90 giorni.' : 'Nessuna scadenza nelle prossime due settimane.'}</p>}
           </section>
+
+          {admin && (
+            <section className="card card-flush">
+              <h2 className="cal-head"><span>Scadenze generali</span> <span className="count ghost">{generaliAccese(scelte).length}</span></h2>
+              <div className="cal-generali">
+                <p className="small muted">Uguali per tutti, ogni anno. Accendi solo quelle che ti riguardano.</p>
+                {GENERALI.map(g => {
+                  const on = generaliAccese(scelte).includes(g)
+                  const quando = prossimaGenerale(g, today, festiviSet)
+                  return (
+                    <label key={g.id} className="cal-task" title={g.nota}>
+                      <input type="checkbox" checked={on} onChange={() => toggleGenerale(g, on)} />
+                      <span className="grow">{g.titolo}</span>
+                      {quando && <span className="small faint">{shortDate(quando)}</span>}
+                    </label>
+                  )
+                })}
+                <a className="small cal-link" href={SCADENZARIO} target="_blank" rel="noreferrer">Le date fiscali possono slittare: scadenzario ufficiale <ExternalLink size={12} /></a>
+                <button className="btn btn-sm" onClick={tuttoAlCalendario}><CalendarPlus size={14} /> Tutto nel calendario dell'iPhone</button>
+                <p className="help">Scarica un file con le tue scadenze e le generali dei prossimi 12 mesi: aprilo e scegli «Aggiungi tutto». Gli avvisi poi li manda il telefono.</p>
+              </div>
+            </section>
+          )}
         </div>
       </div>
 
       {eventForm && (
         <EventForm evento={eventForm.evento} data={eventForm.data} onSave={saveEvent} onDelete={deleteEvent} onClose={() => setEventForm(null)} />
+      )}
+      {adminForm && (
+        <AdminForm scadenza={adminForm.scadenza} data={adminForm.data} onSave={saveAdmin} onDelete={deleteEvent} onClose={() => setAdminForm(null)} />
       )}
     </div>
   )
