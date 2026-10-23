@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, ExternalLink, Ellipsis, Pencil } from 'lucide-react'
+import { ArrowLeft, BookOpen, ExternalLink, Ellipsis, Pencil, Plus } from 'lucide-react'
 import Menu from '../components/ui/Menu'
 import TypeTag from '../components/ui/TypeTag'
 import EmptyState from '../components/ui/EmptyState'
@@ -11,6 +11,9 @@ import DeadlineTag from '../components/ui/DeadlineTag'
 import { useItemMenu } from '../hooks/useItemMenu'
 import { useData } from '../context/useData'
 import { useUi } from '../context/useUi'
+import { useToast } from '../context/useToast'
+import { creaAppunto, subscribeToAppunti } from '../services/appuntiService'
+import { progettiCitati, tagDi, testoAppunto } from '../lib/hashtag'
 import { linkVault, etichettaVault, haVault } from '../vault'
 import { renderMarkdown } from '../lib/markdown'
 import { fullDate } from '../lib/dates'
@@ -146,12 +149,38 @@ const Detail = ({ project }) => {
             )}
           </section>
 
+          <AppuntiDelProgetto project={project} />
 <section className="card stack"><h2 className="card-title">Documenti su questo dispositivo</h2>{documents.filter(d => d.projectId === project.id).map(d => <Link key={d.id} to={`/documenti/${d.id}`}>{d.title}{d.objective ? ` · ${d.objective}` : ""}</Link>)}<Link className="btn btn-sm" to={`/documenti?elemento=${encodeURIComponent(project.id)}`}>Collega foto o file</Link></section>
           <TodoList project={project} onUpdate={(todos) => actions.update(project.id, { todos })} />
           {project.scan && <ScanInfo scan={project.scan} />}
         </aside>
       </div>
     </div>
+  )
+}
+
+// Gli appunti che citano il progetto con #Tag; "Nuovo appunto" ne crea uno con il tag già scritto
+const AppuntiDelProgetto = ({ project }) => {
+  const navigate = useNavigate()
+  const toast = useToast()
+  const [appunti, setAppunti] = useState([])
+  useEffect(() => subscribeToAppunti(setAppunti), [])
+  const suoi = appunti.filter(a => !a.deletedAt && progettiCitati(testoAppunto(a), [project]).length)
+
+  const nuovo = () => creaAppunto({ text: `${tagDi(project)}\n\n` })
+    .then(id => navigate(`/appunti/${id}`))
+    .catch(() => toast.err('Non sono riuscito a creare l\'appunto'))
+
+  return (
+    <section className="card stack">
+      <h2 className="card-title">Appunti {suoi.length > 0 && <span className="count">{suoi.length}</span>}</h2>
+      {suoi.slice(0, 8).map(a => (
+        <Link key={a.id} to={`/appunti/${a.id}`}>{a.title?.trim() || a.text.replace(/#[\p{L}\p{N}_-]+/gu, '').trim().split('\n')[0].slice(0, 80) || 'Senza titolo'}</Link>
+      ))}
+      {suoi.length > 8 && <Link className="small muted" to={`/appunti`}>Altri {suoi.length - 8} negli Appunti</Link>}
+      {!suoi.length && <p className="small muted">Scrivi {tagDi(project)} in un appunto per vederlo qui.</p>}
+      <button className="btn btn-sm" onClick={nuovo}><Plus size={14} /> Nuovo appunto</button>
+    </section>
   )
 }
 

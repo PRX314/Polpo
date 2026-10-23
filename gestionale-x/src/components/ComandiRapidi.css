@@ -1,0 +1,9 @@
+.comandi { display: flex; flex-wrap: wrap; gap: 6px; }
+.comandi .voice-rec { gap: 6px; }
+.comandi-file { position: relative; cursor: pointer; }
+.comandi-file input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+.comandi-file.is-disabled { opacity: 0.5; pointer-events: none; }
+
+/* Domande già scritte per Polpo, sotto la barra */
+.domande { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -6px; }
+.domande .chip { min-height: 26px; padding: 0 8px; font-size: var(--fs-xs); }

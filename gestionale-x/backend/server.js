@@ -1496,7 +1496,7 @@ async function githubCrea(path, contenuto, messaggio) {
 
 app.post('/api/vault/salva-inbox', verifyUser, async (req, res) => {
   if (!GITHUB_TOKEN) return res.status(503).json({ error: 'GitHub token non configurato: il vault non è scrivibile' })
-  const { testo, titolo, assistente } = req.body || {}
+  const { testo, titolo, assistente, tipo } = req.body || {}
   if (typeof testo !== 'string' || !testo.trim() || testo.length > 50000) return res.status(400).json({ error: 'Testo non valido' })
   try {
     const adesso = new Date()
@@ -1506,7 +1506,7 @@ app.post('/api/vault/salva-inbox', verifyUser, async (req, res) => {
     const fm = [
       '---',
       'fonte: gestionale-x',
-      'tipo: chat',
+      `tipo: ${tipo === 'appunto' ? 'appunto' : 'chat'}`,
       `creato: ${adesso.toISOString()}`,
       assistente ? `assistente: ${String(assistente).replace(/[\r\n]/g, ' ')}` : null,
       '---',

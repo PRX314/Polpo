@@ -1,0 +1,17 @@
+.lav { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; background: var(--bg-sub); padding-bottom: env(safe-area-inset-bottom); }
+.lav-barra { display: flex; align-items: center; gap: 8px; padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top)); background: var(--bg); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.lav-barra-2 { padding-top: 8px; }
+.lav-colori, .lav-spessori { display: flex; gap: 6px; }
+.lav-colore { width: 30px; height: 30px; border-radius: 50%; background: var(--c); border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--line-soft); }
+.lav-colore.is-on { box-shadow: 0 0 0 2px var(--ink); }
+.lav-spessore { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line-soft); }
+.lav-spessore span { display: block; border-radius: 50%; background: var(--ink); }
+.lav-spessore.is-on { border-color: var(--ink); outline: 1px solid var(--ink); }
+.lav-barra select { width: auto; }
+.lav-foto { position: relative; overflow: hidden; }
+.lav-foto input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.lav-errore { padding: 6px 12px; background: var(--bg); }
+.lav-area { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 10px; }
+.lav-foglio { position: relative; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18); background: #fff; }
+.lav-foglio canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.lav-inchiostro { touch-action: none; cursor: crosshair; }

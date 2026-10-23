@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowUp, CalendarDays, Plus } from 'lucide-react'
+import ComandiRapidi from '../components/ComandiRapidi'
 import ProgressBar from '../components/ui/ProgressBar'
 import StatusMark from '../components/ui/StatusMark'
 import { useData } from '../context/useData'
@@ -12,6 +13,8 @@ import { documentDeadlines } from '../services/localDocuments'
 import './OggiPage.css'
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1)
+
+const DOMANDE = ['Cosa scade questa settimana?', 'Pianifichiamo la settimana', 'Su cosa lavoro oggi?']
 
 // Scadenze, appuntamenti e cose da fare di oggi e dei prossimi giorni, in un'unica lista ordinata.
 const buildAgenda = (items, events, documents) => {
@@ -133,6 +136,8 @@ const OggiPage = () => {
         </div>
       </div>
 
+      <ComandiRapidi />
+
       <form className="ask" onSubmit={send}>
         <input
           value={prompt} onChange={(e) => setPrompt(e.target.value)}
@@ -140,6 +145,9 @@ const OggiPage = () => {
         />
         <button className="btn btn-primary" type="submit" disabled={!prompt.trim()} aria-label="Invia a Polpo AI"><ArrowUp size={16} /></button>
       </form>
+      <div className="domande" role="group" aria-label="Domande pronte per Polpo">
+        {DOMANDE.map(d => <button key={d} type="button" className="chip" onClick={() => navigate('/ai', { state: { message: d } })}>{d}</button>)}
+      </div>
 
       <div className="stats" role="list">
         <Link to="/elementi" className="stat" role="listitem"><b>{focus.length}</b><span>In primo piano</span></Link>

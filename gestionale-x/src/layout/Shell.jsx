@@ -5,7 +5,7 @@ import { House, Folder, HeartPulse, MessageSquare } from 'lucide-react'
 // Routine mostravano in buona parte le stesse cose.
 //   Oggi      cosa conta oggi e questa settimana
 //   Progetti  elenco e cose da fare dei progetti (roadmap dal vault comprese)
-//   Vita      agenda, documenti, routine: le cose personali con una data
+//   Vita      agenda, documenti, appunti, routine: le cose personali
 //   Polpo     la chat
 // Le pagine di prima restano ai loro indirizzi: Progetti e Vita le raggruppano con una barra
 // di sotto-sezioni, così i link già esistenti (anche nelle chat salvate) continuano a funzionare.
@@ -21,10 +21,11 @@ const SECTIONS = [
   },
   {
     to: '/calendario', label: 'Vita', icon: HeartPulse,
-    match: (p) => ['/calendario', '/documenti', '/routine'].some(x => p.startsWith(x)),
+    match: (p) => ['/calendario', '/documenti', '/appunti', '/routine'].some(x => p.startsWith(x)),
     sub: [
       { to: '/calendario', label: 'Agenda', match: (p) => p.startsWith('/calendario') },
       { to: '/documenti', label: 'Documenti', match: (p) => p.startsWith('/documenti') },
+      { to: '/appunti', label: 'Appunti', match: (p) => p.startsWith('/appunti') },
       { to: '/routine', label: 'Routine', match: (p) => p.startsWith('/routine') }
     ]
   },

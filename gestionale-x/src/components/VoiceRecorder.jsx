@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Mic, Square, X } from 'lucide-react'
+import './VoiceRecorder.css'
 
 // Registra dal microfono e consegna un File audio. Chrome/Edge fanno webm/opus, Safari su iPhone mp4/aac.
 // 32 kbit/s bastano per la voce e per Whisper: un'ora sta sotto i 20 MB dell'archivio locale.
@@ -13,7 +14,7 @@ const ERRORI = {
   NotReadableError: 'Il microfono è occupato da un’altra app.',
 }
 
-export default function VoiceRecorder({ onRecorded, disabled }) {
+export default function VoiceRecorder({ onRecorded, disabled, etichetta = 'Registra voce', piccolo = false }) {
   const [secondi, setSecondi] = useState(null) // null = fermo
   const [errore, setErrore] = useState('')
   const sessione = useRef(null)
@@ -68,13 +69,13 @@ export default function VoiceRecorder({ onRecorded, disabled }) {
   const ferma = annulla => { const s = sessione.current; if (!s) return; s.annullata = annulla; s.registratore.stop() }
 
   if (secondi === null) return <>
-    <button type="button" className="btn" disabled={disabled} onClick={avvia}><Mic size={16} /> Registra voce</button>
+    <button type="button" className={`btn ${piccolo ? 'btn-sm' : ''}`} disabled={disabled} onClick={avvia}><Mic size={piccolo ? 14 : 16} /> {etichetta}</button>
     {errore && <p role="alert" className="small voice-error">{errore}</p>}
   </>
   return <div className="voice-rec" role="group" aria-label="Registrazione in corso">
     <span className="voice-dot" aria-hidden="true" />
     <span className="voice-time" aria-live="off">{durata(secondi)}</span>
-    <button type="button" className="btn btn-primary" onClick={() => ferma(false)}><Square size={14} /> Ferma e salva</button>
-    <button type="button" className="btn-icon" aria-label="Annulla registrazione" onClick={() => ferma(true)}><X size={16} /></button>
+    <button type="button" className={`btn btn-primary ${piccolo ? 'btn-sm' : ''}`} onClick={() => ferma(false)}><Square size={14} /> Ferma e salva</button>
+    <button type="button" className={`btn-icon ${piccolo ? 'sm' : ''}`} aria-label="Annulla registrazione" onClick={() => ferma(true)}><X size={16} /></button>
   </div>
 }

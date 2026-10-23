@@ -1,0 +1,31 @@
+.ap-page { gap: 14px; }
+.ap-filtri { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.ap-filtri input { flex: 1; min-width: 220px; }
+.ap-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.ap-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ap-card h2 { overflow-wrap: anywhere; }
+.ap-estratto { white-space: pre-wrap; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-size: var(--fs-s); }
+.ap-testa { gap: 8px; flex-wrap: wrap; }
+.ap-indietro { align-self: flex-start; }
+.ap-titolo { font-size: var(--fs-xl); font-weight: 700; border: 0; border-bottom: 1px solid var(--line-soft); padding: 6px 0; height: auto; background: transparent; }
+.ap-titolo:focus { outline: none; border-bottom-color: var(--ink); }
+.ap-azioni { gap: 8px; flex-wrap: wrap; }
+.ap-file { position: relative; overflow: hidden; }
+.ap-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.ap-file:focus-within { outline: 2px solid var(--ink); outline-offset: 2px; }
+.ap-testo { min-height: 220px; resize: vertical; line-height: 1.5; font-size: var(--fs-l); }
+.ap-blocchi { display: flex; flex-direction: column; gap: 12px; }
+.ap-blocco { display: flex; flex-direction: column; gap: 10px; }
+.ap-audio { width: 100%; max-width: 480px; }
+.ap-ascolta { align-self: flex-start; }
+.ap-attesa { display: inline-flex; align-items: center; gap: 6px; }
+.ap-trascrizione { white-space: pre-wrap; line-height: 1.5; padding: 10px 12px; background: var(--bg-sub); border-left: 3px solid var(--ink); }
+.ap-disegno { display: block; padding: 0; border: 1px solid var(--line-soft); background: #fff; max-width: 340px; cursor: zoom-in; }
+.ap-disegno img { display: block; width: 100%; height: auto; }
+.ap-disegno span { display: block; padding: 24px; }
+
+/* #hashtag: progetti proposti mentre scrivi e progetti già collegati */
+.ap-proposte { margin-top: -6px; }
+.ap-proposte .chip { min-height: 28px; }
+.ap-collegati { gap: 6px; flex-wrap: wrap; }
+.ap-card .ap-collegati { margin-top: 6px; }

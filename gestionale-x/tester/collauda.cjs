@@ -553,6 +553,37 @@ async function main() {
       verifica(!errori.length, errori.join('; '));
     });
 
+    // ── comandi rapidi di Oggi e appunti legati con #hashtag (dal 2026-10-23) ──
+    const veloce = `Cosa veloce ${tra(100, 999)}`;
+    mosse.push(`comando rapido "Da fare": "${veloce}" in Gestionale di prova`);
+    await passo(page, 'Oggi: comando rapido "Da fare"', async () => {
+      await vai(page, 'Oggi');
+      await page.getByRole('group', { name: 'Comandi rapidi' }).getByRole('button', { name: 'Da fare', exact: true }).click();
+      const f = finestra(page);
+      await f.getByLabel('Cosa').fill(veloce);
+      await f.getByLabel('Progetto').selectOption('storico-progetto');
+      await f.getByRole('button', { name: 'Aggiungi', exact: true }).click();
+      await toast(page, 'Aggiunta a Gestionale di prova');
+      await attendi(async () => (await leggiUno('projects', 'storico-progetto'))?.todos?.some(t => t.text === veloce), 'cosa da fare non salvata nel progetto');
+    });
+
+    await passo(page, 'Oggi: comando rapido "Appunto" legato con #hashtag', async () => {
+      await vai(page, 'Oggi');
+      await page.getByRole('group', { name: 'Comandi rapidi' }).getByRole('button', { name: 'Appunto', exact: true }).click();
+      await page.waitForURL(/\/appunti\/[^/]+$/, { timeout: 8000 });
+      const area = page.getByLabel('Testo dell\'appunto');
+      await area.click();
+      await area.pressSequentially('Pensiero dal collaudo #gestion', { delay: 20 });
+      await page.getByRole('group', { name: 'Collega a un progetto' }).getByRole('button', { name: '#GestionaleDiProva' }).click();
+      const valore = await area.inputValue();
+      verifica(valore === 'Pensiero dal collaudo #GestionaleDiProva ', `il tag non è stato completato bene: "${valore}"`);
+      await page.getByText('Salvato', { exact: true }).waitFor({ timeout: 8000 });
+      await page.locator('.ap-collegati').getByRole('link', { name: 'Gestionale di prova' }).click();
+      await page.getByRole('heading', { name: 'Gestionale di prova', level: 1 }).waitFor();
+      const sezione = page.locator('section').filter({ has: page.getByRole('heading', { name: /^Appunti/ }) });
+      await sezione.getByRole('link', { name: 'Pensiero dal collaudo' }).waitFor({ timeout: 8000 });
+    });
+
     await passo(page, 'Da fare: elenco e filtro "Scadute"', async () => {
       await vai(page, 'Da fare');
       await page.getByText(nuovoTodo, { exact: true }).first().waitFor({ timeout: 5000 });
