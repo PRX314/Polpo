@@ -3,7 +3,6 @@ import {
   collection,
   doc,
   getDocs,
-  addDoc,
   updateDoc,
   deleteDoc,
   onSnapshot,
@@ -13,6 +12,20 @@ import {
   Timestamp
 } from "firebase/firestore";
 import { db, auth } from "./firebase";
+
+// ============================================================================
+// SCRITTURE CHE NON ASPETTANO LA RETE
+// ============================================================================
+//
+// Firestore scrive subito nella cache del dispositivo (e onSnapshot lo mostra), ma la promessa di
+// setDoc/updateDoc si risolve solo quando il server conferma: senza segnale, mai. Così "Appunto",
+// "Da fare" e "Appuntamento" restavano su "Salvo…" finché non tornava la rete. Qui si aspetta il
+// server al massimo un attimo: un errore vero (permessi) arriva in tempo, altrimenti la scrittura
+// è in coda e parte da sola appena c'è campo.
+export const senzaAttendereLaRete = (scrittura, ms = 1500) => {
+  scrittura.catch(e => console.error('Scrittura non confermata dal server:', e))
+  return Promise.race([scrittura, new Promise(resolve => setTimeout(resolve, ms))])
+}
 
 // ============================================================================
 // PROJECTS COLLECTION
@@ -83,111 +96,25 @@ export const addProject = async (projectData) => {
     updatedAt: Timestamp.fromDate(new Date())
   };
 
-  const docRef = await addDoc(projectsCollection, newProject);
+  // L'id nasce sul dispositivo: serve subito, anche senza rete
+  const docRef = doc(projectsCollection);
+  await senzaAttendereLaRete(setDoc(docRef, newProject));
   return docRef.id;
 };
 
 // Update project
 export const updateProject = async (projectId, updates) => {
   const projectRef = doc(db, "projects", projectId);
-  await updateDoc(projectRef, {
+  await senzaAttendereLaRete(updateDoc(projectRef, {
     ...updates,
     updatedAt: Timestamp.fromDate(new Date())
-  });
+  }));
 };
 
 // Delete project
 export const deleteProject = async (projectId) => {
   const projectRef = doc(db, "projects", projectId);
-  await deleteDoc(projectRef);
-};
-
-// ============================================================================
-// NOTES COLLECTION
-// ============================================================================
-
-export const notesCollection = collection(db, "notes");
-
-// Get all notes for current user (legacy collection)
-export const getNotes = async () => {
-  if (!auth.currentUser) return [];
-  const q = query(
-    notesCollection,
-    where("userId", "==", auth.currentUser.uid)
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => {
-    const data = doc.data()
-    return {
-      id: doc.id,
-      ...data,
-      createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : (data.createdAt || new Date().toISOString()),
-      updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
-    }
-  }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-};
-
-// Listen to notes changes (realtime, legacy collection)
-export const subscribeToNotes = (callback, onError) => {
-  if (!auth.currentUser) {
-    callback([]);
-    return () => {};
-  }
-
-  const q = query(
-    notesCollection,
-    where("userId", "==", auth.currentUser.uid)
-  );
-  return onSnapshot(q,
-    (snapshot) => {
-      const notes = snapshot.docs.map(doc => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : (data.createdAt || new Date().toISOString()),
-          updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : (data.updatedAt || null)
-        }
-      }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      callback(notes);
-    },
-    (error) => {
-      console.error('Error in notes subscription:', error);
-      onError && onError(error);
-    }
-  );
-};
-
-// Add new note
-export const addNote = async (noteData) => {
-  if (!auth.currentUser) {
-    throw new Error('User must be authenticated');
-  }
-
-  const newNote = {
-    ...noteData,
-    userId: auth.currentUser.uid,
-    createdAt: Timestamp.fromDate(new Date()),
-    updatedAt: Timestamp.fromDate(new Date())
-  };
-
-  const docRef = await addDoc(notesCollection, newNote);
-  return docRef.id;
-};
-
-// Update note
-export const updateNote = async (noteId, updates) => {
-  const noteRef = doc(db, "notes", noteId);
-  await updateDoc(noteRef, {
-    ...updates,
-    updatedAt: Timestamp.fromDate(new Date())
-  });
-};
-
-// Delete note
-export const deleteNote = async (noteId) => {
-  const noteRef = doc(db, "notes", noteId);
-  await deleteDoc(noteRef);
+  await senzaAttendereLaRete(deleteDoc(projectRef));
 };
 
 // ============================================================================
@@ -212,19 +139,9 @@ export const subscribeToRoutine = (callback, onError) => {
 export const saveRoutine = async (data) => {
   if (!auth.currentUser) return;
   const ref = doc(db, "routines", auth.currentUser.uid);
-  await setDoc(ref, data, { merge: true });
+  await senzaAttendereLaRete(setDoc(ref, data, { merge: true }));
 };
 
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-// Initialize sample data if collections are empty
-export const initializeSampleData = async () => {
-  // Function kept for compatibility but does nothing
-  // Users will start with empty projects and notes
-  return Promise.resolve();
-};
 // ============================================================================
 // EVENTS (appuntamenti del calendario: data, ora, sveglia)
 // ============================================================================
@@ -260,7 +177,8 @@ export const subscribeToEvents = (callback, onError) => {
 
 export const addEvent = async (data) => {
   if (!auth.currentUser) throw new Error('User must be authenticated');
-  const docRef = await addDoc(eventsCollection, {
+  const docRef = doc(eventsCollection);
+  await senzaAttendereLaRete(setDoc(docRef, {
     title: '',
     date: '',
     time: '',
@@ -272,17 +190,17 @@ export const addEvent = async (data) => {
     userId: auth.currentUser.uid,
     createdAt: Timestamp.fromDate(new Date()),
     updatedAt: Timestamp.fromDate(new Date())
-  });
+  }));
   return docRef.id;
 };
 
 export const updateEvent = async (eventId, updates) => {
-  await updateDoc(doc(db, "events", eventId), {
+  await senzaAttendereLaRete(updateDoc(doc(db, "events", eventId), {
     ...updates,
     updatedAt: Timestamp.fromDate(new Date())
-  });
+  }));
 };
 
 export const deleteEvent = async (eventId) => {
-  await deleteDoc(doc(db, "events", eventId));
+  await senzaAttendereLaRete(deleteDoc(doc(db, "events", eventId)));
 };

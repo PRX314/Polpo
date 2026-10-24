@@ -152,12 +152,12 @@ const TOOLS = [
               properties: {
                 tool: {
                   type: 'string',
-                  enum: ['add_note', 'add_project', 'add_todo', 'complete_todo', 'update_project', 'update_note', 'add_link_to_project', 'delete_note', 'add_section_to_project'],
+                  enum: ['add_note', 'add_project', 'add_todo', 'complete_todo', 'update_project', 'update_note', 'add_link_to_project', 'delete_note', 'add_section_to_project', 'add_event'],
                   description: 'Tipo di azione'
                 },
                 args: {
                   type: 'object',
-                  description: 'Parametri dell\'azione. Per add_project: {type (progetto/idea/monologo/musica/video/evento/nota), name, description, status, tags[], roadmap, obiettivi, deadline?, sections[{icon, title, content}]}. Per add_section_to_project: {projectName, icon, sectionTitle, content}. Per add_todo: {projectName, text, deadline? (AAAA-MM-GG), time? (HH:MM, solo con deadline)}. Per complete_todo: {projectName, todoText}. Per update_project: {projectName, status, description, roadmap, obiettivi, deadline? (AAAA-MM-GG)}. Le date si calcolano dalla data di oggi indicata nel contesto. Per add_link_to_project: {projectName, linkTitle, url}. Per add_note: {title, content, type, category, priority, projectTags[]} (LEGACY). Per update_note: {noteTitle, title, content, priority}. Per delete_note: {noteTitle}.'
+                  description: 'Parametri dell\'azione. Per add_project: {type (progetto/idea), name, description, status, tags[], roadmap, obiettivi, deadline?, sections[{icon, title, content}]}. Per add_section_to_project: {projectName, icon, sectionTitle, content}. Per add_todo: {projectName (vuoto o "Personale" = cosa personale, senza progetto), text, deadline? (AAAA-MM-GG), time? (HH:MM, solo con deadline)}. Per complete_todo: {projectName, todoText}. Per update_project: {projectName, status, description, roadmap, obiettivi, deadline? (AAAA-MM-GG)}. Per add_event (appuntamento in agenda): {title, date (AAAA-MM-GG), time? (HH:MM), endTime? (HH:MM), notes?, reminder? (minuti di anticipo della sveglia, solo con time)}. Le date si calcolano dalla data di oggi indicata nel contesto. Per add_link_to_project: {projectName, linkTitle, url}. Per add_note (nuovo appunto negli Appunti): {title, content, projectTags[] (nomi dei progetti a cui collegarlo)}. Per update_note (appunto esistente): {noteTitle, title?, content?}. Per delete_note (appunto nel cestino): {noteTitle}.'
                 },
                 label: {
                   type: 'string',
@@ -362,28 +362,37 @@ async function executeTool(toolName, args, userId) {
 
   switch (toolName) {
     case 'add_note': {
-      // Mappa i vecchi tipi nota ai nuovi tipi unificati
-      const noteTypeMap = { note: 'nota', idea: 'idea', info: 'nota', monologo: 'monologo', musica: 'musica' }
-      const unifiedType = noteTypeMap[args.type] || 'nota'
-      const projectData = {
-        type: unifiedType,
-        name: args.title,
-        description: args.content,
-        status: 'pending',
-        tags: args.projectTags || [],
-        sections: [],
-        todos: [],
-        links: [],
-        roadmap: '',
-        obiettivi: '',
+      // Un appunto vero, nella sezione Appunti (dal 24/10). Prima creava un elemento "nota" fra i
+      // progetti, un tipo che l'app non crea più dal 04/10. Il collegamento ai progetti è un
+      // #hashtag nel testo, come quando lo scrivi tu (src/lib/hashtag.js).
+      const tags = (args.projectTags || []).map(hashtagDi).filter(t => t.length > 1)
+      const testo = [String(args.content || '').trim(), tags.join(' ')].filter(Boolean).join('\n\n')
+      const ref = await adminDb.collection('notes').add({
+        userId, kind: 'appunto', title: String(args.title || '').slice(0, 200), text: testo,
+        blocks: [], deletedAt: null, createdAt: timestamp, updatedAt: timestamp
+      })
+      const collegato = tags.length ? ` (collegato a ${tags.join(' ')})` : ''
+      return { success: true, message: `Appunto "${args.title || 'senza titolo'}" salvato negli Appunti${collegato}`, id: ref.id }
+    }
+
+    case 'add_event': {
+      if (!dataValida(args.date)) return { success: false, message: 'Serve una data valida (AAAA-MM-GG) per l\'appuntamento' }
+      const time = oraValida(args.time) ? args.time : ''
+      const minuti = Number(args.reminder)
+      const ref = await adminDb.collection('events').add({
+        title: String(args.title || 'Appuntamento').slice(0, 200),
+        date: args.date,
+        time,
+        endTime: time && oraValida(args.endTime) ? args.endTime : '',
+        // la sveglia esiste solo con un'ora a cui suonare
+        reminder: time && Number.isFinite(minuti) && minuti >= 0 ? minuti : null,
+        notes: String(args.notes || ''),
+        done: false,
         userId,
         createdAt: timestamp,
         updatedAt: timestamp
-      }
-      const ref = await adminDb.collection('projects').add(projectData)
-      const typeLabel = { nota: 'Nota', idea: 'Idea', monologo: 'Monologo', musica: 'Musica' }
-      const linkedTo = args.projectTags?.length ? ` → collegata a: ${args.projectTags.join(', ')}` : ''
-      return { success: true, message: `${typeLabel[unifiedType] || 'Elemento'} "${args.title}" creato${linkedTo}`, id: ref.id }
+      })
+      return { success: true, message: `Appuntamento "${args.title}" il ${args.date}${time ? ` alle ${time}` : ''} in agenda`, id: ref.id }
     }
 
     case 'add_project': {
@@ -394,7 +403,9 @@ async function executeTool(toolName, args, userId) {
         content: s.content || ''
       }))
       const projectData = {
-        type: args.type || 'progetto',
+        // Dall'app si creano solo progetti e idee (deciso il 2026-10-04): un "video" o un
+        // "monologo" proposto dall'AI diventa un'idea, con le sue sezioni
+        type: args.type === 'progetto' || !args.type ? 'progetto' : 'idea',
         name: args.name,
         description: args.description,
         status: args.status || 'pending',
@@ -415,19 +426,37 @@ async function executeTool(toolName, args, userId) {
     }
 
     case 'add_todo': {
-      const project = await findProject(args.projectName, userId)
-      if (!project) return { success: false, message: `Progetto "${args.projectName}" non trovato` }
-
-      const todos = project.data.todos || []
       const todo = { text: args.text, completed: false }
       // Stessa forma delle cose da fare create dall'app: deadline e, solo con quella, time
       if (dataValida(args.deadline)) {
         todo.deadline = args.deadline
         if (oraValida(args.time)) todo.time = args.time
       }
+      const scadenza = dicituraScadenza(args.deadline, args.time)
+
+      // Senza progetto = cosa personale: va in "Personale", che nasce la prima volta (come nell'app)
+      if (!String(args.projectName || '').trim() || /^personal[ei]$/i.test(String(args.projectName).trim())) {
+        const snap = await adminDb.collection('projects').where('userId', '==', userId).where('personale', '==', true).get()
+        const personale = snap.docs.find(d => !d.data().archived)
+        if (personale) {
+          await personale.ref.update({ todos: [...(personale.data().todos || []), todo], updatedAt: timestamp })
+        } else {
+          await adminDb.collection('projects').add({
+            name: 'Personale', type: 'progetto', personale: true, status: 'in_progress',
+            description: 'Le cose da fare che non appartengono a un progetto.',
+            tags: [], sections: [], links: [], roadmap: '', obiettivi: '', todos: [todo],
+            pinned: false, archived: false, userId, createdAt: timestamp, updatedAt: timestamp
+          })
+        }
+        return { success: true, message: `"${args.text}"${scadenza} aggiunta alle cose personali` }
+      }
+
+      const project = await findProject(args.projectName, userId)
+      if (!project) return { success: false, message: `Progetto "${args.projectName}" non trovato` }
+      const todos = project.data.todos || []
       todos.push(todo)
       await adminDb.collection('projects').doc(project.id).update({ todos, updatedAt: timestamp })
-      return { success: true, message: `Todo "${args.text}"${dicituraScadenza(args.deadline, args.time)} aggiunto al progetto "${project.data.name}"` }
+      return { success: true, message: `Todo "${args.text}"${scadenza} aggiunto al progetto "${project.data.name}"` }
     }
 
     case 'complete_todo': {
@@ -449,28 +478,35 @@ async function executeTool(toolName, args, userId) {
       const project = await findProject(args.projectName, userId)
       if (!project) return { success: false, message: `Progetto "${args.projectName}" non trovato` }
 
+      // Stato e testi di un progetto del vault li riscrive il sync dalla nota: cambiarli qui
+      // durerebbe pochi minuti. Resta la scadenza, che è dell'app.
+      const dalVault = project.data.fonte === 'vault'
       const updates = { updatedAt: timestamp }
-      if (args.status) updates.status = args.status
-      if (args.description) updates.description = args.description
-      if (args.roadmap) updates.roadmap = args.roadmap
-      if (args.obiettivi) updates.obiettivi = args.obiettivi
+      const saltati = []
+      for (const campo of ['status', 'description', 'roadmap', 'obiettivi']) {
+        if (!args[campo]) continue
+        if (dalVault) saltati.push(campo)
+        else updates[campo] = args[campo]
+      }
       if (dataValida(args.deadline)) updates.deadline = args.deadline
 
+      const changes = Object.keys(updates).filter(k => k !== 'updatedAt')
+      const nota = saltati.length ? ` ${saltati.join(', ')} si cambia nella nota del vault "${project.data.vaultNote || project.data.name}", non qui.` : ''
+      if (!changes.length) return { success: false, message: `"${project.data.name}" arriva dal vault:${nota}` }
       await adminDb.collection('projects').doc(project.id).update(updates)
-      const changes = Object.keys(updates).filter(k => k !== 'updatedAt').join(', ')
-      return { success: true, message: `Progetto "${project.data.name}" aggiornato (${changes})` }
+      return { success: true, message: `Progetto "${project.data.name}" aggiornato (${changes.join(', ')}).${nota}` }
     }
 
     case 'update_note': {
-      const note = await findNote(args.noteTitle, userId)
-      if (!note) return { success: false, message: `Nota "${args.noteTitle}" non trovata` }
+      const note = await findAppunto(args.noteTitle, userId)
+      if (!note) return { success: false, message: `Appunto "${args.noteTitle}" non trovato` }
 
       const updates = { updatedAt: timestamp }
-      if (args.title) updates.name = args.title
-      if (args.content) updates.description = args.content
+      if (args.title) updates.title = args.title
+      if (args.content) updates.text = args.content
 
-      await adminDb.collection('projects').doc(note.id).update(updates)
-      return { success: true, message: `Nota "${note.data.name}" aggiornata` }
+      await note.ref.update(updates)
+      return { success: true, message: `Appunto "${note.data.title || args.noteTitle}" aggiornato` }
     }
 
     case 'add_link_to_project': {
@@ -484,16 +520,20 @@ async function executeTool(toolName, args, userId) {
     }
 
     case 'delete_note': {
-      const note = await findNote(args.noteTitle, userId)
-      if (!note) return { success: false, message: `Nota "${args.noteTitle}" non trovata` }
+      // Come nell'app: nel cestino per 30 giorni, recuperabile
+      const note = await findAppunto(args.noteTitle, userId)
+      if (!note) return { success: false, message: `Appunto "${args.noteTitle}" non trovato` }
 
-      await adminDb.collection('projects').doc(note.id).delete()
-      return { success: true, message: `Nota "${note.data.name}" eliminata` }
+      await note.ref.update({ deletedAt: new Date().toISOString(), updatedAt: timestamp })
+      return { success: true, message: `Appunto "${note.data.title || args.noteTitle}" nel cestino (si recupera per 30 giorni)` }
     }
 
     case 'add_section_to_project': {
       const project = await findProject(args.projectName, userId)
       if (!project) return { success: false, message: `Progetto "${args.projectName}" non trovato` }
+      if (project.data.fonte === 'vault') {
+        return { success: false, message: `Le sezioni di "${project.data.name}" arrivano dalla nota del vault: aggiungila lì, oppure salva il testo in un appunto` }
+      }
 
       const newSection = {
         id: Date.now().toString(),
@@ -519,8 +559,10 @@ async function findProject(name, userId) {
   const snap = await adminDb.collection('projects').where('userId', '==', userId).get()
   const nameLower = String(name || '').toLowerCase()
   if (!nameLower) return null
-  // Solo elementi con un nome: uno vuoto "contiene" qualunque testo e verrebbe scelto a caso
+  // Solo elementi con un nome: uno vuoto "contiene" qualunque testo e verrebbe scelto a caso.
+  // Prima quelli vivi: un archiviato con un nome simile non deve vincere su quello in uso.
   const docs = snap.docs.filter(d => typeof d.data().name === 'string' && d.data().name)
+    .sort((a, b) => !!a.data().archived - !!b.data().archived)
 
   // Match esatto prima
   let match = docs.find(d => d.data().name.toLowerCase() === nameLower)
@@ -531,23 +573,30 @@ async function findProject(name, userId) {
   return match ? { id: match.id, data: match.data() } : null
 }
 
-// Helper: trova nota per nome — cerca in projects (dove le note vengono salvate)
-async function findNote(title, userId) {
-  const NOTE_TYPES = ['nota', 'idea', 'monologo', 'musica']
-  const snap = await adminDb.collection('projects')
+// Helper: trova un appunto (Appunti, collection notes) per titolo, o per la prima riga se non ha titolo
+const titoloAppunto = (a) => String(a.title || '').trim() || String(a.text || '').trim().split('\n')[0].slice(0, 80)
+async function findAppunto(title, userId) {
+  const snap = await adminDb.collection('notes')
     .where('userId', '==', userId)
-    .where('type', 'in', NOTE_TYPES)
+    .where('kind', '==', 'appunto')
     .get()
-  const titleLower = String(title || '').toLowerCase()
+  const titleLower = String(title || '').toLowerCase().trim()
   if (!titleLower) return null
-  const docs = snap.docs.filter(d => typeof d.data().name === 'string' && d.data().name)
+  const docs = snap.docs.filter(d => !d.data().deletedAt && titoloAppunto(d.data()))
+    // i più recenti prima: due appunti con lo stesso titolo, vale quello di adesso
+    .sort((a, b) => (b.data().updatedAt?.toMillis?.() || 0) - (a.data().updatedAt?.toMillis?.() || 0))
+  const t = (d) => titoloAppunto(d.data()).toLowerCase()
 
-  let match = docs.find(d => d.data().name.toLowerCase() === titleLower)
-  if (!match) match = docs.find(d => d.data().name.toLowerCase().includes(titleLower))
-  if (!match) match = docs.find(d => titleLower.includes(d.data().name.toLowerCase()))
+  let match = docs.find(d => t(d) === titleLower)
+  if (!match) match = docs.find(d => t(d).includes(titleLower))
+  if (!match) match = docs.find(d => titleLower.includes(t(d)))
 
-  return match ? { id: match.id, data: match.data() } : null
+  return match ? { id: match.id, ref: match.ref, data: match.data() } : null
 }
+
+// "Gestionale X" → "#GestionaleX": lo stesso tag che l'app riconosce negli appunti (src/lib/hashtag.js)
+const hashtagDi = (nome) => `#${String(nome || '').normalize('NFD').replace(/\p{M}/gu, '')
+  .split(/[^\p{L}\p{N}]+/u).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join('')}`
 
 // ============================================================================
 // CONTESTO UTENTE
@@ -565,9 +614,10 @@ const piuGiorni = (iso, n) => {
 const conOra = (giorno, ora) => (ora ? `${giorno} ${ora}` : giorno)
 
 async function getUserContext(userId) {
-  const [projectsSnap, eventsSnap] = await Promise.all([
+  const [projectsSnap, eventsSnap, appuntiSnap] = await Promise.all([
     adminDb.collection('projects').where('userId', '==', userId).get(),
-    adminDb.collection('events').where('userId', '==', userId).get()
+    adminDb.collection('events').where('userId', '==', userId).get(),
+    adminDb.collection('notes').where('userId', '==', userId).where('kind', '==', 'appunto').get()
   ])
   const oggi = oggiRoma()
   const orizzonte = piuGiorni(oggi, 14)
@@ -584,6 +634,9 @@ async function getUserContext(userId) {
       stato: STATUS_LABELS[data.status] || data.status || 'Da fare',
       archiviato: !!data.archived,
       fissato: !!data.pinned,
+      // dal vault: stato e testi li scrive la nota, qui non si cambiano
+      dalVault: data.fonte === 'vault',
+      personale: !!data.personale,
       tags: data.tags || [],
       roadmap: data.roadmap || '',
       obiettivi: data.obiettivi || '',
@@ -601,9 +654,16 @@ async function getUserContext(userId) {
     }
   })
 
-  // Le note del vecchio formato (collezione `notes`) non si leggono più dal 2026-10-04:
-  // sono state copiate nel vault (00-Inbox/2026-10-04 Note vecchie dal gestionale.md)
-  const notes = []
+  // Le note del vecchio formato non si leggono più dal 2026-10-04 (copiate nel vault, 00-Inbox).
+  // Gli Appunti sì: titolo e prima riga dei più recenti, per poterli ritrovare e aggiornare.
+  const notes = appuntiSnap.docs.map(d => d.data())
+    .filter(a => !a.deletedAt)
+    .sort((a, b) => (b.updatedAt?.toMillis?.() || 0) - (a.updatedAt?.toMillis?.() || 0))
+    .map(a => ({
+      titolo: titoloAppunto(a) || 'senza titolo',
+      quando: a.updatedAt?.toDate?.() ? new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(a.updatedAt.toDate()) : '',
+      registrazioni: (a.blocks || []).filter(b => b.type === 'audio').length
+    }))
 
   // Agenda: scadenze (anche già passate, se non fatte) e appuntamenti fino a due settimane da oggi.
   // È la risposta a "cosa devo fare oggi": prima all'AI non arrivava.
@@ -621,7 +681,11 @@ async function getUserContext(userId) {
   }
   for (const d of eventsSnap.docs) {
     const e = d.data()
-    if (e.date && e.date >= oggi && e.date <= orizzonte) {
+    if (e.done) continue
+    // Le scadenze amministrative (bollo, tasse...) sono events con admin: contano anche da scadute
+    if (e.admin && e.date && e.date <= orizzonte) {
+      agenda.push({ giorno: e.date, ora: e.time || '', testo: `Scadenza amministrativa: ${e.title || 'senza titolo'}${e.amount ? ` (${e.amount} €)` : ''}` })
+    } else if (!e.admin && e.date && e.date >= oggi && e.date <= orizzonte) {
       agenda.push({ giorno: e.date, ora: e.time || '', testo: `Appuntamento: ${e.title || 'senza titolo'}` })
     }
   }
@@ -667,6 +731,13 @@ function formatContext(ctx) {
     text += 'Niente in agenda: nessuna scadenza né appuntamento nei prossimi 14 giorni.\n'
   }
 
+  if (ctx.notes.length) {
+    text += `\n=== APPUNTI (i ${Math.min(ctx.notes.length, 10)} più recenti su ${ctx.notes.length}) ===\n`
+    for (const a of ctx.notes.slice(0, 10)) {
+      text += `- "${clip(a.titolo, 80)}"${a.quando ? ` (${a.quando})` : ''}${a.registrazioni ? `, ${a.registrazioni} registrazioni` : ''}\n`
+    }
+  }
+
   text += '\n=== PANORAMICA ===\n'
   text += `Elementi: ${s.totaleProgetti} (${s.progettiInCorso} in corso, ${s.progettiDaFare} da fare, ${s.progettiInPausa} in pausa, ${s.progettiCompletati} completati)`
   text += s.archiviati ? `, più ${s.archiviati} archiviati (non mostrati)\n` : '\n'
@@ -682,7 +753,7 @@ function formatContext(ctx) {
   text += '\n=== ELEMENTI (dal più attivo) ===\n'
   const soloNome = []
   for (const p of ordinati) {
-    const testa = `[${p.tipo}] "${p.nome}" — ${p.stato}${p.fissato ? ', fissato' : ''}${p.scadenza ? `, scadenza ${conOra(p.scadenza, p.scadenzaOra)}` : ''}`
+    const testa = `[${p.tipo}] "${p.nome}" — ${p.stato}${p.fissato ? ', fissato' : ''}${p.dalVault ? ', dal vault' : ''}${p.personale ? ', cose personali' : ''}${p.scadenza ? `, scadenza ${conOra(p.scadenza, p.scadenzaOra)}` : ''}`
     const voci = p.todoAperti.slice(0, 6).map(t => clip(t.text, 90) + (t.deadline ? ` (entro ${t.deadline})` : ''))
     const altre = p.todoAperti.length > 6 ? ` +${p.todoAperti.length - 6} altre` : ''
     let blocco
@@ -718,9 +789,22 @@ function formatContext(ctx) {
 const REGOLE_COMUNI = `
 
 ## COS'È IL GESTIONALE (non inventare altro)
-È lo strumento PERSONALE di Paolo per organizzare progetti, idee, note, cose da fare, scadenze e
+È lo strumento PERSONALE di Paolo per organizzare progetti, idee, appunti, cose da fare, scadenze e
 appuntamenti. Non gestisce fatture, magazzino, clienti o vendite. Quando parli dei suoi progetti usa
 SOLO ciò che trovi nel contesto qui sotto: non inventare funzioni, dati, numeri o risultati.
+
+## DOVE VA COSA
+- Un pensiero, una nota, un testo da tenere → **add_note** (diventa un appunto negli Appunti; con projectTags si collega ai progetti)
+- Una cosa da fare di un progetto → **add_todo** con projectName; una cosa personale (spesa, telefonate, pagamenti) → **add_todo** senza projectName (finisce in "Personale")
+- Un impegno con giorno ed eventualmente ora (visita, riunione, chiamata fissata) → **add_event**
+- Un progetto o un'idea nuova → **add_project** (solo tipo progetto o idea)
+
+## ELEMENTI "DAL VAULT"
+Gli elementi segnati "dal vault" nel contesto sono il riflesso delle note Obsidian di Paolo: stato, descrizione,
+roadmap, obiettivi e sezioni li riscrive la nota a ogni sincronizzazione. Su di loro NON proporre update_project
+per stato/descrizione/roadmap/obiettivi né add_section_to_project: durerebbero pochi minuti. Se Paolo vuole
+cambiarli, digli che va fatto nella nota del vault. Su di loro puoi invece: add_todo, complete_todo, scadenza
+(update_project con solo deadline), add_link_to_project.
 
 ## PROPOSTE (tool propose_actions)
 - Proponi azioni SOLO se l'utente chiede di creare, salvare, segnare, modificare o completare qualcosa
@@ -764,9 +848,11 @@ const SYSTEM_PROMPT_MAIN = `Sei **Polpo AI** 🐙, l'assistente intelligente int
 - NON essere troppo formale o robotico - sii diretto, curioso e propositivo
 
 ## IL GESTIONALE
-Sistema UNIFICATO: tutto è un "elemento" con un tipo.
-Tipi: **progetto**, **idea**, **monologo**, **musica**, **video**, **evento**, **nota**.
-Ogni elemento può avere: descrizione, status, tags, sezioni personalizzate, todo, link, deadline.
+- **Elementi**: progetti e idee (i vecchi tipi monologo/musica/video restano leggibili ma non se ne creano).
+  Ogni elemento può avere: descrizione, stato, tag, sezioni, cose da fare, link, scadenza.
+  La maggior parte arriva dal vault Obsidian ("dal vault"); "Personale" raccoglie le cose da fare senza progetto.
+- **Appunti**: testi, registrazioni trascritte e disegni, collegati ai progetti con #NomeProgetto.
+- **Agenda**: appuntamenti con giorno e ora, scadenze amministrative.
 
 ## IL TUO RUOLO IN QUESTA CHAT
 Chat principale — conversazione E azioni.
@@ -779,16 +865,17 @@ Chat principale — conversazione E azioni.
 - Aiutare a scrivere testi per monologhi, canzoni, idee creative
 - Pianificare strategie, roadmap, obiettivi
 
-### Azioni disponibili (vedi PROPOSTE più sotto per quando usarle):
-- **add_project** → Nuovo elemento (con sezioni personalizzate)
-- **add_section_to_project** → Aggiungere sezione a elemento esistente
-- **add_note** → Nuova nota/idea/info
-- **add_todo** → Nuovo task
-- **complete_todo** → Completare un task
-- **update_project** → Aggiornare stato/roadmap/obiettivi/descrizione
-- **update_note** → Aggiornare una nota
+### Azioni disponibili (vedi PROPOSTE e DOVE VA COSA più sotto per quando usarle):
+- **add_project** → Nuovo progetto o idea (con sezioni personalizzate)
+- **add_section_to_project** → Aggiungere sezione a un elemento non del vault
+- **add_note** → Nuovo appunto
+- **add_todo** → Nuova cosa da fare (in un progetto o personale)
+- **complete_todo** → Completare una cosa da fare
+- **add_event** → Nuovo appuntamento in agenda
+- **update_project** → Aggiornare stato/roadmap/obiettivi/descrizione/scadenza (sugli elementi dal vault solo la scadenza)
+- **update_note** → Aggiornare un appunto
 - **add_link_to_project** → Aggiungere un link
-- **delete_note** → Eliminare una nota
+- **delete_note** → Mettere un appunto nel cestino
 
 ### Sezioni personalizzate:
 - Per un NUOVO elemento: includi sections[{icon, title, content}] nell'azione add_project
@@ -864,10 +951,10 @@ Puoi anche salvare contenuti nel gestionale usando il tool propose_actions.
 - Puoi creare todo, aggiornare progetti, aggiungere sezioni
 
 ### Azioni disponibili:
-- **add_project** → Nuovo elemento video/idea/nota con sezioni
-- **add_section_to_project** → Aggiungere sezione a elemento esistente
-- **add_note** → Nuova nota/idea
-- **add_todo** → Nuovo task
+- **add_project** → Nuova idea (tipo idea) con le sezioni del video
+- **add_section_to_project** → Aggiungere sezione a un elemento non del vault
+- **add_note** → Nuovo appunto (testi, spunti, script veloci)
+- **add_todo** → Nuova cosa da fare
 - **complete_todo** → Completare un task
 - **update_project** → Aggiornare stato/descrizione
 - **add_link_to_project** → Aggiungere un link

@@ -8,10 +8,13 @@ import { useUi } from '../context/useUi'
 import { ITEM_TYPE_LIST } from '../itemTypes'
 import { STATUS_LABEL, STATUS_LIST, progressOf } from '../lib/status'
 import { exportProjectsCSV } from '../services/exportService'
+import { ultimaVolta } from '../lib/vaultCampi'
 import './ItemsPage.css'
 
 const VIEW_KEY = 'gestionale-items-view'
 const FONTI = { vault: 'Dal vault', scanner: 'Dal codice', mano: 'Scritti a mano' }
+// "Più recenti" = su cui hai lavorato da meno tempo. Prima ordinava per data di creazione, che per
+// 72 elementi su 94 era il giorno del primo sync (01/09): un ordine a caso.
 const SORTS = { date: 'Più recenti', name: 'Nome', progress: 'Avanzamento' }
 
 const readView = () => {
@@ -69,7 +72,7 @@ const ItemsPage = () => {
         if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
         if (sort === 'name') return (a.name || '').localeCompare(b.name || '')
         if (sort === 'progress') return progressOf(b).pct - progressOf(a).pct
-        return new Date(b.createdAt) - new Date(a.createdAt)
+        return ultimaVolta(b).localeCompare(ultimaVolta(a)) || new Date(b.createdAt) - new Date(a.createdAt)
       })
   }, [items, q, type, status, fonte, tag, sort, archived])
 
@@ -117,7 +120,7 @@ const ItemsPage = () => {
         <div className="items-search">
           <Search size={16} aria-hidden="true" />
           <input
-            type="search" value={q} placeholder="Cerca negli elementi" aria-label="Cerca negli elementi"
+            type="search" value={q} placeholder="Cerca nei progetti" aria-label="Cerca nei progetti"
             onChange={(e) => setParam('q', e.target.value)}
           />
         </div>

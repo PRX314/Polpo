@@ -5,6 +5,8 @@
 //
 //   node tester/prova-chat.cjs            → screenshot in tester/referti/chat-<data-ora>/
 //   node tester/prova-chat.cjs --vedi     → con la finestra
+//   node tester/prova-chat.cjs --proposte → niente browser: richieste tipiche e che azione propone
+//                                           (appunto, appuntamento, cosa personale, vault intoccabile)
 //
 // A differenza del collaudo costa qualche centesimo di Groq e dipende dalla rete: non sta in PLANCIA.
 const { spawn, spawnSync } = require('child_process');
@@ -17,6 +19,7 @@ const { pathToFileURL } = require('url');
 const ROOT = path.resolve(__dirname, '..');
 const { chromium, devices } = require(path.join(ROOT, 'node_modules', 'playwright'));
 const VEDI = process.argv.includes('--vedi');
+const PROPOSTE = process.argv.includes('--proposte');
 const PROGETTO = 'demo-gestionale-x';
 const PORTE = { firestore: 8299, auth: 9299, app: 5297, backend: 5097 };
 const APP = `http://127.0.0.1:${PORTE.app}/gestionale/`;
@@ -135,9 +138,41 @@ async function preparaDati(uid) {
   });
   await el('freak', { type: 'progetto', name: 'Freak — negozio', status: 'pending', description: 'Negozio di abbigliamento, primo cliente di Bottega.', todos: [{ id: 'f1', text: 'Chiedere le foto dei prodotti', completed: false, deadline: traGiorni(35) }] });
   await el('ungesto', { type: 'progetto', name: 'Ungesto', status: 'in_progress', description: 'Gestionale per bar e ristoranti con menu digitale.' });
+  // Come lo scrive il sync dal vault: stato e testi sono della nota (dal 24/10 la chat non li tocca)
+  await el('fabulus', { type: 'progetto', name: 'Fabulus', status: 'in_progress', fonte: 'vault', vaultNote: 'Fabulus', description: 'Gioco di ruolo raccontato, con un narratore AI.', todos: [{ text: 'Luce e buio', completed: true, daVault: true }, { text: 'Mercanti', completed: false, daVault: true }] });
   await el('monologo', { type: 'monologo', name: 'Monologo sul traffico', status: 'pending', description: 'Pezzo comico sulla coda in tangenziale.' });
   for (let i = 1; i <= 25; i++) await el(`riempitivo-${i}`, { type: i % 3 ? 'idea' : 'progetto', name: `Idea numero ${i}`, status: 'pending', description: `Un'idea qualsiasi, la numero ${i}.` });
   await scrivi('events', 'dentista', { title: 'Dentista', date: traGiorni(40), time: '10:00', userId: uid, createdAt: adesso, updatedAt: adesso });
+}
+
+// Richieste tipiche dal telefono: il modello deve scegliere l'azione giusta (istruzioni del 24/10)
+const RICHIESTE = [
+  { chiedo: 'Ricordami di comprare il latte domani', giusta: 'add_todo senza progetto',
+    ok: a => a.some(x => x.tool === 'add_todo' && (!String(x.args.projectName || '').trim() || /^personal/i.test(x.args.projectName))) },
+  { chiedo: 'Giovedì alle 15 ho il dentista, segnatelo', giusta: 'add_event alle 15:00',
+    ok: a => a.some(x => x.tool === 'add_event' && x.args.time === '15:00') },
+  { chiedo: "Segnati quest'idea: un gioco di carte sulle ricette liguri", giusta: 'add_note (o una idea)',
+    ok: a => a.some(x => x.tool === 'add_note' || (x.tool === 'add_project' && x.args.type === 'idea')) },
+  { chiedo: 'Metti in pausa Fabulus', giusta: 'nessun cambio di stato: Fabulus è del vault',
+    ok: a => !a.some(x => x.tool === 'update_project' && x.args.status) },
+];
+async function provaProposte(idToken) {
+  let buone = 0;
+  for (const r of RICHIESTE) {
+    const res = await fetch(`${BACKEND}/api/chat`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ message: r.chiedo, history: [], targets: [{ provider: 'groq' }] }),
+    });
+    const d = await res.json();
+    const azioni = d.proposedActions || [];
+    const ok = r.ok(azioni);
+    if (ok) buone++;
+    console.log(`\n${ok ? '✓' : '✗'} «${r.chiedo}» → atteso: ${r.giusta}`);
+    console.log(`  propone: ${azioni.map(a => `${a.tool} ${JSON.stringify(a.args)}`).join(' · ') || 'niente'}`);
+    console.log(`  risponde: ${String(d.reply || d.error || '').replace(/\s+/g, ' ').slice(0, 220)}`);
+  }
+  console.log(`\n${buone}/${RICHIESTE.length} come previsto`);
+  if (buone < RICHIESTE.length) process.exitCode = 1;
 }
 
 async function main() {
@@ -149,10 +184,11 @@ async function main() {
     const r = await fetch(`http://127.0.0.1:${PORTE.auth}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-key`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: EMAIL, password: PIN, returnSecureToken: true }),
     });
-    const { localId: uid } = await r.json();
+    const { localId: uid, idToken } = await r.json();
     await avviaBackend(preparaVault());
-    await avviaApp();
+    if (!PROPOSTE) await avviaApp();
     await preparaDati(uid);
+    if (PROPOSTE) return await provaProposte(idToken);
 
     browser = await chromium.launch({ headless: !VEDI });
     const prova = async (nome, ctxOpts, fn) => {

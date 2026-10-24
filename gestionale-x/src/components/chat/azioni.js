@@ -4,15 +4,16 @@
 // (sostituita da una proposta più recente).
 
 export const ACTION_LABEL = {
-  add_note: 'Nuova nota',
+  add_note: 'Nuovo appunto',
   add_project: 'Nuovo elemento',
   add_todo: 'Nuova cosa da fare',
   complete_todo: 'Completa',
   update_project: 'Aggiorna elemento',
-  update_note: 'Aggiorna nota',
+  update_note: 'Aggiorna appunto',
   add_link_to_project: 'Nuovo link',
   add_section_to_project: 'Nuova sezione',
-  delete_note: 'Elimina nota'
+  delete_note: 'Appunto nel cestino',
+  add_event: 'Nuovo appuntamento'
 }
 
 // "2026-10-02" → "ven 2 ott", più l'ora se c'è
@@ -29,9 +30,16 @@ export function dettagliAzione({ tool, args = {}, label }) {
   switch (tool) {
     case 'add_note': return [
       args.title && `**${args.title}**`,
-      args.type && `Tipo: ${args.type}`,
-      args.projectTags?.length && `Collegata a: ${args.projectTags.join(', ')}`,
-      args.content
+      'Negli Appunti',
+      args.projectTags?.length && `Collegato a: ${args.projectTags.join(', ')}`,
+      args.content?.length > 240 ? `${args.content.slice(0, 240)}…` : args.content
+    ].filter(Boolean)
+    case 'add_event': return [
+      `**${args.title}**`,
+      args.date && `Quando: ${giorno(args.date, args.time)}${args.endTime ? `–${args.endTime}` : ''}`,
+      args.time && Number.isFinite(Number(args.reminder)) && args.reminder !== null && args.reminder !== '' &&
+        `Sveglia: ${Number(args.reminder) ? `${args.reminder} minuti prima` : 'all\'ora esatta'}`,
+      args.notes
     ].filter(Boolean)
     case 'add_project': return [
       `**${args.name}**`,
@@ -47,7 +55,7 @@ export function dettagliAzione({ tool, args = {}, label }) {
       args.sectionTitle,
       args.content?.length > 160 ? `${args.content.slice(0, 160)}…` : args.content
     ].filter(Boolean)
-    case 'add_todo': return [`**${args.projectName}**`, args.text, scadenza(args)].filter(Boolean)
+    case 'add_todo': return [`**${args.projectName?.trim() || 'Personale'}**`, args.text, scadenza(args)].filter(Boolean)
     case 'complete_todo': return [`**${args.projectName}**`, args.todoText]
     case 'update_project': return [
       `**${args.projectName}**`,
@@ -57,7 +65,7 @@ export function dettagliAzione({ tool, args = {}, label }) {
       args.obiettivi && 'Obiettivi aggiornati',
       scadenza(args)
     ].filter(Boolean)
-    case 'update_note': return [`**${args.noteTitle}**`, args.title && `Nuovo titolo: ${args.title}`].filter(Boolean)
+    case 'update_note': return [`**${args.noteTitle}**`, args.title && `Nuovo titolo: ${args.title}`, args.content && 'Testo aggiornato'].filter(Boolean)
     case 'add_link_to_project': return [`**${args.projectName}**`, `${args.linkTitle}: ${args.url}`]
     case 'delete_note': return [`**${args.noteTitle}**`]
     default: return [label]

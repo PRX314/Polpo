@@ -9,3 +9,5 @@
 .pf-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pf-image .btn-icon { position: absolute; top: 0; right: 0; background: var(--bg); border-color: var(--line); width: 20px; height: 20px; }
 .pf-upload { align-self: flex-start; cursor: pointer; }
+.pf-vault { border: 1px solid var(--line-soft); padding: 10px 12px; margin: 0 0 4px; }
+.pf-vault a { color: var(--ink); text-decoration: underline; }

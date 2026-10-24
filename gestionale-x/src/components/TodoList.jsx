@@ -1,13 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AlarmClock, CalendarDays, ChevronDown, GripVertical, Plus, X } from 'lucide-react'
 import ProgressBar from './ui/ProgressBar'
 import { ANTICIPI, daSelect, aSelect } from '../sveglie'
 import { relativeDay } from '../lib/dates'
+import { useToast } from '../context/useToast'
 import './TodoList.css'
 
 // Le cose da fare di un progetto: spunta, riordina col trascinamento, scadenza e sveglia per ciascuna.
 const TodoList = ({ project, onUpdate }) => {
+  const toast = useToast()
   const [todos, setTodos] = useState(project.todos || [])
+  const ultime = useRef(todos)
+  ultime.current = todos
   const [dragIndex, setDragIndex] = useState(null)
   const [draft, setDraft] = useState({ text: '', deadline: '', time: '' })
   // Quale voce ha aperto il pannellino scadenza/sveglia: i task nati prima
@@ -24,7 +28,20 @@ const TodoList = ({ project, onUpdate }) => {
   }
 
   const toggle = (i) => save(todos.map((t, idx) => idx === i ? { ...t, completed: !t.completed } : t))
-  const remove = (i) => save(todos.filter((_, idx) => idx !== i))
+  // Eliminare era un tocco solo sulla ×, senza conferma: ora si può annullare per qualche secondo.
+  // L'annullo rimette la voce al suo posto nella lista di quel momento, non in quella vecchia.
+  const remove = (i) => {
+    const tolta = todos[i]
+    save(todos.filter((_, idx) => idx !== i))
+    toast.ok(`Eliminata “${tolta.text.slice(0, 40)}”`, {
+      label: 'Annulla',
+      onClick: () => {
+        const ora = [...ultime.current]
+        ora.splice(Math.min(i, ora.length), 0, tolta)
+        save(ora)
+      }
+    })
+  }
 
   // Una sveglia senza data e ora non ha un momento a cui suonare: se uno dei due sparisce, sparisce anche lei.
   const patch = (i, changes) => save(todos.map((t, idx) => {

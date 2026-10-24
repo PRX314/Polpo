@@ -34,7 +34,8 @@ export default function ComandiRapidi() {
 
   const voce = (file, inizio) => prova(async () => {
     const id = await creaAppunto({ title: `Nota vocale · ${quando(inizio)}` })
-    aggiungiRegistrazione(id, file, inizio).catch(() => {})
+    // La trascrizione fallita la segna il blocco stesso; qui arriva solo un audio non attaccato
+    aggiungiRegistrazione(id, file, inizio).catch(() => toast.err('La registrazione non è entrata nell\'appunto: riprova da lì'))
     navigate(`/appunti/${id}`)
   }, 'Registrazione non salvata')
 
@@ -70,28 +71,29 @@ export default function ComandiRapidi() {
   )
 }
 
-// Una cosa da fare dentro un progetto, senza aprirlo: i fissati in cima, poi gli altri per nome
+// Una cosa da fare senza aprire niente: di solito personale (comprare, chiamare, pagare), oppure
+// dentro un progetto, con i fissati in cima e poi gli altri per nome
 function NuovaCosaDaFare({ onClose }) {
   const { items, actions } = useData()
   const toast = useToast()
-  const progetti = items.filter(p => !p.archived && p.status !== 'completed')
+  const progetti = items.filter(p => !p.archived && !p.personale && p.status !== 'completed')
     .sort((a, b) => (!!b.pinned - !!a.pinned) || a.name.localeCompare(b.name))
   const [testo, setTesto] = useState('')
-  const [progettoId, setProgettoId] = useState(progetti[0]?.id || '')
+  const [progettoId, setProgettoId] = useState('') // '' = Personale
   const [data, setData] = useState('')
   const [errore, setErrore] = useState('')
   const [salvo, setSalvo] = useState(false)
 
   const salva = async (e) => {
     e.preventDefault()
-    const p = items.find(x => x.id === progettoId)
+    const p = progettoId ? items.find(x => x.id === progettoId) : null
     if (!testo.trim()) return setErrore('Scrivi cosa c\'è da fare')
-    if (!p) return setErrore('Scegli un progetto')
+    if (progettoId && !p) return setErrore('Scegli un progetto')
     const todo = { text: testo.trim(), completed: false, ...(data && { deadline: data }) }
     setSalvo(true)
     try {
-      await actions.update(p.id, { todos: [...(p.todos || []), todo] })
-      toast.ok(`Aggiunta a ${p.name}`)
+      await actions.addTodo(p, todo)
+      toast.ok(p ? `Aggiunta a ${p.name}` : 'Aggiunta alle cose personali')
       onClose()
     } catch {
       setErrore('Non salvata: riprova')
@@ -112,8 +114,9 @@ function NuovaCosaDaFare({ onClose }) {
           <input value={testo} onChange={e => setTesto(e.target.value)} maxLength={500} placeholder="Es. chiamare il commercialista" />
         </label>
         <label className="stack" style={{ gap: 4 }}>
-          <span className="small muted">Progetto</span>
+          <span className="small muted">Dove</span>
           <select value={progettoId} onChange={e => setProgettoId(e.target.value)}>
+            <option value="">Personale (nessun progetto)</option>
             {progetti.map(p => <option key={p.id} value={p.id}>{p.pinned ? '★ ' : ''}{p.name}</option>)}
           </select>
         </label>

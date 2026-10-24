@@ -14,9 +14,10 @@
 // Eliminare manda nel cestino (deletedAt); dopo 30 giorni l'appunto e i suoi file spariscono.
 
 import {
-  Bytes, Timestamp, addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, query, setDoc, updateDoc, where
+  Bytes, Timestamp, collection, deleteDoc, doc, getDoc, onSnapshot, query, setDoc, updateDoc, where
 } from 'firebase/firestore'
 import { auth, db } from '../firebase'
+import { senzaAttendereLaRete } from '../firebaseService'
 
 const notes = collection(db, 'notes')
 const PEZZO = 700 * 1024
@@ -40,16 +41,18 @@ export const subscribeToAppunti = (callback, onError) => {
   }, (err) => { console.error('Appunti:', err); onError?.(err) })
 }
 
+// L'id nasce sul dispositivo e l'appunto si apre subito, anche senza rete (vedi senzaAttendereLaRete)
 export const creaAppunto = async (extra = {}) => {
-  const ref = await addDoc(notes, {
+  const ref = doc(notes)
+  await senzaAttendereLaRete(setDoc(ref, {
     userId: uid(), kind: 'appunto', title: '', text: '', blocks: [], deletedAt: null,
     ...extra,
     createdAt: Timestamp.now(), updatedAt: Timestamp.now()
-  })
+  }))
   return ref.id
 }
 
-export const aggiornaAppunto = (id, patch) => updateDoc(doc(db, 'notes', id), { ...patch, updatedAt: Timestamp.now() })
+export const aggiornaAppunto = (id, patch) => senzaAttendereLaRete(updateDoc(doc(db, 'notes', id), { ...patch, updatedAt: Timestamp.now() }))
 
 // I blocchi si cambiano rileggendo l'appunto (dalla cache se offline): una trascrizione che arriva
 // dopo dieci secondi non cancella il disegno aggiunto nel frattempo.

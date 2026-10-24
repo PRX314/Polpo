@@ -6,11 +6,18 @@ import { TIPI_CREABILI, createSectionsFromTemplate, getTypeInfo } from '../itemT
 import { STATUS_LABEL, STATUS_LIST } from '../lib/status'
 import { uploadImage, getThumbnail } from '../services/imageService'
 import { ANTICIPI, daSelect, aSelect } from '../sveglie'
+import { campiBloccati, dalVault } from '../lib/vaultCampi'
+import { linkVault, haVault } from '../vault'
 import './ProjectForm.css'
+
+// Vuoto è vuoto: un campo mai scritto e uno scritto vuoto non sono una modifica
+const vuoto = (v) => v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length)
+const uguali = (a, b) => (vuoto(a) && vuoto(b)) || JSON.stringify(a) === JSON.stringify(b)
 
 const ProjectForm = ({ project, initialType, onClose, onSaved }) => {
   const isEdit = !!project
   const startType = project?.type || initialType || 'progetto'
+  const bloccati = new Set(isEdit ? campiBloccati(project) : [])
 
   const [form, setForm] = useState({
     type: startType,
@@ -69,8 +76,13 @@ const ProjectForm = ({ project, initialType, onClose, onSaved }) => {
         todos: form.todos,
         sections: form.sections
       }
-      if (isEdit) await updateProject(project.id, data)
-      else await addProject(data)
+      if (isEdit) {
+        // Solo ciò che hai cambiato, e mai i campi del vault: salvare il modulo riscriveva tutto
+        // com'era all'apertura, anche le spunte arrivate nel frattempo da un altro dispositivo
+        const patch = Object.fromEntries(Object.entries(data)
+          .filter(([k, v]) => !bloccati.has(k) && !uguali(v, project[k])))
+        if (Object.keys(patch).length) await updateProject(project.id, patch)
+      } else await addProject(data)
       onSaved?.(isEdit)
       onClose()
     } catch (err) {
@@ -165,20 +177,29 @@ const ProjectForm = ({ project, initialType, onClose, onSaved }) => {
           </div>
         )}
 
+        {bloccati.size > 0 && (
+          <p className="help pf-vault">
+            {dalVault(project)
+              ? <>Nome, descrizione, stato, tag e sezioni arrivano dalla nota del vault e si cambiano lì: il gestionale li riallinea da solo entro pochi minuti. Qui scegli scadenza, link e cose da fare.</>
+              : <>La descrizione arriva dal vault (nota «{project.vaultCatalogo}») e si cambia lì.</>}
+            {haVault(project) && <> <a href={linkVault(project)} target="_blank" rel="noopener noreferrer">Apri in Obsidian</a></>}
+          </p>
+        )}
+
         <div className="field">
           <label htmlFor="pf-name">Nome *</label>
-          <input id="pf-name" name="name" value={form.name} onChange={onField} placeholder={`Nome ${typeInfo.label.toLowerCase()}`} />
+          <input id="pf-name" name="name" value={form.name} onChange={onField} disabled={bloccati.has('name')} placeholder={`Nome ${typeInfo.label.toLowerCase()}`} />
         </div>
 
         <div className="field">
           <label htmlFor="pf-desc">Descrizione</label>
-          <textarea id="pf-desc" name="description" rows={3} value={form.description} onChange={onField} placeholder="Breve descrizione" />
+          <textarea id="pf-desc" name="description" rows={3} value={form.description} onChange={onField} disabled={bloccati.has('description')} placeholder="Breve descrizione" />
         </div>
 
         <div className="field-row keep">
           <div className="field">
             <label htmlFor="pf-status">Stato</label>
-            <select id="pf-status" name="status" value={form.status} onChange={onField}>
+            <select id="pf-status" name="status" value={form.status} onChange={onField} disabled={bloccati.has('status')}>
               {STATUS_LIST.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
             </select>
           </div>
@@ -213,15 +234,17 @@ const ProjectForm = ({ project, initialType, onClose, onSaved }) => {
 
         <div className="field">
           <label htmlFor="pf-tags">Tag, separati da virgola</label>
-          <input id="pf-tags" name="tags" value={form.tags} onChange={onField} placeholder="marketing, design, musica" />
+          <input id="pf-tags" name="tags" value={form.tags} onChange={onField} disabled={bloccati.has('tags')} placeholder="marketing, design, musica" />
         </div>
 
-        <div className="field">
-          <label htmlFor="pf-vault">Nota Obsidian (facoltativa)</label>
-          <input id="pf-vault" name="vaultNote" value={form.vaultNote} onChange={onField} placeholder="Ungesto (nome del file senza estensione)" />
-        </div>
+        {!dalVault(project) && (
+          <div className="field">
+            <label htmlFor="pf-vault">Nota Obsidian (facoltativa)</label>
+            <input id="pf-vault" name="vaultNote" value={form.vaultNote} onChange={onField} placeholder="Ungesto (nome del file senza estensione)" />
+          </div>
+        )}
 
-        <fieldset className="pf-block">
+        {!bloccati.has('sections') && <fieldset className="pf-block">
           <legend>Sezioni</legend>
           {form.sections.map((s, i) => (
             <div key={s.id || i} className="pf-section">
@@ -262,7 +285,7 @@ const ProjectForm = ({ project, initialType, onClose, onSaved }) => {
             />
             <button type="button" className="btn" onClick={addSection} disabled={!newSection.trim()}><Plus size={14} /> Sezione</button>
           </div>
-        </fieldset>
+        </fieldset>}
 
         <fieldset className="pf-block">
           <legend>Link</legend>

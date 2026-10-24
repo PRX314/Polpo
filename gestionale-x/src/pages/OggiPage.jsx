@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowUp, CalendarDays, Plus } from 'lucide-react'
+import { ArrowUp, CalendarDays, Pin, Plus } from 'lucide-react'
 import ComandiRapidi from '../components/ComandiRapidi'
 import ProgressBar from '../components/ui/ProgressBar'
 import StatusMark from '../components/ui/StatusMark'
 import { useData } from '../context/useData'
 import { useUi } from '../context/useUi'
 import { saveRoutine } from '../firebaseService'
-import { addDaysIso, longDate, oggiIso, relativeDay, timeAgo } from '../lib/dates'
+import { addDaysIso, longDate, oggiIso, relativeDay } from '../lib/dates'
 import { progressOf } from '../lib/status'
+import { ultimaVolta } from '../lib/vaultCampi'
 import { documentDeadlines } from '../services/localDocuments'
 import './OggiPage.css'
 
@@ -34,6 +35,8 @@ const buildAgenda = (items, events, documents) => {
 }
 
 const KIND_LABEL = { documento: 'Documento locale', todo: 'Da fare', deadline: 'Scadenza', event: 'Appuntamento' }
+
+const quandoTesto = (iso) => (iso ? relativeDay(iso).text : '')
 
 const AgendaRow = ({ row, onToggle }) => {
   const rel = relativeDay(row.iso)
@@ -88,10 +91,20 @@ const OggiPage = () => {
   // In primo piano = fissati. Lo stato "in corso" lo decide il vault (48 su 87 il 04/10, quindi non
   // diceva più niente); il primo piano lo decidi tu nell'app e la sincronizzazione non lo tocca.
   const focus = useMemo(
-    () => active.filter(p => p.pinned)
-      .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt)),
+    () => active.filter(p => p.pinned).sort((a, b) => ultimaVolta(b).localeCompare(ultimaVolta(a))),
     [active]
   )
+  // Su cosa hai lavorato nelle ultime due settimane e non è ancora in primo piano: da qui si sceglie
+  // cosa fissare. Al 24/10 i fissati erano zero e questa colonna restava vuota.
+  const recenti = useMemo(() => {
+    const limite = addDaysIso(-14)
+    return active
+      .filter(p => !p.pinned && !p.personale)
+      .map(p => ({ p, quando: ultimaVolta(p) }))
+      .filter(x => x.quando >= limite && x.quando <= today)
+      .sort((a, b) => b.quando.localeCompare(a.quando))
+      .slice(0, 7)
+  }, [active, today])
   // Solo le cose da fare tue: la roadmap importata dal vault non è "da fare oggi"
   const openTodos = active.flatMap(p => p.todos || []).filter(t => !t.completed && !t.daVault).length
 
@@ -199,7 +212,7 @@ const OggiPage = () => {
             <h2 className="ag-head"><span>In primo piano</span> <span className="count ghost">{focus.length}</span></h2>
             {focus.length === 0 ? (
               <p className="small muted" style={{ padding: 12 }}>
-                Nessun progetto in primo piano. Scegline pochi, al massimo sette: dal menu di un progetto, “Metti in primo piano”.
+                Nessun progetto in primo piano. Fissa quelli su cui stai lavorando, al massimo sette: con la puntina qui sotto o dal menu di un progetto.
               </p>
             ) : (
               <ul>
@@ -210,7 +223,7 @@ const OggiPage = () => {
                       <div className="row">
                         <StatusMark status={p.status} label={false} />
                         <Link to={`/elementi/${p.id}`} className="grow trunc ag-text">{p.name}</Link>
-                        <span className="small faint">{timeAgo(p.updatedAt || p.createdAt)}</span>
+                        <span className="small faint">{quandoTesto(ultimaVolta(p))}</span>
                       </div>
                       {total > 0 && (
                         <div className="row" style={{ marginTop: 6 }}>
@@ -225,6 +238,28 @@ const OggiPage = () => {
             )}
             {focus.length > 7 && <p className="small muted" style={{ padding: '8px 12px' }}>Sono {focus.length}: oltre sette il primo piano smette di aiutare a scegliere.</p>}
           </section>
+
+          {recenti.length > 0 && (
+            <section className="card card-flush" aria-label="Su cosa hai lavorato">
+              <h2 className="ag-head"><span>Su cosa hai lavorato</span> <span className="small faint">14 giorni</span></h2>
+              <ul>
+                {recenti.map(({ p, quando }) => (
+                  <li key={p.id} className="wip-row">
+                    <div className="row">
+                      <StatusMark status={p.status} label={false} />
+                      <Link to={`/elementi/${p.id}`} className="grow trunc ag-text">{p.name}</Link>
+                      <span className="small faint">{quandoTesto(quando)}</span>
+                      {focus.length < 7 && (
+                        <button className="btn-icon sm" onClick={() => actions.togglePin(p)} title="Metti in primo piano" aria-label={`Metti ${p.name} in primo piano`}>
+                          <Pin size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
       </div>
     </div>

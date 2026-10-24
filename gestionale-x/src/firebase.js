@@ -6,7 +6,13 @@ import {
   persistentMultipleTabManager,
   connectFirestoreEmulator,
 } from "firebase/firestore";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
+import {
+  initializeAuth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  connectAuthEmulator,
+} from "firebase/auth";
 
 // Modalità collaudo (tester/collauda.cjs): Firestore e Auth sono gli emulatori locali,
 // con un progetto finto "demo-": i dati veri non si possono raggiungere.
@@ -41,7 +47,13 @@ const app = initializeApp(firebaseConfig);
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 });
-export const auth = getAuth(app);
+// Come getAuth, con la stessa persistenza (le sessioni già salvate restano valide), ma senza il
+// pezzo per l'accesso con popup/redirect: l'accesso con Google è stato tolto il 2026-09-27, e quel
+// pezzo carica uno script di Google a ogni avvio. Senza rete lo aspettava, e la PWA restava su
+// "Caricamento…" anche con l'app e i dati già sul telefono.
+export const auth = initializeAuth(app, {
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+});
 if (EMULATORI) {
   const [host, port] = import.meta.env.VITE_EMU_FIRESTORE.split(':');
   connectFirestoreEmulator(db, host, Number(port));

@@ -170,6 +170,7 @@
 .toast span { flex: 1; min-width: 0; }
 .toast .btn-icon { color: var(--on-ink); width: 24px; height: 24px; }
 .toast .btn-icon:hover { border-color: var(--on-ink); }
+.toast .btn { flex: none; background: transparent; color: var(--on-ink); border-color: var(--on-ink); }
 
 @media (max-width: 768px) {
   .toasts { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }

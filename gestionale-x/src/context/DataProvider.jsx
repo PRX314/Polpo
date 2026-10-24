@@ -9,6 +9,8 @@ import { NOTE_TYPES } from '../itemTypes'
 import { useToast } from './useToast'
 import { DataContext } from './dataContext'
 
+const PERSONALE = 'Personale'
+
 // Un solo posto che ascolta Firestore e distribuisce i dati alle pagine.
 // Prima App.jsx teneva tutto in sé e ogni schermata si iscriveva per conto suo.
 export const DataProvider = ({ children }) => {
@@ -74,11 +76,29 @@ export const DataProvider = ({ children }) => {
       'Non sono riuscito ad archiviare'
     ),
     duplicate: (p) => guard(async () => {
-      const { id, createdAt, updatedAt, ...data } = p
-      await addProject({ ...data, name: `${data.name} (copia)`, pinned: false, archived: false })
+      // La copia è tua: senza i riferimenti alla fonte, altrimenti il sync la scambierebbe per
+      // l'originale (stessa nota del vault) e le roadmap copiate verrebbero tolte o riscritte
+      const {
+        id, createdAt, updatedAt, fonte, vaultNote, vaultPath, vaultCatalogo, vaultAggiornato,
+        cartella, scan, sincronizzatoIl, ...data
+      } = p
+      const todos = (data.todos || []).map(({ daVault, ...t }) => t)
+      await addProject({ ...data, todos, name: `${data.name} (copia)`, pinned: false, archived: false })
     }, 'Elemento duplicato', 'Non sono riuscito a duplicare'),
-    remove: (p) => guard(() => deleteProject(p.id), 'Elemento eliminato', 'Eliminazione non riuscita')
-  }), [guard])
+    remove: (p) => guard(() => deleteProject(p.id), 'Elemento eliminato', 'Eliminazione non riuscita'),
+    // Una cosa da fare in un progetto, oppure (progetto null) in "Personale": il contenitore delle
+    // cose di vita che non appartengono a nessun progetto. Nasce la prima volta che serve.
+    addTodo: async (project, todo) => {
+      if (project) return updateProject(project.id, { todos: [...(project.todos || []), todo] })
+      const personale = (projects || []).find(p => p.personale && !p.archived)
+      if (personale) return updateProject(personale.id, { todos: [...(personale.todos || []), todo] })
+      return addProject({
+        name: PERSONALE, type: 'progetto', personale: true, status: 'in_progress',
+        description: 'Le cose da fare che non appartengono a un progetto.',
+        tags: [], sections: [], links: [], roadmap: '', obiettivi: '', todos: [todo], pinned: false, archived: false
+      })
+    }
+  }), [guard, projects])
 
   const value = useMemo(() => ({
     loading: projects === null,

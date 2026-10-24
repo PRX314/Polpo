@@ -266,6 +266,13 @@ async function preparaAccount(owner, intruso) {
       sections: [{ id: 's1', title: 'Obiettivi', content: 'Primo obiettivo' }], userId: owner.uid, createdAt: adesso, updatedAt: adesso },
     { id: 'storico-idea', type: 'idea', name: 'Idea dal vault', status: 'pending', description: 'Arriva da Obsidian', tags: ['vault'], roadmap: '', obiettivi: '',
       deadline: null, deadlineTime: '', reminder: null, vaultNote: 'Idea dal vault', links: [], todos: [], sections: [], source: 'vault', userId: owner.uid, createdAt: adesso, updatedAt: adesso },
+    // Come li scrive backend/sincronizza.js: stato e testi sono della nota, l'app non li cambia (dal 24/10)
+    { id: 'dal-vault', type: 'progetto', name: 'Progetto del vault', status: 'in_progress', description: 'Scritto nella nota Obsidian', tags: ['vault'],
+      roadmap: '- [ ] Passo della roadmap', obiettivi: 'La visione nella nota', deadline: null, deadlineTime: '', reminder: null,
+      fonte: 'vault', vaultNote: 'Progetto del vault', vaultPath: '20-Projects/Progetto del vault.md', vaultAggiornato: oggi(),
+      links: [], todos: [{ text: 'Passo della roadmap', completed: false, daVault: true }],
+      sections: [{ id: 'vault-decisioni-0', title: 'Decisioni recenti', content: 'Decisa una cosa' }], pinned: false, archived: false,
+      userId: owner.uid, createdAt: adesso, updatedAt: adesso },
   ];
   for (const p of giaPresenti) { const { id, ...dati } = p; await scrivi('projects', id, dati); }
   await scrivi('notes', 'nota-vecchia', { title: 'Nota del vecchio formato', content: 'Scritta prima che le note diventassero elementi', type: 'idea', userId: owner.uid, createdAt: adesso, updatedAt: adesso });
@@ -280,8 +287,12 @@ async function preparaAccount(owner, intruso) {
 
 // ── il browser: niente esce da questo PC, l'AI è finta ──
 let scenarioChat = { testo: 'Ciao!', proposte: [] };
+// "Senza rete": con setOffline le richieste intercettate qui sotto potevano restare appese invece
+// di fallire subito come su un telefono senza campo. Così falliscono davvero, e subito.
+let senzaRete = false;
 async function preparaContesto(ctx) {
   await ctx.route('**/*', async route => {
+    if (senzaRete) return route.abort('internetdisconnected');
     const req = route.request();
     const u = new URL(req.url());
     if (!/^https?:$/.test(u.protocol)) return route.continue();
@@ -315,7 +326,9 @@ async function preparaContesto(ctx) {
 }
 function ascolta(pg) {
   pg.on('pageerror', e => erroriCorrenti.push(e.message));
-  pg.on('console', m => { if (m.type() === 'error' && !/ERR_BLOCKED_BY_CLIENT/.test(m.text())) erroriCorrenti.push(m.text()); });
+  // ERR_INTERNET_DISCONNECTED e "Could not reach Cloud Firestore backend": il passo "senza rete",
+  // dove le richieste falliscono apposta e Firestore annuncia che lavora offline
+  pg.on('console', m => { if (m.type() === 'error' && !/ERR_BLOCKED_BY_CLIENT|ERR_INTERNET_DISCONNECTED|Could not reach Cloud Firestore backend/.test(m.text())) erroriCorrenti.push(m.text()); });
   pg.on('dialog', d => d.accept().catch(() => {}));
 }
 async function entra(pg) {
@@ -473,10 +486,10 @@ async function main() {
     await passo(page, 'Ricerca negli elementi (accenti e simboli)', async () => {
       const c = scegli(vivi());
       const pezzo = c.nome.slice(0, Math.max(4, Math.ceil(c.nome.length / 2)));
-      await page.getByLabel('Cerca negli elementi').fill(pezzo);
+      await page.getByLabel('Cerca nei progetti').fill(pezzo);
       await page.locator(`a[href="#/elementi/${c.id}"]`).first().waitFor({ timeout: 5000 });
       verifica(!(await page.locator('a[href="#/elementi/storico-progetto"]').count()) || pezzo.length < 4, 'la ricerca non filtra');
-      await page.getByLabel('Cerca negli elementi').fill('');
+      await page.getByLabel('Cerca nei progetti').fill('');
       return `cercato "${pezzo}"`;
     });
 
@@ -517,6 +530,19 @@ async function main() {
         return d?.todos?.length === 2 && d.todos[0].completed && d.todos[1].text === nuovoTodo ? d : null;
       }, 'le cose da fare non risultano salvate in Firestore');
       verifica(doc.todos[1].deadline === oggi() && doc.todos[1].time === oraTodo, 'scadenza o ora della cosa da fare non salvate');
+    });
+
+    await passo(page, 'Cose da fare: elimina e annulla', async () => {
+      const lista = page.getByRole('region', { name: 'Cose da fare' });
+      const usa = `Da togliere ${tra(100, 999)}`;
+      const presente = async () => (await leggiUno('projects', conTodo.id))?.todos?.some(t => t.text === usa);
+      await lista.getByLabel('Nuova cosa da fare').fill(usa);
+      await lista.getByRole('button', { name: 'Aggiungi' }).click();
+      await attendi(presente, 'cosa da fare di prova non salvata');
+      await lista.getByRole('button', { name: `Elimina “${usa}”` }).click();
+      await attendi(async () => !(await presente()), 'eliminazione non salvata');
+      await page.locator('.toasts').getByRole('button', { name: 'Annulla' }).click();
+      await attendi(presente, '"Annulla" non ha rimesso la cosa da fare');
     });
 
     await passo(page, 'Modifica elemento e cambio stato', async () => {
@@ -561,10 +587,49 @@ async function main() {
       await page.getByRole('group', { name: 'Comandi rapidi' }).getByRole('button', { name: 'Da fare', exact: true }).click();
       const f = finestra(page);
       await f.getByLabel('Cosa').fill(veloce);
-      await f.getByLabel('Progetto').selectOption('storico-progetto');
+      await f.getByLabel('Dove').selectOption('storico-progetto');
       await f.getByRole('button', { name: 'Aggiungi', exact: true }).click();
       await toast(page, 'Aggiunta a Gestionale di prova');
       await attendi(async () => (await leggiUno('projects', 'storico-progetto'))?.todos?.some(t => t.text === veloce), 'cosa da fare non salvata nel progetto');
+    });
+
+    // ── dal 24/10: cose personali, progetti del vault in sola lettura, "Su cosa hai lavorato" ──
+    await passo(page, 'Oggi: "Da fare" personale, senza progetto', async () => {
+      for (const testo of [`Comprare il pane ${tra(100, 999)}`, `Chiamare il medico ${tra(100, 999)}`]) {
+        await vai(page, 'Oggi');
+        await page.getByRole('group', { name: 'Comandi rapidi' }).getByRole('button', { name: 'Da fare', exact: true }).click();
+        const f = finestra(page);
+        await f.getByLabel('Cosa').fill(testo);
+        await f.getByRole('button', { name: 'Aggiungi', exact: true }).click();
+        await attendi(async () => (await leggi('projects')).some(p => p.personale && p.todos?.some(t => t.text === testo)), `"${testo}" non è finita in Personale`);
+        await finestra(page).waitFor({ state: 'detached', timeout: 5000 });
+      }
+      const personali = (await leggi('projects')).filter(p => p.personale && p.userId === owner.uid);
+      verifica(personali.length === 1, `${personali.length} contenitori "Personale" invece di uno`);
+    });
+
+    await passo(page, 'Progetto del vault: stato e testi in sola lettura', async () => {
+      await page.goto(`${APP}#/elementi/dal-vault`);
+      await page.getByRole('heading', { name: 'Progetto del vault', level: 1 }).waitFor({ timeout: 8000 });
+      await page.getByText('· dal vault').first().waitFor({ timeout: 4000 });
+      verifica(!(await page.getByLabel('Stato', { exact: true }).count()), 'lo stato di un progetto del vault si può ancora cambiare dal dettaglio');
+      await page.getByRole('button', { name: 'Modifica', exact: true }).first().click();
+      const f = finestra(page);
+      verifica(await f.locator('#pf-name').isDisabled(), 'il nome di un progetto del vault è modificabile');
+      verifica(!(await f.getByText('Sezioni', { exact: true }).count()), 'le sezioni di un progetto del vault sono modificabili');
+      await f.locator('#pf-deadline').fill(traGiorni(3));
+      await f.getByRole('button', { name: 'Salva', exact: true }).click();
+      await toast(page, 'Modifiche salvate');
+      const d = await attendi(async () => { const x = await leggiUno('projects', 'dal-vault'); return x?.deadline === traGiorni(3) ? x : null; }, 'la scadenza di un progetto del vault non si salva');
+      verifica(d.name === 'Progetto del vault' && d.status === 'in_progress' && d.todos.length === 1 && d.todos[0].daVault, 'salvare il modulo ha toccato i campi del vault');
+    });
+
+    await passo(page, 'Oggi: "Su cosa hai lavorato" e la puntina', async () => {
+      await vai(page, 'Oggi');
+      const riquadro = page.getByRole('region', { name: 'Su cosa hai lavorato' });
+      await riquadro.getByText('Progetto del vault', { exact: true }).waitFor({ timeout: 6000 });
+      await riquadro.getByRole('button', { name: 'Metti Progetto del vault in primo piano' }).click();
+      await attendi(async () => (await leggiUno('projects', 'dal-vault'))?.pinned === true, 'la puntina non ha messo il progetto in primo piano');
     });
 
     await passo(page, 'Oggi: comando rapido "Appunto" legato con #hashtag', async () => {
@@ -699,6 +764,40 @@ async function main() {
       verifica(doc.todos.find(t => t.text === todoChat).deadline === traGiorni(1), 'scadenza della cosa da fare dalla chat sbagliata');
       const chat = await attendi(async () => (await leggi('chats')).find(c => c.userId === owner.uid), 'la conversazione non è stata salvata');
       verifica(Array.isArray(chat.messages) && chat.messages.length >= 2, 'conversazione salvata senza messaggi');
+    });
+
+    // Dal 24/10 la chat parla la lingua dell'app: appunti veri, appuntamenti, cose personali,
+    // e niente modifiche allo stato di un progetto del vault (il sync le cancellerebbe)
+    const appuntoChat = `Idea dalla chat ${tra(100, 999)}`;
+    const eventoChat = `Dentista ${tra(100, 999)}`;
+    const personaleChat = `Pagare il bollo ${tra(100, 999)}`;
+    scenarioChat = {
+      testo: 'Ecco il piano per la settimana, con le proposte.',
+      proposte: [
+        { tool: 'add_note', args: { title: appuntoChat, content: 'Scritto da Polpo', projectTags: ['Gestionale di prova'] }, label: 'Salva appunto' },
+        { tool: 'add_event', args: { title: eventoChat, date: traGiorni(2), time: '10:30', reminder: 15 }, label: 'Fissa appuntamento' },
+        { tool: 'add_todo', args: { text: personaleChat, deadline: traGiorni(5) }, label: 'Cosa personale' },
+        { tool: 'update_project', args: { projectName: 'Progetto del vault', status: 'paused' }, label: 'Metti in pausa il vault' },
+      ],
+    };
+    await passo(page, 'Polpo AI: appunto, appuntamento, cosa personale; il vault non si tocca', async () => {
+      await vai(page, 'Polpo AI');
+      await page.getByLabel('Messaggio').fill('Organizzami la settimana');
+      // exact: sotto la risposta di prima c'è anche "Invia al vault"
+      await page.getByRole('button', { name: 'Invia', exact: true }).click();
+      await page.getByText('Ecco il piano', { exact: false }).first().waitFor({ timeout: 10000 });
+      for (const l of ['Salva appunto', 'Fissa appuntamento', 'Cosa personale', 'Metti in pausa il vault']) {
+        await page.getByRole('button', { name: `Conferma: ${l}` }).click();
+      }
+      const appunto = await attendi(async () => (await leggi('notes')).find(n => n.kind === 'appunto' && n.title === appuntoChat), 'add_note non ha creato l\'appunto', 15000);
+      verifica(appunto.userId === owner.uid && appunto.text.includes('#GestionaleDiProva'), 'l\'appunto della chat non è collegato al progetto con #hashtag');
+      const ev = await attendi(async () => (await leggi('events')).find(e => e.title === eventoChat), 'add_event non ha creato l\'appuntamento', 15000);
+      verifica(ev.date === traGiorni(2) && ev.time === '10:30' && ev.reminder === 15 && ev.userId === owner.uid, 'appuntamento della chat salvato male');
+      await attendi(async () => (await leggi('projects')).some(p => p.personale && p.todos?.some(t => t.text === personaleChat && t.deadline === traGiorni(5))), 'la cosa personale della chat non è in Personale', 15000);
+      await page.locator('.chat-proposta-err').filter({ hasText: 'vault' }).first().waitFor({ timeout: 15000 });
+      verifica((await leggiUno('projects', 'dal-vault')).status === 'in_progress', 'la chat ha cambiato lo stato di un progetto del vault');
+      const personali = (await leggi('projects')).filter(p => p.personale && p.userId === owner.uid);
+      verifica(personali.length === 1, `la chat ha creato un secondo "Personale" (${personali.length})`);
     });
 
     await passo(page, 'Notifiche: la finestra si apre e si chiude', async () => {
@@ -837,6 +936,43 @@ async function main() {
       const box = await finestra(pt).boundingBox();
       verifica(box && box.x >= -1 && box.x + box.width <= iphone.viewport.width + 1, 'la finestra esce dallo schermo');
       verifica(await senzaOverflow(pt), 'la pagina scorre di lato con il form aperto');
+    });
+    // Dal 24/10: senza campo i comandi rapidi non aspettano il server e la PWA si riapre dalla cache
+    await passo(page, 'Telefono senza rete: «Appunto» si apre subito, l\'app si riapre, l\'appunto arriva dopo', async () => {
+      fotoDa = pt;
+      // il passo di prima lascia aperto il form "Nuovo elemento"
+      if (await finestra(pt).count()) await finestra(pt).getByRole('button', { name: 'Annulla', exact: true }).click();
+      await pt.goto(`${APP}#/`);
+      const comandi = pt.getByRole('group', { name: 'Comandi rapidi' });
+      await comandi.waitFor({ timeout: 8000 });
+      const inCache = await pt.evaluate(async () => {
+        const c = await caches.open('gestionale-shell-v1');
+        return { controllata: !!navigator.serviceWorker.controller, file: (await c.keys()).map(k => k.url) };
+      });
+      verifica(inCache.controllata, 'il service worker non controlla la pagina');
+      verifica(inCache.file.some(u => /\/assets\/index-.*\.js$/.test(u)), `lo script principale non è nella cache (${inCache.file.length} file)`);
+      await tel.setOffline(true);
+      senzaRete = true;
+      try {
+        const t0 = Date.now();
+        await comandi.getByRole('button', { name: 'Appunto', exact: true }).click();
+        await pt.waitForURL(/#\/appunti\/[^/?]+$/, { timeout: 5000 });
+        const ms = Date.now() - t0;
+        const id = pt.url().split('/').pop();
+        const diario = [];
+        pt.on('console', m => diario.push(`${m.type()}: ${m.text().slice(0, 160)}`));
+        pt.on('requestfailed', r => diario.push(`fallita ${r.url().slice(0, 90)} ${r.failure()?.errorText || ''}`));
+        await pt.reload();
+        await pt.getByRole('navigation', { name: 'Sezioni' }).first().waitFor({ timeout: 15000 })
+          .catch(e => { throw new Error(`${e.message.split('\n')[0]} · ${diario.slice(-12).join(' | ')}`); });
+        senzaRete = false;
+        await tel.setOffline(false);
+        await attendi(async () => (await leggiUno('notes', id))?.kind === 'appunto', 'l\'appunto creato senza rete non è arrivato in Firestore', 30000);
+        return `appunto aperto in ${ms} ms senza rete, app riaperta dalla cache`;
+      } finally {
+        senzaRete = false;
+        await tel.setOffline(false);
+      }
     });
     await tel.close();
 

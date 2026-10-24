@@ -66,7 +66,7 @@ function Elenco({ appunti }) {
   const registrato = async (file, inizio) => {
     const id = await nuovo({ title: `Nota vocale · ${quando(inizio)}` })
     if (!id) return
-    aggiungiRegistrazione(id, file, inizio).catch(() => {})
+    aggiungiRegistrazione(id, file, inizio).catch(() => toast.err('La registrazione non è entrata nell\'appunto: riprova da lì'))
     navigate(`/appunti/${id}`)
   }
 

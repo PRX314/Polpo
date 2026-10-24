@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, BookOpen, ExternalLink, Ellipsis, Pencil, Plus } from 'lucide-react'
 import Menu from '../components/ui/Menu'
 import TypeTag from '../components/ui/TypeTag'
@@ -18,6 +18,7 @@ import { linkVault, etichettaVault, haVault } from '../vault'
 import { renderMarkdown } from '../lib/markdown'
 import { fullDate } from '../lib/dates'
 import { STATUS_LABEL, STATUS_LIST, normalizeStatus } from '../lib/status'
+import { dalVault } from '../lib/vaultCampi'
 import '../components/prose.css'
 import './ItemDetailPage.css'
 
@@ -28,6 +29,7 @@ const Prose = ({ text }) => {
 
 const Detail = ({ project }) => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { actions, notesOf, documents } = useData()
   const { openForm } = useUi()
   const menu = useItemMenu(project, { afterDelete: () => navigate('/elementi', { replace: true }) })
@@ -37,7 +39,11 @@ const Detail = ({ project }) => {
   return (
     <div className="stack" style={{ gap: 14 }}>
       <div>
-        <Link to="/elementi" className="btn btn-quiet btn-sm back"><ArrowLeft size={14} /> Elementi</Link>
+        {/* Indietro vero: torna all'elenco con i filtri e la ricerca di prima (o a Oggi, se venivi da lì).
+            Aperta da un link diretto non c'è un "prima": si va all'elenco. */}
+        <button className="btn btn-quiet btn-sm back" onClick={() => (location.key !== 'default' ? navigate(-1) : navigate('/elementi'))}>
+          <ArrowLeft size={14} /> Indietro
+        </button>
       </div>
 
       <header className="detail-head">
@@ -109,12 +115,19 @@ const Detail = ({ project }) => {
               <div>
                 <dt>Stato</dt>
                 <dd>
-                  <select
-                    value={normalizeStatus(project.status)} aria-label="Stato"
-                    onChange={(e) => actions.update(project.id, { status: e.target.value })}
-                  >
-                    {STATUS_LIST.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-                  </select>
+                  {dalVault(project) ? (
+                    // Lo stato lo scrive il frontmatter della nota: cambiarlo qui durava fino al sync dopo
+                    <span title="Arriva dal vault: si cambia con status: nella nota">
+                      {STATUS_LABEL[normalizeStatus(project.status)]} <span className="small faint">· dal vault</span>
+                    </span>
+                  ) : (
+                    <select
+                      value={normalizeStatus(project.status)} aria-label="Stato"
+                      onChange={(e) => actions.update(project.id, { status: e.target.value })}
+                    >
+                      {STATUS_LIST.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+                    </select>
+                  )}
                 </dd>
               </div>
               {project.deadline && (
@@ -150,12 +163,27 @@ const Detail = ({ project }) => {
           </section>
 
           <AppuntiDelProgetto project={project} />
-<section className="card stack"><h2 className="card-title">Documenti su questo dispositivo</h2>{documents.filter(d => d.projectId === project.id).map(d => <Link key={d.id} to={`/documenti/${d.id}`}>{d.title}{d.objective ? ` · ${d.objective}` : ""}</Link>)}<Link className="btn btn-sm" to={`/documenti?elemento=${encodeURIComponent(project.id)}`}>Collega foto o file</Link></section>
+          <DocumentiDelProgetto project={project} documents={documents} />
           <TodoList project={project} onUpdate={(todos) => actions.update(project.id, { todos })} />
           {project.scan && <ScanInfo scan={project.scan} />}
         </aside>
       </div>
     </div>
+  )
+}
+
+// Foto e file collegati al progetto. Restano sul dispositivo (scelta del 04/10): su un altro
+// telefono o sul PC qui non compaiono, per questo il titolo lo dice.
+const DocumentiDelProgetto = ({ project, documents }) => {
+  const suoi = documents.filter(d => d.projectId === project.id)
+  return (
+    <section className="card stack">
+      <h2 className="card-title">Documenti su questo dispositivo {suoi.length > 0 && <span className="count">{suoi.length}</span>}</h2>
+      {suoi.map(d => (
+        <Link key={d.id} to={`/documenti/${d.id}`}>{d.title}{d.objective ? ` · ${d.objective}` : ''}</Link>
+      ))}
+      <Link className="btn btn-sm" to={`/documenti?elemento=${encodeURIComponent(project.id)}`}>Collega foto o file</Link>
+    </section>
   )
 }
 
@@ -193,7 +221,7 @@ const ItemDetailPage = () => {
   if (!project) {
     return (
       <EmptyState title="Elemento non trovato" hint="Potrebbe essere stato eliminato, o il link non è corretto.">
-        <Link to="/elementi" className="btn" style={{ marginTop: 12 }}><ArrowLeft size={14} /> Torna agli elementi</Link>
+        <Link to="/elementi" className="btn" style={{ marginTop: 12 }}><ArrowLeft size={14} /> Torna ai progetti</Link>
       </EmptyState>
     )
   }
