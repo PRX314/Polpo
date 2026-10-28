@@ -632,6 +632,64 @@ async function main() {
       await attendi(async () => (await leggiUno('projects', 'dal-vault'))?.pinned === true, 'la puntina non ha messo il progetto in primo piano');
     });
 
+    // Raccolte (dal 2026-10-28): #Pensieri, #Musica… come i progetti, anche dalla finestrella «Metti in…»
+    await passo(page, 'Appunti: raccolte con «Metti in…», filtro e «Mettili insieme»', async () => {
+      await vai(page, 'Oggi');
+      await page.getByRole('group', { name: 'Comandi rapidi' }).getByRole('button', { name: 'Appunto', exact: true }).click();
+      await page.waitForURL(/\/appunti\/[^/]+$/, { timeout: 8000 });
+      const area = page.getByLabel('Testo dell\'appunto');
+      const inFondo = async (testo) => { await area.focus(); await page.keyboard.press('Control+End'); await area.pressSequentially(testo, { delay: 10 }); };
+      const scegliIn = async (gruppo, nome) => {
+        await page.getByRole('button', { name: 'Metti in…' }).click();
+        await finestra(page).getByRole('group', { name: gruppo }).getByRole('button', { name: nome, exact: true }).click();
+        await finestra(page).getByRole('button', { name: 'Fatto' }).click();
+      };
+
+      await page.getByRole('button', { name: 'Metti in…' }).click();
+      const schermo = page.viewportSize();
+      await page.setViewportSize({ width: 390, height: 844 });
+      verifica(await senzaOverflow(page), 'sul telefono «Metti in…» esce dai bordi');
+      await page.screenshot({ path: path.join(OUT, 'metti-in-telefono.png') });
+      await page.setViewportSize(schermo);
+      await finestra(page).getByRole('group', { name: 'Raccolte' }).getByRole('button', { name: 'Pensieri', exact: true }).click();
+      await finestra(page).getByRole('group', { name: 'Progetti' }).getByRole('button', { name: 'Gestionale di prova', exact: true }).click();
+      verifica(await finestra(page).getByRole('button', { name: 'Pensieri', exact: true }).getAttribute('aria-pressed') === 'true', '«Pensieri» non risulta scelto');
+      await finestra(page).getByRole('button', { name: 'Fatto' }).click();
+      let valore = await area.inputValue();
+      verifica(valore === '#Pensieri #GestionaleDiProva\n\n', `«Metti in…» ha scritto i tag male: ${JSON.stringify(valore)}`);
+      await inFondo('Due vedute sullo stesso fatto');
+
+      await scegliIn('Raccolte', 'Pensieri'); // toglie
+      valore = await area.inputValue();
+      verifica(valore === '#GestionaleDiProva\n\nDue vedute sullo stesso fatto', `togliere Pensieri ha rovinato il testo: ${JSON.stringify(valore)}`);
+      await inFondo(' #pensiero'); // scritto a mano, al singolare
+      await page.locator('.ap-dove').getByRole('link', { name: 'Pensieri' }).waitFor({ timeout: 4000 });
+      await page.getByText('Salvato', { exact: true }).waitFor({ timeout: 8000 });
+
+      await page.locator('.ap-dove').getByRole('link', { name: 'Pensieri' }).click();
+      await page.waitForURL(/in=pensieri/, { timeout: 6000 });
+      await page.locator('.ap-card').filter({ hasText: 'Due vedute sullo stesso fatto' }).first().waitFor({ timeout: 6000 });
+      const titolo = await page.locator('.ap-card').filter({ hasText: 'Due vedute sullo stesso fatto' }).first().locator('h2').innerText();
+      verifica(titolo === 'Due vedute sullo stesso fatto', `nell'elenco il titolo si porta dietro i #tag: "${titolo}"`);
+      await page.getByRole('button', { name: 'Nuovo in Pensieri' }).click();
+      await page.waitForURL(/\/appunti\/[^/?]+$/, { timeout: 8000 });
+      await attendi(async () => (await area.inputValue()) === '#Pensieri\n\n', '«Nuovo in Pensieri» non nasce col tag', 6000);
+      await inFondo('Un altro punto di vista');
+      await page.getByText('Salvato', { exact: true }).waitFor({ timeout: 8000 });
+      const salvati = (await leggi('notes')).filter(n => n.kind === 'appunto' && n.userId === owner.uid && /#pensier/i.test(n.text));
+      verifica(salvati.length === 2, `in Firestore gli appunti in Pensieri sono ${salvati.length}, non 2`);
+
+      await page.locator('.ap-indietro').click();
+      const filtri = page.getByRole('group', { name: 'Raccolte' });
+      await filtri.getByRole('button', { name: /^Musica/ }).click();
+      await page.getByRole('heading', { name: 'Ancora niente in Musica' }).waitFor({ timeout: 4000 });
+      await filtri.getByRole('button', { name: /^Pensieri/ }).click();
+      await page.locator('.ap-card').filter({ hasText: 'Un altro punto di vista' }).first().waitFor({ timeout: 6000 });
+      await page.getByRole('button', { name: 'Mettili insieme con Polpo' }).click();
+      await page.waitForURL(/\/ai/, { timeout: 6000 });
+      await page.getByText('dalla raccolta Pensieri', { exact: false }).first().waitFor({ timeout: 10000 });
+    });
+
     await passo(page, 'Oggi: comando rapido "Appunto" legato con #hashtag', async () => {
       await vai(page, 'Oggi');
       await page.getByRole('group', { name: 'Comandi rapidi' }).getByRole('button', { name: 'Appunto', exact: true }).click();
@@ -754,7 +812,8 @@ async function main() {
     await passo(page, 'Polpo AI: risposta, proposta confermata, azione eseguita', async () => {
       await vai(page, 'Polpo AI');
       await page.getByLabel('Messaggio').fill(`Aggiungi una cosa da fare a ${bersaglio.nome}`);
-      await page.getByRole('button', { name: 'Invia' }).click();
+      // exact: c'è già la conversazione di «Mettili insieme», con «Invia al vault» sotto la risposta
+      await page.getByRole('button', { name: 'Invia', exact: true }).click();
       await page.getByText('Aggiungo', { exact: false }).first().waitFor({ timeout: 10000 });
       await page.getByRole('button', { name: 'Conferma: Aggiungi cosa da fare' }).click();
       const doc = await attendi(async () => {

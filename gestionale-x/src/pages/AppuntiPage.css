@@ -24,8 +24,14 @@
 .ap-disegno img { display: block; width: 100%; height: auto; }
 .ap-disegno span { display: block; padding: 24px; }
 
-/* #hashtag: progetti proposti mentre scrivi e progetti già collegati */
+/* #hashtag: progetti e raccolte proposti mentre scrivi, e quelli già collegati */
 .ap-proposte { margin-top: -6px; }
 .ap-proposte .chip { min-height: 28px; }
 .ap-collegati { gap: 6px; flex-wrap: wrap; }
 .ap-card .ap-collegati { margin-top: 6px; }
+.ap-collegati .tag-raccolta { border-color: var(--line); color: var(--ink); }
+
+/* Raccolte (Musica, Pensieri…): filtri dell'elenco e "Metti in…" nel dettaglio */
+.ap-raccolte { margin-top: -4px; }
+.ap-dove { gap: 8px; flex-wrap: wrap; margin-top: -6px; }
+.ap-insieme { gap: 10px; flex-wrap: wrap; }

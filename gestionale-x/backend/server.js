@@ -157,7 +157,7 @@ const TOOLS = [
                 },
                 args: {
                   type: 'object',
-                  description: 'Parametri dell\'azione. Per add_project: {type (progetto/idea), name, description, status, tags[], roadmap, obiettivi, deadline?, sections[{icon, title, content}]}. Per add_section_to_project: {projectName, icon, sectionTitle, content}. Per add_todo: {projectName (vuoto o "Personale" = cosa personale, senza progetto), text, deadline? (AAAA-MM-GG), time? (HH:MM, solo con deadline)}. Per complete_todo: {projectName, todoText}. Per update_project: {projectName, status, description, roadmap, obiettivi, deadline? (AAAA-MM-GG)}. Per add_event (appuntamento in agenda): {title, date (AAAA-MM-GG), time? (HH:MM), endTime? (HH:MM), notes?, reminder? (minuti di anticipo della sveglia, solo con time)}. Le date si calcolano dalla data di oggi indicata nel contesto. Per add_link_to_project: {projectName, linkTitle, url}. Per add_note (nuovo appunto negli Appunti): {title, content, projectTags[] (nomi dei progetti a cui collegarlo)}. Per update_note (appunto esistente): {noteTitle, title?, content?}. Per delete_note (appunto nel cestino): {noteTitle}.'
+                  description: 'Parametri dell\'azione. Per add_project: {type (progetto/idea), name, description, status, tags[], roadmap, obiettivi, deadline?, sections[{icon, title, content}]}. Per add_section_to_project: {projectName, icon, sectionTitle, content}. Per add_todo: {projectName (vuoto o "Personale" = cosa personale, senza progetto), text, deadline? (AAAA-MM-GG), time? (HH:MM, solo con deadline)}. Per complete_todo: {projectName, todoText}. Per update_project: {projectName, status, description, roadmap, obiettivi, deadline? (AAAA-MM-GG)}. Per add_event (appuntamento in agenda): {title, date (AAAA-MM-GG), time? (HH:MM), endTime? (HH:MM), notes?, reminder? (minuti di anticipo della sveglia, solo con time)}. Le date si calcolano dalla data di oggi indicata nel contesto. Per add_link_to_project: {projectName, linkTitle, url}. Per add_note (nuovo appunto negli Appunti): {title, content, projectTags[] (nomi dei progetti o delle raccolte a cui collegarlo; raccolte: Musica, Documenti, Idee, Idee social, Monologhi, Pensieri)}. Per update_note (appunto esistente): {noteTitle, title?, content?}. Per delete_note (appunto nel cestino): {noteTitle}.'
                 },
                 label: {
                   type: 'string',
@@ -794,7 +794,7 @@ appuntamenti. Non gestisce fatture, magazzino, clienti o vendite. Quando parli d
 SOLO ciò che trovi nel contesto qui sotto: non inventare funzioni, dati, numeri o risultati.
 
 ## DOVE VA COSA
-- Un pensiero, una nota, un testo da tenere → **add_note** (diventa un appunto negli Appunti; con projectTags si collega ai progetti)
+- Un pensiero, una nota, un testo da tenere → **add_note** (diventa un appunto negli Appunti; con projectTags si collega ai progetti e alle raccolte: una riflessione → Pensieri, un'idea generica → Idee, reel e post → Idee social, un pezzo da dire → Monologhi, testi e brani → Musica)
 - Una cosa da fare di un progetto → **add_todo** con projectName; una cosa personale (spesa, telefonate, pagamenti) → **add_todo** senza projectName (finisce in "Personale")
 - Un impegno con giorno ed eventualmente ora (visita, riunione, chiamata fissata) → **add_event**
 - Un progetto o un'idea nuova → **add_project** (solo tipo progetto o idea)

@@ -1,0 +1,7 @@
+/* "Metti in…": raccolte in due colonne, progetti a capo */
+.mi { gap: 18px; }
+.mi-titolo { font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); margin-bottom: 8px; }
+.mi-raccolte { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.mi-raccolte .chip { min-height: 40px; }
+.mi-progetti { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.mi-progetti .chip { white-space: normal; text-align: left; min-width: 0; overflow-wrap: anywhere; }

@@ -34,3 +34,49 @@ export const suggerisci = (parziale, items, quanti = 5) => {
     .sort((a, b) => (chiave(b.name).startsWith(k) - chiave(a.name).startsWith(k)) || (!!b.pinned - !!a.pinned) || a.name.localeCompare(b.name))
     .slice(0, quanti)
 }
+
+// Raccolte: i posti fissi per gli appunti che non sono di un progetto (dal 2026-10-28).
+// Funzionano come i progetti: #Musica nel testo e l'appunto sta in Musica.
+// Gli alias sono gli altri modi di scriverlo (#pensiero = #Pensieri, #social = #IdeeSocial).
+export const RACCOLTE = [
+  { id: 'musica', nome: 'Musica', alias: [], descrizione: 'Testi, melodie, ascolti, idee per brani.' },
+  { id: 'documenti', nome: 'Documenti', alias: ['documento'], descrizione: 'Appunti su carte, pratiche e testi da tenere.' },
+  { id: 'idee', nome: 'Idee', alias: ['idea'], descrizione: 'Idee generali, di qualsiasi tipo, anche grezze.' },
+  { id: 'ideesocial', nome: 'Idee social', alias: ['ideasocial', 'social'], descrizione: 'Reel, post e storie da fare.' },
+  { id: 'monologhi', nome: 'Monologhi', alias: ['monologo'], descrizione: 'Pezzi parlati, stand-up, cose da dire a voce.' },
+  { id: 'pensieri', nome: 'Pensieri', alias: ['pensiero'], descrizione: 'Riflessioni, discussioni interne, punti di vista sull\'umano.' }
+].map(r => ({ ...r, tag: tagDi({ name: r.nome }), chiavi: [r.id, ...r.alias] }))
+
+export const raccolteCitate = (testo) => {
+  const tags = hashtagIn(testo)
+  return tags.size ? RACCOLTE.filter(r => r.chiavi.some(k => tags.has(k))) : []
+}
+
+export const suggerisciRaccolte = (parziale) => {
+  const k = chiave(parziale)
+  return RACCOLTE.filter(r => r.chiavi.some(c => c.includes(k)))
+}
+
+// Una riga fatta solo di #tag: la prima di un appunto messo in una raccolta o in un progetto
+const SOLO_TAG = /^\s*(#[\p{L}\p{N}_-]+\s*)+$/u
+
+// Il selettore "Metti in…" scrive il tag sulla riga dei tag in cima, o ne apre una
+export const conTag = (testo, tag) => {
+  const [prima, ...resto] = testo.split('\n')
+  if (SOLO_TAG.test(prima)) return [`${prima.trimEnd()} ${tag}`, ...resto].join('\n')
+  return testo.trim() ? `${tag}\n\n${testo}` : `${tag}\n\n`
+}
+
+// Toglie i #tag con queste chiavi ovunque siano; una riga rimasta vuota se ne va
+export const senzaTag = (testo, chiavi) => {
+  const via = new Set(chiavi)
+  return testo.split('\n').flatMap(riga => {
+    const nuova = riga.replace(HASHTAG, (tutto, prima, nome) => (via.has(chiave(nome)) ? prima : tutto))
+    if (nuova === riga) return [riga]
+    const pulita = nuova.trim().replace(/[ \t]{2,}/g, ' ')
+    return pulita ? [riga.match(/^[ \t]*/)[0] + pulita] : []
+  }).join('\n').replace(/^\n+/, '')
+}
+
+// Il testo senza le righe di soli #tag, per titoli ed estratti
+export const senzaRigheTag = (testo = '') => testo.split('\n').filter(r => !SOLO_TAG.test(r)).join('\n').trim()

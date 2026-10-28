@@ -5,16 +5,18 @@ import { X } from 'lucide-react'
 // torna dove era. Su telefono diventa un pannello dal basso (vedi ui.css).
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-const Modal = ({ title, onClose, children, footer, size = '' }) => {
+// focusCampo=false: il focus va al primo bottone, così sul telefono non si apre la tastiera
+const Modal = ({ title, onClose, children, footer, size = '', focusCampo = true }) => {
   const ref = useRef(null)
   const titleId = useId()
   const closeRef = useRef(onClose)
   closeRef.current = onClose
+  const focusCampoRef = useRef(focusCampo)
 
   useEffect(() => {
     const previous = document.activeElement
     const node = ref.current
-    const first = node?.querySelector('input, select, textarea') || node?.querySelector(FOCUSABLE)
+    const first = (focusCampoRef.current && node?.querySelector('input, select, textarea')) || node?.querySelector(FOCUSABLE)
     first?.focus()
 
     const onKey = (e) => {

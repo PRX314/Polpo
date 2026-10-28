@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Check, Copy, Download, ImagePlus, Loader, NotebookPen, PenLine, Play, Plus, RotateCcw, TextQuote, Trash2 } from 'lucide-react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { ArrowLeft, Check, Copy, Download, FolderInput, ImagePlus, Loader, NotebookPen, PenLine, Play, Plus, RotateCcw, Sparkles, TextQuote, Trash2 } from 'lucide-react'
 import VoiceRecorder from '../components/VoiceRecorder'
 import Lavagna from '../components/appunti/Lavagna'
+import MettiIn, { IconaRaccolta } from '../components/appunti/MettiIn'
 import { preparaFoto, SFONDI } from '../components/appunti/disegno'
 import { useData } from '../context/useData'
 import { useToast } from '../context/useToast'
 import { download } from '../services/localDocuments'
 import { salvaNelVault } from '../services/chatService'
 import { relativeDay, toIso } from '../lib/dates'
-import { progettiCitati, suggerisci, tagDi, tagInCorso, testoAppunto } from '../lib/hashtag'
+import {
+  RACCOLTE, conTag, progettiCitati, raccolteCitate, senzaRigheTag, senzaTag, suggerisci, suggerisciRaccolte, tagDi, tagInCorso, testoAppunto
+} from '../lib/hashtag'
 import {
   GIORNI_CESTINO, aggiornaAppunto, aggiungiBlocco, aggiungiRegistrazione, aggiornaBlocco, creaAppunto, eliminaFile, eliminaPerSempre,
   leggiFile, nelCestino, nuovoId, ripristina, salvaFile, sostituisciBlocco, subscribeToAppunti, svuotaScaduti, togliBlocco, trascrivi
@@ -20,7 +23,9 @@ import './AppuntiPage.css'
 // Tutto sincronizzato tra telefono e PC (vedi appuntiService). Eliminare manda nel cestino.
 
 const quando = (d) => new Date(d).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-const titoloDi = (a) => a.title?.trim() || a.text?.trim().split('\n')[0].slice(0, 80) || 'Senza titolo'
+// Senza titolo vale la prima riga vera del testo, senza i #tag che la chiudono
+const titoloDi = (a) => a.title?.trim()
+  || senzaRigheTag(a.text).split('\n')[0].replace(/(\s+#[\p{L}\p{N}_-]+)+\s*$/u, '').slice(0, 80) || 'Senza titolo'
 const conta = (a, type) => a.blocks.filter(b => b.type === type).length
 const peso = (n) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} kB` : `${(n / 1024 / 1024).toFixed(1)} MB`)
 const nomeFile = (s) => s.replace(/[^\p{L}\p{N} _-]/gu, '_').slice(0, 80) || 'appunto'
@@ -34,6 +39,17 @@ export default function AppuntiPage() {
   return id ? <Dettaglio key={id} id={id} appunti={appunti} /> : <Elenco appunti={appunti} />
 }
 
+// Pensieri → Polpo: quanti caratteri al massimo, i più recenti prima
+const MAX_PER_POLPO = 8000
+
+// Il filtro dell'elenco: una raccolta, "progetti" (collegati ad almeno uno) o "sciolti" (a niente)
+const nel = (posti, f) => (a) => {
+  const { raccolte, progetti } = posti.get(a.id)
+  if (f === 'progetti') return progetti.length > 0
+  if (f === 'sciolti') return !raccolte.length && !progetti.length
+  return raccolte.some(r => r.id === f)
+}
+
 function Elenco({ appunti }) {
   const navigate = useNavigate()
   const toast = useToast()
@@ -42,21 +58,37 @@ function Elenco({ appunti }) {
   const [cestino, setCestino] = useState(false)
   const [occupato, setOccupato] = useState(false)
   const pulito = useRef(false)
+  // ?in=musica (una raccolta), ?in=progetti, ?in=sciolti (né raccolta né progetto): resta tornando indietro
+  const [params, setParams] = useSearchParams()
+  const filtro = params.get('in') || ''
+  const raccolta = RACCOLTE.find(r => r.id === filtro)
+  const scegli = (f) => setParams(f ? { in: f } : {}, { replace: true })
 
   useEffect(() => {
     if (appunti && !pulito.current) { pulito.current = true; svuotaScaduti(appunti) }
   }, [appunti])
 
+  const posti = useMemo(() => new Map((appunti || []).map(a => [a.id, {
+    raccolte: raccolteCitate(testoAppunto(a)), progetti: progettiCitati(testoAppunto(a), items)
+  }])), [appunti, items])
+  const vivi = useMemo(() => (appunti || []).filter(a => !a.deletedAt), [appunti])
+  const filtri = [
+    ...RACCOLTE.map(r => ({ id: r.id, nome: r.nome })),
+    { id: 'progetti', nome: 'Progetti' }, { id: 'sciolti', nome: 'Senza posto' }
+  ].map(f => ({ ...f, n: vivi.filter(nel(posti, f.id)).length }))
+
   const lista = useMemo(() => (appunti || [])
     .filter(a => (cestino ? !!a.deletedAt : !a.deletedAt))
+    .filter(a => cestino || !filtro || nel(posti, filtro)(a))
     .filter(a => `${a.title} ${a.text} ${a.blocks.map(b => b.trascrizione || '').join(' ')}`.toLowerCase().includes(cerca.toLowerCase())),
-  [appunti, cestino, cerca])
+  [appunti, cestino, cerca, filtro, posti])
   const nelCestinoN = (appunti || []).filter(a => a.deletedAt).length
 
   const nuovo = async (extra) => {
     setOccupato(true)
     try {
-      const id = await creaAppunto(extra)
+      // Dentro una raccolta l'appunto nuovo nasce già con il suo #tag
+      const id = await creaAppunto({ ...(raccolta && { text: `${raccolta.tag}\n\n` }), ...extra })
       return id
     } catch {
       toast.err('Non sono riuscito a creare l\'appunto')
@@ -70,16 +102,36 @@ function Elenco({ appunti }) {
     navigate(`/appunti/${id}`)
   }
 
+  // I pensieri che vedi (anche filtrati dalla ricerca) vanno a Polpo, che li mette in ordine
+  const mettiInsieme = () => {
+    const pezzi = []
+    let caratteri = 0
+    for (const a of lista) {
+      const corpo = [a.title?.trim(), senzaRigheTag(a.text), ...a.blocks.map(b => b.trascrizione)].filter(Boolean).join('\n')
+      const pezzo = `— ${quando(a.createdAt)}\n${corpo}`
+      if (pezzi.length && caratteri + pezzo.length > MAX_PER_POLPO) break
+      pezzi.push(pezzo.slice(0, MAX_PER_POLPO))
+      caratteri += pezzo.length
+    }
+    const quali = pezzi.length === lista.length ? `i miei ${pezzi.length} pensieri` : `i miei ${pezzi.length} pensieri più recenti (su ${lista.length})`
+    const message = `Ecco ${quali}, dalla raccolta Pensieri degli Appunti. Mettili insieme in uno schema: i temi che tornano, `
+      + 'i punti di vista diversi (anche in contrasto tra loro), cosa sembra cambiato nel tempo e le domande ancora aperte. '
+      + `Non giudicarli: aiutami a vederli in ordine.\n\n${pezzi.join('\n\n')}`
+    navigate('/ai', { state: { message } })
+  }
+
   return (
     <div className="stack ap-page">
       <header className="page-head">
         <div>
           <h1>Appunti</h1>
-          <p className="sub">Testo, voce e disegni. Li ritrovi uguali sul telefono e sul PC.</p>
+          <p className="sub">{raccolta && !cestino ? raccolta.descrizione : 'Testo, voce e disegni. Li ritrovi uguali sul telefono e sul PC.'}</p>
         </div>
         <div className="page-actions">
           <VoiceRecorder disabled={occupato} onRecorded={registrato} />
-          <button className="btn btn-primary" disabled={occupato} onClick={async () => { const id = await nuovo(); if (id) navigate(`/appunti/${id}`) }}><Plus size={15} /> Nuovo appunto</button>
+          <button className="btn btn-primary" disabled={occupato} onClick={async () => { const id = await nuovo(); if (id) navigate(`/appunti/${id}`) }}>
+            <Plus size={15} /> {raccolta && !cestino ? `Nuovo in ${raccolta.nome}` : 'Nuovo appunto'}
+          </button>
         </div>
       </header>
 
@@ -90,13 +142,30 @@ function Elenco({ appunti }) {
           <button style={{ width: 'auto', padding: '0 12px' }} className={cestino ? 'is-on' : ''} aria-pressed={cestino} onClick={() => setCestino(true)}>Cestino{nelCestinoN ? ` (${nelCestinoN})` : ''}</button>
         </div>
       </div>
+      {!cestino && (
+        <div className="chips ap-raccolte" role="group" aria-label="Raccolte">
+          <button type="button" className={`chip ${!filtro ? 'is-active' : ''}`} aria-pressed={!filtro} onClick={() => scegli('')}>Tutti <span className="n">{vivi.length}</span></button>
+          {filtri.map(f => (
+            <button key={f.id} type="button" className={`chip ${filtro === f.id ? 'is-active' : ''}`} aria-pressed={filtro === f.id} onClick={() => scegli(filtro === f.id ? '' : f.id)}>
+              <IconaRaccolta id={f.id} /> {f.nome} <span className="n">{f.n}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {cestino && <p className="small muted">Gli appunti nel cestino spariscono da soli dopo {GIORNI_CESTINO} giorni, con le loro registrazioni e i disegni.</p>}
+      {!cestino && filtro === 'pensieri' && lista.length > 1 && (
+        <div className="row ap-insieme">
+          <button className="btn btn-sm" onClick={mettiInsieme}><Sparkles size={14} /> Mettili insieme con Polpo</button>
+          <span className="small muted">Temi, punti di vista diversi e domande aperte{cerca ? ', solo di quelli trovati' : ''}.</span>
+        </div>
+      )}
 
       {appunti === null ? <p className="muted">Carico gli appunti…</p>
         : !lista.length ? (
           <section className="card">
-            <h2>{cestino ? 'Il cestino è vuoto' : cerca ? 'Nessun appunto trovato' : 'Ancora nessun appunto'}</h2>
-            {!cestino && !cerca && <p className="muted">Scrivi, registra la voce (la trascrizione arriva da sola) o disegna, anche sopra una foto.</p>}
+            <h2>{cestino ? 'Il cestino è vuoto' : cerca ? 'Nessun appunto trovato' : raccolta ? `Ancora niente in ${raccolta.nome}` : filtro ? 'Nessun appunto qui' : 'Ancora nessun appunto'}</h2>
+            {!cestino && !cerca && !filtro && <p className="muted">Scrivi, registra la voce (la trascrizione arriva da sola) o disegna, anche sopra una foto.</p>}
+            {!cestino && !cerca && raccolta && <p className="muted">Scrivi {raccolta.tag} in un appunto, o sceglilo da «Metti in…» dentro l'appunto.</p>}
           </section>
         ) : (
           <div className="ap-lista">
@@ -117,8 +186,8 @@ function Elenco({ appunti }) {
                   {conta(a, 'audio') > 0 && ` · ${conta(a, 'audio')} registrazion${conta(a, 'audio') === 1 ? 'e' : 'i'}`}
                   {conta(a, 'disegno') > 0 && ` · ${conta(a, 'disegno')} disegn${conta(a, 'disegno') === 1 ? 'o' : 'i'}`}
                 </p>
-                <p className="ap-estratto">{a.text?.trim() || a.blocks.find(b => b.trascrizione)?.trascrizione || ''}</p>
-                <ProgettiCollegati progetti={progettiCitati(testoAppunto(a), items)} link={false} />
+                <p className="ap-estratto">{senzaRigheTag(a.text) || a.blocks.find(b => b.trascrizione)?.trascrizione || ''}</p>
+                <Posti {...posti.get(a.id)} link={false} />
               </Link>
             ))}
           </div>
@@ -138,10 +207,16 @@ function Dettaglio({ id, appunti }) {
   const [lavagna, setLavagna] = useState(null) // { blocco?, iniziale }
   const [cursore, setCursore] = useState(null)
   const [alVault, setAlVault] = useState('') // '' | 'invio' | 'fatto'
+  const [mettiIn, setMettiIn] = useState(false)
   const area = useRef(null)
   const collegati = useMemo(() => progettiCitati(`${title}\n${text}`, items), [title, text, items])
+  const raccolte = useMemo(() => raccolteCitate(`${title}\n${text}`), [title, text])
   const inCorso = cursore === null ? null : tagInCorso(text, cursore)
-  const proposte = inCorso ? suggerisci(inCorso.parziale, items) : []
+  // Scrivendo #… : prima le raccolte che combaciano, poi i progetti
+  const proposte = inCorso ? [
+    ...suggerisciRaccolte(inCorso.parziale).map(r => ({ key: r.id, tag: r.tag, raccolta: r.id })),
+    ...suggerisci(inCorso.parziale, items).map(p => ({ key: p.id, tag: tagDi(p) }))
+  ] : []
   const iniziato = useRef(false)
   const ultimo = useRef({ title: '', text: '' })
   const inAttesa = useRef(false)
@@ -232,9 +307,9 @@ function Dettaglio({ id, appunti }) {
     download(new Blob([corpo], { type: 'text/plain;charset=utf-8' }), `${nomeFile(title || 'appunto')}.txt`)
   }
 
-  // Completa il #parola che stai scrivendo col tag del progetto scelto
-  const completaTag = (p) => {
-    const tag = `${tagDi(p)} `
+  // Completa il #parola che stai scrivendo col tag del progetto o della raccolta scelti
+  const completaTag = (scelto) => {
+    const tag = `${scelto} `
     const prima = text.slice(0, inCorso.inizio)
     const dopo = text.slice(cursore).replace(/^[\p{L}\p{N}_-]*\s?/u, '')
     setText(prima + tag + dopo)
@@ -247,7 +322,9 @@ function Dettaglio({ id, appunti }) {
   const mandaAlVault = () => {
     const trascrizioni = a.blocks.filter(b => b.trascrizione).map(b => b.trascrizione)
     const legami = collegati.map(p => `[[${p.vaultNote || p.name}]]`).join(' · ')
-    const testo = [text.trim(), ...trascrizioni, legami && `Progetti: ${legami}`].filter(Boolean).join('\n\n')
+    const testo = [
+      text.trim(), ...trascrizioni, legami && `Progetti: ${legami}`, raccolte.length && `Raccolte: ${raccolte.map(r => r.nome).join(', ')}`
+    ].filter(Boolean).join('\n\n')
     if (!testo) return toast.err('L\'appunto è vuoto: scrivi qualcosa prima')
     setAlVault('invio')
     salvaNelVault({ testo, titolo: title.trim() || undefined, tipo: 'appunto' })
@@ -275,6 +352,11 @@ function Dettaglio({ id, appunti }) {
 
       <input className="ap-titolo" value={title} onChange={e => setTitle(e.target.value)} placeholder="Titolo" aria-label="Titolo dell'appunto" />
 
+      <div className="row ap-dove">
+        <button className="btn btn-sm" onClick={() => setMettiIn(true)}><FolderInput size={14} /> Metti in…</button>
+        <Posti raccolte={raccolte} progetti={collegati} />
+      </div>
+
       <div className="row ap-azioni">
         <VoiceRecorder onRecorded={(file, inizio) => aggiungiRegistrazione(id, file, inizio).catch(() => toast.err('Registrazione non salvata'))} />
         <button className="btn" onClick={() => setLavagna({ iniziale: { tratti: [], sfondo: 'bianco' } })}><PenLine size={16} /> Disegna</button>
@@ -286,19 +368,20 @@ function Dettaglio({ id, appunti }) {
 
       <textarea
         ref={area} className="ap-testo" value={text} rows={10}
-        placeholder="Scrivi qui… Con #NomeProgetto lo colleghi a un progetto" aria-label="Testo dell'appunto"
+        placeholder="Scrivi qui… Con #Pensieri, #Musica o #NomeProgetto lo metti al suo posto" aria-label="Testo dell'appunto"
         onChange={e => { setText(e.target.value); setCursore(e.target.selectionStart) }}
         onSelect={e => setCursore(e.target.selectionStart)}
         onBlur={() => setTimeout(() => setCursore(null), 200)}
       />
       {proposte.length > 0 && (
-        <div className="chips ap-proposte" role="group" aria-label="Collega a un progetto">
+        <div className="chips ap-proposte" role="group" aria-label="Collega a un progetto o a una raccolta">
           {proposte.map(p => (
-            <button key={p.id} type="button" className="chip" onMouseDown={e => e.preventDefault()} onClick={() => completaTag(p)}>{tagDi(p)}</button>
+            <button key={p.key} type="button" className="chip" onMouseDown={e => e.preventDefault()} onClick={() => completaTag(p.tag)}>
+              <IconaRaccolta id={p.raccolta} /> {p.tag}
+            </button>
           ))}
         </div>
       )}
-      <ProgettiCollegati progetti={collegati} />
 
       {a.blocks.length > 0 && (
         <div className="ap-blocchi">
@@ -309,16 +392,26 @@ function Dettaglio({ id, appunti }) {
       )}
 
       {lavagna && <Lavagna iniziale={lavagna.iniziale} onSalva={salvaDisegno} onChiudi={() => setLavagna(null)} />}
+      {mettiIn && (
+        <MettiIn
+          testo={`${title}\n${text}`} items={items} onClose={() => setMettiIn(false)}
+          onAggiungi={(tag) => setText(t => conTag(t, tag))}
+          onTogli={(chiavi) => { setTitle(t => senzaTag(t, chiavi)); setText(t => senzaTag(t, chiavi)) }}
+        />
+      )}
     </div>
   )
 }
 
-// I progetti citati con #: nel dettaglio portano al progetto, nell'elenco (già dentro un link) sono solo etichette
-function ProgettiCollegati({ progetti, link = true }) {
-  if (!progetti.length) return null
+// Raccolte e progetti citati con #: nel dettaglio portano alla raccolta o al progetto,
+// nell'elenco (già dentro un link) sono solo etichette
+function Posti({ raccolte = [], progetti = [], link = true }) {
+  if (!raccolte.length && !progetti.length) return null
   return (
     <div className="row ap-collegati">
-      <span className="small muted">Collegato a</span>
+      {raccolte.map(r => (link
+        ? <Link key={r.id} to={`/appunti?in=${r.id}`} className="tag tag-raccolta"><IconaRaccolta id={r.id} size={12} /> {r.nome}</Link>
+        : <span key={r.id} className="tag tag-raccolta"><IconaRaccolta id={r.id} size={12} /> {r.nome}</span>))}
       {progetti.map(p => (link
         ? <Link key={p.id} to={`/elementi/${p.id}`} className="tag">{p.name}</Link>
         : <span key={p.id} className="tag">{p.name}</span>))}
