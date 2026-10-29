@@ -2,19 +2,21 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useData } from '../../context/useData'
 import { indiceElementi } from '../../lib/markdown'
 import ChatMessage from './ChatMessage'
+import TestiPronti from './TestiPronti'
+import { leggiLettura, salvaLettura } from './posto'
 
-const SUGGERIMENTI = [
-  { label: 'Oggi', msg: 'Cosa dovrei fare oggi? Guarda agenda e progetti in corso.' },
-  { label: 'Priorità', msg: 'Quali sono le 3 priorità principali per questa settimana?' },
-  { label: 'Riepilogo', msg: 'Fammi un riepilogo dei progetti in corso e di cosa manca a ciascuno' },
-  { label: 'Idee', msg: 'Analizza i miei progetti e suggeriscimi idee o miglioramenti' }
-]
+// Solo le conversazioni salvate hanno un punto di lettura: quella nuova non ha ancora un id
+const salvata = (chiave) => !String(chiave).startsWith('nuova-')
 
 // L'elenco dei messaggi. Scorre solo lui: prima scrollIntoView spostava anche la pagina,
 // e su telefono la barra in alto usciva dallo schermo a ogni risposta.
-export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, onSuggerimento, ...perMessaggio }) {
+export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, onTestoPronto, ...perMessaggio }) {
   const scrollRef = useRef(null)
   const inFondo = useRef(true)
+  // Fin dove hai letto: si misura mentre scorri e si scrive quando ti fermi, cambi conversazione o esci
+  const lettura = useRef(null) // { chiave, punto: { i, off, fondo } }
+  const fotogramma = useRef(0)
+  const timer = useRef(0)
   const { projects } = useData()
   // Per riconoscere i nomi degli elementi nelle risposte ([[Ungesto]] → link)
   const indice = useMemo(() => indiceElementi(projects), [projects])
@@ -24,10 +26,45 @@ export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, 
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: morbido ? 'smooth' : 'auto' })
   }
 
-  // Conversazione appena aperta: subito in fondo, senza animazione
+  // Il primo messaggio in vista e di quanto sporge sopra il bordo
+  const misura = () => {
+    fotogramma.current = 0
+    const el = scrollRef.current
+    if (!el || !salvata(chiave)) return
+    const fondo = el.scrollHeight - el.scrollTop - el.clientHeight < 80
+    const alto = el.getBoundingClientRect().top
+    let punto = { i: 0, off: 0, fondo }
+    if (!fondo) {
+      for (const n of el.querySelectorAll(':scope > [data-i]')) {
+        const r = n.getBoundingClientRect()
+        if (r.bottom > alto + 1) { punto = { i: Number(n.dataset.i), off: Math.round(r.top - alto), fondo }; break }
+      }
+    }
+    lettura.current = { chiave, punto }
+  }
+
+  const scriviLettura = () => {
+    clearTimeout(timer.current)
+    cancelAnimationFrame(fotogramma.current)
+    fotogramma.current = 0
+    if (lettura.current) salvaLettura(lettura.current.chiave, lettura.current.punto)
+    lettura.current = null
+  }
+
+  // Conversazione appena aperta: torna dove avevi smesso di leggere, se no in fondo. Senza animazione.
+  // Prima si apriva sempre in fondo, anche se stavi rileggendo più su.
   useLayoutEffect(() => {
-    inFondo.current = true
-    vaiInFondo(false)
+    const el = scrollRef.current
+    const punto = salvata(chiave) ? leggiLettura(chiave) : null
+    const n = punto && !punto.fondo && el?.querySelector(`:scope > [data-i="${punto.i}"]`)
+    if (n) {
+      el.scrollTop += n.getBoundingClientRect().top - el.getBoundingClientRect().top - punto.off
+      inFondo.current = false
+    } else {
+      inFondo.current = true
+      vaiInFondo(false)
+    }
+    return scriviLettura
   }, [chiave])
 
   // Nuovi messaggi: segue se eri già in fondo o se hai appena scritto tu.
@@ -47,6 +84,9 @@ export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, 
   const onScroll = () => {
     const el = scrollRef.current
     inFondo.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
+    fotogramma.current ||= requestAnimationFrame(misura)
+    clearTimeout(timer.current)
+    timer.current = setTimeout(scriviLettura, 400)
   }
 
   return (
@@ -55,9 +95,7 @@ export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, 
         <div className="chat-welcome">
           <h2>Ciao, sono Polpo</h2>
           <p className="muted">Conosco i tuoi progetti, le cose da fare e l&apos;agenda. Se c&apos;è da salvare qualcosa te lo propongo qui sotto la risposta: confermi tu.</p>
-          <div className="chat-suggest">
-            {SUGGERIMENTI.map(s => <button key={s.label} className="btn" onClick={() => onSuggerimento(s.msg)}>{s.label}</button>)}
-          </div>
+          <TestiPronti onUsa={onTestoPronto} />
         </div>
       )}
 

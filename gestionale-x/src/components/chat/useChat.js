@@ -4,6 +4,7 @@ import {
   patchConversation, subscribeToConversations, deleteConversation
 } from '../../services/chatService'
 import { nuoveAzioni, perStoria, segnaSostituite, ultimoConInAttesa } from './azioni'
+import { spostaBozza } from './posto'
 
 // Il cuore della chat: quale conversazione è aperta, l'invio, le proposte, il salvataggio.
 //
@@ -68,7 +69,9 @@ function rispostaDa({ reply, proposedActions, label, replies, passi, ragionament
   return msg
 }
 
-export function useChat({ ripristina = true } = {}) {
+// ripristina: all'apertura riapre una conversazione salvata, quella con id preferita se c'è ancora,
+// se no la più recente
+export function useChat({ ripristina = true, preferita = null } = {}) {
   const [conversations, setConversations] = useState([])
   const [vista, setVista] = useState(vistaVuota)
   // Cosa si sta aspettando dal server: { chiave, tipo: 'invio' | 'salvo' | 'azioni' }. Uno alla volta.
@@ -85,26 +88,33 @@ export function useChat({ ripristina = true } = {}) {
     setVista(v => (v.chiave === chiave ? { ...v, messages: fn(v.messages) } : v))
   }, [])
 
-  // Conversazioni salvate. Al primo arrivo riapre l'ultima, ma solo se intanto non hai scelto tu:
-  // l'elenco può arrivare dopo che hai già toccato "Nuova", e non deve scavalcarti.
+  // Conversazioni salvate. Al primo arrivo riapre quella che avevi lasciato aperta (o l'ultima),
+  // ma solo se intanto non hai scelto tu: l'elenco può arrivare dopo che hai già toccato "Nuova",
+  // e non deve scavalcarti.
   const ripristinata = useRef(!ripristina)
+  const preferitaRef = useRef(preferita)
+  // Finché l'elenco non arriva non si mostra la conversazione vuota: lampeggiava per un attimo
+  // prima di quella ritrovata
+  const [inRipristino, setInRipristino] = useState(ripristina)
   useEffect(() => subscribeToConversations(
     (convs) => {
       setConversations(convs)
+      setInRipristino(false)
       if (ripristinata.current || !convs.length) return
       ripristinata.current = true
       const v = vistaRef.current
       if (v.id || v.messages.length) return
-      const ultima = convs[0]
+      const ultima = convs.find(c => c.id === preferitaRef.current) || convs[0]
       if (ultima.messages?.length) {
         setVista({ chiave: ultima.id, id: ultima.id, messages: ultima.messages, assistente: ultima.specialist ?? null })
       }
     },
-    (err) => console.error('Errore caricamento chat:', err)
+    (err) => { console.error('Errore caricamento chat:', err); setInRipristino(false) }
   ), [])
 
   const apri = useCallback((conv) => {
     ripristinata.current = true
+    setInRipristino(false)
     setErrore('')
     setVista({ chiave: conv.id, id: conv.id, messages: conv.messages || [], assistente: conv.specialist ?? null })
   }, [])
@@ -112,6 +122,7 @@ export function useChat({ ripristina = true } = {}) {
   // La nuova conversazione tiene l'assistente che stavi usando
   const nuova = useCallback(() => {
     ripristinata.current = true
+    setInRipristino(false)
     setErrore('')
     setVista(v => vistaVuota(v.assistente))
   }, [])
@@ -211,6 +222,8 @@ export function useChat({ ripristina = true } = {}) {
         await updateConversation(v.id, finale, { specialist: assistente })
       } else {
         const id = await saveConversation(titoloDa(text), finale, { specialist: assistente })
+        // Quello che hai cominciato a scrivere intanto resta, ora come bozza di questa conversazione
+        if (vistaRef.current.chiave === chiave) spostaBozza('nuova', id)
         setVista(cur => (cur.chiave === chiave ? { ...cur, id, chiave: id } : cur))
         // Solo il titolo: riscrivere i messaggi cancellerebbe quelli arrivati intanto
         generateTitle(finale)
@@ -311,6 +324,7 @@ export function useChat({ ripristina = true } = {}) {
 
   return {
     conversations,
+    inRipristino,
     chiave: vista.chiave,
     convId: vista.id,
     messages: vista.messages,

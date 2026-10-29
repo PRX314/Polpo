@@ -885,6 +885,80 @@ async function main() {
       verifica(personali.length === 1, `la chat ha creato un secondo "Personale" (${personali.length})`);
     });
 
+    // Dal 28/10 la chat ha una home (testi pronti e tutte le conversazioni) e si riapre dove l'avevi
+    // lasciata: la conversazione, il punto in cui leggevi, quello che stavi scrivendo
+    const testoPronto = `Testo pronto di collaudo ${tra(100, 999)}: completalo tu`;
+    const bozzaChat = `Bozza da ritrovare ${tra(100, 999)}`;
+    scenarioChat = { testo: Array.from({ length: 40 }, (_, i) => `Riga ${i + 1} della risposta lunga.`).join('\n\n'), proposte: [] };
+    await passo(page, 'Polpo AI: home, testi pronti e chat ritrovata dove l\'avevi lasciata', async () => {
+      const scorri = page.locator('.chat-scroll');
+      const titolo = () => page.locator('.chat-title').innerText();
+      const campo = page.getByLabel('Messaggio');
+      await vai(page, 'Polpo AI');
+      await campo.fill('Dammi una risposta lunga');
+      await page.getByRole('button', { name: 'Invia', exact: true }).click();
+      await page.getByText('Riga 40 della risposta lunga.').waitFor({ timeout: 10000 });
+      await attendi(async () => (await leggi('chats')).some(c => c.messages?.some(m => m.content?.includes('Riga 40'))), 'la risposta lunga non è stata salvata', 15000);
+      const conversazione = await titolo();
+      const letto = await scorri.evaluate(el => { el.scrollTop = Math.round((el.scrollHeight - el.clientHeight) * 0.4); return el.scrollTop; });
+      await page.waitForTimeout(700);
+      await campo.fill(bozzaChat);
+      await vai(page, 'Oggi');
+      await vai(page, 'Polpo AI');
+      await campo.waitFor({ timeout: 5000 });
+      verifica(await titolo() === conversazione, `riaperta un'altra conversazione («${await titolo()}» invece di «${conversazione}»)`);
+      // Il campo si riempie un attimo dopo essere comparso: si aspetta, non si legge una volta sola
+      const nelCampo = (atteso, msg) => attendi(async () => (await campo.inputValue()) === atteso, msg, 5000);
+      await nelCampo(bozzaChat, 'la bozza del messaggio non c\'è più');
+      const ritrovato = await scorri.evaluate(el => el.scrollTop);
+      verifica(Math.abs(ritrovato - letto) < 40, `non è tornata al punto di lettura (${ritrovato} px invece di ${letto})`);
+      await campo.fill('');
+
+      await page.getByRole('button', { name: 'Home della chat' }).click();
+      const elenco = page.getByRole('region', { name: 'Conversazioni' });
+      await elenco.getByText(conversazione, { exact: true }).first().waitFor({ timeout: 5000 });
+      const pronti = page.getByRole('region', { name: 'Testi pronti' });
+      await pronti.getByRole('button', { name: 'Testo pronto: Oggi' }).waitFor({ timeout: 5000 });
+      await pronti.getByRole('button', { name: 'Modifica' }).click();
+      await finestra(page).getByRole('button', { name: 'Aggiungi testo' }).click();
+      await finestra(page).getByPlaceholder('Titolo (facoltativo)').last().fill('Collaudo');
+      await finestra(page).getByPlaceholder('Il testo che finisce nel messaggio').last().fill(testoPronto);
+      await finestra(page).getByRole('button', { name: 'Salva' }).click();
+      await finestra(page).waitFor({ state: 'detached', timeout: 5000 });
+      const routine = await attendi(async () => {
+        const d = await leggiUno('routines', owner.uid);
+        return d?.testiPronti?.some(t => t.testo === testoPronto) ? d : null;
+      }, 'il testo pronto non è stato salvato in Firestore');
+      verifica(routine.testiPronti.some(t => t.titolo === 'Oggi') && routine.tasks?.length, 'salvando i testi pronti sono spariti i predefiniti o la routine');
+      await pronti.getByRole('button', { name: 'Testo pronto: Collaudo' }).waitFor({ timeout: 5000 });
+      await page.screenshot({ path: path.join(OUT, 'chat-home.png') });
+      const schermo = page.viewportSize();
+      await page.setViewportSize({ width: 390, height: 844 });
+      verifica(await senzaOverflow(page), 'sul telefono la home della chat esce dai bordi');
+      await page.screenshot({ path: path.join(OUT, 'chat-home-telefono.png') });
+      await page.setViewportSize(schermo);
+
+      const chatPrima = (await leggi('chats')).filter(c => c.userId === owner.uid).length;
+      await pronti.getByRole('button', { name: 'Testo pronto: Collaudo' }).click();
+      await campo.waitFor({ timeout: 5000 });
+      verifica(await titolo() === 'Nuova conversazione', 'il testo pronto non apre una conversazione nuova');
+      await nelCampo(testoPronto, 'il testo pronto non è finito nel campo per scrivere');
+      verifica(await page.locator('.chat-msg.user').count() === 0, 'il testo pronto è stato mandato invece di restare nel campo');
+      await vai(page, 'Oggi');
+      await vai(page, 'Polpo AI');
+      await campo.waitFor({ timeout: 5000 });
+      verifica(await titolo() === 'Nuova conversazione', 'uscendo e rientrando non c\'è più la conversazione nuova');
+      await nelCampo(testoPronto, 'uscendo e rientrando il testo pronto non è più nel campo');
+      await campo.fill('');
+      verifica((await leggi('chats')).filter(c => c.userId === owner.uid).length === chatPrima, 'il testo pronto ha creato una conversazione');
+
+      await page.getByRole('button', { name: 'Home della chat' }).click();
+      await page.reload();
+      await page.getByRole('region', { name: 'Conversazioni' }).getByText(conversazione, { exact: true }).first().click({ timeout: 10000 });
+      await campo.waitFor({ timeout: 5000 });
+      verifica(await titolo() === conversazione, 'dalla home non si apre la conversazione scelta');
+    });
+
     await passo(page, 'Notifiche: la finestra si apre e si chiude', async () => {
       await page.getByRole('button', { name: /^Notifiche/ }).first().click();
       await finestra(page).first().waitFor({ timeout: 5000 });

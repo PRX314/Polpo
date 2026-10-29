@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUp, AtSign, X } from 'lucide-react'
 import { useData } from '../../context/useData'
 import { STATUS_LABEL, normalizeStatus } from '../../lib/status'
+import { leggiBozza, salvaBozza } from './posto'
 
 const suTelefono = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
 const norm = (s) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -15,17 +16,58 @@ const MAX_CITATI = 6
 //
 // Con @ si cita un elemento: si apre l'elenco, scegli, e Polpo riceve la sua scheda completa
 // (più la nota del vault). Le citazioni sono sopra il campo e si tolgono con la ×.
-export default function Composer({ onInvia, occupato, inAttesa }) {
+//
+// Quello che stai scrivendo resta come bozza della sua conversazione (bozza: id, o 'nuova'):
+// cambiando conversazione o uscendo dalla chat lo ritrovi. incolla = { testo } aggiunge un testo
+// pronto in fondo al campo; onIncollato avvisa che è stato preso.
+export default function Composer({ bozza, incolla, onIncollato, onInvia, occupato, inAttesa }) {
   const { projects } = useData()
-  const [testo, setTesto] = useState('')
-  const [citati, setCitati] = useState([])
+  const [testo, setTesto] = useState(() => leggiBozza(bozza).testo)
+  const [citati, setCitati] = useState(() => leggiBozza(bozza).citati)
   const [menu, setMenu] = useState(null) // { query, inizio, scelta }
   const ref = useRef(null)
+  const bozzaRef = useRef(bozza)
 
   const adatta = (el) => {
     el.style.height = 'auto'
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`
   }
+
+  // Altra conversazione: torna la sua bozza. Quando la conversazione nuova viene salvata cambia
+  // solo il nome della bozza (useChat la sposta), il testo è lo stesso e resta com'è.
+  useEffect(() => {
+    if (bozzaRef.current === bozza) return
+    bozzaRef.current = bozza
+    const b = leggiBozza(bozza)
+    if (b.testo !== testo) {
+      setTesto(b.testo)
+      setCitati(b.citati)
+      setMenu(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bozza])
+
+  useEffect(() => { salvaBozza(bozzaRef.current, testo, citati) }, [testo, citati])
+
+  // Il campo cresce col testo (fino a 160 px): scrivendo, con la bozza ritrovata, col testo pronto
+  useLayoutEffect(() => { if (ref.current) adatta(ref.current) }, [testo])
+
+  // Un testo pronto: in fondo a quello che c'è già, col cursore alla fine. Una volta sola anche
+  // se l'effetto riparte (in sviluppo React lo esegue due volte)
+  const incollato = useRef(null)
+  useEffect(() => {
+    if (!incolla || incollato.current === incolla) return
+    incollato.current = incolla
+    setTesto(t => (t.trim() ? `${t.trimEnd()}\n\n${incolla.testo}` : incolla.testo))
+    onIncollato?.()
+    requestAnimationFrame(() => {
+      const el = ref.current
+      if (!el) return
+      el.focus()
+      el.setSelectionRange(el.value.length, el.value.length)
+      el.scrollTop = el.scrollHeight
+    })
+  }, [incolla, onIncollato])
 
   // Elementi che corrispondono a quello che segue la @: prima chi inizia così, poi gli attivi
   const proposte = useMemo(() => {
@@ -58,7 +100,6 @@ export default function Composer({ onInvia, occupato, inAttesa }) {
     requestAnimationFrame(() => {
       el.focus()
       el.setSelectionRange(cursore, cursore)
-      adatta(el)
     })
   }
 
@@ -85,7 +126,6 @@ export default function Composer({ onInvia, occupato, inAttesa }) {
     setTesto('')
     setCitati([])
     setMenu(null)
-    if (ref.current) ref.current.style.height = 'auto'
   }
 
   // Col computer: Invio invia, Maiusc+Invio va a capo. Su telefono Invio va a capo e si invia col tasto.
@@ -158,7 +198,7 @@ export default function Composer({ onInvia, occupato, inAttesa }) {
         <textarea
           ref={ref} rows={1} value={testo} placeholder="Scrivi a Polpo" aria-label="Messaggio"
           aria-expanded={!!menu} aria-autocomplete="list"
-          onChange={(e) => { setTesto(e.target.value); adatta(e.target); leggiMenzione(e.target) }}
+          onChange={(e) => { setTesto(e.target.value); leggiMenzione(e.target) }}
           onKeyDown={onKeyDown}
           onClick={(e) => leggiMenzione(e.target)}
           onBlur={() => setMenu(null)}

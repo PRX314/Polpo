@@ -41,7 +41,7 @@ function ChatMessage({ msg, indice, indiceElementi, nomeAssistente, occupato, on
 
   if (msg.role === 'user') {
     return (
-      <div className={`chat-msg user ${msg.failed ? 'is-failed' : ''}`}>
+      <div className={`chat-msg user ${msg.failed ? 'is-failed' : ''}`} data-i={indice}>
         <div className="chat-bubble"><p className="pre"><TestoConCitati testo={msg.content} citati={msg.citati} /></p></div>
         <div className="chat-meta small faint">
           {msg.voce && <Mic size={11} aria-label="detto a voce" />}
@@ -72,7 +72,7 @@ function ChatMessage({ msg, indice, indiceElementi, nomeAssistente, occupato, on
   }
 
   return (
-    <div className="chat-msg assistant">
+    <div className="chat-msg assistant" data-i={indice}>
       {msg.alternatives?.length > 1 && (
         <div className="chat-alts" role="tablist" aria-label="Risposte a confronto">
           {msg.alternatives.map((alt, ai) => (
