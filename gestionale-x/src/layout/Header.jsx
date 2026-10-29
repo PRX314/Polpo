@@ -1,11 +1,12 @@
-import { Link } from 'react-router-dom'
-import { Bell, Sun, Moon, LogOut, Lock } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Bell, Sun, Moon, LogOut, Lock, Puzzle } from 'lucide-react'
 import GlobalSearch from './GlobalSearch'
 import Menu from '../components/ui/Menu'
 import { useTheme } from '../theme/useTheme'
 
 const Header = ({ user, pushActive, onNotifications, onPassword, onLogout }) => {
   const { theme, toggleTheme } = useTheme()
+  const navigate = useNavigate()
   const name = user.displayName || user.email || 'Utente'
   const initial = (name[0] || '?').toUpperCase()
 
@@ -38,6 +39,8 @@ const Header = ({ user, pushActive, onNotifications, onPassword, onLogout }) => 
           trigger={<span className="avatar" aria-hidden="true">{initial}</span>}
           items={[
             { header: name },
+            // Le estensioni non hanno una scheda in basso: le sezioni restano quattro
+            { label: 'Estensioni', icon: Puzzle, onClick: () => navigate('/estensioni') },
             { label: 'Notifiche', icon: Bell, onClick: onNotifications },
             { label: 'Cambia password', icon: Lock, onClick: onPassword },
             'sep',

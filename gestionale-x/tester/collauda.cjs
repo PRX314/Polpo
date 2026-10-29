@@ -707,6 +707,32 @@ async function main() {
       await sezione.getByRole('link', { name: 'Pensiero dal collaudo' }).waitFor({ timeout: 8000 });
     });
 
+    // Le carte stanno nell'hub (/arcana/carte/): qui non ci sono, quindi i 404 sono attesi e si vede il disegno di riserva
+    await passo(page, 'Estensioni: il Mazzo dell\'Anno dal menu e in Oggi', async () => {
+      await page.getByRole('button', { name: 'Menu utente' }).click();
+      await page.getByRole('menuitem', { name: 'Estensioni' }).click();
+      await page.getByRole('heading', { name: 'Estensioni', level: 1 }).waitFor();
+      await page.locator('.est-voce').filter({ hasText: 'Il Mazzo dell\'Anno' }).getByRole('link', { name: 'Apri' }).click();
+      await page.getByRole('heading', { name: 'Il Mazzo dell\'Anno', level: 1 }).waitFor();
+      await page.getByLabel('Data da interrogare').fill('2027-03-20');
+      await page.getByRole('heading', { name: 'Giorno del Jolly', level: 2 }).waitFor({ timeout: 4000 });
+      await page.getByRole('button', { name: 'Giorno successivo' }).click();
+      await page.getByRole('heading', { name: 'Asso di Bastoni', level: 2 }).waitFor({ timeout: 4000 });
+      verifica(await senzaOverflow(page), 'la pagina del Mazzo esce dai bordi');
+      await page.screenshot({ path: path.join(OUT, 'mazzo-anno.png'), fullPage: true });
+      const schermo = page.viewportSize();
+      await page.setViewportSize({ width: 390, height: 844 });
+      verifica(await senzaOverflow(page), 'sul telefono la pagina del Mazzo esce dai bordi');
+      await page.screenshot({ path: path.join(OUT, 'mazzo-anno-telefono.png'), fullPage: true });
+      await page.setViewportSize(schermo);
+      await page.getByRole('navigation', { name: 'Estensioni' }).getByRole('link', { name: 'Tutte', exact: true }).click();
+      await page.getByLabel('Mostra la stesa del giorno in Oggi').check();
+      await vai(page, 'Oggi');
+      await page.getByRole('region', { name: 'Il Mazzo dell\'Anno, oggi' }).waitFor({ timeout: 6000 });
+    }, { ignora: /status of 404/ });
+    // La scelta resta nel browser: via, così i passi dopo trovano Oggi com'era (e niente 404 delle carte)
+    await page.evaluate(() => localStorage.removeItem('gestionale-estensioni'));
+
     await passo(page, 'Da fare: elenco e filtro "Scadute"', async () => {
       await vai(page, 'Da fare');
       await page.getByText(nuovoTodo, { exact: true }).first().waitFor({ timeout: 5000 });

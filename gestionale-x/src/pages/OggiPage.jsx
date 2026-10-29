@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowUp, CalendarDays, Pin, Plus } from 'lucide-react'
 import ComandiRapidi from '../components/ComandiRapidi'
@@ -11,6 +11,7 @@ import { addDaysIso, longDate, oggiIso, relativeDay } from '../lib/dates'
 import { progressOf } from '../lib/status'
 import { ultimaVolta } from '../lib/vaultCampi'
 import { documentDeadlines } from '../services/localDocuments'
+import { ESTENSIONI, useEstensioniInOggi } from '../estensioni'
 import './OggiPage.css'
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1)
@@ -78,6 +79,7 @@ const OggiPage = () => {
   const { items, events, routine, loading, actions, documents } = useData()
   const { openForm } = useUi()
   const [prompt, setPrompt] = useState('')
+  const [inOggi] = useEstensioniInOggi()
 
   const today = oggiIso()
   const weekEnd = addDaysIso(7)
@@ -260,6 +262,11 @@ const OggiPage = () => {
               </ul>
             </section>
           )}
+
+          {/* Le estensioni che hai scelto di vedere qui (Menu → Estensioni) */}
+          {ESTENSIONI.filter(e => e.Riquadro && inOggi[e.id]).map(e => (
+            <Suspense key={e.id} fallback={null}><e.Riquadro /></Suspense>
+          ))}
         </div>
       </div>
     </div>

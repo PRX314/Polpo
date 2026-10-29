@@ -1,0 +1,9 @@
+.est-lista { list-style: none; display: flex; flex-direction: column; gap: var(--gap); }
+.est-voce { display: flex; align-items: flex-start; gap: 12px; }
+.est-voce h2 a { color: inherit; }
+.est-voce .small.muted { max-width: 70ch; }
+.est-oggi { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; cursor: pointer; }
+
+@media (max-width: 560px) {
+  .est-voce { flex-direction: column; }
+}
