@@ -53,7 +53,9 @@ if (!admin.apps.length) {
 const adminDb = admin.firestore()
 
 const app = express()
-app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4321', 'https://gestionalepolpo.netlify.app', 'https://polpo-c9un.onrender.com', 'https://polpopoly.it', 'https://www.polpopoly.it'] }))
+// maxAge: il browser ricorda il permesso CORS (Chrome fino a 2 ore, Safari 10 minuti) invece di
+// chiederlo prima di ogni messaggio e di ogni nota vocale: un giro di rete in meno ogni volta.
+app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:4321', 'https://gestionalepolpo.netlify.app', 'https://polpo-c9un.onrender.com', 'https://polpopoly.it', 'https://www.polpopoly.it'], maxAge: 86400 }))
 app.use(express.json({ limit: '1mb' }))
 
 // I provider AI (Groq, Nvidia, ...) vivono in providers.js; le key stanno nelle env.

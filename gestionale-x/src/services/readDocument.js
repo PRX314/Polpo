@@ -2,17 +2,13 @@
 // scaricati al primo utilizzo. Fanno eccezione le note vocali: l'audio passa dal backend a Whisper
 // (Groq) solo per la trascrizione e non viene conservato, l'originale resta qui.
 // pdf.js in build legacy: quella moderna usa API JavaScript che Safari su iPhone può non avere.
-import { auth } from '../firebase'
-
-// Come API_URL di chatService, che però apre Firestore appena importato.
-const API_URL = import.meta.env.VITE_AI_API_URL || ''
+import { inviaAudio } from './trascrizione'
 
 const isAudio = file => /^(audio|video)\//.test(file.type) || /\.(webm|m4a|mp3|ogg|wav|flac)$/i.test(file.name)
 async function transcribe(file) {
-  const token = await auth.currentUser?.getIdToken?.()
   let res
   try {
-    res = await fetch(`${API_URL}/api/trascrivi`, { method: 'POST', headers: { 'Content-Type': file.type || 'audio/webm', ...(token && { Authorization: `Bearer ${token}` }) }, body: file.blob })
+    res = await inviaAudio(file.blob, file.type)
   } catch { throw new Error('trascrizione non raggiungibile: serve la rete. La registrazione è salvata, riprova con “Leggi gli originali”.') }
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(`trascrizione non riuscita (${data.error || `errore ${res.status}`}). La registrazione è salvata, puoi riprovare.`)

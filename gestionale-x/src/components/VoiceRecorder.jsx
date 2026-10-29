@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Mic, Square, X } from 'lucide-react'
+import { preparaTrascrizione } from '../services/trascrizione'
 import './VoiceRecorder.css'
 
 // Registra dal microfono e consegna un File audio. Chrome/Edge fanno webm/opus, Safari su iPhone mp4/aac.
@@ -35,6 +36,7 @@ export default function VoiceRecorder({ onRecorded, disabled, etichetta = 'Regis
   const avvia = async () => {
     setErrore('')
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') return setErrore('Questo browser non sa registrare l’audio.')
+    preparaTrascrizione()
     let flusso
     try {
       flusso = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })

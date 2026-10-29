@@ -14,10 +14,11 @@
 // Eliminare manda nel cestino (deletedAt); dopo 30 giorni l'appunto e i suoi file spariscono.
 
 import {
-  Bytes, Timestamp, collection, deleteDoc, doc, getDoc, onSnapshot, query, setDoc, updateDoc, where
+  Bytes, Timestamp, collection, deleteDoc, doc, getDoc, getDocFromCache, onSnapshot, query, setDoc, updateDoc, where
 } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import { senzaAttendereLaRete } from '../firebaseService'
+import { inviaAudio } from './trascrizione'
 
 const notes = collection(db, 'notes')
 const PEZZO = 700 * 1024
@@ -54,10 +55,13 @@ export const creaAppunto = async (extra = {}) => {
 
 export const aggiornaAppunto = (id, patch) => senzaAttendereLaRete(updateDoc(doc(db, 'notes', id), { ...patch, updatedAt: Timestamp.now() }))
 
-// I blocchi si cambiano rileggendo l'appunto (dalla cache se offline): una trascrizione che arriva
-// dopo dieci secondi non cancella il disegno aggiunto nel frattempo.
+// I blocchi si cambiano rileggendo l'appunto: una trascrizione che arriva dopo dieci secondi non
+// cancella il disegno aggiunto nel frattempo. Si rilegge dalla cache, che il listener degli appunti
+// tiene aggiornata e che ha già le scritture di questo dispositivo: chiedere al server costava un
+// giro di rete prima di mostrare il testo. Il server solo se l'appunto in cache non c'è.
 const conBlocchi = async (id, cambia) => {
-  const snap = await getDoc(doc(db, 'notes', id))
+  const ref = doc(db, 'notes', id)
+  const snap = await getDocFromCache(ref).catch(() => getDoc(ref))
   if (!snap.exists()) throw new Error('Appunto non trovato')
   return aggiornaAppunto(id, { blocks: cambia(snap.data().blocks || []) })
 }
@@ -123,20 +127,13 @@ export const eliminaFile = (meta) => {
 }
 
 // ── Trascrizione ──
-// Stesso servizio delle note vocali di Documenti: l'audio passa dal backend a Whisper (Groq)
-// solo per essere trascritto, non viene conservato lì.
-
-const API_URL = import.meta.env.VITE_AI_API_URL || ''
+// Stesso servizio delle note vocali di Documenti (vedi trascrizione.js): l'audio passa a Whisper
+// (Groq) solo per essere trascritto, non viene conservato lì.
 
 export const trascrivi = async (blob) => {
-  const token = await auth.currentUser?.getIdToken?.()
   let res
   try {
-    res = await fetch(`${API_URL}/api/trascrivi`, {
-      method: 'POST',
-      headers: { 'Content-Type': blob.type || 'audio/webm', ...(token && { Authorization: `Bearer ${token}` }) },
-      body: blob
-    })
+    res = await inviaAudio(blob)
   } catch {
     throw new Error('Serve la rete per trascrivere. La registrazione è salvata: riprova dopo.')
   }
@@ -145,14 +142,17 @@ export const trascrivi = async (blob) => {
   return (data.testo || '').trim()
 }
 
-// Una registrazione: il file parte subito verso Firestore, poi la trascrizione completa il blocco
+// Una registrazione: il file parte subito verso Firestore e la trascrizione parte insieme,
+// senza aspettare che il blocco sia scritto; quando arriva il testo completa il blocco.
 export async function aggiungiRegistrazione(noteId, file, inizio) {
   const { meta } = salvaFile(noteId, file)
+  const testo = trascrivi(file)
+  testo.catch(() => {}) // se il blocco non entra l'errore lo dà aggiungiBlocco, non questo
   const blocco = { id: nuovoId(), type: 'audio', file: meta, createdAt: inizio.toISOString(), trascrizione: '', stato: 'trascrivo' }
   await aggiungiBlocco(noteId, blocco)
   try {
-    const testo = await trascrivi(file)
-    await aggiornaBlocco(noteId, blocco.id, { trascrizione: testo, stato: testo ? 'ok' : 'vuota', errore: '' })
+    const t = await testo
+    await aggiornaBlocco(noteId, blocco.id, { trascrizione: t, stato: t ? 'ok' : 'vuota', errore: '' })
   } catch (e) {
     await aggiornaBlocco(noteId, blocco.id, { stato: 'errore', errore: e.message })
   }

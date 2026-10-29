@@ -371,7 +371,8 @@ async function main() {
     await preparaAccount(owner, intruso);
     process.stdout.write(' pronti\n\n');
 
-    browser = await chromium.launch({ headless: !VEDI, slowMo: VEDI ? 150 : 0 });
+    // Microfono finto di Chromium (un tono) per le note vocali, senza chiedere il permesso
+    browser = await chromium.launch({ headless: !VEDI, slowMo: VEDI ? 150 : 0, args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
     const ctx = await browser.newContext({ viewport: { width: 1360, height: 900 }, locale: 'it-IT', timezoneId: 'Europe/Rome' });
     await preparaContesto(ctx);
     const page = await ctx.newPage();
@@ -705,6 +706,41 @@ async function main() {
       await page.getByRole('heading', { name: 'Gestionale di prova', level: 1 }).waitFor();
       const sezione = page.locator('section').filter({ has: page.getByRole('heading', { name: /^Appunti/ }) });
       await sezione.getByRole('link', { name: 'Pensiero dal collaudo' }).waitFor({ timeout: 8000 });
+    });
+
+    // La trascrizione è finta (Whisper costa quota e qui la rete esterna è chiusa) e risponde dopo
+    // un secondo: il blocco nasce in «Trascrivo…» e il testo deve arrivare da solo, letto dalla cache.
+    await passo(page, 'Oggi: comando rapido «Voce», la trascrizione arriva nell\'appunto', async () => {
+      const testo = 'Nota vocale del collaudo, ricordarsi il pane';
+      let inviato = null;
+      await page.route('**/api/trascrivi', async route => {
+        inviato = { tipo: route.request().headers()['content-type'], byte: route.request().postDataBuffer()?.length || 0 };
+        await new Promise(r => setTimeout(r, 1000));
+        await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ testo }) });
+      });
+      try {
+        await vai(page, 'Oggi');
+        await page.getByRole('group', { name: 'Comandi rapidi' }).getByRole('button', { name: 'Voce', exact: true }).click();
+        const ferma = page.getByRole('button', { name: 'Ferma e salva' });
+        await ferma.waitFor({ timeout: 5000 });
+        await page.waitForTimeout(1500);
+        await ferma.click();
+        await page.waitForURL(/\/appunti\/[^/]+$/, { timeout: 8000 });
+        await page.locator('.ap-trascrizione').filter({ hasText: testo }).waitFor({ timeout: 10000 });
+        verifica(inviato?.byte > 0 && /^audio\//.test(inviato.tipo), `l'audio non è arrivato alla trascrizione: ${JSON.stringify(inviato)}`);
+        // Sul server (emulatore) arrivano poco dopo lo schermo: si aspetta al massimo 5 secondi
+        const id = page.url().split('/').pop();
+        let blocco, pezzi = [];
+        for (let i = 0; i < 20; i++) {
+          blocco = (await leggiUno('notes', id))?.blocks?.find(b => b.type === 'audio');
+          pezzi = blocco ? (await leggi('notes')).filter(n => n.kind === 'appunto-file' && n.fileId === blocco.file.fileId) : [];
+          if (blocco?.stato === 'ok' && pezzi.length === blocco.file.parti) break;
+          await page.waitForTimeout(250);
+        }
+        verifica(blocco?.stato === 'ok' && blocco.trascrizione === testo, `blocco salvato male: ${JSON.stringify(blocco && { stato: blocco.stato, trascrizione: blocco.trascrizione })}`);
+        verifica(pezzi.length === blocco.file.parti, `audio non salvato: ${pezzi.length} pezzi su ${blocco.file.parti}`);
+        return `${(inviato.byte / 1024).toFixed(1)} kB di audio (${inviato.tipo})`;
+      } finally { await page.unroute('**/api/trascrivi'); }
     });
 
     // Le carte stanno nell'hub (/arcana/carte/): qui non ci sono, quindi i 404 sono attesi e si vede il disegno di riserva
