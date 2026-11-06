@@ -29,14 +29,7 @@ const SECTIONS = [
       { to: '/routine', label: 'Routine', match: (p) => p.startsWith('/routine') }
     ]
   },
-  {
-    to: '/ai', label: 'Peppino', icon: MessageSquare,
-    match: p => p.startsWith('/ai') || p.startsWith('/editoriale'),
-    sub: [
-      { to: '/ai', label: 'Chat', match: p => p.startsWith('/ai') },
-      { to: '/editoriale', label: 'Laboratorio editoriale', match: p => p.startsWith('/editoriale') }
-    ]
-  }
+  { to: '/ai', label: 'Peppino', icon: MessageSquare, match: (p) => p.startsWith('/ai') }
 ]
 
 const Shell = ({ header }) => {

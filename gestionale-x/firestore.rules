@@ -36,56 +36,6 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Archivio editoriale condiviso tra dispositivi. Originali e risposte hanno vite separate.
-    match /editorial/{entryId} {
-      function owner() { return request.auth != null && request.auth.uid == resource.data.userId; }
-      function valid(d) {
-        return d.kind in ['spark', 'conversation', 'content']
-          && d.title is string && d.title.size() <= 150
-          && d.archived is bool && d.revision is int
-          && (d.kind != 'spark' || (d.original is string && d.original.size() <= 12000))
-          && (d.kind != 'conversation' || (d.projectIds is list && d.projectIds.size() <= 4))
-          && (d.kind != 'content' || (d.script is string && d.script.size() <= 20000
-            && d.outline is string && d.outline.size() <= 8000
-            && d.scenes is string && d.scenes.size() <= 8000
-            && d.notes is string && d.notes.size() <= 10000));
-      }
-      allow read: if owner();
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid
-        && valid(request.resource.data) && !request.resource.data.keys().hasAny(['leaseToken', 'leaseUntil']);
-      allow update: if owner() && valid(request.resource.data)
-        && request.resource.data.userId == resource.data.userId
-        && request.resource.data.kind == resource.data.kind
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'title', 'archived', 'revision', 'updatedAt', 'threadId', 'projectIds',
-          'script', 'outline', 'scenes', 'notes', 'voice', 'status'
-        ]);
-      allow delete: if false;
-      match /turns/{turnId} {
-        function parentOwner() {
-          return request.auth != null
-            && get(/databases/$(database)/documents/editorial/$(entryId)).data.userId == request.auth.uid
-            && get(/databases/$(database)/documents/editorial/$(entryId)).data.kind == 'conversation';
-        }
-        allow read: if parentOwner();
-        allow create: if parentOwner()
-          && request.resource.data.keys().hasOnly(['text', 'state', 'createdAt'])
-          && request.resource.data.text is string
-          && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 12000
-          && request.resource.data.state == 'pending'
-          && request.resource.data.createdAt == request.time;
-        allow update, delete: if false;
-      }
-      match /versions/{versionId} {
-        function parentOwner() {
-          return request.auth != null
-            && get(/databases/$(database)/documents/editorial/$(entryId)).data.userId == request.auth.uid;
-        }
-        allow read, create: if parentOwner();
-        allow update, delete: if false;
-      }
-    }
-
     match /{document=**} {
       allow read, write: if false;
     }

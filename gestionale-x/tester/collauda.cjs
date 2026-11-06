@@ -1139,10 +1139,6 @@ async function main() {
       verifica(push.status === 403, `un altro account si iscrive alle notifiche (HTTP ${push.status})`);
     });
 
-    await require('../tests/editorial.integration.cjs')({
-      browser, owner, intruso, APP, BACKEND, OUT, preparaContesto, entra, passo, page, rest,
-    });
-
     // ── telefono ──
     const { defaultBrowserType: _tipo, ...iphone } = devices['iPhone 13'];
     const tel = await browser.newContext({ ...iphone, locale: 'it-IT', timezoneId: 'Europe/Rome' });

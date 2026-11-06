@@ -1,4 +1,3 @@
-import { creaEditor } from './editoriale.js'
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
@@ -1133,17 +1132,6 @@ const vaultDi = async (userId) => {
   try { return userId === await uidProprietario() ? lettoreVault : null } catch { return null }
 }
 const DEPS_LETTURA = { progetti: progettiDi, eventi: eventiDi, vault: vaultDi }
-const editor = creaEditor({
-  db: adminDb, timestamp: () => admin.firestore.FieldValue.serverTimestamp(),
-  progetti: progettiDi, vault: vaultDi,
-})
-app.post('/api/editoriale/rispondi', verifyUser, async (req, res) => {
-  try { res.json(await editor(req.userId, req.body.threadId, req.body.turnId)) }
-  catch (e) {
-    console.error('Editor:', e.status || 500, e.message)
-    res.status(e.status || 502).json({ error: e.status ? e.message : 'Assistente non raggiungibile. Il tuo messaggio è salvato: riprova.' })
-  }
-})
 
 // Gli elementi citati con @: scheda completa più la nota del vault, già nelle istruzioni.
 // Arrivano come id; si leggono solo tra quelli dell'utente.
