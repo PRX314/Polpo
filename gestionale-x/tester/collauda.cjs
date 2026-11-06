@@ -227,6 +227,7 @@ async function avviaBackend() {
     ...process.env, PORT: String(PORTE.backend), GCLOUD_PROJECT: PROGETTO,
     FIRESTORE_EMULATOR_HOST: `127.0.0.1:${PORTE.firestore}`, FIREBASE_AUTH_EMULATOR_HOST: `127.0.0.1:${PORTE.auth}`,
     FIREBASE_SERVICE_ACCOUNT: '', GROQ_API_KEY: '', ANTHROPIC_API_KEY: '', NVIDIA_API_KEY: '', GITHUB_TOKEN: '', VAPID_PRIVATE_KEY: '',
+    MATTINO_SENZA_RETE: '1', // il discorso del mattino: niente meteo vero, niente voce vera
     VAULT_PATH: path.join(os.tmpdir(), 'gestionale-collaudo-vault-inesistente'),
   };
   const figlio = spawn(process.execPath, [path.join(ROOT, 'backend', 'server.js')], { cwd: CACHE, env, windowsHide: true });
@@ -342,7 +343,7 @@ async function entra(pg) {
 const DOVE = {
   Elementi: ['Progetti', 'Elenco'], 'Da fare': ['Progetti', 'Cose da fare'],
   Calendario: ['Vita', 'Agenda'], Documenti: ['Vita', 'Documenti'], Routine: ['Vita', 'Routine'],
-  'Peppino': ['Peppino'],
+  'Peppino': ['Peppino'], Sveglia: ['Peppino', 'Sveglia'],
 };
 const vai = async (pg, testo) => {
   const [sezione, sotto] = DOVE[testo] || [testo];
@@ -1044,6 +1045,96 @@ async function main() {
       verifica(await titolo() === conversazione, 'dalla home non si apre la conversazione scelta');
     });
 
+    // Dal 06/11 la sveglia. Nel collaudo non c'è un modello: il discorso è quello coi soli dati, che
+    // deve funzionare proprio quando l'AI non risponde. Il modello vero si prova con prova-mattino.mjs.
+    const fraseMia = `Una frase tutta mia ${tra(100, 999)}`;
+    const cosaMia = `Chiamare Zoë ${tra(100, 999)}`;
+    const cosaDomani = `Portare l'auto in officina ${tra(100, 999)}`;
+    const routineDi = () => leggiUno('routines', owner.uid);
+    await passo(page, 'Sveglia: una frase mia, una voce spenta, il discorso si scrive e si ascolta', async () => {
+      const SILENZIO = Buffer.from('UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQIAAAAAAA==', 'base64');
+      let frasi = 0;
+      await page.route('**/api/parla**', async route => { frasi++; await route.fulfill({ contentType: 'audio/wav', body: SILENZIO }); });
+      try {
+        await vai(page, 'Sveglia');
+        await page.getByRole('heading', { name: 'Sveglia', exact: true }).waitFor({ timeout: 8000 });
+        await page.getByLabel('Nuova frase').fill(fraseMia);
+        await page.getByRole('button', { name: 'Aggiungi la frase' }).click();
+        await page.getByText(fraseMia).waitFor({ timeout: 8000 });
+        await attendi(async () => (await routineDi())?.sveglia?.frasi?.some(f => f.testo === fraseMia), 'la frase non è stata salvata');
+        await page.getByLabel('Il meteo di Chiavari').click();
+        await attendi(async () => (await routineDi())?.sveglia?.voci?.meteo === false, 'la voce spenta non è stata salvata');
+
+        await page.getByRole('button', { name: 'Scrivilo adesso' }).click();
+        const discorso = page.locator('.sveglia-discorso');
+        await discorso.filter({ hasText: 'Buongiorno Paolo' }).waitFor({ timeout: 15000 });
+        const r = await routineDi();
+        verifica(r.mattino?.data === oggi(), `il discorso ha la data ${r.mattino?.data}`);
+        verifica(r.mattino.modello === 'riserva' && r.mattino.audio === false, `senza modello e voce doveva restare il testo: ${r.mattino.modello}, audio ${r.mattino.audio}`);
+        verifica(/Ti eri scritto: /.test(r.mattino.testo), `nel discorso non c'è una frase di Paolo: ${r.mattino.testo}`);
+        verifica(r.treCose?.[oggi()]?.proposte === true, 'le tre cose proposte non sono state salvate');
+
+        await page.getByRole('button', { name: 'Ascolta il discorso' }).click();
+        await attendi(async () => frasi > 0, 'il discorso non è stato chiesto alla voce', 8000);
+        await page.getByRole('button', { name: 'Ascolta il discorso' }).waitFor({ timeout: 15000 });
+        return `${r.mattino.testo.split(/\s+/).length} parole, ${r.treCose[oggi()].voci.length} cose proposte, ${frasi} frasi lette`;
+      } finally {
+        await page.unroute('**/api/parla**');
+      }
+    });
+    await passo(page, 'Sveglia: la chiave del Comando si vede una volta, su Firestore resta l\'impronta', async () => {
+      await page.getByRole('button', { name: 'Crea il mio indirizzo' }).click();
+      const indirizzo = await page.locator('.sveglia-indirizzo code').innerText();
+      const chiave = new URL(indirizzo).searchParams.get('k');
+      verifica(chiave?.length >= 30, `chiave troppo corta: ${chiave?.length}`);
+      verifica(new URL(indirizzo).pathname === '/api/gestionale-push/mattino', `indirizzo sbagliato: ${new URL(indirizzo).pathname}`);
+      const r = await attendi(async () => { const d = await routineDi(); return d?.sveglia?.chiaveHash ? d : null; }, 'la chiave non è stata salvata');
+      verifica(r.sveglia.chiaveHash === crypto.createHash('sha256').update(chiave).digest('hex'), 'l\'impronta non corrisponde alla chiave');
+      verifica(!JSON.stringify(r).includes(chiave), 'la chiave è finita in chiaro su Firestore');
+      verifica(r.sveglia.attiva === true, 'creando la chiave la sveglia doveva accendersi');
+      await page.reload();
+      await page.getByText(/Creato il/).waitFor({ timeout: 15000 });
+      verifica(await page.locator('.sveglia-indirizzo').count() === 0, 'dopo la ricarica la chiave si vede ancora');
+    });
+    await passo(page, 'Oggi: il mattino, le tre cose proposte, spunta legata al progetto, modifica', async () => {
+      await vai(page, 'Oggi');
+      await page.getByRole('region', { name: 'Il mattino di Peppino' }).getByText(/Buongiorno Paolo/).waitFor({ timeout: 8000 });
+      const tre = page.getByRole('region', { name: 'Le tre cose di oggi' });
+      await tre.getByText('proposte da Peppino').waitFor({ timeout: 8000 });
+
+      const primaVoce = () => routineDi().then(r => r.treCose[oggi()].voci[0]);
+      const legata = await primaVoce();
+      verifica(legata.progettoId && legata.todo, `la proposta non è legata a un progetto: ${JSON.stringify(legata)}`);
+      const statoTodo = async () => (await leggiUno('projects', legata.progettoId)).todos.find(t => t.text === legata.todo)?.completed;
+      await tre.getByRole('checkbox').first().click();
+      await attendi(async () => (await primaVoce()).fatta === true && await statoTodo() === true, 'la spunta non è arrivata alla cosa da fare del progetto');
+      await tre.getByRole('checkbox').first().click();
+      await attendi(async () => (await primaVoce()).fatta === false && await statoTodo() === false, 'togliendo la spunta la cosa da fare non si è riaperta');
+
+      await tre.getByRole('button', { name: 'Cambia' }).click();
+      await tre.getByLabel('Cosa numero 1').fill(cosaMia);
+      await tre.getByRole('button', { name: 'Salva', exact: true }).click();
+      await tre.getByText(cosaMia).waitFor({ timeout: 8000 });
+      await attendi(async () => (await routineDi()).treCose[oggi()].proposte === false, 'dopo la modifica restano «proposte»');
+      verifica(await tre.getByText('proposte da Peppino').count() === 0, 'dopo la modifica si legge ancora «proposte da Peppino»');
+    });
+    await passo(page, 'Sveglia: il discorso riscritto ricorda le cose scelte da Paolo; buonanotte per domani', async () => {
+      await vai(page, 'Sveglia');
+      await page.getByRole('button', { name: 'Riscrivilo adesso' }).click();
+      await page.locator('.sveglia-discorso').filter({ hasText: cosaMia }).waitFor({ timeout: 15000 });
+      verifica(!(await routineDi()).mattino.testo.includes('Io partirei'), 'le cose scelte da Paolo sono trattate come proposte');
+
+      const sera = page.getByRole('region', { name: 'Buonanotte' });
+      await sera.getByLabel('Domani, cosa numero 1').fill(cosaDomani);
+      await sera.getByRole('button', { name: 'Salva per domani' }).click();
+      await sera.getByText('Domattina te le ricordo io.').waitFor({ timeout: 8000 });
+      const domani = await attendi(async () => (await routineDi()).treCose?.[traGiorni(1)], 'le cose di domani non sono state salvate');
+      verifica(domani.proposte === false && domani.voci[0].testo === cosaDomani, `cose di domani sbagliate: ${JSON.stringify(domani)}`);
+
+      await page.getByLabel('Ricordamelo con una notifica').click();
+      await attendi(async () => { const v = (await routineDi()).sveglia; return v.buonanotte === true && v.oraSera === '21:30'; }, 'la notifica della sera non è stata salvata');
+    });
+
     await passo(page, 'Notifiche: la finestra si apre e si chiude', async () => {
       await page.getByRole('button', { name: /^Notifiche/ }).first().click();
       await finestra(page).first().waitFor({ timeout: 5000 });
@@ -1143,6 +1234,17 @@ async function main() {
       verifica(trascrivi.status === 403, `un altro account usa la trascrizione delle note vocali (HTTP ${trascrivi.status})`);
       const push = await fetch(`${BACKEND}/api/push/subscribe`, { method: 'POST', headers: auth, body: JSON.stringify({ subscription: { endpoint: 'https://esempio.test' } }) });
       verifica(push.status === 403, `un altro account si iscrive alle notifiche (HTTP ${push.status})`);
+      const mattino = await fetch(`${BACKEND}/api/mattino/prepara`, { method: 'POST', headers: auth, body: '{}' });
+      verifica(mattino.status === 403, `un altro account fa preparare il discorso (HTTP ${mattino.status})`);
+      const senza = await fetch(`${BACKEND}/api/mattino/prepara`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      verifica(senza.status === 401, `senza accesso il discorso risponde ${senza.status}`);
+      const finto = await fetch(`${BACKEND}/api/mattino/prepara`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Servizio': 'a.b.c' }, body: '{}' });
+      verifica(finto.status === 401, `un gettone finto passa (HTTP ${finto.status})`);
+      // L'audio del mattino non si legge dal browser, neanche da Paolo: lo serve il Worker
+      for (const chi of [intruso, owner]) {
+        const audio = await rest('GET', `/mattini/${owner.uid}_${oggi()}`, null, chi.token);
+        verifica(audio.status === 403, `l'audio del mattino si legge dal browser (HTTP ${audio.status})`);
+      }
     });
 
     // ── telefono ──
@@ -1180,6 +1282,17 @@ async function main() {
       const box = await finestra(pt).boundingBox();
       verifica(box && box.x >= -1 && box.x + box.width <= iphone.viewport.width + 1, 'la finestra esce dallo schermo');
       verifica(await senzaOverflow(pt), 'la pagina scorre di lato con il form aperto');
+    });
+    await passo(page, 'Telefono: Sveglia, un indirizzo nuovo sostituisce il vecchio e sta nello schermo', async () => {
+      fotoDa = pt;
+      await finestra(pt).getByRole('button', { name: 'Annulla' }).click(); // il passo prima lascia aperto il modulo
+      await pt.goto(`${APP}#/sveglia`);
+      const prima = (await routineDi()).sveglia.chiaveHash;
+      await pt.getByRole('button', { name: 'Crea un indirizzo nuovo' }).click();
+      await pt.locator('.sveglia-indirizzo code').waitFor({ timeout: 8000 });
+      await attendi(async () => (await routineDi()).sveglia.chiaveHash !== prima, 'la chiave vecchia vale ancora');
+      verifica(await senzaOverflow(pt), 'l\'indirizzo esce dallo schermo');
+      await pt.locator('.sveglia-indirizzo').scrollIntoViewIfNeeded();
     });
     // Dal 24/10: senza campo i comandi rapidi non aspettano il server e la PWA si riapre dalla cache
     await passo(page, 'Telefono senza rete: «Appunto» si apre subito, l\'app si riapre, l\'appunto arriva dopo', async () => {
