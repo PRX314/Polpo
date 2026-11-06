@@ -35,7 +35,10 @@ export function useModelli() {
 
   const isOn = (provider, model) => targets.some(t => t.provider === provider && t.model === model)
 
-  // Almeno uno resta sempre acceso
+  // Cambia modello: da adesso risponde solo questo
+  const scegli = (provider, model) => setTargets([{ provider, model }])
+
+  // A confronto: si aggiunge o si toglie. Almeno uno resta sempre acceso
   const toggle = (provider, model) => setTargets(prev => {
     if (prev.some(t => t.provider === provider && t.model === model)) {
       return prev.length > 1 ? prev.filter(t => !(t.provider === provider && t.model === model)) : prev
@@ -45,5 +48,5 @@ export function useModelli() {
 
   const etichetta = targets.length > 1 ? `${targets.length} modelli a confronto` : shortModel(targets[0]?.model)
 
-  return { providers, targets, isOn, toggle, etichetta }
+  return { providers, targets, isOn, scegli, toggle, etichetta }
 }
