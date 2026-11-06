@@ -71,6 +71,18 @@ export async function salvaNelVault({ testo, titolo, assistente, tipo }) {
 // CHAT API
 // ============================================================================
 
+// Peppino si prepara prima della domanda: il server si sveglia (su Render dorme dopo 15 minuti e
+// ci mette 30-60 s) e rilegge i tuoi dati. Si chiama aprendo l'app e la chat, e quando tocchi il
+// campo per scrivere. Al massimo una volta ogni 25 secondi; se non va, pazienza.
+let preparato = 0
+export function preparaPeppino() {
+  if (Date.now() - preparato < 25000 || !auth.currentUser) return
+  preparato = Date.now()
+  getAuthHeaders()
+    .then(headers => fetch(`${API_URL}/api/chat/pronto`, { method: 'POST', headers, body: '{}' }))
+    .catch(() => {})
+}
+
 // history: [{ role, content }] già pronta (vedi perStoria in components/chat/azioni.js).
 // specialist: id dell'assistente (null = Peppino generico).
 // targets: [{ provider, model }] — con più di uno il backend risponde con `replies` (una per modello).

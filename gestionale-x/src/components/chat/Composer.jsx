@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { preparaPeppino } from '../../services/chatService'
 import { ArrowUp, AtSign, X } from 'lucide-react'
 import { useData } from '../../context/useData'
 import { STATUS_LABEL, normalizeStatus } from '../../lib/status'
@@ -201,6 +202,7 @@ export default function Composer({ bozza, incolla, onIncollato, onInvia, occupat
           onChange={(e) => { setTesto(e.target.value); leggiMenzione(e.target) }}
           onKeyDown={onKeyDown}
           onClick={(e) => leggiMenzione(e.target)}
+          onFocus={preparaPeppino}
           onBlur={() => setMenu(null)}
         />
         <button className="btn btn-primary" onClick={invia} disabled={!testo.trim() || occupato} aria-label="Invia">

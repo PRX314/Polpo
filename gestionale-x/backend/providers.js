@@ -4,11 +4,16 @@ import Groq, { toFile } from 'groq-sdk'
 // server.js carica dotenv dopo gli import.
 const csv = (v, fallback) => (v ? v.split(',').map(s => s.trim()).filter(Boolean) : fallback)
 
-const GROQ_FALLBACK_MODEL = 'llama-3.1-8b-instant'
+// Il ripiego: il fratello piccolo, che ragiona come il principale e ha limiti suoi
+// (llama-3.1-8b-instant, quello di prima, su Groq non esiste più: verificato il 2026-11-06)
+const GROQ_FALLBACK_MODEL = 'openai/gpt-oss-20b'
 
-// Il modello di ripiego non ragiona: con questi parametri risponderebbe 400
-// eslint-disable-next-line no-unused-vars
-const senzaRagionamento = ({ reasoning_effort, include_reasoning, ...resto }) => resto
+// Si passa al ripiego se il modello non c'è più, se ha finito la quota o se Groq è in panne
+const daRipiego = (err, modello) => {
+  if (modello === GROQ_FALLBACK_MODEL) return false
+  const code = err?.error?.error?.code || err?.code
+  return err?.status === 404 || code === 'model_not_found' || err?.status === 429 || err?.status >= 500
+}
 
 const PROVIDERS = {
   groq: {
@@ -17,8 +22,7 @@ const PROVIDERS = {
     defaultModel: () => process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
     models: () => csv(process.env.GROQ_MODELS, [
       'openai/gpt-oss-120b',
-      'openai/gpt-oss-20b',
-      'llama-3.1-8b-instant'
+      'openai/gpt-oss-20b'
     ])
   },
   nvidia: {
@@ -122,10 +126,9 @@ export async function* streamProvider({ provider, model }, opts) {
     try {
       stream = await groq.chat.completions.create({ model: m, ...opts, stream: true })
     } catch (err) {
-      const code = err?.error?.error?.code || err?.code
-      if (err?.status !== 404 && code !== 'model_not_found') throw err
-      console.warn(`Modello ${m} non disponibile su Groq → fallback ${GROQ_FALLBACK_MODEL}`)
-      stream = await groq.chat.completions.create({ model: GROQ_FALLBACK_MODEL, ...senzaRagionamento(opts), stream: true })
+      if (!daRipiego(err, m)) throw err
+      console.warn(`Modello ${m} non disponibile su Groq (${err?.status}) → ripiego ${GROQ_FALLBACK_MODEL}`)
+      stream = await groq.chat.completions.create({ model: GROQ_FALLBACK_MODEL, ...opts, stream: true })
     }
     for await (const chunk of stream) {
       const delta = chunk.choices?.[0]?.delta
@@ -187,10 +190,9 @@ export async function callProvider({ provider, model }, opts) {
     try {
       return await groq.chat.completions.create({ model: m, ...opts })
     } catch (err) {
-      const code = err?.error?.error?.code || err?.code
-      if (err?.status === 404 || code === 'model_not_found') {
-        console.warn(`Modello ${m} non disponibile su Groq → fallback ${GROQ_FALLBACK_MODEL}`)
-        return await groq.chat.completions.create({ model: GROQ_FALLBACK_MODEL, ...senzaRagionamento(opts) })
+      if (daRipiego(err, m)) {
+        console.warn(`Modello ${m} non disponibile su Groq (${err?.status}) → ripiego ${GROQ_FALLBACK_MODEL}`)
+        return await groq.chat.completions.create({ model: GROQ_FALLBACK_MODEL, ...opts })
       }
       throw err
     }
