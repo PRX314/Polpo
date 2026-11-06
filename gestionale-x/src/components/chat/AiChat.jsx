@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { House, Plus, X } from 'lucide-react'
-import { getSpecialists } from '../../services/chatService'
+import { getSpecialists, preparaPeppino } from '../../services/chatService'
 import { useChat } from './useChat'
 import { useModelli } from './useModelli'
 import { nomeAssistente as nomeDa } from './assistenti'
@@ -34,7 +34,7 @@ export default function AiChat({ initialMessage, onInitialMessageConsumed }) {
   const [modo, setModo] = useState(modoSalvato)
   const [incolla, setIncolla] = useState(null) // il testo pronto che il campo deve prendere
 
-  useEffect(() => { getSpecialists().then(setSpecialisti).catch(() => {}) }, [])
+  useEffect(() => { preparaPeppino(); getSpecialists().then(setSpecialisti).catch(() => {}) }, [])
   useEffect(() => { try { localStorage.setItem(MODO_KEY, modo) } catch { /* storage non disponibile */ } }, [modo])
 
   // La conversazione aperta (anche quella nuova appena salvata) diventa il posto in cui tornare

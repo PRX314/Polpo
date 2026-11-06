@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { onAuthStateChanged, signOut, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { auth } from './firebase'
+import { preparaPeppino } from './services/chatService'
 import Auth from './components/Auth'
 import Shell from './layout/Shell'
 import Header from './layout/Header'
@@ -92,7 +93,8 @@ function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => onAuthStateChanged(auth, (u) => { setUser(u); setLoading(false) }), [])
+  // Appena entri il server di Peppino si sveglia: quando arrivi alla chat è già pronto
+  useEffect(() => onAuthStateChanged(auth, (u) => { setUser(u); setLoading(false); if (u) preparaPeppino() }), [])
 
   if (loading) {
     return <div className="loading-screen"><span className="spinner" aria-hidden="true" /> Caricamento…</div>
