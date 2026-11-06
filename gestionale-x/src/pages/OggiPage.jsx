@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowUp, CalendarDays, Pin, Plus } from 'lucide-react'
 import ComandiRapidi from '../components/ComandiRapidi'
+import TreCose from '../components/mattino/TreCose'
+import Buonanotte from '../components/mattino/Buonanotte'
 import ProgressBar from '../components/ui/ProgressBar'
 import StatusMark from '../components/ui/StatusMark'
 import { useData } from '../context/useData'
@@ -12,6 +14,12 @@ import { progressOf } from '../lib/status'
 import { ultimaVolta } from '../lib/vaultCampi'
 import { documentDeadlines } from '../services/localDocuments'
 import './OggiPage.css'
+
+// A parte: si porta dietro la voce di Peppino, che serve solo se c'è un discorso da ascoltare
+const MattinoOggi = lazy(() => import('../components/mattino/MattinoOggi'))
+
+// Dalle 18 in Oggi compare la buonanotte (sempre raggiungibile da Peppino → Sveglia)
+const ORA_SERA = 18
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -171,6 +179,9 @@ const OggiPage = () => {
 
       <div className="oggi-grid">
         <div className="stack">
+          <Suspense fallback={null}><MattinoOggi /></Suspense>
+          <TreCose />
+          {new Date().getHours() >= ORA_SERA && <Buonanotte />}
           <AgendaBlock
             title="Scadute" rows={overdue.slice(0, 8)} onToggle={toggleTodo} invert
             more={overdue.length > 8 && <Link className="ag-more" to="/da-fare">Altre {overdue.length - 8} scadute</Link>}

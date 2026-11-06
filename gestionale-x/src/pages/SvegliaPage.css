@@ -1,0 +1,22 @@
+.sveglia-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+
+.sveglia-discorso { line-height: 1.5; }
+.sveglia-azioni { margin-top: 10px; }
+
+.sveglia-voce { display: flex; align-items: center; gap: 10px; min-height: 38px; cursor: pointer; border-top: 1px solid var(--line-soft); }
+.sveglia-voce:first-of-type { border-top: 0; }
+.sveglia-ora { margin-top: 8px; max-width: 160px; }
+
+.sveglia-frasi { margin: 8px 0; }
+.sveglia-frasi li { min-height: 38px; border-top: 1px solid var(--line-soft); overflow-wrap: anywhere; }
+.sveglia-nuova { display: flex; gap: 6px; margin-top: 8px; }
+.sveglia-nuova input { flex: 1; min-width: 0; }
+.sveglia-nuova .btn { width: var(--field-h); padding: 0; }
+
+.sveglia-passi { list-style: decimal; padding-left: 20px; margin-bottom: 10px; font-size: var(--fs-s); line-height: 1.5; }
+.sveglia-indirizzo { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; }
+.sveglia-indirizzo code { flex: 1; min-width: 0; font-size: var(--fs-xs); overflow-wrap: anywhere; user-select: all; }
+
+@media (max-width: 860px) {
+  .sveglia-grid { grid-template-columns: minmax(0, 1fr); }
+}

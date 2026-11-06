@@ -24,6 +24,7 @@ const AppuntiPage = lazy(() => import('./pages/AppuntiPage'))
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const RoutinePage = lazy(() => import('./pages/RoutinePage'))
 const ChatPage = lazy(() => import('./pages/ChatPage'))
+const SvegliaPage = lazy(() => import('./pages/SvegliaPage'))
 
 const Authed = ({ user }) => {
   const toast = useToast()
@@ -74,6 +75,7 @@ const Authed = ({ user }) => {
           <Route path="calendario" element={<Suspense fallback={<PageLoading />}><CalendarPage /></Suspense>} />
           <Route path="routine" element={<Suspense fallback={<PageLoading />}><RoutinePage /></Suspense>} />
           <Route path="ai" element={<Suspense fallback={<PageLoading />}><ChatPage /></Suspense>} />
+          <Route path="sveglia" element={<Suspense fallback={<PageLoading />}><SvegliaPage /></Suspense>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

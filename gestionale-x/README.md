@@ -61,6 +61,26 @@ Il browser blocca ogni richiesta che esce dal PC. Serve `firebase-tools` install
 Java 21 viene scaricato una volta in `tester/cache` se manca. In Claude Code o PLANCIA:
 `/collaudo-gestionale`.
 
+### Il discorso del mattino
+
+```powershell
+npm run test:mattino                # i conti, senza rete né database
+node tester/prova-mattino.mjs       # modelli e voce veri su tre mattine finte; --voce registra, --giri N ripete
+node tester/prova-mattino-giro.mjs  # il giro intero su emulatori, col codice vero del Worker
+```
+
+Le due prove nel `tester/` usano le chiavi di `backend/.env`, costano qualche centesimo e dipendono dalla rete. Dal `worktree` si passano `--env` e, per il giro, `--worker`.
+
+## La sveglia di Peppino
+
+La sveglia suona sull'iPhone: una pagina web non può svegliare nessuno. Un'automazione di Comandi, quando la fermi, scarica e suona il discorso di oggi.
+
+- Di notte il Worker `gestionale-push` chiama `POST /api/mattino/prepara` con un gettone firmato dal service account. Render raccoglie i dati, il modello scrive e la voce legge (`backend/mattino.js`).
+- Il testo va in `routines/{uid}.mattino`, le tre cose del giorno in `routines/{uid}.treCose`, per data: l'app le vede con le regole di sempre.
+- L'audio va in `mattini/{uid}_{data}`, che le regole non aprono a nessun browser. Lo consegna il Worker a chi ha la chiave del Comando, così alla sveglia Render può dormire.
+- La chiave nasce nel browser: in `routines/{uid}.sveglia.chiaveHash` c'è solo la sua impronta.
+- Se il modello non risponde o inventa orari e frasi, il discorso si scrive coi soli dati (`discorsoDiRiserva`). Se manca la voce il Comando riceve un messaggio di riserva, registrato una volta sola.
+
 ## Sincronizzazione dei progetti
 
 `backend/sincronizza.js` legge il vault e il report dello scanner in `PLANCIA/scanner/`. Prima di scrivere su Firestore si può controllare il risultato:

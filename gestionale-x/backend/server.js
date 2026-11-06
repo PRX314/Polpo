@@ -1,8 +1,9 @@
+import { creaMattino, verificaServizio } from './mattino.js'
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { listProviders, providerName, normalizeTargets, callProvider, defaultTarget, trascriviAudio } from './providers.js'
-import { agente, creaLettore, schedaElemento, percorsoVault, riassumiNota, STRUMENTI_LETTURA, CARTELLE_VAULT, STATUS_LABELS } from './agente.js'
+import { agente, creaLettore, schedaElemento, percorsoVault, riassumiNota, ragiona, STRUMENTI_LETTURA, CARTELLE_VAULT, STATUS_LABELS } from './agente.js'
 import admin from 'firebase-admin'
 import webpush from 'web-push'
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts'
@@ -616,10 +617,11 @@ const piuGiorni = (iso, n) => {
 const conOra = (giorno, ora) => (ora ? `${giorno} ${ora}` : giorno)
 
 async function getUserContext(userId) {
-  const [projectsSnap, eventsSnap, appuntiSnap] = await Promise.all([
+  const [projectsSnap, eventsSnap, appuntiSnap, routineSnap] = await Promise.all([
     adminDb.collection('projects').where('userId', '==', userId).get(),
     adminDb.collection('events').where('userId', '==', userId).get(),
-    adminDb.collection('notes').where('userId', '==', userId).where('kind', '==', 'appunto').get()
+    adminDb.collection('notes').where('userId', '==', userId).where('kind', '==', 'appunto').get(),
+    adminDb.collection('routines').doc(userId).get()
   ])
   const oggi = oggiRoma()
   const orizzonte = piuGiorni(oggi, 14)
@@ -706,7 +708,19 @@ async function getUserContext(userId) {
     todoCompletati: attivi.reduce((s, p) => s + p.todoCompletati, 0)
   }
 
-  return { projects, notes, agenda, oggi, stats }
+  // Routine di oggi, le tre cose e il discorso del mattino: quello che Peppino ha detto al risveglio
+  // deve saperlo anche dopo, se Paolo gli risponde in chat
+  const r = routineSnap.exists ? routineSnap.data() : {}
+  const giornoSett = new Date(`${oggi}T12:00:00Z`).getUTCDay()
+  const valeOggi = (x) => !x.days?.length || x.days.includes(giornoSett)
+  const routine = {
+    attivita: (r.tasks || []).filter(valeOggi).map(t => ({ nome: t.name, ora: t.time || '', fatta: !!r.dayTasks?.[oggi]?.[t.id] })),
+    blocchi: (r.timeBlocks || []).filter(valeOggi).map(b => `${b.label} dalle ${b.start} alle ${b.end}`)
+  }
+  const treCose = (r.treCose?.[oggi]?.voci || []).filter(v => v?.testo)
+  const mattino = r.mattino?.data === oggi ? r.mattino.testo : ''
+
+  return { projects, notes, agenda, oggi, stats, routine, treCose, mattino }
 }
 
 const clip = (v, n) => {
@@ -731,6 +745,16 @@ function formatContext(ctx) {
     }
   } else {
     text += 'Niente in agenda: nessuna scadenza né appuntamento nei prossimi 14 giorni.\n'
+  }
+
+  if (ctx.treCose.length) {
+    text += '\n=== LE TRE COSE DI OGGI (si cambiano nella pagina Oggi) ===\n'
+    for (const v of ctx.treCose) text += `- ${clip(v.testo, 100)}${v.fatta ? ' (fatta)' : ''}\n`
+  }
+  if (ctx.routine.attivita.length || ctx.routine.blocchi.length) {
+    text += '\n=== ROUTINE DI OGGI ===\n'
+    if (ctx.routine.blocchi.length) text += `Blocchi: ${ctx.routine.blocchi.join('; ')}\n`
+    for (const a of ctx.routine.attivita) text += `- ${clip(a.nome, 60)}${a.ora ? ` alle ${a.ora}` : ''}${a.fatta ? ' (fatta)' : ''}\n`
   }
 
   if (ctx.notes.length) {
@@ -780,6 +804,9 @@ function formatContext(ctx) {
     text += `\n…e altri ${soloNome.length} elementi, solo il nome: ${clip(soloNome.map(p => `"${p.nome}" (${p.stato})`).join(', '), 900)}\n`
   }
 
+  // In fondo e fuori dal budget: è corto, e senza Peppino non saprebbe cosa ha detto stamattina
+  if (ctx.mattino) text += `\n=== STAMATTINA GLI HAI DETTO ===\n${clip(ctx.mattino, 1800)}\n`
+
   return text
 }
 
@@ -812,6 +839,11 @@ c'entrano e non dire che ti occupi solo del gestionale.
 - Una cosa da fare di un progetto → **add_todo** con projectName; una cosa personale (spesa, telefonate, pagamenti) → **add_todo** senza projectName (finisce in "Personale")
 - Un impegno con giorno ed eventualmente ora (visita, riunione, chiamata fissata) → **add_event**
 - Un progetto o un'idea nuova → **add_project** (solo tipo progetto o idea)
+
+## IL DISCORSO DEL MATTINO
+Ogni mattina prepari un discorso che Paolo ascolta quando ferma la sveglia dell'iPhone (si regola in Peppino → Sveglia).
+Se nel contesto c'è "STAMATTINA GLI HAI DETTO" e Paolo ti risponde su quello (per esempio "parto dal preventivo"),
+continua da lì senza ripeterlo. Le tre cose di oggi si cambiano nella pagina Oggi.
 
 ## ELEMENTI "DAL VAULT"
 Gli elementi segnati "dal vault" nel contesto sono il riflesso delle note Obsidian di Paolo: stato, descrizione,
@@ -1455,6 +1487,93 @@ app.get('/api/parla', async (req, res) => {
     console.error('Voce non disponibile:', err?.message)
     chiudi()
     if (!res.headersSent) res.status(502).end()
+  }
+})
+
+// ============================================================================
+// IL DISCORSO DEL MATTINO (vedi mattino.js)
+// ============================================================================
+// Il discorso intero in un file, non a flusso come /api/parla: finisce su Firestore, non in un <audio>
+function sintetizza(testo) {
+  return new Promise((risolvi, rifiuta) => {
+    const tts = new MsEdgeTTS()
+    const pezzi = []
+    const chiudi = () => { try { tts.close() } catch { /* già chiuso */ } }
+    const limite = setTimeout(() => { chiudi(); rifiuta(new Error('la voce non ha finito in tempo')) }, 60000)
+    const fine = (errore) => {
+      clearTimeout(limite)
+      chiudi()
+      if (errore) rifiuta(errore)
+      else risolvi(Buffer.concat(pezzi))
+    }
+    tts.setMetadata(VOCE, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3).then(() => {
+      const { audioStream } = tts.toStream(testo, { rate: VOCE_VELOCITA, pitch: VOCE_TONO })
+      audioStream.on('data', (pezzo) => pezzi.push(pezzo))
+      audioStream.on('error', fine)
+      audioStream.on('end', () => fine())
+    }).catch(fine)
+  })
+}
+
+// Claude se c'è, come sul PC; altrimenti, o se non risponde, il modello di base
+async function scriviMattino(messaggi) {
+  const prova = async (target) => {
+    // Di notte il tempo non conta: meglio che ragioni, così inventa meno
+    const risposta = await callProvider(target, { messages: messaggi, max_tokens: 4000, ...(ragiona(target) ? { reasoning_effort: 'medium' } : {}) })
+    return { testo: risposta.choices?.[0]?.message?.content || '', modello: target.model }
+  }
+  const claude = listProviders().find(p => p.id === 'claude')
+  if (claude) {
+    try {
+      return await prova({ provider: 'claude', model: claude.defaultModel })
+    } catch (err) {
+      console.warn('Mattino: Claude non risponde, passo al modello di base:', err?.message)
+    }
+  }
+  const base = defaultTarget()
+  if (!base) throw new Error('Nessun modello configurato')
+  return prova(base)
+}
+
+// Nel collaudo il backend non deve uscire da questo PC
+const SENZA_RETE = process.env.MATTINO_SENZA_RETE === '1'
+const mattino = creaMattino({
+  db: adminDb,
+  FieldValue: admin.firestore.FieldValue,
+  scrivi: scriviMattino,
+  voce: SENZA_RETE ? async () => null : sintetizza,
+  ...(SENZA_RETE ? { meteo: async () => null } : {})
+})
+
+// Il service account è la cosa che Render e il Worker hanno già in comune
+const accountServizio = () => {
+  try {
+    return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || readFileSync(join(__dirname, 'serviceAccount.json'), 'utf8'))
+  } catch {
+    return null
+  }
+}
+
+// Di notte chiede il Worker, col suo gettone firmato; dall'app chiede Paolo, come per la chat
+async function permessoMattino(req, res, next) {
+  const gettone = req.headers['x-servizio']
+  if (!gettone) return verifyUser(req, res, next)
+  if (!verificaServizio(gettone, accountServizio())) return res.status(401).json({ error: 'Gettone non valido' })
+  try {
+    req.userId = await uidProprietario()
+    next()
+  } catch {
+    res.status(503).json({ error: 'Accesso non configurato' })
+  }
+}
+
+app.post('/api/mattino/prepara', permessoMattino, async (req, res) => {
+  try {
+    const { stato, data, testo, modello, audio } = await mattino.prepara(req.userId, { forza: req.body?.forza === true })
+    res.json({ stato, data, testo, modello, audio })
+  } catch (err) {
+    console.error('Mattino:', err?.message)
+    res.status(500).json({ error: 'Non sono riuscito a preparare il discorso.' })
   }
 })
 

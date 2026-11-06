@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:documents": "node tests/documents.browser.cjs",
+    "test:mattino": "node --test tests/mattino.test.mjs",
     "collauda": "node tester/collauda.cjs",
     "collauda:vedi": "node tester/collauda.cjs --vedi"
   },
