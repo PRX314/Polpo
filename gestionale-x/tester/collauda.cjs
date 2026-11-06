@@ -226,7 +226,7 @@ async function avviaBackend() {
   const env = {
     ...process.env, PORT: String(PORTE.backend), GCLOUD_PROJECT: PROGETTO,
     FIRESTORE_EMULATOR_HOST: `127.0.0.1:${PORTE.firestore}`, FIREBASE_AUTH_EMULATOR_HOST: `127.0.0.1:${PORTE.auth}`,
-    FIREBASE_SERVICE_ACCOUNT: '', GROQ_API_KEY: '', NVIDIA_API_KEY: '', GITHUB_TOKEN: '', VAPID_PRIVATE_KEY: '',
+    FIREBASE_SERVICE_ACCOUNT: '', GROQ_API_KEY: '', ANTHROPIC_API_KEY: '', NVIDIA_API_KEY: '', GITHUB_TOKEN: '', VAPID_PRIVATE_KEY: '',
     VAULT_PATH: path.join(os.tmpdir(), 'gestionale-collaudo-vault-inesistente'),
   };
   const figlio = spawn(process.execPath, [path.join(ROOT, 'backend', 'server.js')], { cwd: CACHE, env, windowsHide: true });

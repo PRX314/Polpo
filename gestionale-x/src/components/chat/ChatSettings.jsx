@@ -52,20 +52,29 @@ export default function ChatSettings({ specialisti, assistente, onAssistente, mo
           {modelli.providers.length > 0 && (
             <>
               <p className="chat-pop-name">Modello</p>
-              <p className="help">Uno: chat normale. Fino a {MAX_TARGETS}: ricevi tutte le risposte e scegli la migliore.</p>
+              <p className="help">Tocca un modello per cambiare. Con «confronta» ne aggiungi altri (fino a {MAX_TARGETS}): ricevi tutte le risposte e scegli la migliore.</p>
               {modelli.providers.map(p => (
                 <div key={p.id} className="chat-pop-group">
                   {modelli.providers.length > 1 && <div className="small faint">{p.name}</div>}
                   {p.models.map(m => {
                     const on = modelli.isOn(p.id, m)
+                    const solo = on && modelli.targets.length === 1
                     return (
-                      <label key={m} className={`chat-pop-row ${on ? 'is-on' : ''}`}>
-                        <input
-                          type="checkbox" checked={on} onChange={() => modelli.toggle(p.id, m)}
-                          disabled={!on && modelli.targets.length >= MAX_TARGETS}
-                        />
-                        <span>{shortModel(m)}</span>
-                      </label>
+                      <div key={m} className={`chat-pop-row chat-pop-modello ${on ? 'is-on' : ''}`}>
+                        <label>
+                          <input type="radio" name="chat-modello" checked={solo} onChange={() => modelli.scegli(p.id, m)} />
+                          <span>{shortModel(m)}</span>
+                        </label>
+                        {!solo && (
+                          <button
+                            type="button" className="btn btn-sm btn-quiet" onClick={() => modelli.toggle(p.id, m)}
+                            disabled={!on && modelli.targets.length >= MAX_TARGETS}
+                            aria-label={on ? `Togli ${shortModel(m)} dal confronto` : `Aggiungi ${shortModel(m)} al confronto`}
+                          >
+                            {on ? 'togli' : '+ confronta'}
+                          </button>
+                        )}
+                      </div>
                     )
                   })}
                 </div>

@@ -348,7 +348,7 @@ export async function eseguiLettura(nome, args, lettore) {
 // IL GIRO: pensa → legge → pensa → risponde
 // ============================================================================
 // Solo i modelli che ragionano accettano reasoning_effort (gli altri rispondono 400)
-export const ragiona = (target) => target.provider === 'groq' && /gpt-oss/i.test(target.model || '')
+export const ragiona = (target) => target.provider === 'claude' || (target.provider === 'groq' && /gpt-oss/i.test(target.model || ''))
 
 const MAX_RAGIONAMENTO = 6000
 
@@ -357,7 +357,9 @@ async function consuma(target, opts, { onTesto, onPensiero }) {
   let content = ''
   let reasoning = ''
   const calls = []
+  let originali = null // Claude: i suoi blocchi così come li ha scritti, da rimandargli al giro dopo
   for await (const delta of streamProvider(target, opts)) {
+    if (delta._anthropic) originali = delta._anthropic
     if (delta.reasoning) {
       reasoning += delta.reasoning
       onPensiero(delta.reasoning)
@@ -373,7 +375,7 @@ async function consuma(target, opts, { onTesto, onPensiero }) {
       if (tc.function?.arguments) c.function.arguments += tc.function.arguments
     }
   }
-  return { content, reasoning, toolCalls: calls.filter(Boolean) }
+  return { content, reasoning, toolCalls: calls.filter(Boolean), originali }
 }
 
 // opzioni: { tools, maxTokens, effort, lettore, maxGiri }
@@ -446,7 +448,7 @@ export async function agente(target, baseMessages, opzioni, eventi = {}) {
     if (r.content) parti.push(r.content)
     if (!r.toolCalls.length) break
 
-    messages.push({ role: 'assistant', content: r.content || null, tool_calls: r.toolCalls })
+    messages.push({ role: 'assistant', content: r.content || null, tool_calls: r.toolCalls, ...(r.originali ? { _anthropic: r.originali } : {}) })
     if (r.content) aCapo = true
     for (const call of r.toolCalls) {
       let args

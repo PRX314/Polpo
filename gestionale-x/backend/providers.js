@@ -1,4 +1,5 @@
 import Groq, { toFile } from 'groq-sdk'
+import { streamClaude, callClaude } from './claude.js'
 
 // Le variabili d'ambiente si leggono a ogni chiamata, non all'import:
 // server.js carica dotenv dopo gli import.
@@ -23,6 +24,18 @@ const PROVIDERS = {
     models: () => csv(process.env.GROQ_MODELS, [
       'openai/gpt-oss-120b',
       'openai/gpt-oss-20b'
+    ])
+  },
+  // Claude (vedi claude.js): compare tra i modelli solo se sul server c'è ANTHROPIC_API_KEY.
+  // Haiku di base, come sul PC: è il più svelto e costa poco; Sonnet e Opus per le cose difficili.
+  claude: {
+    name: 'Claude',
+    key: () => process.env.ANTHROPIC_API_KEY,
+    defaultModel: () => process.env.CLAUDE_MODEL || 'claude-haiku-5-5',
+    models: () => csv(process.env.CLAUDE_MODELS, [
+      'claude-haiku-5-5',
+      'claude-sonnet-5-5',
+      'claude-opus-5-5'
     ])
   },
   nvidia: {
@@ -120,6 +133,8 @@ export async function* streamProvider({ provider, model }, opts) {
   if (!p || !p.key()) throw Object.assign(new Error(`Provider ${provider} non configurato`), { status: 401 })
   const m = model || p.defaultModel()
 
+  if (provider === 'claude') return yield* streamClaude(m, opts)
+
   if (provider === 'groq') {
     const groq = getGroq()
     let stream
@@ -184,6 +199,8 @@ export async function callProvider({ provider, model }, opts) {
   const p = PROVIDERS[provider]
   if (!p || !p.key()) throw Object.assign(new Error(`Provider ${provider} non configurato`), { status: 401 })
   const m = model || p.defaultModel()
+
+  if (provider === 'claude') return callClaude(m, opts)
 
   if (provider === 'groq') {
     const groq = getGroq()
