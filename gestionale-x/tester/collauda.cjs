@@ -337,12 +337,12 @@ async function entra(pg) {
   await pg.keyboard.type(PIN, { delay: 40 });
   await pg.getByRole('navigation', { name: 'Sezioni' }).first().waitFor({ timeout: 20000 });
 }
-// Dal 2026-10-04 le sezioni sono quattro (Oggi, Progetti, Vita, Polpo); Progetti e Vita hanno
+// Dal 2026-10-04 le sezioni sono quattro (Oggi, Progetti, Vita, Peppino); Progetti e Vita hanno
 // sotto-sezioni. Il giro chiama ancora le pagine col loro nome: qui si traduce in sezione + sotto-sezione.
 const DOVE = {
   Elementi: ['Progetti', 'Elenco'], 'Da fare': ['Progetti', 'Cose da fare'],
   Calendario: ['Vita', 'Agenda'], Documenti: ['Vita', 'Documenti'], Routine: ['Vita', 'Routine'],
-  'Polpo AI': ['Polpo'],
+  'Peppino': ['Peppino'],
 };
 const vai = async (pg, testo) => {
   const [sezione, sotto] = DOVE[testo] || [testo];
@@ -419,7 +419,7 @@ async function main() {
     });
 
     // ── giro delle sezioni, in ordine casuale ──
-    const sezioni = mescola(['Oggi', 'Elementi', 'Da fare', 'Calendario', 'Routine', 'Documenti', 'Polpo AI']);
+    const sezioni = mescola(['Oggi', 'Elementi', 'Da fare', 'Calendario', 'Routine', 'Documenti', 'Peppino']);
     mosse.push(`ordine delle sezioni: ${sezioni.join(' → ')}`);
     await passo(page, 'Tutte le sezioni si aprono', async () => {
       const rotte = [];
@@ -686,7 +686,7 @@ async function main() {
       await page.getByRole('heading', { name: 'Ancora niente in Musica' }).waitFor({ timeout: 4000 });
       await filtri.getByRole('button', { name: /^Pensieri/ }).click();
       await page.locator('.ap-card').filter({ hasText: 'Un altro punto di vista' }).first().waitFor({ timeout: 6000 });
-      await page.getByRole('button', { name: 'Mettili insieme con Polpo' }).click();
+      await page.getByRole('button', { name: 'Mettili insieme con Peppino' }).click();
       await page.waitForURL(/\/ai/, { timeout: 6000 });
       await page.getByText('dalla raccolta Pensieri', { exact: false }).first().waitFor({ timeout: 10000 });
     });
@@ -871,8 +871,8 @@ async function main() {
       proposte: [{ tool: 'add_todo', args: { projectName: bersaglio.nome, text: todoChat, deadline: traGiorni(1) }, label: 'Aggiungi cosa da fare' }],
     };
     mosse.push(`chat: propone "${todoChat}" su ${bersaglio.nome}`);
-    await passo(page, 'Polpo AI: risposta, proposta confermata, azione eseguita', async () => {
-      await vai(page, 'Polpo AI');
+    await passo(page, 'Peppino: risposta, proposta confermata, azione eseguita', async () => {
+      await vai(page, 'Peppino');
       await page.getByLabel('Messaggio').fill(`Aggiungi una cosa da fare a ${bersaglio.nome}`);
       // exact: c'è già la conversazione di «Mettili insieme», con «Invia al vault» sotto la risposta
       await page.getByRole('button', { name: 'Invia', exact: true }).click();
@@ -895,14 +895,14 @@ async function main() {
     scenarioChat = {
       testo: 'Ecco il piano per la settimana, con le proposte.',
       proposte: [
-        { tool: 'add_note', args: { title: appuntoChat, content: 'Scritto da Polpo', projectTags: ['Gestionale di prova'] }, label: 'Salva appunto' },
+        { tool: 'add_note', args: { title: appuntoChat, content: 'Scritto da Peppino', projectTags: ['Gestionale di prova'] }, label: 'Salva appunto' },
         { tool: 'add_event', args: { title: eventoChat, date: traGiorni(2), time: '10:30', reminder: 15 }, label: 'Fissa appuntamento' },
         { tool: 'add_todo', args: { text: personaleChat, deadline: traGiorni(5) }, label: 'Cosa personale' },
         { tool: 'update_project', args: { projectName: 'Progetto del vault', status: 'paused' }, label: 'Metti in pausa il vault' },
       ],
     };
-    await passo(page, 'Polpo AI: appunto, appuntamento, cosa personale; il vault non si tocca', async () => {
-      await vai(page, 'Polpo AI');
+    await passo(page, 'Peppino: appunto, appuntamento, cosa personale; il vault non si tocca', async () => {
+      await vai(page, 'Peppino');
       await page.getByLabel('Messaggio').fill('Organizzami la settimana');
       // exact: sotto la risposta di prima c'è anche "Invia al vault"
       await page.getByRole('button', { name: 'Invia', exact: true }).click();
@@ -921,16 +921,59 @@ async function main() {
       verifica(personali.length === 1, `la chat ha creato un secondo "Personale" (${personali.length})`);
     });
 
+    // Dal 06/11 in Parla c'è Peppino: si tocca il polpo, le orecchie sono Whisper (qui finto) e la
+    // voce arriva dal server (qui un attimo di silenzio). Il microfono è quello finto di Chromium.
+    scenarioChat = { testo: 'Oggi hai due cose da fare.', proposte: [] };
+    await passo(page, 'Peppino a voce: tocchi il polpo, ti capisce e ti risponde', async () => {
+      const detto = 'Che cosa ho da fare oggi?';
+      const SILENZIO = Buffer.from('UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQIAAAAAAA==', 'base64');
+      let audio = null, frasi = 0;
+      await page.route('**/api/trascrivi', async route => {
+        audio = { tipo: route.request().headers()['content-type'], byte: route.request().postDataBuffer()?.length || 0 };
+        await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ testo: detto }) });
+      });
+      await page.route('**/api/parla**', async route => { frasi++; await route.fulfill({ contentType: 'audio/wav', body: SILENZIO }); });
+      try {
+        await vai(page, 'Peppino');
+        await page.getByRole('button', { name: 'Nuova conversazione' }).click();
+        await page.getByRole('tab', { name: 'Parla' }).click();
+        const polpo = page.getByRole('button', { name: 'Parla con Peppino' });
+        await polpo.waitFor({ timeout: 5000 });
+        const pieni = () => page.locator('canvas.peppino').evaluate(c => {
+          const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+          let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
+          return n;
+        });
+        verifica(await pieni() > 300, 'Peppino non è disegnato');
+        await polpo.click();
+        const finito = page.getByRole('button', { name: 'Ho finito di parlare' });
+        await finito.waitFor({ timeout: 8000 });
+        await page.waitForTimeout(1500);
+        await finito.click().catch(() => {}); // se la pausa l'ha già chiuso da solo va bene lo stesso
+        await page.locator('.parla-tu').filter({ hasText: detto }).waitFor({ timeout: 10000 });
+        await page.locator('.parla-polpo').filter({ hasText: 'Oggi hai due cose da fare.' }).waitFor({ timeout: 10000 });
+        await attendi(async () => frasi > 0, 'la risposta non è stata chiesta alla voce del server', 8000);
+        verifica(audio?.byte > 0 && /^audio\//.test(audio.tipo), `l'audio non è arrivato a Whisper: ${JSON.stringify(audio)}`);
+        await page.getByRole('button', { name: 'Basta così' }).click().catch(() => {});
+        await page.getByText('Tocca Peppino e parla').waitFor({ timeout: 8000 });
+        await attendi(async () => (await leggi('chats')).some(c => c.messages?.some(m => m.content === detto)), 'lo scambio a voce non è finito nella conversazione', 15000);
+        return `${(audio.byte / 1024).toFixed(1)} kB di audio (${audio.tipo}), ${frasi} frase letta`;
+      } finally {
+        await page.unroute('**/api/trascrivi'); await page.unroute('**/api/parla**');
+        await page.getByRole('tab', { name: 'Scrivi' }).click().catch(() => {});
+      }
+    });
+
     // Dal 28/10 la chat ha una home (testi pronti e tutte le conversazioni) e si riapre dove l'avevi
     // lasciata: la conversazione, il punto in cui leggevi, quello che stavi scrivendo
     const testoPronto = `Testo pronto di collaudo ${tra(100, 999)}: completalo tu`;
     const bozzaChat = `Bozza da ritrovare ${tra(100, 999)}`;
     scenarioChat = { testo: Array.from({ length: 40 }, (_, i) => `Riga ${i + 1} della risposta lunga.`).join('\n\n'), proposte: [] };
-    await passo(page, 'Polpo AI: home, testi pronti e chat ritrovata dove l\'avevi lasciata', async () => {
+    await passo(page, 'Peppino: home, testi pronti e chat ritrovata dove l\'avevi lasciata', async () => {
       const scorri = page.locator('.chat-scroll');
       const titolo = () => page.locator('.chat-title').innerText();
       const campo = page.getByLabel('Messaggio');
-      await vai(page, 'Polpo AI');
+      await vai(page, 'Peppino');
       await campo.fill('Dammi una risposta lunga');
       await page.getByRole('button', { name: 'Invia', exact: true }).click();
       await page.getByText('Riga 40 della risposta lunga.').waitFor({ timeout: 10000 });
@@ -940,7 +983,7 @@ async function main() {
       await page.waitForTimeout(700);
       await campo.fill(bozzaChat);
       await vai(page, 'Oggi');
-      await vai(page, 'Polpo AI');
+      await vai(page, 'Peppino');
       await campo.waitFor({ timeout: 5000 });
       verifica(await titolo() === conversazione, `riaperta un'altra conversazione («${await titolo()}» invece di «${conversazione}»)`);
       // Il campo si riempie un attimo dopo essere comparso: si aspetta, non si legge una volta sola
@@ -981,7 +1024,7 @@ async function main() {
       await nelCampo(testoPronto, 'il testo pronto non è finito nel campo per scrivere');
       verifica(await page.locator('.chat-msg.user').count() === 0, 'il testo pronto è stato mandato invece di restare nel campo');
       await vai(page, 'Oggi');
-      await vai(page, 'Polpo AI');
+      await vai(page, 'Peppino');
       await campo.waitFor({ timeout: 5000 });
       verifica(await titolo() === 'Nuova conversazione', 'uscendo e rientrando non c\'è più la conversazione nuova');
       await nelCampo(testoPronto, 'uscendo e rientrando il testo pronto non è più nel campo');

@@ -842,7 +842,7 @@ Quando nomini un elemento che esiste nel gestionale scrivi il suo nome esatto tr
 Solo per elementi veri, non per concetti generici. Dentro un grassetto va bene: **[[Ungesto]]**.`
 
 // System prompt per la chat: conversazione e, quando richiesto, proposte di azioni
-const SYSTEM_PROMPT_MAIN = `Sei **Polpo AI** 🐙, l'assistente intelligente integrato nel Gestionale Polpo.
+const SYSTEM_PROMPT_MAIN = `Sei **Peppino** 🐙, un polpo: l'assistente di Paolo dentro il suo gestionale.
 
 ## Chi sei
 - Un assistente personale intelligente e proattivo, integrato nel gestionale
@@ -898,7 +898,7 @@ const SPECIALISTS = {
     name: 'Content Creator',
     icon: '🎬',
     description: 'Esperto di Reel, TikTok e video social',
-    prompt: `Sei **Polpo Content** 🎬, lo specialista di content creation per social media integrato nel Gestionale Polpo.
+    prompt: `Sei **Peppino Content** 🎬, lo specialista di content creation per social media integrato nel Gestionale Polpo.
 
 ## Chi sei
 - Un esperto di content creation per Reel, TikTok, Shorts e video social
@@ -976,7 +976,7 @@ Puoi anche salvare contenuti nel gestionale usando il tool propose_actions.
     name: 'Pianificatore',
     icon: '🗓️',
     description: 'Settimana, priorità e scadenze realistiche',
-    prompt: `Sei **Polpo Pianificatore** 🗓️, integrato nel gestionale di Paolo. Lo aiuti a decidere cosa fare e quando.
+    prompt: `Sei **Peppino Pianificatore** 🗓️, integrato nel gestionale di Paolo. Lo aiuti a decidere cosa fare e quando.
 Parli in italiano, diretto e concreto, come un collega che tiene il calendario.
 
 ## Come lavori
@@ -1001,7 +1001,7 @@ Parli in italiano, diretto e concreto, come un collega che tiene il calendario.
     icon: '🧐',
     description: 'Avvocato del diavolo su progetti e idee',
     effort: 'high',
-    prompt: `Sei **Polpo Critico** 🧐, l'avvocato del diavolo integrato nel gestionale di Paolo.
+    prompt: `Sei **Peppino Critico** 🧐, l'avvocato del diavolo integrato nel gestionale di Paolo.
 Il tuo compito è trovare i punti deboli prima che costino tempo. Parli in italiano, franco ma giusto.
 
 ## Come lavori
@@ -1392,12 +1392,14 @@ app.post('/api/chat/title', verifyUser, async (req, res) => {
 })
 
 // ============================================================================
-// VOCE - modalità "Parla": voce neurale di Microsoft Edge (la stessa di ECO), gratis
+// VOCE - modalità "Parla": la voce di Peppino, la stessa che ha sul PC (Isabella di Microsoft
+// Edge, abbassata di tono e un po' più svelta: scelta di Paolo del 2026-11-06), gratis
 // ============================================================================
 // GET perché la suona un <audio src>, che non manda intestazioni: il token Firebase
 // viaggia nel parametro k. Limite a parte dalla chat: ogni frase letta è una richiesta.
 const VOCE = process.env.VOCE_EDGE || 'it-IT-IsabellaNeural'
-const VOCE_VELOCITA = process.env.VOCE_VELOCITA || '+10%'
+const VOCE_VELOCITA = process.env.VOCE_VELOCITA || '+12%'
+const VOCE_TONO = process.env.VOCE_TONO || '-25Hz'
 const voceLimits = new Map()
 
 app.get('/api/parla', async (req, res) => {
@@ -1421,7 +1423,7 @@ app.get('/api/parla', async (req, res) => {
   const chiudi = () => { try { tts.close() } catch { /* già chiuso */ } }
   try {
     await tts.setMetadata(VOCE, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3)
-    const { audioStream } = tts.toStream(testo, { rate: VOCE_VELOCITA })
+    const { audioStream } = tts.toStream(testo, { rate: VOCE_VELOCITA, pitch: VOCE_TONO })
     res.set({ 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' })
     audioStream.on('error', (err) => { console.error('Voce:', err?.message); chiudi(); res.end() })
     audioStream.on('close', chiudi)

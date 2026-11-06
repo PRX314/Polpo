@@ -1,16 +1,19 @@
-/* Modalità Parla: un solo tasto grande al centro, quadrato come il resto dell'app */
+/* Modalità Parla: al centro c'è Peppino nella sua bolla, e si tocca lui */
 .parla { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; padding: 24px 16px; gap: 24px; }
 .parla-centro { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 240px; }
 
 .parla-tasto {
-  width: 128px; height: 128px; display: grid; place-items: center;
-  border: 1px solid var(--ink); background: var(--bg); color: var(--ink); cursor: pointer;
+  padding: 0; border: 0; background: transparent; cursor: pointer;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
 .parla-tasto:disabled { cursor: default; }
-.parla-tasto.is-ascolto, .parla-tasto.is-parlo { background: var(--ink); color: var(--on-ink); }
-.parla-tasto.is-ascolto { animation: parla-respiro 1.4s ease-in-out infinite; }
-@keyframes parla-respiro { 50% { outline: 1px solid var(--ink); outline-offset: 10px; } }
-@media (prefers-reduced-motion: reduce) { .parla-tasto.is-ascolto { animation: none; } }
+.parla-tasto:focus-visible { outline: 1px solid var(--ink); outline-offset: 4px; }
+.peppino { display: block; width: 190px; height: 190px; image-rendering: pixelated; }
+
+/* Il volume del microfono mentre ti ascolta */
+.parla-volume { width: 96px; height: 3px; visibility: hidden; }
+.parla-volume.is-on { visibility: visible; }
+.parla-volume i { display: block; height: 100%; background: var(--ink); transform-origin: left; transform: scaleX(var(--livello, 0)); transition: transform .06s linear; }
 
 .parla-fase { font-size: var(--fs-l, 16px); margin: 0; }
 

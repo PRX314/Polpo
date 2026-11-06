@@ -1,14 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
-import { Mic, Square } from 'lucide-react'
 import { Eco } from '../../lib/eco-client'
 import { API_URL, parametriVoce } from '../../services/chatService'
+import { inviaAudio, preparaTrascrizione } from '../../services/trascrizione'
+import Peppino from './Peppino'
 import './ParlaView.css'
 
 const FASE = {
-  fermo: 'Tocca e parla',
+  fermo: 'Tocca Peppino e parla',
   ascolto: 'Ti ascolto…',
   penso: 'Ci penso…',
   parlo: 'Sto parlando · tocca per interrompermi'
+}
+
+// Le orecchie: lo stesso Whisper delle note vocali (funzione dell'hub online, se no il backend).
+// Su un audio quasi vuoto Whisper a volte scrive i titoli di coda dei sottotitoli: si buttano.
+const trascrivi = async (blob) => {
+  let res
+  try { res = await inviaAudio(blob) } catch { throw new Error('Serve la rete per capire quello che dici.') }
+  const dati = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(dati.error || `Non sono riuscito a capire l'audio (errore ${res.status})`)
+  const testo = (dati.testo || '').trim()
+  return /amara\.org|sottotitoli (creati|e revisione|a cura)/i.test(testo) ? '' : testo
 }
 
 // Modalità "Parla": una conversazione a voce, come una telefonata. Un tocco e si va avanti
@@ -23,6 +35,7 @@ function ParlaView({ invia, azioni }) {
   const [errore, setErrore] = useState('')
   const ecoRef = useRef(null)
   const attivaRef = useRef(false)
+  const volumeRef = useRef(null)
 
   useEffect(() => () => {
     attivaRef.current = false
@@ -32,9 +45,12 @@ function ParlaView({ invia, azioni }) {
 
   const eco = () => (ecoRef.current ??= new Eco({
     api: API_URL,
-    ascolto: 'browser', whisper: false, // il backend del gestionale non ha Whisper
+    // Whisper dove il browser sa registrare (anche iPhone): capisce meglio del riconoscimento di
+    // Safari, che nell'app installata va e viene. Altrimenti il riconoscimento del browser.
+    ascolto: Eco.saRegistrare() ? 'whisper' : 'browser', whisper: Eco.saRegistrare(), trascrivi,
     voce: 'server',                     // voce neurale dal backend, non quella robotica del browser
     parametriVoce,
+    onLivello: (v) => volumeRef.current?.style.setProperty('--livello', v),
     onStato: (s) => setFase(s),
     onMessaggio: (m) => { if (m.chi === 'errore') setErrore(m.testo) },
     onDiario: (d) => console.info('[voce]', d)
@@ -47,6 +63,7 @@ function ParlaView({ invia, azioni }) {
 
   const conversa = async () => {
     const e = eco()
+    try {
     while (attivaRef.current) {
       const testo = await e.ascolta()
       if (!attivaRef.current) break
@@ -64,7 +81,12 @@ function ParlaView({ invia, azioni }) {
       const si = Eco.risposta(await e.ascolta({ attesaMax: 6000 }))
       if (si === 'si') { await azioni.current.confirmAll(); await dici(e, 'Fatto.') }
       else if (si === 'no') { azioni.current.rejectAll(); await dici(e, 'Va bene, lascio stare.') }
-      else await dici(e, 'Non ho capito. Le trovi nel pannello azioni.')
+      else await dici(e, 'Non ho capito. Le trovi in Scrivi, sotto la risposta.')
+    }
+    } catch (err) {
+      // Di solito il microfono negato: senza questo il tasto restava morto
+      setErrore(err?.name === 'NotAllowedError' ? Eco.ERRORI_ASCOLTO['not-allowed']
+        : err?.name === 'NotFoundError' ? Eco.ERRORI_ASCOLTO['audio-capture'] : 'Il microfono non è partito. Riprova.')
     }
     attivaRef.current = false
     setFase('fermo')
@@ -76,6 +98,7 @@ function ParlaView({ invia, azioni }) {
       return
     }
     const e = eco()
+    preparaTrascrizione()
     e.sblocca() // subito, dentro il tocco: la voce arriva secondi dopo e iPhone la bloccherebbe
     if (fase === 'parlo') return e.zitto()         // interrompi: la conversazione torna ad ascoltarti
     if (fase === 'ascolto') return e.fermaAscolto() // ho finito di parlare
@@ -96,10 +119,11 @@ function ParlaView({ invia, azioni }) {
       <div className="parla-centro">
         <button
           className={`parla-tasto is-${fase}`} onClick={tocca} disabled={fase === 'penso'}
-          aria-label={fase === 'parlo' ? 'Interrompi' : fase === 'ascolto' ? 'Ho finito di parlare' : 'Parla con Polpo'}
+          aria-label={fase === 'parlo' ? 'Interrompi' : fase === 'ascolto' ? 'Ho finito di parlare' : 'Parla con Peppino'}
         >
-          {fase === 'parlo' ? <Square size={28} /> : fase === 'penso' ? <span className="spinner" aria-hidden="true" /> : <Mic size={32} />}
+          <Peppino fase={fase} />
         </button>
+        <div className={`parla-volume ${fase === 'ascolto' ? 'is-on' : ''}`} ref={volumeRef} aria-hidden="true"><i /></div>
         <p className="parla-fase" role="status">{FASE[fase]}</p>
         {fase !== 'fermo' && <button className="btn btn-sm btn-quiet" onClick={chiudi}>Basta così</button>}
       </div>
@@ -108,7 +132,7 @@ function ParlaView({ invia, azioni }) {
         {errore && <div className="form-error" role="alert">{errore}</div>}
         {detto && <p className="parla-tu"><span className="faint">Tu</span> {detto}</p>}
         {risposta && <p className="parla-polpo">{risposta}</p>}
-        {!detto && !errore && <p className="small muted">Parli, Polpo ti risponde a voce e ti riascolta. Se stai zitto si ferma. Quello che vi dite resta nella conversazione: lo ritrovi in Scrivi.</p>}
+        {!detto && !errore && <p className="small muted">Parli, Peppino ti risponde a voce e ti riascolta. Se stai zitto si ferma. Quello che vi dite resta nella conversazione: lo ritrovi in Scrivi.</p>}
       </div>
     </div>
   )

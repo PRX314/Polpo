@@ -6,7 +6,7 @@ import { House, Folder, HeartPulse, MessageSquare } from 'lucide-react'
 //   Oggi      cosa conta oggi e questa settimana
 //   Progetti  elenco e cose da fare dei progetti (roadmap dal vault comprese)
 //   Vita      agenda, documenti, appunti, routine: le cose personali
-//   Polpo     la chat
+//   Peppino     la chat
 // Le pagine di prima restano ai loro indirizzi: Progetti e Vita le raggruppano con una barra
 // di sotto-sezioni, così i link già esistenti (anche nelle chat salvate) continuano a funzionare.
 const SECTIONS = [
@@ -30,7 +30,7 @@ const SECTIONS = [
     ]
   },
   {
-    to: '/ai', label: 'Polpo', icon: MessageSquare,
+    to: '/ai', label: 'Peppino', icon: MessageSquare,
     match: p => p.startsWith('/ai') || p.startsWith('/editoriale'),
     sub: [
       { to: '/ai', label: 'Chat', match: p => p.startsWith('/ai') },

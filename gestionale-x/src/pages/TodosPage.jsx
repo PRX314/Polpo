@@ -142,7 +142,7 @@ const TodosPage = () => {
         <EmptyState
           title={origine === 'mie' && !mieAperte ? 'Niente di tuo da fare' : 'Niente che corrisponda'}
           hint={origine === 'mie' && !mieAperte
-            ? 'Qui finiscono le cose che aggiungi tu, di solito con una data. Scegli un passo dalla roadmap e dagli una scadenza, o chiedi a Polpo di pianificare la settimana.'
+            ? 'Qui finiscono le cose che aggiungi tu, di solito con una data. Scegli un passo dalla roadmap e dagli una scadenza, o chiedi a Peppino di pianificare la settimana.'
             : 'Prova ad allargare i filtri o a svuotare la ricerca.'}
         />
       ) : (

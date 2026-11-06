@@ -1,4 +1,4 @@
-// Chat service - comunicazione con Polpo AI backend + storico su Firestore
+// Chat service - comunicazione con Peppino backend + storico su Firestore
 import {
   collection,
   doc,
@@ -26,7 +26,7 @@ export const parametriVoce = async () => {
 // ============================================================================
 async function getAuthHeaders() {
   const token = await auth.currentUser?.getIdToken()
-  if (!token) throw new Error('Devi essere autenticato per usare Polpo AI')
+  if (!token) throw new Error('Devi essere autenticato per usare Peppino')
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
@@ -72,7 +72,7 @@ export async function salvaNelVault({ testo, titolo, assistente, tipo }) {
 // ============================================================================
 
 // history: [{ role, content }] già pronta (vedi perStoria in components/chat/azioni.js).
-// specialist: id dell'assistente (null = Polpo generico).
+// specialist: id dell'assistente (null = Peppino generico).
 // targets: [{ provider, model }] — con più di uno il backend risponde con `replies` (una per modello).
 // voce: il messaggio è stato detto al microfono e la risposta verrà letta → il server la chiede breve.
 // citati: id degli elementi citati con @ → il server allega la loro scheda completa.
@@ -85,7 +85,7 @@ const corpo = (message, { history, specialist, targets, voce, citati }) => {
   return body
 }
 
-// Cosa ha letto Polpo prima di rispondere e come ci ha ragionato (vuoti con un server vecchio)
+// Cosa ha letto Peppino prima di rispondere e come ci ha ragionato (vuoti con un server vecchio)
 const dietro = (data) => ({ passi: data.passi || [], ragionamento: data.ragionamento || '' })
 
 export const sendMessage = async (message, { history = [], specialist = null, targets = [], voce = false, citati = [] } = {}) => {

@@ -96,7 +96,7 @@ async function avviaApp() {
 }
 const chiudi = () => { for (const f of figli) if (f.exitCode === null) spawnSync('taskkill', ['/pid', String(f.pid), '/T', '/F'], { windowsHide: true }); };
 
-// ── dati finti, abbastanza ricchi da far lavorare Polpo ──
+// ── dati finti, abbastanza ricchi da far lavorare Peppino ──
 function preparaVault() {
   const dir = path.join(os.tmpdir(), 'gestionale-prova-chat-vault');
   fs.rmSync(dir, { recursive: true, force: true });

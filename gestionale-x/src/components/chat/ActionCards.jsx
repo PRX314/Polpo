@@ -11,14 +11,14 @@ const STATO = {
   error: 'Non riuscita'
 }
 
-// Le proposte di Polpo, sotto la risposta che le ha fatte. Prima stavano in un pannello a parte
+// Le proposte di Peppino, sotto la risposta che le ha fatte. Prima stavano in un pannello a parte
 // che su telefono copriva tutta la chat (anche la modalità Parla) e si perdeva ricaricando.
 export default function ActionCards({ actions, occupato, onConferma, onRifiuta }) {
   const [aperta, setAperta] = useState(null)
   const inAttesa = actions.filter(a => a.status === 'pending').length
 
   return (
-    <section className="chat-proposte" aria-label="Proposte di Polpo">
+    <section className="chat-proposte" aria-label="Proposte di Peppino">
       <p className="chat-proposte-head cal-label">
         {inAttesa ? `Da confermare · ${inAttesa}` : 'Proposte'}
       </p>

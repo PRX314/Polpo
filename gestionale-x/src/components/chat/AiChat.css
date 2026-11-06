@@ -1,4 +1,4 @@
-/* Chat con Polpo.
+/* Chat con Peppino.
    La pagina della chat occupa esattamente lo schermo e non scorre: scorrono solo i messaggi.
    Prima l'altezza era calcolata con numeri fissi, sbagliava di qualche pixel e su telefono la
    pagina intera si spostava mentre scrivevi. */
@@ -102,7 +102,7 @@
   background: var(--ink); animation: blink 1s infinite;
 }
 
-/* Cosa ha letto Polpo e come ci ha ragionato, sopra la risposta */
+/* Cosa ha letto Peppino e come ci ha ragionato, sopra la risposta */
 .chat-passaggi { width: min(680px, 100%); display: flex; flex-direction: column; gap: 4px; padding-left: 15px; }
 .chat-passi { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: var(--fs-xs); }
 .chat-passi-label { font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-right: 2px; }
@@ -134,7 +134,7 @@
 .chat-msg .prose a.link-el:hover { background: var(--ink); color: var(--bg); }
 .chat-cit { font-weight: 600; color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
 
-/* Proposte di Polpo, sotto la risposta che le ha fatte */
+/* Proposte di Peppino, sotto la risposta che le ha fatte */
 .chat-proposte { width: min(680px, 100%); border: 1px solid var(--line); margin-top: 4px; }
 .chat-proposte-head { padding: 8px 12px 6px; }
 .chat-proposta { border-top: 1px solid var(--line-soft); }

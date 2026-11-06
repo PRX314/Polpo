@@ -11,10 +11,10 @@ const norm = (s) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-
 const MENZIONE = /(?:^|\s)@([^\n@]{0,40})$/
 const MAX_CITATI = 6
 
-// Il campo per scrivere. Resta sempre attivo, anche mentre Polpo risponde: prima si disattivava,
+// Il campo per scrivere. Resta sempre attivo, anche mentre Peppino risponde: prima si disattivava,
 // su iPhone la tastiera si chiudeva e poi si riapriva da sola a ogni risposta (con lo zoom).
 //
-// Con @ si cita un elemento: si apre l'elenco, scegli, e Polpo riceve la sua scheda completa
+// Con @ si cita un elemento: si apre l'elenco, scegli, e Peppino riceve la sua scheda completa
 // (più la nota del vault). Le citazioni sono sopra il campo e si tolgono con la ×.
 //
 // Quello che stai scrivendo resta come bozza della sua conversazione (bozza: id, o 'nuova'):
@@ -181,7 +181,7 @@ export default function Composer({ bozza, incolla, onIncollato, onInvia, occupat
 
       {citati.length > 0 && (
         <div className="chat-citati" aria-label="Elementi citati">
-          <span className="chat-citati-label">Polpo legge per intero</span>
+          <span className="chat-citati-label">Peppino legge per intero</span>
           {citati.map(c => (
             <span key={c.id} className="chat-citato">
               @{c.nome}
@@ -196,7 +196,7 @@ export default function Composer({ bozza, incolla, onIncollato, onInvia, occupat
           <AtSign size={16} />
         </button>
         <textarea
-          ref={ref} rows={1} value={testo} placeholder="Scrivi a Polpo" aria-label="Messaggio"
+          ref={ref} rows={1} value={testo} placeholder="Scrivi a Peppino" aria-label="Messaggio"
           aria-expanded={!!menu} aria-autocomplete="list"
           onChange={(e) => { setTesto(e.target.value); leggiMenzione(e.target) }}
           onKeyDown={onKeyDown}

@@ -156,11 +156,11 @@ const OggiPage = () => {
       <form className="ask" onSubmit={send}>
         <input
           value={prompt} onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Chiedi a Polpo: riassumi la settimana, aggiungi una nota…" aria-label="Scrivi a Polpo AI"
+          placeholder="Chiedi a Peppino: riassumi la settimana, aggiungi una nota…" aria-label="Scrivi a Peppino"
         />
-        <button className="btn btn-primary" type="submit" disabled={!prompt.trim()} aria-label="Invia a Polpo AI"><ArrowUp size={16} /></button>
+        <button className="btn btn-primary" type="submit" disabled={!prompt.trim()} aria-label="Invia a Peppino"><ArrowUp size={16} /></button>
       </form>
-      <div className="domande" role="group" aria-label="Domande pronte per Polpo">
+      <div className="domande" role="group" aria-label="Domande pronte per Peppino">
         {DOMANDE.map(d => <button key={d} type="button" className="chip" onClick={() => navigate('/ai', { state: { message: d } })}>{d}</button>)}
       </div>
 

@@ -19,7 +19,7 @@ const modoSalvato = () => {
   try { return localStorage.getItem(MODO_KEY) === 'parla' ? 'parla' : 'scrivi' } catch { return 'scrivi' }
 }
 
-// La chat con Polpo. Due schermate: la home (testi pronti e tutte le conversazioni) e la
+// La chat con Peppino. Due schermate: la home (testi pronti e tutte le conversazioni) e la
 // conversazione, con in alto il tasto per tornare alla home, chi risponde, Scrivi o Parla.
 // Riaprendo la chat ritrovi quello che avevi lasciato: la home, o la conversazione al punto in cui
 // leggevi e con quello che stavi scrivendo (vedi posto.js).
@@ -79,14 +79,14 @@ export default function AiChat({ initialMessage, onInitialMessageConsumed }) {
 
   const titolo = chat.convId
     ? chat.conversations.find(c => c.id === chat.convId)?.title || 'Conversazione'
-    : chat.inRipristino ? 'Polpo' : 'Nuova conversazione'
+    : chat.inRipristino ? 'Peppino' : 'Nuova conversazione'
 
   return (
     <div className="chat">
       <header className="chat-bar">
         {inHome ? (
           <div className="chat-head">
-            <h1 className="chat-title">Polpo</h1>
+            <h1 className="chat-title">Peppino</h1>
             <span className="chat-sub">Testi pronti e conversazioni</span>
           </div>
         ) : (
@@ -134,7 +134,7 @@ export default function AiChat({ initialMessage, onInitialMessageConsumed }) {
               <ChatMessages
                 chiave={chat.chiave} messages={chat.messages}
                 inAttesa={chat.inAttesaQui}
-                attesaTesto={modelli.targets.length > 1 ? `${modelli.targets.length} modelli stanno rispondendo…` : 'Polpo sta pensando…'}
+                attesaTesto={modelli.targets.length > 1 ? `${modelli.targets.length} modelli stanno rispondendo…` : 'Peppino sta pensando…'}
                 onTestoPronto={usaTesto}
                 nomeAssistente={nomeAssistente} occupato={chat.occupato}
                 onRiprova={riprova} onAlternativa={chat.scegliAlternativa}

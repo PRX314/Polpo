@@ -240,7 +240,7 @@ export default function EditorialPage() {
   }
   const thread = entries?.find(e => e.id === id && e.kind === 'conversation')
   return <div className="editorial">
-    <header className="ed-header"><div className="ed-eyebrow">Polpo / laboratorio editoriale</div><h1>Dalle idee alle prime riprese.</h1><p className="muted">Raccogli gli spunti, segui un discorso, prepara ciò che vuoi raccontare.</p></header>
+    <header className="ed-header"><div className="ed-eyebrow">Peppino / laboratorio editoriale</div><h1>Dalle idee alle prime riprese.</h1><p className="muted">Raccogli gli spunti, segui un discorso, prepara ciò che vuoi raccontare.</p></header>
     <ErrorNotice text={error} />
     {busy && <p className="small" role="status">Operazione in corso. Se manca la rete, il testo rimane conservato.</p>}
     {!entries ? <p>Carico il laboratorio…</p> : id

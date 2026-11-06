@@ -20,7 +20,7 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
 export const renderMarkdown = (text) => (text ? DOMPurify.sanitize(marked.parse(String(text))) : '')
 export const renderInline = (text) => (text ? DOMPurify.sanitize(marked.parseInline(String(text))) : '')
 
-// Elementi del gestionale per nome, per riconoscerli nel testo di Polpo
+// Elementi del gestionale per nome, per riconoscerli nel testo di Peppino
 const normNome = (s) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim()
 export const indiceElementi = (elementi = []) => {
   const indice = new Map()
@@ -31,7 +31,7 @@ export const indiceElementi = (elementi = []) => {
   return indice
 }
 
-// Polpo scrive i nomi degli elementi tra doppie quadre, come in Obsidian: [[Ungesto]].
+// Peppino scrive i nomi degli elementi tra doppie quadre, come in Obsidian: [[Ungesto]].
 // Se l'elemento esiste diventa un link alla sua pagina, altrimenti resta solo il nome.
 export const collegaElementi = (testo, indice) => String(testo || '').replace(
   /\[\[([^\]\n|]{1,120})(?:\|([^\]\n]{1,120}))?\]\]/g,

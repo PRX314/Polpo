@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getProviders } from '../../services/chatService'
 
-// Con quali modelli risponde Polpo: uno solo = chat normale, più di uno = risposte a confronto.
+// Con quali modelli risponde Peppino: uno solo = chat normale, più di uno = risposte a confronto.
 // È una preferenza tua, uguale per tutte le conversazioni: resta nel browser.
 const TARGETS_KEY = 'polpo.chatTargets'
 export const MAX_TARGETS = 4

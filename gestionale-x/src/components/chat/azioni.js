@@ -1,4 +1,4 @@
-// Le azioni che Polpo propone: come si chiamano, cosa mostrano, e come le racconta all'AI.
+// Le azioni che Peppino propone: come si chiamano, cosa mostrano, e come le racconta all'AI.
 // Una proposta vive dentro il messaggio che l'ha fatta (msg.actions) e ha uno stato:
 // pending → executing → confirmed | error, oppure rejected, oppure superseded
 // (sostituita da una proposta più recente).

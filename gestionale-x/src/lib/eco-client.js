@@ -1,14 +1,14 @@
 // Copia di ECO/web/eco-client.js (Progetti Codice/ECO): la fonte è quella,
 // se cambi qualcosa qui riportalo là e viceversa.
-// ECO nel browser: orecchie, bocca e filo verso un cervello remoto.
+// Peppino nel browser: orecchie, bocca e filo verso un cervello remoto.
 // Nessuna dipendenza e nessun framework: la stessa classe gira nella pagina locale
-// di ECO (cervello = server.py sul PC) e potrà girare nel Gestionale X
+// (cervello = server.py sul PC) e potrà girare nel Gestionale X
 // (cervello = backend su Render, con `intestazioni` per il token Firebase).
 //
 //   const eco = new Eco({ api: '', onStato, onMessaggio, onLivello })
 //   await eco.turno()            ascolta una frase, la manda, legge la risposta
 //   await eco.invia('ciao')      salta l'ascolto
-//   eco.maniLibere(true)         resta in ascolto, risponde a "Eco, ..."
+//   eco.maniLibere(true)         resta in ascolto, risponde a "Peppino, ..."
 //   eco.zitto()                  interrompe la voce (anche parlandogli sopra)
 
 const Riconoscimento = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -22,16 +22,18 @@ export class Eco {
     lingua = 'it-IT',
     ascolto = Riconoscimento ? 'browser' : 'whisper', // 'browser' | 'whisper'
     whisper = true,                // false = il server non ha /api/ascolta: niente ripiego
+    trascrivi = null,              // async (blob) => testo: chi trascrive al posto di /api/ascolta
     voce = 'server',               // 'server' (edge/Piper) | 'browser' (speechSynthesis)
-    paroleChiave = ['eco', 'echo', 'eko'],
+    paroleChiave = ['peppino', 'pepino'],
     onStato = () => {},            // 'fermo' | 'ascolto' | 'penso' | 'parlo'
     onMessaggio = () => {},        // { chi: 'tu'|'eco'|'azione'|'errore', testo, ... }
     onLivello = () => {},          // volume del microfono 0..1, per le animazioni
     onDiario = () => {},           // cosa succede all'audio, per capire i problemi a distanza
+    onInterrotto = () => {},       // hai interrotto la voce: riceve quante frasi hai sentito
     parametriVoce = async () => '', // es. '&k=<token>': un <audio src> non manda intestazioni
   } = {}) {
-    Object.assign(this, { api, intestazioni, lingua, ascolto, whisper, voce, paroleChiave,
-                          onStato, onMessaggio, onLivello, onDiario, parametriVoce });
+    Object.assign(this, { api, intestazioni, lingua, ascolto, whisper, trascrivi, voce, paroleChiave,
+                          onStato, onMessaggio, onLivello, onDiario, onInterrotto, parametriVoce });
     this.stato = 'fermo';
     this._maniLibere = false;
     this._ultimoScambio = 0;
@@ -121,7 +123,7 @@ export class Eco {
       let finito = false, chiuso = false, passaAWhisper = false, attesaFine = null;
       const limite = Date.now() + 120000;
       // Chiusura unica: la chiama "end", ma anche una scadenza se "end" non arriva. Dopo un
-      // errore di rete Edge a volte non lo manda mai, e ECO restava fermo in ascolto per sempre.
+      // errore di rete Edge a volte non lo manda mai, e Peppino restava fermo in ascolto per sempre.
       const chiudi = () => {
         if (chiuso) return;
         chiuso = true;
@@ -186,7 +188,10 @@ export class Eco {
   async _ascoltaWhisper(attesaMax) {
     const flusso = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true } });
-    const contesto = new AudioContext();
+    // Se c'è già il contesto acceso da sblocca() dentro un tocco si usa quello: su iPhone uno
+    // nuovo, creato secondi dopo il tocco, può restare fermo e il volume sembrerebbe sempre zero.
+    const acceso = this._contesto?.state === 'running';
+    const contesto = acceso ? this._contesto : new (window.AudioContext || window.webkitAudioContext)();
     const analisi = contesto.createAnalyser();
     analisi.fftSize = 1024;
     contesto.createMediaStreamSource(flusso).connect(analisi);
@@ -202,6 +207,7 @@ export class Eco {
     // riprendi a parlare quella trascrizione si butta. Quando scattano gli 0,8 s che chiudono
     // la frase è già a metà strada: circa mezzo secondo risparmiato a ogni domanda.
     const trascrivi = (blob) => {
+      if (this.trascrivi) return this.trascrivi(blob).then((t) => t || '');
       const dati = new FormData();
       dati.append('audio', blob, 'voce.webm');
       return this._post('/api/ascolta', dati).then((r) => r.json()).then((j) => j.testo || '');
@@ -246,7 +252,7 @@ export class Eco {
     });
     await fine;
     flusso.getTracks().forEach((t) => t.stop());
-    contesto.close();
+    if (!acceso) contesto.close();
     this.onLivello(0);
     this._fermaAscolto = null;
     if (!parlando) return '';
@@ -266,9 +272,11 @@ export class Eco {
     frasi = frasi.map(Eco.perVoce).filter(Boolean);
     if (!frasi.length) return;
     this._interrotto = false;
+    this._dette = 0;
     this._imposta('parlo');
     if (this.voce === 'browser') await this._parlaBrowser(frasi);
     else await this._parlaServer(frasi);
+    if (this._interrotto && this._dette < frasi.length) this.onInterrotto(this._dette);
     if (!this._maniLibere) this._imposta('fermo');
   }
 
@@ -328,7 +336,7 @@ export class Eco {
     if (!window.speechSynthesis) {
       if (!this._avvisato) {
         this._avvisato = true;
-        this.onMessaggio({ chi: 'errore', testo: 'Il browser non mi lascia parlare. Tocca il quadrato una volta e riprova.' });
+        this.onMessaggio({ chi: 'errore', testo: 'Il browser non mi lascia parlare. Toccami una volta e riprova.' });
       }
       return false;
     }
@@ -353,8 +361,10 @@ export class Eco {
         risolvi('scaduta');
         l.pause();
       }, 8000);
+      let partita = false; // "playing" torna anche dopo un intoppo della rete: la frase è sempre una
       l.onplaying = () => {
         clearTimeout(scadenza);
+        if (!partita) { partita = true; this._dette++; }
         this.onDiario(`voce: suona dopo ${tempo()} (volume ${l.volume}, muto ${l.muted})`);
       };
       l.onended = () => { this.onDiario(`voce: finita dopo ${tempo()}`); risolvi(true); };
@@ -388,6 +398,7 @@ export class Eco {
         s.connect(this._contesto.destination);
         s.onended = risolvi;
         this._sorgente = s;
+        this._dette++;
         s.start();
       });
       this._sorgente = null;
@@ -403,6 +414,7 @@ export class Eco {
   async _parlaBrowser(frasi) {
     for (const testo of frasi) {
       if (this._interrotto) break;
+      this._dette++;
       await new Promise((risolvi) => {
         const u = new SpeechSynthesisUtterance(testo);
         u.lang = this.lingua;
@@ -431,7 +443,9 @@ export class Eco {
   }
 
   // --- testo per la voce ------------------------------------------------------
-  static supportato() { return Boolean(Riconoscimento); }
+  // Sa ascoltare: col riconoscimento del browser, oppure registrando per Whisper.
+  static supportato() { return Boolean(Riconoscimento) || Eco.saRegistrare(); }
+  static saRegistrare() { return Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder); }
 
   // Quello che una voce non deve leggere: markdown, link, emoji, blocchi di codice.
   static perVoce(testo) {
@@ -474,13 +488,11 @@ export class Eco {
     }
   }
 
+  // Se tra le prime tre parole c'è il suo nome restituisce quello che viene dopo, altrimenti null.
+  // Il resto della frase resta com'è: i limiti del server leggono gli indirizzi scritti da Paolo.
   _dopoParolaChiave(testo) {
-    // Whisper scrive "Eco," a inizio frase come "Ecco,": lo accettiamo solo così,
-    // prima parola e virgola, che è il modo in cui si chiama qualcuno.
-    const ecco = testo.match(/^\s*ecco\s*,\s*(.*)$/is);
-    if (ecco && this.paroleChiave.includes('eco')) return ecco[1].trim();
-    const parole = testo.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean);
-    const i = parole.slice(0, 3).findIndex((p) => this.paroleChiave.includes(p));
-    return i < 0 ? null : parole.slice(i + 1).join(' ');
+    const nome = [...testo.matchAll(/[\p{L}\p{N}_]+/gu)].slice(0, 3)
+      .find((m) => this.paroleChiave.includes(m[0].toLowerCase()));
+    return nome ? testo.slice(nome.index + nome[0].length).replace(/^[\s,.:;!?-]+/, '').trim() : null;
   }
 }

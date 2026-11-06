@@ -39,7 +39,7 @@ export default function AppuntiPage() {
   return id ? <Dettaglio key={id} id={id} appunti={appunti} /> : <Elenco appunti={appunti} />
 }
 
-// Pensieri → Polpo: quanti caratteri al massimo, i più recenti prima
+// Pensieri → Peppino: quanti caratteri al massimo, i più recenti prima
 const MAX_PER_POLPO = 8000
 
 // Il filtro dell'elenco: una raccolta, "progetti" (collegati ad almeno uno) o "sciolti" (a niente)
@@ -102,7 +102,7 @@ function Elenco({ appunti }) {
     navigate(`/appunti/${id}`)
   }
 
-  // I pensieri che vedi (anche filtrati dalla ricerca) vanno a Polpo, che li mette in ordine
+  // I pensieri che vedi (anche filtrati dalla ricerca) vanno a Peppino, che li mette in ordine
   const mettiInsieme = () => {
     const pezzi = []
     let caratteri = 0
@@ -155,7 +155,7 @@ function Elenco({ appunti }) {
       {cestino && <p className="small muted">Gli appunti nel cestino spariscono da soli dopo {GIORNI_CESTINO} giorni, con le loro registrazioni e i disegni.</p>}
       {!cestino && filtro === 'pensieri' && lista.length > 1 && (
         <div className="row ap-insieme">
-          <button className="btn btn-sm" onClick={mettiInsieme}><Sparkles size={14} /> Mettili insieme con Polpo</button>
+          <button className="btn btn-sm" onClick={mettiInsieme}><Sparkles size={14} /> Mettili insieme con Peppino</button>
           <span className="small muted">Temi, punti di vista diversi e domande aperte{cerca ? ', solo di quelli trovati' : ''}.</span>
         </div>
       )}

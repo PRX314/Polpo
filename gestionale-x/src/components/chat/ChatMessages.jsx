@@ -93,7 +93,7 @@ export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, 
     <div className="chat-scroll" ref={scrollRef} onScroll={onScroll}>
       {messages.length === 0 && !inAttesa && (
         <div className="chat-welcome">
-          <h2>Ciao, sono Polpo</h2>
+          <h2>Ciao, sono Peppino</h2>
           <p className="muted">Conosco i tuoi progetti, le cose da fare e l&apos;agenda. Se c&apos;è da salvare qualcosa te lo propongo qui sotto la risposta: confermi tu.</p>
           <TestiPronti onUsa={onTestoPronto} />
         </div>

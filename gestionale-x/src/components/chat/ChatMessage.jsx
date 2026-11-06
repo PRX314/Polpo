@@ -100,7 +100,7 @@ function ChatMessage({ msg, indice, indiceElementi, nomeAssistente, occupato, on
       ) : msg.streaming && (
         <div className="chat-bubble" role="status">
           <span className="chat-typing" aria-hidden="true"><i /><i /><i /></span>
-          <span className="small muted"> {msg.passi?.length ? 'Ci sto pensando…' : 'Polpo sta pensando…'}</span>
+          <span className="small muted"> {msg.passi?.length ? 'Ci sto pensando…' : 'Peppino sta pensando…'}</span>
         </div>
       )}
 

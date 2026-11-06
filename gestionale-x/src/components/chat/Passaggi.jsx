@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AtSign, BookOpen, CalendarDays, ChevronDown, FileText, Search } from 'lucide-react'
 
-// Cosa ha letto Polpo prima di rispondere (sempre in vista) e come ci ha ragionato (si apre a richiesta).
+// Cosa ha letto Peppino prima di rispondere (sempre in vista) e come ci ha ragionato (si apre a richiesta).
 // Mentre lavora: i passi compaiono uno alla volta e sotto scorre la coda del ragionamento.
 
 const ICONA = { citato: AtSign, apri: FileText, cerca: Search, vault: BookOpen, agenda: CalendarDays }
@@ -33,7 +33,7 @@ export default function Passaggi({ passi = [], ragionamento = '', pensiero = '',
   return (
     <div className={`chat-passaggi ${streaming ? 'is-live' : ''}`}>
       {unici.length > 0 && (
-        <div className="chat-passi" aria-label="Cosa ha letto Polpo">
+        <div className="chat-passi" aria-label="Cosa ha letto Peppino">
           <span className="chat-passi-label">{streaming && !haTesto ? 'Sto leggendo' : 'Ha letto'}</span>
           {unici.map((p, i) => <Passo key={i} passo={p} />)}
         </div>
