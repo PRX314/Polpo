@@ -1,0 +1,12 @@
+/* Il discorso del mattino, le tre cose di oggi e la buonanotte */
+.mattino p { line-height: 1.5; }
+.mattino-azioni { margin-top: 10px; }
+
+.tre-nota { font-weight: 400; letter-spacing: 0; text-transform: none; }
+.tre-fatta .ag-text { color: var(--ink-3); text-decoration: line-through; }
+.tre-vuoto { padding: 12px; }
+.tre-modifica { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; }
+.tre-form { display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+.tre-form-sera { padding: 8px 0 0; }
+
+.buonanotte-settimana { margin-top: 10px; }

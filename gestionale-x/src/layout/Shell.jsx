@@ -31,9 +31,10 @@ const SECTIONS = [
   },
   {
     to: '/ai', label: 'Peppino', icon: MessageSquare,
-    match: p => p.startsWith('/ai') || p.startsWith('/editoriale'),
+    match: p => p.startsWith('/ai') || p.startsWith('/sveglia') || p.startsWith('/editoriale'),
     sub: [
       { to: '/ai', label: 'Chat', match: p => p.startsWith('/ai') },
+      { to: '/sveglia', label: 'Sveglia', match: p => p.startsWith('/sveglia') },
       { to: '/editoriale', label: 'Laboratorio editoriale', match: p => p.startsWith('/editoriale') }
     ]
   }
