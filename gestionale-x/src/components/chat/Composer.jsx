@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { preparaPeppino } from '../../services/chatService'
-import { ArrowUp, AtSign, X } from 'lucide-react'
+import { ArrowUp, AtSign, Lightbulb, Mic, X } from 'lucide-react'
 import { useData } from '../../context/useData'
 import { STATUS_LABEL, normalizeStatus } from '../../lib/status'
 import { leggiBozza, salvaBozza } from './posto'
@@ -21,7 +21,11 @@ const MAX_CITATI = 6
 // Quello che stai scrivendo resta come bozza della sua conversazione (bozza: id, o 'nuova'):
 // cambiando conversazione o uscendo dalla chat lo ritrovi. incolla = { testo } aggiunge un testo
 // pronto in fondo al campo; onIncollato avvisa che è stato preso.
-export default function Composer({ bozza, incolla, onIncollato, onInvia, occupato, inAttesa }) {
+//
+// Sotto il testo, dentro il campo (dal 2026-11-07): @, «Ragiona» (ragiona/onRagiona: acceso, Peppino si
+// prende il tempo per pensare, con qualunque modello), il microfono per parlargli (onParla) e Invia.
+// onScrive(true|false): stai scrivendo, Peppino ti ascolta.
+export default function Composer({ bozza, incolla, onIncollato, onInvia, occupato, inAttesa, ragiona = false, onRagiona, onParla, onScrive }) {
   const { projects } = useData()
   const [testo, setTesto] = useState(() => leggiBozza(bozza).testo)
   const [citati, setCitati] = useState(() => leggiBozza(bozza).citati)
@@ -192,24 +196,42 @@ export default function Composer({ bozza, incolla, onIncollato, onInvia, occupat
         </div>
       )}
 
-      <div className="chat-input-row">
-        <button type="button" className="btn-icon chat-at" onClick={apriMenu} aria-label="Cita un elemento" title="Cita un elemento (@)">
-          <AtSign size={16} />
-        </button>
+      <div className="chat-campo">
         <textarea
           ref={ref} rows={1} value={testo} placeholder="Scrivi a Peppino" aria-label="Messaggio"
           aria-expanded={!!menu} aria-autocomplete="list"
           onChange={(e) => { setTesto(e.target.value); leggiMenzione(e.target) }}
           onKeyDown={onKeyDown}
           onClick={(e) => leggiMenzione(e.target)}
-          onFocus={preparaPeppino}
-          onBlur={() => setMenu(null)}
+          onFocus={() => { preparaPeppino(); onScrive?.(true) }}
+          onBlur={() => { setMenu(null); onScrive?.(false) }}
         />
-        <button className="btn btn-primary" onClick={invia} disabled={!testo.trim() || occupato} aria-label="Invia">
-          {inAttesa ? <span className="spinner" aria-hidden="true" /> : <ArrowUp size={16} />}
-        </button>
+        <div className="chat-campo-barra">
+          <button type="button" className="chat-tasto" onClick={apriMenu} aria-label="Cita un elemento" title="Cita un elemento (@)">
+            <AtSign size={17} />
+          </button>
+          {onRagiona && (
+            <button
+              type="button" className={`chat-ragiona ${ragiona ? 'is-on' : ''}`} onClick={onRagiona} aria-pressed={ragiona}
+              title={ragiona ? 'Ragiona è acceso: Peppino si prende il tempo per pensare' : 'Accendi per una risposta pensata (più lenta)'}
+            >
+              <Lightbulb size={15} aria-hidden="true" /> Ragiona
+            </button>
+          )}
+          <span className="grow" />
+          {onParla && (
+            <button type="button" className="chat-tasto" onClick={onParla} aria-label="Parla con Peppino" title="Parla con Peppino">
+              <Mic size={18} />
+            </button>
+          )}
+          <button
+            type="button" className="chat-invia" onClick={invia} disabled={!testo.trim() || occupato}
+            aria-label="Invia" title="Invia (Invio) · Maiusc+Invio per andare a capo"
+          >
+            {inAttesa ? <span className="spinner" aria-hidden="true" /> : <ArrowUp size={18} />}
+          </button>
+        </div>
       </div>
-      <p className="small faint chat-hint">Invio per inviare · Maiusc+Invio per andare a capo · @ per citare un elemento</p>
     </div>
   )
 }

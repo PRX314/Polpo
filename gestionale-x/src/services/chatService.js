@@ -88,20 +88,24 @@ export function preparaPeppino() {
 // targets: [{ provider, model }] — con più di uno il backend risponde con `replies` (una per modello).
 // voce: il messaggio è stato detto al microfono e la risposta verrà letta → il server la chiede breve.
 // citati: id degli elementi citati con @ → il server allega la loro scheda completa.
-const corpo = (message, { history, specialist, targets, voce, citati }) => {
+// tipo: 'parliamo' (conversazione libera, senza il gestionale davanti) o 'cose' (le mie cose).
+// ragiona: il tasto «Ragiona» è acceso → risposta pensata, più lenta.
+const corpo = (message, { history = [], specialist = null, targets = [], voce = false, citati = [], tipo = null, ragiona = false } = {}) => {
   const body = { message, history: history.slice(-24) }
   if (specialist) body.specialist = specialist
   if (targets.length) body.targets = targets
   if (voce) body.voce = true
   if (citati.length) body.citati = citati.slice(0, 6)
+  if (tipo) body.tipo = tipo
+  if (ragiona) body.ragiona = true
   return body
 }
 
 // Cosa ha letto Peppino prima di rispondere e come ci ha ragionato (vuoti con un server vecchio)
 const dietro = (data) => ({ passi: data.passi || [], ragionamento: data.ragionamento || '' })
 
-export const sendMessage = async (message, { history = [], specialist = null, targets = [], voce = false, citati = [] } = {}) => {
-  const body = corpo(message, { history, specialist, targets, voce, citati })
+export const sendMessage = async (message, opzioni = {}) => {
+  const body = corpo(message, opzioni)
   const data = await apiCall('/api/chat', body)
   return {
     ...dietro(data),
@@ -120,11 +124,11 @@ export const sendMessage = async (message, { history = [], specialist = null, ta
 //   su.pensiero(pezzo)   il ragionamento
 // Restituisce la risposta completa nella stessa forma di sendMessage. Se il server non ha lo
 // streaming (versione vecchia) si torna da soli alla chiamata normale.
-export const streamMessage = async (message, { history = [], specialist = null, targets = [], voce = false, citati = [] } = {}, su = {}) => {
-  const body = corpo(message, { history, specialist, targets: targets.slice(0, 1), voce, citati })
+export const streamMessage = async (message, opzioni = {}, su = {}) => {
+  const body = corpo(message, { ...opzioni, targets: (opzioni.targets || []).slice(0, 1) })
 
   const res = await fetch(`${API_URL}/api/chat/stream`, { method: 'POST', headers: await getAuthHeaders(), body: JSON.stringify(body) })
-  if (res.status === 404) return sendMessage(message, { history, specialist, targets, voce, citati })
+  if (res.status === 404) return sendMessage(message, opzioni)
   if (res.status === 429) throw new Error('Troppe richieste. Aspetta qualche secondo e riprova.')
   if (!res.ok || !res.body) {
     const err = await res.json().catch(() => ({}))
