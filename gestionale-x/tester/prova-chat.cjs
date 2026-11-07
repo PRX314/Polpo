@@ -7,6 +7,11 @@
 //   node tester/prova-chat.cjs --vedi     → con la finestra
 //   node tester/prova-chat.cjs --proposte → niente browser: richieste tipiche e che azione propone
 //                                           (appunto, appuntamento, cosa personale, vault intoccabile)
+//   node tester/prova-chat.cjs --parliamo → niente browser: le stesse conversazioni in «Parliamo» e in
+//                                           «Le mie cose», e un ragionamento con «Ragiona»; trascrizione
+//                                           in parliamo.md (dal 2026-11-07)
+//
+// La chiave Groq viene da backend/.env, oppure dalla variabile GROQ_API_KEY (copie di lavoro senza .env).
 //
 // A differenza del collaudo costa qualche centesimo di Groq e dipende dalla rete: non sta in PLANCIA.
 const { spawn, spawnSync } = require('child_process');
@@ -20,6 +25,7 @@ const ROOT = path.resolve(__dirname, '..');
 const { chromium, devices } = require(path.join(ROOT, 'node_modules', 'playwright'));
 const VEDI = process.argv.includes('--vedi');
 const PROPOSTE = process.argv.includes('--proposte');
+const PARLIAMO = process.argv.includes('--parliamo');
 const PROGETTO = 'demo-gestionale-x';
 const PORTE = { firestore: 8299, auth: 9299, app: 5297, backend: 5097 };
 const APP = `http://127.0.0.1:${PORTE.app}/gestionale/`;
@@ -69,6 +75,7 @@ async function avviaEmulatori() {
   await aspettaUrl(`http://127.0.0.1:${PORTE.auth}/`, 60, 'Emulatore Auth');
 }
 function chiaveGroq() {
+  if (process.env.GROQ_API_KEY) return process.env.GROQ_API_KEY;
   const env = fs.readFileSync(path.join(ROOT, 'backend', '.env'), 'utf8');
   const m = env.match(/^GROQ_API_KEY=(.+)$/m);
   if (!m) throw new Error('GROQ_API_KEY non trovata in backend/.env');
@@ -175,6 +182,78 @@ async function provaProposte(idToken) {
   if (buone < RICHIESTE.length) process.exitCode = 1;
 }
 
+// «Parliamo» contro «Le mie cose»: stesse domande, e si conta quante volte Peppino tira in ballo il
+// gestionale senza che glielo chiedi. Poi un ragionamento a due turni con «Ragiona» spento e acceso.
+const DEL_GESTIONALE = /\b(Bottega|Freak|Ungesto|Fabulus|gestionale|progett[oi]|scadenz[ae]|agenda|cose da fare)\b/i;
+const CONVERSAZIONI = [
+  { nome: 'Saluto', turni: ['Ciao Peppino, come va oggi?'] },
+  { nome: 'Cultura', turni: ['Perché il cielo al tramonto diventa rosso?'] },
+  { nome: 'Filosofia', turni: ['Secondo te ha senso leggere Kant oggi? Da dove partiresti?', 'E se invece partissi da Schopenhauer?'] },
+  { nome: 'Una scelta', turni: ['Sto pensando di lasciare il lavoro in ufficio per fare il freelance a tempo pieno. Ho 8 mesi di risparmi. Aiutami a ragionarci.', 'E se nel frattempo provassi a trovare due clienti fissi prima di licenziarmi?'] },
+];
+const SOLO_PARLIAMO = [
+  { nome: 'Un suo progetto, nominato da lui', turni: ['Come sta andando Bottega, secondo te?'], vuole: 'che legga Bottega' },
+  { nome: 'Salvare un’idea', turni: ['Salvami come appunto questa idea: un podcast sulle leggende liguri'], vuole: 'che proponga add_note' },
+];
+async function chiedi(idToken, messaggio, storia, extra) {
+  const t0 = Date.now();
+  const res = await fetch(`${BACKEND}/api/chat`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+    body: JSON.stringify({ message: messaggio, history: storia, targets: [{ provider: 'groq' }], ...extra }),
+  });
+  const d = await res.json();
+  return { ...d, secondi: (Date.now() - t0) / 1000 };
+}
+async function conversa(idToken, turni, extra) {
+  const storia = [];
+  const risposte = [];
+  for (const t of turni) {
+    const d = await chiedi(idToken, t, storia, extra);
+    const testo = String(d.reply || d.error || '');
+    risposte.push({ domanda: t, risposta: testo, secondi: d.secondi, passi: (d.passi || []).map(p => `${p.tipo} ${p.testo}`), azioni: (d.proposedActions || []).map(a => `${a.tool} ${JSON.stringify(a.args)}`) });
+    storia.push({ role: 'user', content: t }, { role: 'assistant', content: testo });
+  }
+  return risposte;
+}
+// Quanto è «a scheda» una risposta: righe di elenco o di titolo, più i grassetti
+const segniDiScheda = (t) => (t.match(/^\s*([-*•]|\d+[.)]|#{1,4})\s/gm) || []).length + Math.floor((t.match(/\*\*/g) || []).length / 2);
+// secondi / caratteri / segni di scheda / domande
+const misura = (x) => `${x.secondi.toFixed(1)}s/${x.risposta.length}c/${segniDiScheda(x.risposta)}s/${(x.risposta.match(/\?/g) || []).length}d`;
+async function provaParliamo(idToken) {
+  const md = ['# Prova «Parliamo» col modello vero', '', `${new Date().toLocaleString('it-IT')} · Groq, modello di base del backend`, ''];
+  const scrivi = (r) => {
+    for (const x of r) {
+      md.push(`**Paolo:** ${x.domanda}`, '', `**Peppino** (${x.secondi.toFixed(1)} s${x.passi.length ? `, ha letto: ${x.passi.join(', ')}` : ''}${x.azioni.length ? `, propone: ${x.azioni.join(' · ')}` : ''}):`, '', x.risposta, '');
+    }
+  };
+  const conta = { parliamo: 0, cose: 0 };
+  for (const c of CONVERSAZIONI) {
+    for (const tipo of ['parliamo', 'cose']) {
+      const r = await conversa(idToken, c.turni, { tipo });
+      const fuori = r.filter(x => DEL_GESTIONALE.test(x.risposta)).length;
+      conta[tipo] += fuori;
+      md.push(`## ${c.nome} — ${tipo === 'parliamo' ? 'Parliamo' : 'Le mie cose'}${fuori ? ` (tira in ballo il gestionale ${fuori} volte)` : ''}`, '');
+      scrivi(r);
+      console.log(`${c.nome.padEnd(12)} ${tipo.padEnd(9)} ${r.map(misura).join('  ')}${fuori ? `  ← gestionale ×${fuori}` : ''}`);
+    }
+  }
+  const scelta = CONVERSAZIONI.find(c => c.nome === 'Una scelta');
+  const conRagiona = await conversa(idToken, scelta.turni, { tipo: 'parliamo', ragiona: true });
+  md.push('## Una scelta — Parliamo con «Ragiona»', '');
+  scrivi(conRagiona);
+  console.log(`${'Ragiona'.padEnd(12)} parliamo  ${conRagiona.map(misura).join('  ')}`);
+  for (const c of SOLO_PARLIAMO) {
+    const r = await conversa(idToken, c.turni, { tipo: 'parliamo' });
+    md.push(`## ${c.nome} — Parliamo (si vuole ${c.vuole})`, '');
+    scrivi(r);
+    console.log(`${c.nome}: letture ${r[0].passi.join(', ') || 'nessuna'}; proposte ${r[0].azioni.join(' · ') || 'nessuna'}`);
+  }
+  console.log(`\nRisposte che tirano in ballo il gestionale: Parliamo ${conta.parliamo}, Le mie cose ${conta.cose}`);
+  md.push('', `Risposte che tirano in ballo il gestionale (nomi dei progetti, «progetto», «scadenza», «agenda»…): Parliamo ${conta.parliamo}, Le mie cose ${conta.cose}.`);
+  fs.writeFileSync(path.join(OUT, 'parliamo.md'), md.join('\n'));
+  console.log(`Trascrizione: ${path.join(OUT, 'parliamo.md')}`);
+}
+
 async function main() {
   fs.mkdirSync(OUT, { recursive: true });
   let browser;
@@ -186,9 +265,10 @@ async function main() {
     });
     const { localId: uid, idToken } = await r.json();
     await avviaBackend(preparaVault());
-    if (!PROPOSTE) await avviaApp();
+    if (!PROPOSTE && !PARLIAMO) await avviaApp();
     await preparaDati(uid);
     if (PROPOSTE) return await provaProposte(idToken);
+    if (PARLIAMO) return await provaParliamo(idToken);
 
     browser = await chromium.launch({ headless: !VEDI });
     const prova = async (nome, ctxOpts, fn) => {
@@ -225,6 +305,25 @@ async function main() {
 
     await prova('computer', { viewport: { width: 1280, height: 860 } }, async (page) => {
       const campo = page.getByLabel('Messaggio');
+      // Dal 07/11: prima una conversazione «Parliamo», poi una nuova sulle «Le mie cose»
+      await foto(page, '00-nuova-parliamo');
+      await campo.fill('Sto pensando di lasciare il lavoro in ufficio per fare il freelance a tempo pieno. Ho 8 mesi di risparmi. Aiutami a ragionarci.');
+      await campo.press('Enter');
+      await page.locator('.chat-attesa, .chat-bubble.is-streaming').first().waitFor({ timeout: 30000 }).catch(() => {});
+      await foto(page, '00b-parliamo-ci-pensa');
+      await aspettaRisposta(page);
+      await campo.fill('E se nel frattempo provassi a trovare due clienti fissi prima di licenziarmi?');
+      await page.getByRole('button', { name: 'Ragiona', exact: true }).click();
+      await campo.press('Enter');
+      await page.waitForTimeout(800);
+      await aspettaRisposta(page);
+      await page.locator('.chat-msg.user').last().scrollIntoViewIfNeeded();
+      await foto(page, '00c-parliamo-ragiona');
+      await page.getByRole('button', { name: 'Ragiona', exact: true }).click(); // spento di nuovo
+      await page.getByRole('complementary', { name: 'Conversazioni' }).getByRole('button', { name: 'Nuova conversazione' }).click();
+      await page.getByRole('radio', { name: /Le mie cose/ }).click();
+      await foto(page, '00d-nuova-le-mie-cose');
+
       await campo.click();
       await campo.pressSequentially('Come procede @Bot', { delay: 30 });
       await page.locator('.chat-menzioni').waitFor();
@@ -239,7 +338,8 @@ async function main() {
       await foto(page, '04-risposta');
       const link = page.locator('.chat-msg.assistant .prose a.link-el').first();
       console.log(`  nomi cliccabili nella risposta: ${await page.locator('.chat-msg.assistant .prose a.link-el').count()}`);
-      await page.getByRole('button', { name: 'Come ci ha ragionato' }).last().click();
+      // Dal 07/11 letture e ragionamento stanno in una riga che si apre («Ha letto 2 cose · come ci ha ragionato»)
+      await page.locator('.chat-dietro').last().click();
       await foto(page, '05-ragionamento');
 
       await campo.pressSequentially('Cosa ho in agenda nei prossimi due mesi, appuntamenti compresi?', { delay: 5 });
@@ -270,6 +370,14 @@ async function main() {
       await page.getByRole('button', { name: 'Cita un elemento' }).click();
       await page.locator('.chat-menzioni').waitFor();
       await foto(page, '10-telefono-menu');
+      await page.keyboard.press('Escape');
+      await page.getByRole('button', { name: 'Conversazioni', exact: true }).click();
+      await page.locator('.chat.is-lato .chat-lato').waitFor();
+      await page.waitForTimeout(400);
+      await foto(page, '11-telefono-conversazioni');
+      await page.getByRole('complementary', { name: 'Conversazioni' }).locator('.chat-conv').last().click();
+      await page.waitForTimeout(800);
+      await foto(page, '12-telefono-parliamo');
     });
     console.log(`\nScreenshot in ${OUT}`);
   } catch (e) {

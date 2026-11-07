@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useData } from '../../context/useData'
 import { indiceElementi } from '../../lib/markdown'
 import ChatMessage from './ChatMessage'
-import TestiPronti from './TestiPronti'
 import { leggiLettura, salvaLettura } from './posto'
 
 // Solo le conversazioni salvate hanno un punto di lettura: quella nuova non ha ancora un id
@@ -10,7 +9,7 @@ const salvata = (chiave) => !String(chiave).startsWith('nuova-')
 
 // L'elenco dei messaggi. Scorre solo lui: prima scrollIntoView spostava anche la pagina,
 // e su telefono la barra in alto usciva dallo schermo a ogni risposta.
-export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, onTestoPronto, ...perMessaggio }) {
+export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, ...perMessaggio }) {
   const scrollRef = useRef(null)
   const inFondo = useRef(true)
   // Fin dove hai letto: si misura mentre scorri e si scrive quando ti fermi, cambi conversazione o esci
@@ -90,24 +89,17 @@ export default function ChatMessages({ chiave, messages, inAttesa, attesaTesto, 
   }
 
   return (
+    // La colonna dei messaggi è stretta come una pagina da leggere; scorre tutta la larghezza
     <div className="chat-scroll" ref={scrollRef} onScroll={onScroll}>
-      {messages.length === 0 && !inAttesa && (
-        <div className="chat-welcome">
-          <h2>Ciao, sono Peppino</h2>
-          <p className="muted">Conosco i tuoi progetti, le cose da fare e l&apos;agenda. Se c&apos;è da salvare qualcosa te lo propongo qui sotto la risposta: confermi tu.</p>
-          <TestiPronti onUsa={onTestoPronto} />
-        </div>
-      )}
-
       {messages.map((msg, i) => (
         <ChatMessage key={`${msg.timestamp}-${i}`} msg={msg} indice={i} indiceElementi={indice} {...perMessaggio} />
       ))}
 
       {inAttesa && !inScrittura && (
         <div className="chat-msg assistant" role="status">
-          <div className="chat-bubble">
+          <div className="chat-attesa">
             <span className="chat-typing" aria-hidden="true"><i /><i /><i /></span>
-            <span className="small muted"> {attesaTesto}</span>
+            <span>{attesaTesto}</span>
           </div>
         </div>
       )}

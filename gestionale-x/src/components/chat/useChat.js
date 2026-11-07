@@ -21,7 +21,10 @@ const titoloDa = (testo) => (testo.length > 40 ? `${testo.slice(0, 40)}…` : te
 // I messaggi non partiti (con "Riprova") e la risposta ancora in scrittura restano solo a schermo:
 // non si salvano e non vanno all'AI
 const salvabili = (messages) => messages.filter(m => !m.failed && !m.streaming)
-const vistaVuota = (assistente = null) => ({ chiave: nuovaChiave(), id: null, messages: [], assistente })
+// tipo: 'parliamo' (conversazione libera) | 'cose' (le mie cose: progetti, agenda, appunti). Le conversazioni
+// salvate prima del 2026-11-07 non ce l'hanno: erano tutte «Le mie cose».
+export const tipoDi = (conv) => (conv?.tipo === 'parliamo' ? 'parliamo' : 'cose')
+const vistaVuota = (assistente = null, tipo = 'parliamo') => ({ chiave: nuovaChiave(), id: null, messages: [], assistente, tipo })
 
 // Cosa ha letto e come ha ragionato: si salva con la risposta, il ragionamento accorciato
 // (la conversazione è un documento solo, al massimo 1 MB)
@@ -70,10 +73,10 @@ function rispostaDa({ reply, proposedActions, label, replies, passi, ragionament
 }
 
 // ripristina: all'apertura riapre una conversazione salvata, quella con id preferita se c'è ancora,
-// se no la più recente
-export function useChat({ ripristina = true, preferita = null } = {}) {
+// se no la più recente. tipo: il tipo della conversazione nuova da cui si parte.
+export function useChat({ ripristina = true, preferita = null, tipo: tipoIniziale = 'parliamo' } = {}) {
   const [conversations, setConversations] = useState([])
-  const [vista, setVista] = useState(vistaVuota)
+  const [vista, setVista] = useState(() => vistaVuota(null, tipoIniziale))
   // Cosa si sta aspettando dal server: { chiave, tipo: 'invio' | 'salvo' | 'azioni' }. Uno alla volta.
   const [occupato, setOccupato] = useState(null)
   const [errore, setErrore] = useState('')
@@ -106,7 +109,7 @@ export function useChat({ ripristina = true, preferita = null } = {}) {
       if (v.id || v.messages.length) return
       const ultima = convs.find(c => c.id === preferitaRef.current) || convs[0]
       if (ultima.messages?.length) {
-        setVista({ chiave: ultima.id, id: ultima.id, messages: ultima.messages, assistente: ultima.specialist ?? null })
+        setVista({ chiave: ultima.id, id: ultima.id, messages: ultima.messages, assistente: ultima.specialist ?? null, tipo: tipoDi(ultima) })
       }
     },
     (err) => { console.error('Errore caricamento chat:', err); setInRipristino(false) }
@@ -116,21 +119,21 @@ export function useChat({ ripristina = true, preferita = null } = {}) {
     ripristinata.current = true
     setInRipristino(false)
     setErrore('')
-    setVista({ chiave: conv.id, id: conv.id, messages: conv.messages || [], assistente: conv.specialist ?? null })
+    setVista({ chiave: conv.id, id: conv.id, messages: conv.messages || [], assistente: conv.specialist ?? null, tipo: tipoDi(conv) })
   }, [])
 
-  // La nuova conversazione tiene l'assistente che stavi usando
-  const nuova = useCallback(() => {
+  // La nuova conversazione tiene l'assistente che stavi usando; il tipo lo sceglie chi la apre
+  const nuova = useCallback((tipo) => {
     ripristinata.current = true
     setInRipristino(false)
     setErrore('')
-    setVista(v => vistaVuota(v.assistente))
+    setVista(v => vistaVuota(v.assistente, tipo || v.tipo))
   }, [])
 
   const elimina = useCallback(async (id) => {
     try {
       await deleteConversation(id)
-      setVista(v => (v.id === id ? vistaVuota(v.assistente) : v))
+      setVista(v => (v.id === id ? vistaVuota(v.assistente, v.tipo) : v))
     } catch (err) {
       setErrore(`Non sono riuscito a eliminare la conversazione: ${err.message}`)
     }
@@ -143,18 +146,26 @@ export function useChat({ ripristina = true, preferita = null } = {}) {
     if (id) patchConversation(id, { specialist: assistente }).catch(() => {})
   }, [])
 
+  // Anche il tipo appartiene alla conversazione, e si può cambiare a metà: vale dal messaggio dopo
+  const setTipo = useCallback((tipo) => {
+    const { id } = vistaRef.current
+    setVista(v => ({ ...v, tipo }))
+    if (id) patchConversation(id, { tipo }).catch(() => {})
+  }, [])
+
   // Manda un messaggio nella conversazione aperta. Restituisce { reply, proposedActions } o null.
-  // citati: [{ id, nome }] gli elementi citati con @ in questo messaggio
-  const invia = useCallback(async (testo, { assistente = null, targets = [], voce = false, citati = [] } = {}) => {
+  // citati: [{ id, nome }] gli elementi citati con @ in questo messaggio; ragiona: il tasto «Ragiona» è acceso
+  const invia = useCallback(async (testo, { assistente = null, targets = [], voce = false, citati = [], ragiona = false } = {}) => {
     const text = String(testo || '').trim()
     if (!text || occupatoRef.current) return null
     ripristinata.current = true
     const v = vistaRef.current
-    const { chiave } = v
+    const { chiave, tipo } = v
     const base = salvabili(v.messages)
     const domanda = {
       role: 'user', content: text, timestamp: adesso(),
       ...(voce ? { voce: true } : {}),
+      ...(ragiona ? { ragiona: true } : {}),
       ...(citati.length ? { citati: citati.map(({ id, nome }) => ({ id, nome })) } : {})
     }
     const conDomanda = [...base, domanda]
@@ -167,7 +178,9 @@ export function useChat({ ripristina = true, preferita = null } = {}) {
       specialist: assistente,
       targets: voce ? targets.slice(0, 1) : targets, // a voce un modello solo: il confronto non si ascolta
       voce,
-      citati: citatiPerServer(citati, base)
+      citati: citatiPerServer(citati, base),
+      tipo,
+      ragiona
     }
     // Un modello solo, scrivendo: la risposta compare mentre arriva. A confronto (più modelli) e a
     // voce (si legge la risposta intera) resta la chiamata normale.
@@ -219,9 +232,10 @@ export function useChat({ ripristina = true, preferita = null } = {}) {
     // Si salva nella conversazione da cui è partita la domanda, anche se intanto ne hai aperta un'altra
     try {
       if (v.id) {
+        // Il tipo no: lo scrive setTipo quando lo cambi, e qui riscriverebbe quello di quando è partita la domanda
         await updateConversation(v.id, finale, { specialist: assistente })
       } else {
-        const id = await saveConversation(titoloDa(text), finale, { specialist: assistente })
+        const id = await saveConversation(titoloDa(text), finale, { specialist: assistente, tipo })
         // Quello che hai cominciato a scrivere intanto resta, ora come bozza di questa conversazione
         if (vistaRef.current.chiave === chiave) spostaBozza('nuova', id)
         setVista(cur => (cur.chiave === chiave ? { ...cur, id, chiave: id } : cur))
@@ -244,7 +258,7 @@ export function useChat({ ripristina = true, preferita = null } = {}) {
     const m = messages[indice]
     if (!m?.failed || occupatoRef.current) return null
     aggiorna(chiave, msgs => msgs.filter(x => x !== m))
-    return invia(m.content, { ...opzioni, voce: !!m.voce, citati: m.citati || [] })
+    return invia(m.content, { ...opzioni, voce: !!m.voce, citati: m.citati || [], ragiona: !!m.ragiona })
   }, [aggiorna, invia])
 
   // Proposte: conferma di alcune (ids) o di tutte quelle in attesa di un messaggio
@@ -329,9 +343,10 @@ export function useChat({ ripristina = true, preferita = null } = {}) {
     convId: vista.id,
     messages: vista.messages,
     assistente: vista.assistente,
+    tipo: vista.tipo,
     occupato: !!occupato,
     inAttesaQui: occupato?.tipo === 'invio' && occupato.chiave === vista.chiave,
     errore, setErrore,
-    apri, nuova, elimina, setAssistente, invia, riprova, conferma, rifiuta, scegliAlternativa, azioniVoce
+    apri, nuova, elimina, setAssistente, setTipo, invia, riprova, conferma, rifiuta, scegliAlternativa, azioniVoce
   }
 }

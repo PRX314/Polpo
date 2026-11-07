@@ -936,7 +936,9 @@ async function main() {
       try {
         await vai(page, 'Peppino');
         await page.getByRole('button', { name: 'Nuova conversazione' }).click();
-        await page.getByRole('tab', { name: 'Parla' }).click();
+        // Dal 07/11 Parla è il microfono nel campo per scrivere (prima una linguetta): toccato, il campo sparisce
+        await page.getByRole('button', { name: 'Parla con Peppino' }).click();
+        await page.getByLabel('Messaggio').waitFor({ state: 'detached', timeout: 5000 });
         const polpo = page.getByRole('button', { name: 'Parla con Peppino' });
         await polpo.waitFor({ timeout: 5000 });
         const pieni = () => page.locator('canvas.peppino').evaluate(c => {
@@ -960,16 +962,17 @@ async function main() {
         return `${(audio.byte / 1024).toFixed(1)} kB di audio (${audio.tipo}), ${frasi} frase letta`;
       } finally {
         await page.unroute('**/api/trascrivi'); await page.unroute('**/api/parla**');
-        await page.getByRole('tab', { name: 'Scrivi' }).click().catch(() => {});
+        await page.getByRole('button', { name: 'Torna a scrivere' }).click().catch(() => {});
       }
     });
 
-    // Dal 28/10 la chat ha una home (testi pronti e tutte le conversazioni) e si riapre dove l'avevi
-    // lasciata: la conversazione, il punto in cui leggevi, quello che stavi scrivendo
+    // Dal 28/10 la chat si riapre dove l'avevi lasciata: la conversazione, il punto in cui leggevi, quello
+    // che stavi scrivendo. Dal 07/11 le conversazioni stanno nel pannello a sinistra (prima in una «home»)
+    // e i testi pronti nella conversazione nuova, quando scegli «Le mie cose»
     const testoPronto = `Testo pronto di collaudo ${tra(100, 999)}: completalo tu`;
     const bozzaChat = `Bozza da ritrovare ${tra(100, 999)}`;
     scenarioChat = { testo: Array.from({ length: 40 }, (_, i) => `Riga ${i + 1} della risposta lunga.`).join('\n\n'), proposte: [] };
-    await passo(page, 'Peppino: home, testi pronti e chat ritrovata dove l\'avevi lasciata', async () => {
+    await passo(page, 'Peppino: conversazioni, testi pronti e chat ritrovata dove l\'avevi lasciata', async () => {
       const scorri = page.locator('.chat-scroll');
       const titolo = () => page.locator('.chat-title').innerText();
       const campo = page.getByLabel('Messaggio');
@@ -993,9 +996,23 @@ async function main() {
       verifica(Math.abs(ritrovato - letto) < 40, `non è tornata al punto di lettura (${ritrovato} px invece di ${letto})`);
       await campo.fill('');
 
-      await page.getByRole('button', { name: 'Home della chat' }).click();
-      const elenco = page.getByRole('region', { name: 'Conversazioni' });
+      // Una conversazione aperta, sul computer e sul telefono
+      await page.screenshot({ path: path.join(OUT, 'chat-conversazione.png') });
+      const schermo = page.viewportSize();
+      await page.setViewportSize({ width: 390, height: 844 });
+      verifica(await senzaOverflow(page), 'sul telefono la conversazione esce dai bordi');
+      await page.screenshot({ path: path.join(OUT, 'chat-conversazione-telefono.png') });
+      await page.getByRole('button', { name: 'Conversazioni', exact: true }).click();
+      await page.locator('.chat.is-lato .chat-lato').waitFor({ timeout: 5000 });
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: path.join(OUT, 'chat-pannello-telefono.png') });
+      await page.keyboard.press('Escape');
+      await page.setViewportSize(schermo);
+
+      const elenco = page.getByRole('complementary', { name: 'Conversazioni' });
       await elenco.getByText(conversazione, { exact: true }).first().waitFor({ timeout: 5000 });
+      await elenco.getByRole('button', { name: 'Nuova conversazione' }).click();
+      await page.getByRole('radio', { name: /Le mie cose/ }).click();
       const pronti = page.getByRole('region', { name: 'Testi pronti' });
       await pronti.getByRole('button', { name: 'Testo pronto: Oggi' }).waitFor({ timeout: 5000 });
       await pronti.getByRole('button', { name: 'Modifica' }).click();
@@ -1010,11 +1027,10 @@ async function main() {
       }, 'il testo pronto non è stato salvato in Firestore');
       verifica(routine.testiPronti.some(t => t.titolo === 'Oggi') && routine.tasks?.length, 'salvando i testi pronti sono spariti i predefiniti o la routine');
       await pronti.getByRole('button', { name: 'Testo pronto: Collaudo' }).waitFor({ timeout: 5000 });
-      await page.screenshot({ path: path.join(OUT, 'chat-home.png') });
-      const schermo = page.viewportSize();
+      await page.screenshot({ path: path.join(OUT, 'chat-nuova.png') });
       await page.setViewportSize({ width: 390, height: 844 });
-      verifica(await senzaOverflow(page), 'sul telefono la home della chat esce dai bordi');
-      await page.screenshot({ path: path.join(OUT, 'chat-home-telefono.png') });
+      verifica(await senzaOverflow(page), 'sul telefono la conversazione nuova esce dai bordi');
+      await page.screenshot({ path: path.join(OUT, 'chat-nuova-telefono.png') });
       await page.setViewportSize(schermo);
 
       const chatPrima = (await leggi('chats')).filter(c => c.userId === owner.uid).length;
@@ -1031,11 +1047,10 @@ async function main() {
       await campo.fill('');
       verifica((await leggi('chats')).filter(c => c.userId === owner.uid).length === chatPrima, 'il testo pronto ha creato una conversazione');
 
-      await page.getByRole('button', { name: 'Home della chat' }).click();
       await page.reload();
-      await page.getByRole('region', { name: 'Conversazioni' }).getByText(conversazione, { exact: true }).first().click({ timeout: 10000 });
+      await page.getByRole('complementary', { name: 'Conversazioni' }).getByText(conversazione, { exact: true }).first().click({ timeout: 10000 });
       await campo.waitFor({ timeout: 5000 });
-      verifica(await titolo() === conversazione, 'dalla home non si apre la conversazione scelta');
+      verifica(await titolo() === conversazione, 'dal pannello non si apre la conversazione scelta');
     });
 
     await passo(page, 'Notifiche: la finestra si apre e si chiude', async () => {

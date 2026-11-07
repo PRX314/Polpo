@@ -421,7 +421,8 @@ export async function agente(target, baseMessages, opzioni, eventi = {}) {
       chiuso = true
     }
     const opts = {
-      messages, temperature: 0.7, max_tokens: maxTokens,
+      // Oltre i 4096 solo chi ragiona («Ragiona» acceso): gli altri modelli potrebbero rifiutare la richiesta
+      messages, temperature: 0.7, max_tokens: ragiona(target) ? maxTokens : Math.min(maxTokens, 4096),
       ...(strumentiQui ? { tools, tool_choice: 'auto' } : {}),
       ...(ragiona(target) ? { reasoning_effort: effort, include_reasoning: true } : {})
     }
@@ -481,7 +482,9 @@ export async function agente(target, baseMessages, opzioni, eventi = {}) {
     }
   }
 
-  const reply = parti.join('\n\n').trim() || (proposedActions.length ? 'Ecco cosa ti propongo.' : 'Non sono riuscito a elaborare una risposta.')
+  // Nella storia le proposte di prima arrivano come «[Proposte: …]» in fondo alla risposta, e a volte il modello
+  // lo imita nel testo (visto il 07/11): le proposte vere stanno già sotto la risposta, il segno si toglie
+  const reply = parti.join('\n\n').replace(/\s*\[Proposte:[^\]]*\]\s*$/, '').trim() || (proposedActions.length ? 'Ecco cosa ti propongo.' : 'Non sono riuscito a elaborare una risposta.')
   return {
     provider: target.provider, model: target.model, label,
     reply, proposedActions, passi, ragionamento: ragionamento.trim(), ms: Date.now() - started
