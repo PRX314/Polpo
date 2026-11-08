@@ -947,10 +947,16 @@ async function main() {
           return n;
         });
         verifica(await pieni() > 300, 'Peppino non è disegnato');
+        const foto = () => page.locator('canvas.peppino').evaluate(c => c.toDataURL());
+        const ferma = await foto();
+        await page.waitForTimeout(700);
+        verifica(await foto() !== ferma, 'Peppino non si muove');
+        await page.screenshot({ path: path.join(OUT, 'peppino-dorme.png') });
         await polpo.click();
         const finito = page.getByRole('button', { name: 'Ho finito di parlare' });
         await finito.waitFor({ timeout: 8000 });
         await page.waitForTimeout(1500);
+        await page.screenshot({ path: path.join(OUT, 'peppino-ascolta.png') });
         await finito.click().catch(() => {}); // se la pausa l'ha già chiuso da solo va bene lo stesso
         await page.locator('.parla-tu').filter({ hasText: detto }).waitFor({ timeout: 10000 });
         await page.locator('.parla-polpo').filter({ hasText: 'Oggi hai due cose da fare.' }).waitFor({ timeout: 10000 });
