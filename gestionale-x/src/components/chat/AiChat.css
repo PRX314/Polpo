@@ -122,9 +122,10 @@
   display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: 0; position: relative;
   padding: 0 4px 8px 12px; border-bottom: 1px solid var(--line-soft);
 }
-.chat-faccia { width: 42px; height: 42px; flex-shrink: 0; display: grid; place-items: center; }
+/* 44 come il suo palco (LATO in lib/polpo.js): a scala 1:1 i pixel restano tutti */
+.chat-faccia { width: 44px; height: 44px; flex-shrink: 0; display: grid; place-items: center; }
 .chat-faccia .peppino {
-  width: 42px; height: 42px; image-rendering: pixelated;
+  width: 44px; height: 44px; image-rendering: pixelated;
   /* Peppino è viola (275°): lo si gira verso il colore del momento */
   filter: hue-rotate(calc((var(--pp-h) - 275) * 1deg)) saturate(1.15);
 }
@@ -378,7 +379,6 @@
   .chat.is-lato .chat-lato { transform: none; visibility: visible; transition: transform 0.22s ease, visibility 0s; }
   .chat-lato-chiudi, .chat-apri-lato, .chat-nuova-tasto { display: inline-flex; }
   .chat-bar { padding: 4px 4px 6px; gap: 4px; }
-  .chat-faccia, .chat-faccia .peppino { width: 38px; height: 38px; }
   .chat-scroll { padding: 16px 12px 8px; gap: 20px; }
   .chat-msg.user .chat-bubble { max-width: 88%; }
   .chat-input { padding: 4px 8px 8px; }

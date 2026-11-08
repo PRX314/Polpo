@@ -348,7 +348,10 @@ const DOVE = {
 const vai = async (pg, testo) => {
   const [sezione, sotto] = DOVE[testo] || [testo];
   await pg.getByRole('navigation', { name: 'Sezioni' }).first().getByRole('link', { name: sezione, exact: true }).click();
-  if (sotto) await pg.getByRole('navigation', { name: `Sottosezioni di ${sezione}` }).getByRole('link', { name: sotto, exact: true }).click();
+  if (!sotto) return;
+  // Sopra la chat la barra non c'è (dal 2026-11-07): le altre pagine di Peppino stanno nel pannello delle conversazioni
+  const menu = sezione === 'Peppino' ? 'Altro di Peppino' : `Sottosezioni di ${sezione}`;
+  await pg.getByRole('navigation', { name: menu }).getByRole('link', { name: sotto, exact: true }).click();
 };
 const toast = (pg, testo) => pg.locator('.toasts').getByText(testo).first().waitFor({ timeout: 8000 });
 const finestra = pg => pg.getByRole('dialog');
@@ -1008,6 +1011,7 @@ async function main() {
       const schermo = page.viewportSize();
       await page.setViewportSize({ width: 390, height: 844 });
       verifica(await senzaOverflow(page), 'sul telefono la conversazione esce dai bordi');
+      await page.waitForTimeout(350); // il pannello, col telefono, scivola via: si fotografa quando è uscito
       await page.screenshot({ path: path.join(OUT, 'chat-conversazione-telefono.png') });
       await page.getByRole('button', { name: 'Conversazioni', exact: true }).click();
       await page.locator('.chat.is-lato .chat-lato').waitFor({ timeout: 5000 });
@@ -1037,6 +1041,7 @@ async function main() {
       await page.screenshot({ path: path.join(OUT, 'chat-nuova.png') });
       await page.setViewportSize({ width: 390, height: 844 });
       verifica(await senzaOverflow(page), 'sul telefono la conversazione nuova esce dai bordi');
+      await page.waitForTimeout(350);
       await page.screenshot({ path: path.join(OUT, 'chat-nuova-telefono.png') });
       await page.setViewportSize(schermo);
 
