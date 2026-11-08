@@ -3,9 +3,15 @@ import { ChevronDown } from 'lucide-react'
 import { MAX_TARGETS, shortModel } from './useModelli'
 import { GENERICO } from './assistenti'
 
-// Chi risponde e con quale modello, in un posto solo. Prima erano due file di pulsanti in alto
-// (assistenti e modello) che non si capiva cosa facessero.
-export default function ChatSettings({ specialisti, assistente, onAssistente, modelli }) {
+const TIPI = [
+  { id: 'parliamo', nome: 'Parliamo', cosa: 'Di tutto, senza il gestionale davanti' },
+  { id: 'cose', nome: 'Le mie cose', cosa: 'Progetti, agenda, appunti: li ha davanti' }
+]
+
+// Sotto il titolo, una riga sola: che conversazione è, chi risponde e con quale modello. Toccandola si
+// apre il menu per cambiarli. Il modello lo scegli sempre tu: «Ragiona» non lo cambia.
+// Gli assistenti (Content Creator, Pianificatore, Critico) ci sono solo nelle «Le mie cose».
+export default function ChatSettings({ tipo, onTipo, specialisti, assistente, onAssistente, modelli }) {
   const [aperto, setAperto] = useState(false)
   const ref = useRef(null)
 
@@ -24,30 +30,48 @@ export default function ChatSettings({ specialisti, assistente, onAssistente, mo
   }, [aperto])
 
   const tutti = [GENERICO, ...specialisti]
-  const nome = tutti.find(s => s.id === assistente)?.name || GENERICO.name
+  const cose = tipo === 'cose'
+  const nomeTipo = TIPI.find(t => t.id === tipo)?.nome || 'Parliamo'
+  const specialista = cose && assistente ? tutti.find(s => s.id === assistente)?.name : null
+  const riga = [nomeTipo, specialista, modelli.etichetta].filter(Boolean).join(' · ')
 
   return (
     <div className="chat-set" ref={ref}>
       <button
         type="button" className="chat-sub" onClick={() => setAperto(v => !v)}
-        aria-expanded={aperto} aria-haspopup="dialog" aria-label={`Assistente ${nome}, modello ${modelli.etichetta}: cambia`}
+        aria-expanded={aperto} aria-haspopup="dialog" aria-label={`${riga}: cambia`}
       >
-        <span className="trunc">{nome}{modelli.etichetta ? ` · ${modelli.etichetta}` : ''}</span>
+        <span className="trunc">{riga}</span>
         <ChevronDown size={12} aria-hidden="true" />
       </button>
 
       {aperto && (
-        <div className="chat-pop" role="dialog" aria-label="Assistente e modello">
-          <p className="chat-pop-name">Assistente</p>
-          {tutti.map(s => (
-            <label key={s.id ?? 'generico'} className={`chat-pop-row ${assistente === s.id ? 'is-on' : ''}`}>
-              <input type="radio" name="chat-assistente" checked={assistente === s.id} onChange={() => onAssistente(s.id)} />
+        <div className="chat-pop" role="dialog" aria-label="Conversazione e modello">
+          <p className="chat-pop-name">Conversazione</p>
+          {TIPI.map(t => (
+            <label key={t.id} className={`chat-pop-row ${tipo === t.id ? 'is-on' : ''}`}>
+              <input type="radio" name="chat-tipo" checked={tipo === t.id} onChange={() => onTipo(t.id)} />
               <span className="chat-pop-text">
-                <span>{s.icon ? `${s.icon} ` : ''}{s.name}</span>
-                {s.description && <span className="small muted">{s.description}</span>}
+                <span>{t.nome}</span>
+                <span className="small muted">{t.cosa}</span>
               </span>
             </label>
           ))}
+
+          {cose && (
+            <>
+              <p className="chat-pop-name">Assistente</p>
+              {tutti.map(s => (
+                <label key={s.id ?? 'generico'} className={`chat-pop-row ${assistente === s.id ? 'is-on' : ''}`}>
+                  <input type="radio" name="chat-assistente" checked={assistente === s.id} onChange={() => onAssistente(s.id)} />
+                  <span className="chat-pop-text">
+                    <span>{s.icon ? `${s.icon} ` : ''}{s.name}</span>
+                    {s.description && <span className="small muted">{s.description}</span>}
+                  </span>
+                </label>
+              ))}
+            </>
+          )}
 
           {modelli.providers.length > 0 && (
             <>

@@ -886,6 +886,80 @@ e la nota del vault. Non riaprirli con apri_elemento; dalla nota puoi chiedere u
 Quando nomini un elemento che esiste nel gestionale scrivi il suo nome esatto tra doppie quadre, così diventa un link: [[Gestionale X]].
 Solo per elementi veri, non per concetti generici. Dentro un grassetto va bene: **[[Ungesto]]**.`
 
+// Una sezione delle regole comuni, presa col suo titolo: le usa anche «Parliamo», così non si duplicano
+const sezioneRegole = (titolo) => {
+  const s = REGOLE_COMUNI.split('\n## ').find(x => x.startsWith(titolo))
+  if (!s) throw new Error(`Regole comuni: manca la sezione «${titolo}»`)
+  return `\n\n## ${s.trim()}`
+}
+
+// «Parliamo» (dal 2026-11-07): una conversazione libera, senza il gestionale davanti. Prima ogni messaggio,
+// anche «parliamo di Kant», portava con sé ~14.000 caratteri di progetti, agenda e appunti, e Peppino finiva
+// sempre lì. Qui le cose di Paolo le legge con gli strumenti solo se è lui a nominarle.
+const SYSTEM_PROMPT_PARLIAMO = `Sei **Peppino**, un polpo: quello con cui Paolo parla di tutto.
+
+## Chi sei
+Un interlocutore curioso e preparato, con una buona cultura generale e opinioni tue. Qui non fai l'assistente
+del gestionale: siete in una conversazione libera, come tra due persone che si stimano.
+
+## Come parli
+- Sempre in italiano, dandogli del tu, come parla una persona normale: frasi semplici, parole di tutti i giorni
+- Rispondi prima alla domanda, in modo diretto. Lunghezza in proporzione: a una chiacchiera si risponde con una
+  chiacchiera, si approfondisce quando l'argomento lo chiede o quando te lo chiede lui
+- Scrivi a frasi e paragrafi, non a schede: titoli, elenchi e tabelle solo se il contenuto è davvero un elenco
+  (passi da seguire, un confronto) o se te li chiede
+- Niente frasi da assistente: non aprire con «Certo!», «Ottima domanda!», «Ecco…», non ripetere la domanda, non
+  chiudere con riassunti, offerte d'aiuto o «fammi sapere». Niente emoji, a meno che le usi lui
+- Segui il filo: tieni conto di quello che vi siete già detti e non ricominciare da capo a ogni messaggio
+- Un po' di spirito va bene, senza fare il personaggio: sei un polpo, ma non serve ricordarlo
+
+## Ragionare insieme
+Quando Paolo porta un dubbio, una scelta, un'idea o un problema, aiutalo a pensarlo davvero:
+- capisci cosa gli importa; se manca una cosa importante fai UNA domanda, non un questionario
+- metti sul tavolo le strade possibili, cosa si guadagna e cosa si perde con ciascuna, cosa non si sa ancora
+- dì cosa faresti tu e perché. Se una sua idea non ti convince lo dici, con garbo e con il motivo
+- non dargli ragione per forza e non annacquare: meglio una posizione chiara che una fila di «dipende»
+- se il discorso si allunga, ogni tanto fissa il punto a cui siete arrivati
+
+## Di cosa sai
+- Rispondi su qualsiasi argomento con quello che sai: scienza, storia, filosofia, cucina, tecnologia, salute,
+  soldi, lingue, viaggi, libri, film, musica, sport, consigli pratici, conti
+- Non hai internet: notizie di oggi, prezzi, risultati, meteo e fatti recentissimi non li conosci. Dillo in mezza
+  frase e dai comunque quello che sai
+- Se di una cosa non sei sicuro, dillo invece di inventare
+
+## Le sue cose
+In questa conversazione non hai davanti i progetti, l'agenda e gli appunti di Paolo, e non sei tu a tirarli in ballo.
+Se è lui a nominare un suo progetto, un appunto o un impegno, puoi andarlo a leggere con gli strumenti:
+**cerca_elementi** (non sai bene cosa sia), **apri_elemento** (la scheda), **leggi_nota_vault** (la nota Obsidian,
+con visione e decisioni), **agenda** (scadenze e appuntamenti). Per tutto il resto non leggere niente.
+Se ti chiede di salvare qualcosa (un'idea venuta fuori, una cosa da fare, un appuntamento), proponilo con
+propose_actions: conferma lui. Per questo valgono le regole qui sotto.`
+
+const REGOLE_PARLIAMO = ['DOVE VA COSA', 'ELEMENTI "DAL VAULT"', 'PROPOSTE', 'ELEMENTI CITATI', 'COME NOMINARE']
+  .map(sezioneRegole).join('')
+
+// In «Parliamo», scrivendo, un promemoria subito prima del messaggio di Paolo. Le regole del prompt da sole non
+// bastavano: alla prima prova (07/11, gpt-oss-120b) un dubbio sul lavoro diventava una scheda di 3.700 caratteri
+// con titoli, grassetti, sei elenchi e cinque domande, e su Kant e Schopenhauer citava libri che non esistono.
+// Le istruzioni arrivate per ultime il modello le rispetta di più.
+const promemoriaParliamo = (conRagiona) => `Promemoria per questa risposta: è una conversazione tra voi due, non una consulenza.
+Scrivi a paragrafi brevi, come parlerebbe una persona: niente titoli, niente grassetti, niente elenchi puntati o
+numerati, a meno che Paolo li chieda o che siano davvero passi da seguire in ordine. ${conRagiona
+    ? 'Ha acceso «Ragiona»: puoi andare a fondo, ma resta sotto le 400 parole, sempre a paragrafi.'
+    : 'Di solito tra 40 e 200 parole: di più solo se te lo chiede o se l\'argomento lo richiede davvero.'}
+Al massimo una domanda, alla fine, e solo se ti serve davvero per andare avanti. Titoli di libri, nomi, date e numeri:
+solo quelli di cui sei sicuro.`
+
+// Il tasto «Ragiona» del campo per scrivere (dal 2026-11-07): Paolo sceglie quando vuole una risposta pensata.
+// Vale con ogni modello; a quelli che ragionano si alza anche lo sforzo (vedi preparaChat).
+const RAGIONA_NOTE = `
+
+## RAGIONA CON CALMA
+Paolo ha acceso «Ragiona»: vuole una risposta pensata, non svelta. Prima di scrivere ragiona a fondo: guarda la
+questione da più lati, cerca l'obiezione migliore alla tua prima idea, controlla i passaggi e i conti. Poi rispondi
+chiaro e in ordine, lungo quanto serve e non di più.`
+
 // System prompt per la chat: conversazione e, quando richiesto, proposte di azioni
 const SYSTEM_PROMPT_MAIN = `Sei **Peppino** 🐙, un polpo: l'assistente di Paolo dentro il suo gestionale.
 
@@ -1248,12 +1322,18 @@ async function preparaChat(req, maxTargets) {
   const targets = normalizeTargets(req.body.targets, maxTargets)
   if (!targets.length) return { errore: { status: 500, error: 'Nessun provider AI configurato sul server (mancano le chiavi).' } }
 
+  // Che conversazione è: «Parliamo» (libera, senza il gestionale davanti) o «Le mie cose» (com'era prima).
+  // Le conversazioni salvate prima del 2026-11-07 non hanno il tipo: sono «Le mie cose».
+  const parliamo = req.body.tipo === 'parliamo'
+  // «Ragiona», acceso da Paolo nel campo per scrivere
+  const conRagiona = req.body.ragiona === true
+
   const lettore = creaLettore(DEPS_LETTURA, req.userId)
-  const [context, citati] = await Promise.all([contestoDi(req.userId), elementiCitati(req.body.citati, lettore)])
+  const [context, citati] = await Promise.all([parliamo ? null : contestoDi(req.userId), elementiCitati(req.body.citati, lettore)])
   // Cap duro: il tier gratuito ha un limite di token per richiesta.
   // formatContext e' gia' limitato per campo, questo e' la rete di sicurezza.
   const MAX_CONTEXT_CHARS = 14000
-  const full = formatContext(context)
+  const full = context ? formatContext(context) : ''
   const contextText = full.length > MAX_CONTEXT_CHARS
     ? full.slice(0, MAX_CONTEXT_CHARS) + '\n…(contesto troncato: troppi elementi)'
     : full
@@ -1268,8 +1348,12 @@ async function preparaChat(req, maxTargets) {
     return `${nome} = ${iso}${['  (oggi)', '  (domani)', '  (dopodomani)'][i] || ''}`
   }).join('\n')
 
-  // Il prompt dell'assistente scelto, più le regole comuni a tutti
-  let systemPrompt = (SPECIALISTS[specialist]?.prompt || SYSTEM_PROMPT_MAIN) + REGOLE_COMUNI
+  // Il prompt dell'assistente scelto, più le regole comuni a tutti. In «Parliamo» gli specialisti non ci sono:
+  // i loro prompt parlano del gestionale.
+  let systemPrompt = parliamo
+    ? SYSTEM_PROMPT_PARLIAMO + REGOLE_PARLIAMO
+    : (SPECIALISTS[specialist]?.prompt || SYSTEM_PROMPT_MAIN) + REGOLE_COMUNI
+  if (conRagiona) systemPrompt += RAGIONA_NOTE
   if (req.body.voce) systemPrompt += VOICE_NOTE
 
   const messages = [
@@ -1281,7 +1365,7 @@ async function preparaChat(req, maxTargets) {
         `Calendario dei prossimi giorni (per le date usa questo, non calcolarle):\n${calendario}`,
         `Nome utente: ${req.userName}`,
         '',
-        contextText || 'L\'utente non ha ancora progetti o note. Suggerisci di iniziare!',
+        parliamo ? '' : (contextText || 'L\'utente non ha ancora progetti o note. Suggerisci di iniziare!'),
         citati.testo
       ].filter(Boolean).join('\n')
     },
@@ -1289,6 +1373,8 @@ async function preparaChat(req, maxTargets) {
     ...history.slice(-24)
       .filter(m => (m?.role === 'user' || m?.role === 'assistant') && typeof m.content === 'string' && m.content)
       .map(m => ({ role: m.role, content: m.content.slice(0, 8000) })),
+    // A voce no: lì vale la nota della risposta a voce, ancora più corta
+    ...(parliamo && !req.body.voce ? [{ role: 'system', content: promemoriaParliamo(conRagiona) }] : []),
     { role: 'user', content: message }
   ]
 
@@ -1298,16 +1384,20 @@ async function preparaChat(req, maxTargets) {
   // Scrivendo ragiona di più; a voce conta la prontezza
   // Peppino di base ragiona poco: misurato il 2026-11-06, con «medium» la prima parola arriva anche
   // dopo 5-6 secondi, con «low» in mezzo secondo. Ragiona di più solo se Paolo glielo chiede.
+  // Con «Ragiona» acceso: «high» scrivendo, «medium» a voce (lì conta ancora la prontezza).
   const conCalma = /\b(pensaci|ragiona(ci)?|rifletti(ci)?|con calma|a fondo|analizza)\b/i.test(message)
-  const effort = req.body.voce ? 'low' : (SPECIALISTS[specialist]?.effort || (conCalma ? 'medium' : 'low'))
-  const stats = {
+  const effort = conRagiona
+    ? (req.body.voce ? 'medium' : 'high')
+    : req.body.voce ? 'low' : ((!parliamo && SPECIALISTS[specialist]?.effort) || (conCalma ? 'medium' : 'low'))
+  const stats = context ? {
     progetti: context.stats.totaleProgetti,
     note: context.stats.totaleNote,
     todoCompletati: context.stats.todoCompletati,
     todoTotali: context.stats.todoTotali
-  }
-  // max_tokens comprende anche il ragionamento: con 2048 una domanda complessa restava a metà
-  return { targets, messages, opts: { maxTokens: 4096, tools, effort, lettore }, stats, passiIniziali: citati.passi }
+  } : null
+  // max_tokens comprende anche il ragionamento: con 2048 una domanda complessa restava a metà, e con
+  // «Ragiona» il ragionamento da solo può superare i 4096 (vale solo per i modelli che ragionano, vedi agente.js)
+  return { targets, messages, opts: { maxTokens: conRagiona ? 16000 : 4096, tools, effort, lettore }, stats, passiIniziali: citati.passi }
 }
 
 app.post('/api/chat', verifyUser, async (req, res) => {

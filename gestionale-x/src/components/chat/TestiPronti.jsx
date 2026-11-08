@@ -22,7 +22,7 @@ export default function TestiPronti({ onUsa }) {
       {testi.length > 0 ? (
         <div className="chat-pronti-list">
           {testi.map(t => (
-            <button key={t.id} type="button" className="chat-pronto" onClick={() => onUsa(t.testo)} aria-label={`Testo pronto: ${titoloDi(t)}`}>
+            <button key={t.id} type="button" className="chat-pronto" onClick={() => onUsa(t.testo)} aria-label={`Testo pronto: ${titoloDi(t)}`} title={t.testo}>
               <span className="chat-pronto-titolo">{titoloDi(t)}</span>
               <span className="chat-pronto-testo">{t.testo}</span>
             </button>

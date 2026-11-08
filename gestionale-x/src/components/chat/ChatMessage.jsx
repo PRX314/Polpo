@@ -1,6 +1,6 @@
 import { memo, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, Copy, Mic, NotebookPen, RotateCcw } from 'lucide-react'
+import { Check, Copy, Lightbulb, Mic, NotebookPen, RotateCcw } from 'lucide-react'
 import { collegaElementi, renderMarkdown } from '../../lib/markdown'
 import { salvaNelVault } from '../../services/chatService'
 import { shortModel } from './useModelli'
@@ -33,7 +33,8 @@ function TestoConCitati({ testo, citati }) {
 
 const ora = (iso) => new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
 
-// Un messaggio. Sotto le risposte si legge chi ha risposto (assistente e modello).
+// Un messaggio. I tuoi in un fumetto a destra; quelli di Peppino a sinistra, senza scatola, e sotto chi
+// ha risposto (assistente e modello) con Copia e Invia al vault, piccoli.
 function ChatMessage({ msg, indice, indiceElementi, nomeAssistente, occupato, onRiprova, onAlternativa, onConferma, onRifiuta }) {
   const [copiato, setCopiato] = useState(false)
   // Invio al vault: 'idle' | 'invio' | 'fatto' | 'errore'
@@ -45,6 +46,7 @@ function ChatMessage({ msg, indice, indiceElementi, nomeAssistente, occupato, on
         <div className="chat-bubble"><p className="pre"><TestoConCitati testo={msg.content} citati={msg.citati} /></p></div>
         <div className="chat-meta small faint">
           {msg.voce && <Mic size={11} aria-label="detto a voce" />}
+          {msg.ragiona && <Lightbulb size={11} aria-label="con Ragiona" />}
           <span>{ora(msg.timestamp)}</span>
         </div>
         {msg.failed && (
@@ -124,13 +126,16 @@ function ChatMessage({ msg, indice, indiceElementi, nomeAssistente, occupato, on
         />
       )}
 
-      {!msg.streaming && <div className="chat-meta small faint">
-        <span>{nomeAssistente(msg.assistant)}{modello ? ` · ${modello}` : ''} · {ora(msg.timestamp)}</span>
-        <button className="btn btn-sm btn-quiet" onClick={copia}>
-          {copiato ? <><Check size={12} /> Copiato</> : <><Copy size={12} /> Copia</>}
+      {!msg.streaming && <div className="chat-meta">
+        <span className="chat-chi">{nomeAssistente(msg.assistant)}{modello ? ` · ${modello}` : ''} · {ora(msg.timestamp)}</span>
+        <button className="chat-tasto sm" onClick={copia} aria-label={copiato ? 'Copiato' : 'Copia'} title="Copia">
+          {copiato ? <Check size={14} /> : <Copy size={14} />}
         </button>
-        <button className="btn btn-sm btn-quiet" onClick={inviaAlVault} disabled={!msg.content || salvataggio.stato === 'invio'}>
-          {salvataggio.stato === 'fatto' ? <><Check size={12} /> Nel vault</> : <><NotebookPen size={12} /> {salvataggio.stato === 'invio' ? 'Invio…' : 'Invia al vault'}</>}
+        <button
+          className="chat-tasto sm" onClick={inviaAlVault} disabled={!msg.content || salvataggio.stato === 'invio'}
+          aria-label={salvataggio.stato === 'fatto' ? 'Nel vault' : salvataggio.stato === 'invio' ? 'Invio…' : 'Invia al vault'} title="Invia al vault (00-Inbox)"
+        >
+          {salvataggio.stato === 'fatto' ? <Check size={14} /> : <NotebookPen size={14} />}
         </button>
       </div>}
       {salvataggio.stato === 'errore' && (
