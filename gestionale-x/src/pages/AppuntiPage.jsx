@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Check, Copy, Download, FolderInput, ImagePlus, Loader, NotebookPen, PenLine, Play, Plus, RotateCcw, Sparkles, TextQuote, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Copy, Download, FolderInput, ImagePlus, Loader, Music, NotebookPen, PenLine, Play, Plus, RotateCcw, Sparkles, TextQuote, Trash2 } from 'lucide-react'
 import VoiceRecorder from '../components/VoiceRecorder'
 import Lavagna from '../components/appunti/Lavagna'
 import MettiIn, { IconaRaccolta } from '../components/appunti/MettiIn'
@@ -17,6 +17,7 @@ import {
   GIORNI_CESTINO, aggiornaAppunto, aggiungiBlocco, aggiungiRegistrazione, aggiornaBlocco, creaAppunto, eliminaFile, eliminaPerSempre,
   leggiFile, nelCestino, nuovoId, ripristina, salvaFile, sostituisciBlocco, subscribeToAppunti, svuotaScaduti, togliBlocco, trascrivi
 } from '../services/appuntiService'
+import { mandaASonora, sonoraAccesa } from '../services/sonora'
 import './AppuntiPage.css'
 
 // Appunti: testo libero, registrazioni con la trascrizione, disegni su foglio o sopra una foto.
@@ -29,6 +30,14 @@ const titoloDi = (a) => a.title?.trim()
 const conta = (a, type) => a.blocks.filter(b => b.type === type).length
 const peso = (n) => (n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} kB` : `${(n / 1024 / 1024).toFixed(1)} MB`)
 const nomeFile = (s) => s.replace(/[^\p{L}\p{N} _-]/gu, '_').slice(0, 80) || 'appunto'
+
+// Sonora (il laboratorio dei suoni, sul PC di Paolo) è accesa? Si guarda una volta: se no, i suoi tasti non compaiono.
+function useSonora() {
+  const [accesa, setAccesa] = useState(false)
+  useEffect(() => { let vivo = true; sonoraAccesa().then(ok => vivo && setAccesa(ok)); return () => { vivo = false } }, [])
+  return accesa
+}
+const titoloPerSonora = (a, b) => `${titoloDi(a)} · ${quando(b.createdAt)}`
 
 export default function AppuntiPage() {
   const { id } = useParams()
@@ -120,6 +129,25 @@ function Elenco({ appunti }) {
     navigate('/ai', { state: { message } })
   }
 
+  const sonora = useSonora()
+  const [mando, setMando] = useState('')
+  const registrazioni = useMemo(() => lista.flatMap(a => a.blocks.filter(b => b.type === 'audio').map(b => ({ a, b }))), [lista])
+  // Tutte le registrazioni degli appunti in vista, una dopo l'altra: Sonora le riceve una per volta,
+  // il conteggio dice dove siamo. Quelle che non si leggono si saltano e si contano alla fine.
+  const tutteASonora = async () => {
+    let fatte = 0, saltate = 0
+    for (const { a, b } of registrazioni) {
+      setMando(`${fatte + saltate + 1}/${registrazioni.length}`)
+      try { await mandaASonora(await leggiFile(b.file), { titolo: titoloPerSonora(a, b) }); fatte++ }
+      catch (e) {
+        if (/non risponde/.test(e.message)) { setMando(''); return toast.err(e.message) }
+        saltate++
+      }
+    }
+    setMando('')
+    toast.ok(`${fatte} registrazion${fatte === 1 ? 'e' : 'i'} in Sonora${saltate ? `, ${saltate} saltate` : ''}`)
+  }
+
   return (
     <div className="stack ap-page">
       <header className="page-head">
@@ -157,6 +185,15 @@ function Elenco({ appunti }) {
         <div className="row ap-insieme">
           <button className="btn btn-sm" onClick={mettiInsieme}><Sparkles size={14} /> Mettili insieme con Peppino</button>
           <span className="small muted">Temi, punti di vista diversi e domande aperte{cerca ? ', solo di quelli trovati' : ''}.</span>
+        </div>
+      )}
+
+      {!cestino && sonora && registrazioni.length > 0 && (
+        <div className="row ap-insieme">
+          <button className="btn btn-sm" disabled={!!mando} onClick={tutteASonora}>
+            {mando ? <Loader size={14} /> : <Music size={14} />} {mando ? `Mando a Sonora… ${mando}` : `Tutte le registrazioni a Sonora (${registrazioni.length})`}
+          </button>
+          <span className="small muted">Finiscono nella libreria di Sonora, come WAV{cerca || filtro ? ', solo di questi appunti' : ''}.</span>
         </div>
       )}
 
@@ -198,6 +235,7 @@ function Elenco({ appunti }) {
 
 function Dettaglio({ id, appunti }) {
   const navigate = useNavigate()
+  const sonora = useSonora()
   const toast = useToast()
   const { items } = useData()
   const a = appunti?.find(x => x.id === id)
@@ -386,7 +424,7 @@ function Dettaglio({ id, appunti }) {
       {a.blocks.length > 0 && (
         <div className="ap-blocchi">
           {a.blocks.map(b => b.type === 'audio'
-            ? <BloccoAudio key={b.id} b={b} noteId={id} onAggiungi={aggiungiAlTesto} onTogli={() => togli(b)} />
+            ? <BloccoAudio key={b.id} b={b} noteId={id} titolo={titoloPerSonora(a, b)} sonora={sonora} onAggiungi={aggiungiAlTesto} onTogli={() => togli(b)} />
             : <BloccoDisegno key={b.id} b={b} onApri={() => apriDisegno(b)} onTogli={() => togli(b)} />)}
         </div>
       )}
@@ -432,10 +470,18 @@ function useFile(meta, subito) {
   return { url, errore, carica: () => setChiesto(true) }
 }
 
-function BloccoAudio({ b, noteId, onAggiungi, onTogli }) {
+function BloccoAudio({ b, noteId, titolo, sonora, onAggiungi, onTogli }) {
   const { url, errore, carica } = useFile(b.file, false)
   const [riprovo, setRiprovo] = useState(false)
+  const [mando, setMando] = useState(false)
   const toast = useToast()
+  const aSonora = async () => {
+    setMando(true)
+    try {
+      const voce = await mandaASonora(await leggiFile(b.file), { titolo })
+      toast.ok(`In Sonora: ${voce.titolo || titolo}`)
+    } catch (e) { toast.err(e.message) } finally { setMando(false) }
+  }
   const riprova = async () => {
     setRiprovo(true)
     try {
@@ -452,6 +498,7 @@ function BloccoAudio({ b, noteId, onAggiungi, onTogli }) {
       <div className="row">
         <span className="tag">Registrazione</span>
         <span className="grow small muted">{quando(b.createdAt)} · {peso(b.file.size)}</span>
+        {sonora && <button className="btn btn-sm" disabled={mando} onClick={aSonora} title="Nella libreria di Sonora, come WAV">{mando ? <Loader size={14} /> : <Music size={14} />} Sonora</button>}
         <button className="btn-icon sm" onClick={onTogli} aria-label="Elimina la registrazione"><Trash2 size={15} /></button>
       </div>
       {url ? <audio controls autoPlay src={url} className="ap-audio" aria-label="Ascolta la registrazione" />
