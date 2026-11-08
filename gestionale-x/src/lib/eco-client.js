@@ -40,6 +40,7 @@ export class Eco {
     this._audio = null;
     this._interrotto = false;
     this._fermaAscolto = null;
+    this._frase = null;
   }
 
   // --- rete ------------------------------------------------------------------
@@ -267,6 +268,15 @@ export class Eco {
   }
 
   // --- bocca ---------------------------------------------------------------------
+  // La frase che sta suonando adesso: { testo, tempo, durata }, null se in quel momento c'è silenzio.
+  // Serve a chi muove la bocca: si legge a che punto è il lettore, l'audio non passa da nessuna parte.
+  voceOra() {
+    const f = this._frase;
+    if (!f) return null;
+    if (f.lettore) return { testo: f.testo, tempo: f.lettore.currentTime, durata: f.lettore.duration };
+    return { testo: f.testo, tempo: (performance.now() - f.da) / 1000, durata: f.durata };
+  }
+
   async parla(frasi) {
     if (typeof frasi === 'string') frasi = Eco.frasi(frasi);
     frasi = frasi.map(Eco.perVoce).filter(Boolean);
@@ -319,10 +329,10 @@ export class Eco {
       let suonata = false;
       if (!i || blob) {
         const sorgente = i ? URL.createObjectURL(blob) : indirizzo(frasi[0]);
-        const esito = await this._suona(sorgente);
+        const esito = await this._suona(sorgente, frasi[i]);
         suonata = esito === true;
         // Rifiutata dal lettore: si riprova con Web Audio. Scaduta: il server è fermo, inutile riscaricarla.
-        if (esito === false && !this._interrotto) suonata = await this._suonaConContesto(blob || await scarica(frasi[0]));
+        if (esito === false && !this._interrotto) suonata = await this._suonaConContesto(blob || await scarica(frasi[0]), frasi[i]);
         if (i) URL.revokeObjectURL(sorgente);
       }
       if (suonata || this._interrotto) continue;
@@ -347,14 +357,14 @@ export class Eco {
   }
 
   // true = suonata (o interrotta da te), false = il lettore la rifiuta, 'scaduta' = non è mai partita
-  _suona(sorgente) {
+  _suona(sorgente, testo) {
     const l = this._lettore;
     this._audio = l;
     const inizio = performance.now();
     const tempo = () => `${((performance.now() - inizio) / 1000).toFixed(1)}s`;
     return new Promise((fatto) => {
       let chiusa = false;
-      const risolvi = (esito) => { if (!chiusa) { chiusa = true; clearTimeout(scadenza); fatto(esito); } };
+      const risolvi = (esito) => { if (!chiusa) { chiusa = true; clearTimeout(scadenza); this._frase = null; fatto(esito); } };
       // Se la frase non parte entro 8 s (rete ferma) si passa oltre invece di aspettare per sempre.
       const scadenza = setTimeout(() => {
         this.onDiario(`voce: dopo ${tempo()} non è ancora partita, la lascio`);
@@ -365,6 +375,7 @@ export class Eco {
       l.onplaying = () => {
         clearTimeout(scadenza);
         if (!partita) { partita = true; this._dette++; }
+        this._frase = { testo, lettore: l };
         this.onDiario(`voce: suona dopo ${tempo()} (volume ${l.volume}, muto ${l.muted})`);
       };
       l.onended = () => { this.onDiario(`voce: finita dopo ${tempo()}`); risolvi(true); };
@@ -382,7 +393,7 @@ export class Eco {
   }
 
   // true se l'ha suonata
-  async _suonaConContesto(blob) {
+  async _suonaConContesto(blob, testo) {
     try {
       if (!blob || !this._contesto) throw new Error('niente riserva');
       // resume() senza un gesto recente può restare in sospeso per sempre: al massimo 1,5 s.
@@ -399,9 +410,11 @@ export class Eco {
         s.onended = risolvi;
         this._sorgente = s;
         this._dette++;
+        this._frase = { testo, da: performance.now(), durata: suono.duration };
         s.start();
       });
       this._sorgente = null;
+      this._frase = null;
       return true;
     } catch (e) {
       this.onDiario(`voce: nemmeno Web Audio suona (${e.message})`);
@@ -421,8 +434,10 @@ export class Eco {
         u.voice = Eco.voceMigliore(this.lingua);
         u.rate = 1.05;
         // Safari a volte non manda "end": dopo un tempo ragionevole si passa oltre comunque
-        const riserva = setTimeout(risolvi, 4000 + testo.length * 120);
-        u.onend = u.onerror = () => { clearTimeout(riserva); risolvi(); };
+        const fine = () => { clearTimeout(riserva); this._frase = null; risolvi(); };
+        const riserva = setTimeout(fine, 4000 + testo.length * 120);
+        u.onstart = () => { this._frase = { testo, da: performance.now() }; };
+        u.onend = u.onerror = fine;
         speechSynthesis.speak(u);
       });
     }
@@ -437,6 +452,7 @@ export class Eco {
 
   zitto() {
     this._interrotto = true;
+    this._frase = null;
     if (this._audio) { this._audio.pause(); this._audio = null; }
     try { this._sorgente?.stop(); } catch { /* già finita */ }
     if (window.speechSynthesis?.speaking) speechSynthesis.cancel();

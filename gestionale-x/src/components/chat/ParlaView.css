@@ -8,7 +8,8 @@
 }
 .parla-tasto:disabled { cursor: default; }
 .parla-tasto:focus-visible { outline: 1px solid var(--ink); outline-offset: 4px; }
-.peppino { display: block; width: 190px; height: 190px; image-rendering: pixelated; }
+.peppino { display: block; width: 220px; height: 220px; image-rendering: pixelated; }
+@media (max-height: 640px) { .peppino { width: 176px; height: 176px; } } /* a multipli interi: i pixel restano netti */
 
 /* Il volume del microfono mentre ti ascolta */
 .parla-volume { width: 96px; height: 3px; visibility: hidden; }

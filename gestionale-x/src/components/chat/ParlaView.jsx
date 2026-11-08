@@ -36,6 +36,7 @@ function ParlaView({ invia, azioni }) {
   const ecoRef = useRef(null)
   const attivaRef = useRef(false)
   const volumeRef = useRef(null)
+  const peppino = useRef(null)
 
   useEffect(() => () => {
     attivaRef.current = false
@@ -43,18 +44,23 @@ function ParlaView({ invia, azioni }) {
     ecoRef.current?.zitto()
   }, [])
 
-  const eco = () => (ecoRef.current ??= new Eco({
-    api: API_URL,
-    // Whisper dove il browser sa registrare (anche iPhone): capisce meglio del riconoscimento di
-    // Safari, che nell'app installata va e viene. Altrimenti il riconoscimento del browser.
-    ascolto: Eco.saRegistrare() ? 'whisper' : 'browser', whisper: Eco.saRegistrare(), trascrivi,
-    voce: 'server',                     // voce neurale dal backend, non quella robotica del browser
-    parametriVoce,
-    onLivello: (v) => volumeRef.current?.style.setProperty('--livello', v),
-    onStato: (s) => setFase(s),
-    onMessaggio: (m) => { if (m.chi === 'errore') setErrore(m.testo) },
-    onDiario: (d) => console.info('[voce]', d)
-  }))
+  const eco = () => {
+    if (ecoRef.current) return ecoRef.current
+    ecoRef.current = new Eco({
+      api: API_URL,
+      // Whisper dove il browser sa registrare (anche iPhone): capisce meglio del riconoscimento di
+      // Safari, che nell'app installata va e viene. Altrimenti il riconoscimento del browser.
+      ascolto: Eco.saRegistrare() ? 'whisper' : 'browser', whisper: Eco.saRegistrare(), trascrivi,
+      voce: 'server',                     // voce neurale dal backend, non quella robotica del browser
+      parametriVoce,
+      onLivello: (v) => { volumeRef.current?.style.setProperty('--livello', v); peppino.current?.livello(v) },
+      onStato: (s) => setFase(s),
+      onMessaggio: (m) => { if (m.chi === 'errore') setErrore(m.testo) },
+      onDiario: (d) => console.info('[voce]', d)
+    })
+    peppino.current?.voce(() => ecoRef.current?.voceOra()) // la bocca segue la frase che sta suonando
+    return ecoRef.current
+  }
 
   const dici = async (e, testo) => {
     setRisposta(Eco.perVoce(testo)) // lo stesso testo che viene letto, senza asterischi e link
@@ -98,6 +104,7 @@ function ParlaView({ invia, azioni }) {
       return
     }
     const e = eco()
+    peppino.current?.tocco()
     preparaTrascrizione()
     e.sblocca() // subito, dentro il tocco: la voce arriva secondi dopo e iPhone la bloccherebbe
     if (fase === 'parlo') return e.zitto()         // interrompi: la conversazione torna ad ascoltarti
@@ -121,7 +128,7 @@ function ParlaView({ invia, azioni }) {
           className={`parla-tasto is-${fase}`} onClick={tocca} disabled={fase === 'penso'}
           aria-label={fase === 'parlo' ? 'Interrompi' : fase === 'ascolto' ? 'Ho finito di parlare' : 'Parla con Peppino'}
         >
-          <Peppino fase={fase} />
+          <Peppino fase={fase} motore={peppino} />
         </button>
         <div className={`parla-volume ${fase === 'ascolto' ? 'is-on' : ''}`} ref={volumeRef} aria-hidden="true"><i /></div>
         <p className="parla-fase" role="status">{FASE[fase]}</p>
